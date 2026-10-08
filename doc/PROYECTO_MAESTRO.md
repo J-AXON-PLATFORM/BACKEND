@@ -3,27 +3,27 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | activación CI backend TEC-PLT-003a, 2026-10-08
-> **Estado documental:** baseline v1 `DESIGN_READY`; implementación nueva iniciada de forma acotada con bootstrap estructural y de persistencia backend verificados; `PRODUCTION_READY = NO`.  
+> **Revisión de continuidad:** CKP-JAXON-005 | fundación y CI frontend verificadas, 2026-10-08
+> **Estado documental:** baseline v1 `DESIGN_READY`; implementación nueva iniciada de forma acotada con fundaciones backend/frontend, persistencia backend y CI base verificadas; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
 
 ## 0. Estado de inicialización
 
-- Estado: `DESIGN_READY`: descubrimiento y refinamiento/diseño detallado v1 cerrados documentalmente; la implementación comenzó de forma acotada con `TEC-PLT-001a`, `TEC-PLT-002a` y `TEC-PLT-003a`, sin autorización general para el resto del backlog.
-- Implementación verificada: bootstrap estructural del backend con Java 25, Spring Boot 4.1.1, Spring Modulith 2.1.1, Maven Wrapper con Maven 3.9.16 y los ocho módulos; integración de PostgreSQL 18.6 y pgvector 0.8.6 mediante Testcontainers; Flyway 12.4.0; migración bootstrap que habilita `vector` y crea los ocho schemas aprobados; y CI base del backend mediante GitHub Actions. No contiene tablas de negocio ni lógica funcional.
+- Estado: `DESIGN_READY`: descubrimiento y refinamiento/diseño detallado v1 cerrados documentalmente; la implementación comenzó de forma acotada con fundaciones backend/frontend y CI base, sin autorización general para el resto del backlog.
+- Implementación verificada: bootstrap estructural del backend con Java 25/Spring Boot/Spring Modulith/Maven; PostgreSQL 18.6, pgvector 0.8.6, Flyway 12.4.0 y ocho schemas; `Backend CI`; fundación frontend con Node.js 24.21.0, npm 11.19.0, Next.js 16.3.8, React 19.3.0, TypeScript 5.9.3, ESLint 9.39.5, Vitest/RTL, no-indexación y `Frontend CI`. No contiene tablas ni funcionalidad de negocio.
 - Madurez: baseline documental `DESIGN_READY` e implementación incremental iniciada; `PRE_IMPLEMENTACION` fue el estado anterior al inicio de `TEC-PLT-001a`.
 - Modelo de repositorios: `MULTIREPO`: `frontend`, `backend`, `automation-collector`.
 - Estado remoto histórico verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada con tres repositorios privados. `backend` fue inicializado y publicado de forma controlada en `https://github.com/J-AXON-PLATFORM/BACKEND` mediante `TEC-GIT-001C`.
-- Estado remoto con el cierre de `TEC-PLT-003a` verificado el 2026-10-08: `Backend CI` fue integrado en `develop` mediante el Pull Request `#1`, con `Squash and merge` después de checks verdes sobre la última revisión. `main` no fue modificado y puede quedar temporalmente detrás de `develop`. `https://github.com/J-AXON-PLATFORM/FRONTEND` y `https://github.com/J-AXON-PLATFORM/AUTOMATION-COLLECTOR` permanecen vacíos y sin Git local. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados ni despliegues.
+- Estado remoto frontend verificado el 2026-10-08: `FRONTEND` fue publicado como privado con ramas `main` y `develop`; `Frontend CI` fue integrado en `develop` mediante el Pull Request `#1`, squash `0a34d6dadacc95351544996235faf6bcb0b21b65`, después del run de PR verde `37849248403`; el run post-merge `37849379045` también quedó verde. `AUTOMATION-COLLECTOR` permanece vacío y sin Git local. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados ni despliegues.
 - Los nombres lógicos canónicos continúan siendo `backend`, `frontend` y `automation-collector`; las mayúsculas visibles en GitHub no cambian la arquitectura MULTIREPO. GitHub trata estos identificadores sin distinción efectiva entre mayúsculas y minúsculas. La organización histórica distinta `j-axon` y sus repositorios preexistentes son ajenos al nuevo inicio controlado y no fueron modificados.
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-10-08.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: la primera vertical E2E y el resto no autorizado de OLA 0 continúan sin implementar. OpenAPI ejecutable, Dockerfile, Compose, frontend y `automation-collector` tampoco están implementados. La integración PostgreSQL/pgvector/Flyway y los ocho schemas existen en el alcance backend verificado por `TEC-PLT-002a`; `TEC-PLT-003a` incorpora CI base para esa línea ejecutable. No existe despliegue ni infraestructura Production.
+- Estado funcional: la primera vertical E2E y el resto no autorizado de OLA 0 continúan sin implementar. La fundación frontend existe, pero no contiene funcionalidad de negocio. OpenAPI ejecutable, Dockerfile, Compose y `automation-collector` no están implementados. No existe despliegue ni infraestructura Production.
 
 ## 1. Identidad
 
@@ -188,6 +188,7 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 
 - Runtime/build: **Node.js 24 LTS + npm 11.x**.
 - Framework: **Next.js 16.3.x + React 19.x compatible + TypeScript 5.9.x**.
+- Estado ejecutable verificado: Node.js 24.21.0, npm 11.19.0, Next.js 16.3.8, React/React DOM 19.3.0, TypeScript 5.9.3 y ESLint 9.39.5 temporalmente EOL.
 - Estructura: `src/app/` para routing/layout y `src/features/` para capacidades de usuario/negocio; no copiar mecánicamente los ocho módulos backend.
 - Actualizaciones selectivas servidor->navegador mediante SSE sobre HTTPS; navegador->backend permanece REST/HTTPS.
 - `NEXT_PUBLIC_*` solo para información que puede ser pública en navegador; casi ningún secreto debe existir en frontend.
@@ -368,6 +369,7 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 - Estado backend: `Backend CI` ejecuta `./mvnw --batch-mode --no-transfer-progress clean verify` en PR hacia `develop/main`, push a `develop` y manualmente, con Java 25, permisos `contents: read`, acciones fijadas por SHA completo, cancelación de ejecuciones obsoletas y sin secretos, publicación o despliegue. Contratos/SFTP se añadirán cuando existan artefactos ejecutables aplicables.
 - Los rulesets y protecciones automáticas del repositorio privado no están aplicados por la limitación del plan actual. PR y checks verdes se exigen operativamente, pero GitHub no bloquea técnicamente una fusión incorrecta. `main` y `develop` pueden quedar temporalmente en commits distintos.
 - Frontend CI: `npm ci`, lint, typecheck, Vitest/RTL y `next build`.
+- Estado frontend: `Frontend CI` ejecuta esos gates y auditorías de producción/completa en PR hacia `develop/main`, push a `develop` y manualmente. La auditoría de producción está limpia; la completa acepta solo `GHSA-vfj7-8cjw-p6xm` en `braces@3.0.3` de desarrollo mediante verificador cerrado, pendiente de corrección upstream.
 - Python CI: `uv sync --locked`, Ruff, pytest, contratos/SFTP y packaging cuando aplique.
 - Dockerfiles backend/frontend multi-stage; runtime no-root.
 - Una imagen por componente/version; tags SemVer + Git SHA y promoción por digest inmutable. `latest` no es identidad de deployment.
@@ -484,8 +486,8 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 
 - Organización oficial nueva verificada: `J-AXON-PLATFORM`. Repositorios privados verificados: `BACKEND` (`https://github.com/J-AXON-PLATFORM/BACKEND`), `FRONTEND` (`https://github.com/J-AXON-PLATFORM/FRONTEND`) y `AUTOMATION-COLLECTOR` (`https://github.com/J-AXON-PLATFORM/AUTOMATION-COLLECTOR`).
 - Los nombres lógicos canónicos permanecen `backend`, `frontend` y `automation-collector`; GitHub no distingue efectivamente mayúsculas y minúsculas en estos identificadores. La separación respecto de la organización histórica `j-axon` se debe al identificador distinto `J-AXON-PLATFORM`; `j-axon` y sus repositorios preexistentes no fueron modificados y no son los repositorios oficiales de este nuevo inicio.
-- `backend` tiene Git local y remoto SSH `origin`. `TEC-GIT-001C` publicó sus dos commits iniciales; `TEC-PLT-003a` añadió la CI base a `develop` mediante el Pull Request `#1`. Ambas ramas siguen sus remotos, pero `main` no recibió este cambio y puede quedar temporalmente detrás de `develop`. `frontend` y `automation-collector` continúan vacíos y sin Git local.
-- Las autorizaciones específicas de `TEC-GIT-001C` y `TEC-PLT-003a` fueron consumidas y se limitaron a sus alcances sobre `backend`. No autorizan publicar los otros repositorios, operar backlog remoto, crear otros Pull Requests o workflows, configurar rulesets, crear tags/releases/Packages/artefactos ni desplegar.
+- `backend` tiene Git local y remoto SSH `origin`; `Backend CI` está en `develop`. `frontend` fue publicado mediante `TEC-GIT-002`: `main` apunta a `ffec9bdd39d5168ed5f7d3bbaa68d5d4bc5860ab` y `develop` al squash de CI `0a34d6dadacc95351544996235faf6bcb0b21b65`; ambas ramas siguen sus remotos. `automation-collector` continúa vacío y sin Git local.
+- Las autorizaciones específicas consumidas se limitaron a las fundaciones, publicaciones, CI y sincronizaciones documentales ejecutadas. No autorizan operar backlog remoto, crear otros Pull Requests o workflows, configurar rulesets, crear tags/releases/Packages/artefactos ni desplegar.
 - Ramas permanentes: `main` (producción) y `develop` (integración/candidato a producción, no entorno físico).
 - Ramas cortas desde `develop`: `feature/*`, `fix/*`, `refactor/*`, `test/*`, `docs/*`, `chore/*`, `ci/*`.
 - Hotfix: nace de `main`, PR a `main`, luego sincronizar a `develop`.
@@ -604,4 +606,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con implementación incremental iniciada de forma acotada por `TEC-PLT-001a`, `TEC-PLT-002a` y `TEC-PLT-003a`, completadas y verificadas. `TEC-GIT-001C` publicó de forma controlada únicamente `backend`, y `TEC-PLT-003a` activó su CI base; `frontend` y `automation-collector` permanecen vacíos. Lotes 30--54 aprobados y consolidados. La siguiente tarea técnica no ha sido iniciada: el próximo paso es analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0. Cualquier publicación posterior de los otros repositorios requiere una tarea y autorización independientes. Esta continuidad no constituye autorización ilimitada para implementar toda OLA 0 ni para GitHub, CI/CD adicional, backlog o despliegues.
+Baseline `DESIGN_READY`, con fundaciones backend/frontend, persistencia backend y CI base completadas y verificadas de forma acotada. `backend` y `frontend` están publicados en sus repositorios privados oficiales; `automation-collector` permanece vacío. La fundación frontend no contiene funcionalidad de negocio; conserva como pendientes temporales ESLint 9.39.5 EOL y la excepción cerrada de desarrollo para `GHSA-vfj7-8cjw-p6xm`. Lotes 30--54 permanecen aprobados y consolidados. El próximo paso es analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0. Esta continuidad no constituye autorización ilimitada para implementar, operar GitHub, ampliar CI/CD, publicar backlog o desplegar.
