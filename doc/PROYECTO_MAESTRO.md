@@ -3,7 +3,7 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | activación CI backend TEC-PLT-003a, 2026-10-07  
+> **Revisión de continuidad:** CKP-JAXON-005 | activación CI backend TEC-PLT-003a, 2026-10-08
 > **Estado documental:** baseline v1 `DESIGN_READY`; implementación nueva iniciada de forma acotada con bootstrap estructural y de persistencia backend verificados; `PRODUCTION_READY = NO`.  
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
@@ -15,12 +15,13 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Implementación verificada: bootstrap estructural del backend con Java 25, Spring Boot 4.1.1, Spring Modulith 2.1.1, Maven Wrapper con Maven 3.9.16 y los ocho módulos; integración de PostgreSQL 18.6 y pgvector 0.8.6 mediante Testcontainers; Flyway 12.4.0; migración bootstrap que habilita `vector` y crea los ocho schemas aprobados; y CI base del backend mediante GitHub Actions. No contiene tablas de negocio ni lógica funcional.
 - Madurez: baseline documental `DESIGN_READY` e implementación incremental iniciada; `PRE_IMPLEMENTACION` fue el estado anterior al inicio de `TEC-PLT-001a`.
 - Modelo de repositorios: `MULTIREPO`: `frontend`, `backend`, `automation-collector`.
-- Estado remoto verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada con tres repositorios privados. `backend` fue inicializado y publicado de forma controlada en `https://github.com/J-AXON-PLATFORM/BACKEND`; `TEC-PLT-003a` integró `Backend CI` en `develop` mediante el Pull Request `#1`, con `Squash and merge` después de checks verdes sobre la última revisión. `main` no fue modificado y puede quedar temporalmente detrás de `develop`. `https://github.com/J-AXON-PLATFORM/FRONTEND` y `https://github.com/J-AXON-PLATFORM/AUTOMATION-COLLECTOR` permanecen vacíos y sin Git local. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados ni despliegues.
+- Estado remoto histórico verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada con tres repositorios privados. `backend` fue inicializado y publicado de forma controlada en `https://github.com/J-AXON-PLATFORM/BACKEND` mediante `TEC-GIT-001C`.
+- Estado remoto con el cierre de `TEC-PLT-003a` verificado el 2026-10-08: `Backend CI` fue integrado en `develop` mediante el Pull Request `#1`, con `Squash and merge` después de checks verdes sobre la última revisión. `main` no fue modificado y puede quedar temporalmente detrás de `develop`. `https://github.com/J-AXON-PLATFORM/FRONTEND` y `https://github.com/J-AXON-PLATFORM/AUTOMATION-COLLECTOR` permanecen vacíos y sin Git local. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados ni despliegues.
 - Los nombres lógicos canónicos continúan siendo `backend`, `frontend` y `automation-collector`; las mayúsculas visibles en GitHub no cambian la arquitectura MULTIREPO. GitHub trata estos identificadores sin distinción efectiva entre mayúsculas y minúsculas. La organización histórica distinta `j-axon` y sus repositorios preexistentes son ajenos al nuevo inicio controlado y no fueron modificados.
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-07.
+- Fecha de última revisión: 2026-10-08.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
 - Estado funcional: la primera vertical E2E y el resto no autorizado de OLA 0 continúan sin implementar. OpenAPI ejecutable, Dockerfile, Compose, frontend y `automation-collector` tampoco están implementados. La integración PostgreSQL/pgvector/Flyway y los ocho schemas existen en el alcance backend verificado por `TEC-PLT-002a`; `TEC-PLT-003a` incorpora CI base para esa línea ejecutable. No existe despliegue ni infraestructura Production.
 
