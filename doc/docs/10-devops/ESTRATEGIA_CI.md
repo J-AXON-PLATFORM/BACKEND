@@ -47,6 +47,20 @@ La activación fue integrada mediante el Pull Request frontend `#1`, squash `0a3
 
 La auditoría de producción es bloqueante y está limpia. La auditoría completa usa `scripts/verify-npm-audit.mjs`, que acepta temporalmente solo `GHSA-vfj7-8cjw-p6xm` / `CVE-2026-93687` en `braces@3.0.3`, dependencia transitiva exclusivamente de desarrollo introducida por `eslint-config-next -> @next/eslint-plugin-next -> fast-glob -> micromatch`. No existe versión corregida al 2026-10-08. El control falla ante cualquier otra vulnerabilidad, cambio de versión/cadena/alcance, presencia en producción o error de auditoría. ESLint 9.39.5 permanece como riesgo EOL temporal porque la combinación aprobada con ESLint 10.12.0 falló de forma ejecutable; ambos pendientes deben revisarse cuando la cadena oficial publique compatibilidad y correcciones.
 
+## Estado implementado en automation-collector -- TEC-QLT-002a
+
+El workflow `.github/workflows/python-ci.yml`, denominado `Python CI`, implementa la línea base ejecutable actual de Python:
+
+- Pull Requests hacia `develop` o `main`, pushes a `develop` y ejecución manual mediante `workflow_dispatch`;
+- job estable `Python verification` sobre `ubuntu-24.04`, con timeout de 20 minutos;
+- Python 3.14.8 desde `.python-version` y uv 0.12.24 fijado también mediante `tool.uv.required-version`;
+- pasos separados para sincronización `uv sync --locked`, `uv lock --check`, Ruff lint, Ruff format check, seis pruebas pytest, build, pip-audit y ejecución de ambos entrypoints;
+- permisos `contents: read`, sin secretos, publicación, artefactos o despliegue;
+- `actions/checkout@v7.0.1`, `actions/setup-python@v7.0.0` y `astral-sh/setup-uv@v10.2.0` fijadas por SHA completo, con credenciales persistentes deshabilitadas;
+- concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
+
+La activación fue integrada mediante el Pull Request `AUTOMATION-COLLECTOR#1`, squash `a040c5fba34fae22903088b82191e8355deaab26`. El run de PR `37852626079` y el run post-merge `37852683236` finalizaron correctamente. La auditoría no detectó vulnerabilidades conocidas. Las dependencias runtime permanecen vacías; contratos JSON Schema, SFTP, Paramiko y PyInstaller quedan pendientes hasta incrementos funcionales aplicables.
+
 ## Propósito
 
 Detectar problemas temprano en cada cambio integrable.

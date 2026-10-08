@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Fundación, publicación y CI base de automation-collector -- TEC-PLT-005a, TEC-GIT-003, TEC-QLT-002a y TEC-DOC-006, 2026-10-08
+
+Se crea y verifica la fundación técnica de `automation-collector` con Python 3.14.8 administrado por uv 0.12.24, `pyproject.toml`, `uv.lock`, Hatchling 1.32.4, Ruff 0.16.10, pytest 9.1.1 y pip-audit 2.10.1. Las dependencias runtime permanecen vacías. `jaxon_agent` y `jaxon_discovery_executor` son paquetes y entrypoints distintos que solo identifican programa y versión; seis pruebas demuestran importación, ejecución e identidades inequívocas. Lint, formato, build, auditoría y reproducibilidad del lockfile quedan verdes, sin vulnerabilidades conocidas.
+
+`AUTOMATION-COLLECTOR` se publica como repositorio privado con commit inicial `a1079d8d5bac0d0436daae844e0b1ba9e42a9d12` y ramas permanentes `main` y `develop`. `Python CI` se integra en `develop` mediante el Pull Request `#1` y squash `a040c5fba34fae22903088b82191e8355deaab26`. El run de PR `37852626079` y el run post-merge `37852683236` terminan verdes. El workflow usa permisos `contents: read`, acciones fijadas por SHA completo y no usa secretos, publicación, artefactos ni despliegues.
+
+No se copia código legado ni se implementan SFTP, Paramiko, contratos JSON Schema, snapshots, inventario del sistema, polling, spool, tareas remotas, discovery de red, enrolamiento, claves SSH, PyInstaller, servicios, Docker o Compose. Agent y Discovery Executor no comparten identidad ni configuración operacional. No se modifican contratos, datos o migraciones. J-AXON conserva `DESIGN_READY` y `PRODUCTION_READY = NO`.
+
+---
+
 ## Fundación, publicación y CI base del frontend -- TEC-PLT-004a, TEC-GIT-002, TEC-QLT-001a y TEC-DOC-005, 2026-10-08
 
 Se crea y verifica la fundación técnica de `frontend` con Node.js 24.21.0, npm 11.19.0, Next.js 16.3.8, React 19.3.0, TypeScript 5.9.3, App Router, Server Components por defecto, Vitest y React Testing Library. La página mínima identifica J-AXON sin simular funcionalidad de negocio y queda no-indexable mediante metadata y `robots.txt`. La validación local confirma `npm ci`, lint, typecheck, una prueba, build, `verify` y smoke tests de `/` y `/robots.txt`.
