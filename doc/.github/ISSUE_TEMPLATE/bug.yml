@@ -1,0 +1,22 @@
+name: Error
+description: Reportar un comportamiento incorrecto o una regresión
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: textarea
+    attributes:
+      label: Descripción
+      description: Explica qué ocurrió y qué esperabas que ocurriera.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Pasos para reproducir
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Requisito o flujo relacionado
+  - type: textarea
+    attributes:
+      label: Evidencia

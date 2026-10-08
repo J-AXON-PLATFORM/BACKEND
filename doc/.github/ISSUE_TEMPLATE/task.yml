@@ -1,0 +1,17 @@
+name: Tarea
+description: Unidad pequeña de trabajo técnico o de implementación asociada a una Historia de Usuario
+title: "[TASK] "
+body:
+  - type: input
+    attributes:
+      label: Historia de Usuario padre
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Trabajo a realizar
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Criterios de finalización

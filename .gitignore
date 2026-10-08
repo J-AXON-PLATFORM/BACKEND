@@ -1,0 +1,15 @@
+/target/
+/logs/
+*.log
+
+.env
+.env.*
+!.env.example
+
+/.idea/
+*.iml
+/.vscode/
+
+.DS_Store
+Thumbs.db
+hs_err_pid*

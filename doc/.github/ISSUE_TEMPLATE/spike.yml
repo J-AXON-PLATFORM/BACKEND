@@ -1,0 +1,15 @@
+name: Spike
+description: Investigación acotada para reducir incertidumbre antes de decidir o implementar
+title: "[SPIKE] "
+body:
+  - type: textarea
+    attributes:
+      label: Pregunta o incertidumbre
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Evidencia necesaria
+  - type: textarea
+    attributes:
+      label: Criterio de cierre

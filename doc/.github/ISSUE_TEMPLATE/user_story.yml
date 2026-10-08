@@ -1,0 +1,20 @@
+name: Historia de Usuario
+description: Crear una Historia de Usuario trazable a una funcionalidad, requisitos y flujos
+title: "[HU] "
+body:
+  - type: textarea
+    attributes:
+      label: Historia
+      description: "Como <actor>, quiero <objetivo>, para <beneficio>."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Criterios de aceptación
+      description: Preferir Given/When/Then cuando aporte claridad.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Trazabilidad
+      description: Épica, Funcionalidad, Requisitos, Flujos y ADR/RFC relacionados

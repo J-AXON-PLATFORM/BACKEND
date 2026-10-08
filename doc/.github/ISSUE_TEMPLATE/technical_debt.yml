@@ -1,0 +1,18 @@
+name: Deuda técnica
+description: Trabajo técnico necesario por una limitación o compromiso conocido
+title: "[DEBT] "
+body:
+  - type: textarea
+    attributes:
+      label: Deuda o limitación
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Impacto
+  - type: textarea
+    attributes:
+      label: Riesgo de no abordarla
+  - type: textarea
+    attributes:
+      label: Estrategia propuesta

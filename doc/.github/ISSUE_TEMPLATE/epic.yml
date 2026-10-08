@@ -1,0 +1,21 @@
+name: Épica
+description: Objetivo amplio de producto que agrupa varias funcionalidades
+title: "[EPIC] "
+body:
+  - type: textarea
+    attributes:
+      label: Resultado esperado
+      description: Describe el resultado de negocio o producto, no la implementación.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Alcance
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Medidas de éxito
+  - type: textarea
+    attributes:
+      label: Riesgos y dependencias

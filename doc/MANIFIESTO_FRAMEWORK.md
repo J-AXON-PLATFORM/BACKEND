@@ -1,0 +1,267 @@
+# Manifiesto del framework
+
+> **Versión:** 1.0.0  
+> **Nombre:** `doc`  
+> **Naturaleza:** framework documental dinámico y reutilizable.
+
+## Cobertura
+
+Esta versión está preparada para combinar, según necesidad:
+
+- backend y APIs;
+- frontend web;
+- móvil, escritorio y CLI;
+- batch/workers;
+- monolito y monolito modular;
+- microservicios y sistemas distribuidos;
+- arquitecturas orientadas a eventos;
+- serverless;
+- bases de datos, ETL/ELT y gobierno de datos;
+- DevOps, CI/CD e infraestructura como código;
+- on-premise, cloud, híbrido y multicloud;
+- seguridad y cadena de suministro;
+- testing funcional y no funcional;
+- observabilidad, incidentes, DR y prácticas SRE;
+- desarrollo asistido por IA con trazabilidad y control de decisiones.
+
+## Modelo dinámico
+
+El framework usa:
+
+1. perfil documental;
+2. perfiles técnicos;
+3. matriz de activación;
+4. marco de decisiones;
+5. validación documental automática.
+
+La existencia de una plantilla no obliga a usar la tecnología o patrón asociado.
+
+## Instancia de proyecto J-AXON
+
+Se conserva el framework 1.0.0. CKP-JAXON-005 consolida decisiones de la instancia hasta el Lote 54 y deja el proyecto `DESIGN_READY`, sin cambiar la versión genérica ni autorizar implementación. Para evitar confundir la plantilla con artefactos conversacionales, `CHECKPOINT_JAXON.md`, `CONTROL_CAMBIOS_CHECKPOINT.md` e `INVENTARIO_ARCHIVOS_CHECKPOINT.json` ya no se incluyen dentro de `doc/`; el checkpoint se distribuye externamente. `docs/16-contexto/` sí se conserva porque es parte del mecanismo reutilizable de contexto dinámico del framework.
+
+## Inventario
+
+Total de archivos: **221**
+
+- `.github/ISSUE_TEMPLATE/bug.yml`
+- `.github/ISSUE_TEMPLATE/config.yml`
+- `.github/ISSUE_TEMPLATE/epic.yml`
+- `.github/ISSUE_TEMPLATE/feature.yml`
+- `.github/ISSUE_TEMPLATE/spike.yml`
+- `.github/ISSUE_TEMPLATE/task.yml`
+- `.github/ISSUE_TEMPLATE/technical_debt.yml`
+- `.github/ISSUE_TEMPLATE/user_story.yml`
+- `.github/PULL_REQUEST_TEMPLATE.md`
+- `.ia/adaptadores/PLANTILLA_ADAPTADOR.md`
+- `.ia/adaptadores/README.md`
+- `HISTORIAL_CAMBIOS.md`
+- `LISTA_INICIALIZACION.md`
+- `MANIFIESTO_FRAMEWORK.md`
+- `MAPA_DOCUMENTACION.md`
+- `PROYECTO_MAESTRO.md`
+- `README.md`
+- `VERSION`
+- `docs/00-gobierno/CONSTITUCION_IA.md`
+- `docs/00-gobierno/CRITERIOS_CALIDAD.md`
+- `docs/00-gobierno/DEFINICION_PREPARADO.md`
+- `docs/00-gobierno/DEFINICION_TERMINADO.md`
+- `docs/00-gobierno/FLUJO_TRABAJO_IA.md`
+- `docs/00-gobierno/MARCO_TOMA_DECISIONES.md`
+- `docs/00-gobierno/MATRIZ_ACTIVACION.md`
+- `docs/00-gobierno/MODELO_ESTADOS_PROYECTO.md`
+- `docs/00-gobierno/POLITICA_DECISIONES.md`
+- `docs/00-gobierno/POLITICA_DOCUMENTACION.md`
+- `docs/00-gobierno/POLITICA_TRAZABILIDAD.md`
+- `docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md`
+- `docs/00-gobierno/VALIDACION_DOCUMENTAL.md`
+- `docs/01-producto/ALCANCE.md`
+- `docs/01-producto/CONTEXTO_NEGOCIO.md`
+- `docs/01-producto/GLOSARIO.md`
+- `docs/01-producto/INTERESADOS.md`
+- `docs/01-producto/PERSONAS.md`
+- `docs/01-producto/SUPUESTOS_RESTRICCIONES_RIESGOS.md`
+- `docs/01-producto/VISION_PRODUCTO.md`
+- `docs/02-requisitos/CASOS_USO.md`
+- `docs/02-requisitos/CRITERIOS_ACEPTACION.md`
+- `docs/02-requisitos/MATRIZ_TRAZABILIDAD_REQUISITOS.md`
+- `docs/02-requisitos/REQUISITOS_FUNCIONALES.md`
+- `docs/02-requisitos/REQUISITOS_NO_FUNCIONALES.md`
+- `docs/02-requisitos/SRS.md`
+- `docs/03-flujos/CONVENCIONES_FLUJOS.md`
+- `docs/03-flujos/PLANTILLA_FLUJO_APLICACION.md`
+- `docs/03-flujos/PLANTILLA_FLUJO_ASINCRONO_EVENTOS.md`
+- `docs/03-flujos/PLANTILLA_FLUJO_DATOS.md`
+- `docs/03-flujos/PLANTILLA_FLUJO_E2E.md`
+- `docs/03-flujos/PLANTILLA_FLUJO_ENTRE_MODULOS.md`
+- `docs/03-flujos/PLANTILLA_FLUJO_ESTADOS.md`
+- `docs/03-flujos/PLANTILLA_FLUJO_NEGOCIO.md`
+- `docs/03-flujos/PLANTILLA_FLUJO_TECNICO.md`
+- `docs/03-flujos/RESUMEN_FLUJOS.md`
+- `docs/04-arquitectura/ARQUITECTURA_CLOUD.md`
+- `docs/04-arquitectura/ARQUITECTURA_DESPLIEGUE.md`
+- `docs/04-arquitectura/ARQUITECTURA_DISTRIBUIDA.md`
+- `docs/04-arquitectura/ARQUITECTURA_INTEGRACIONES.md`
+- `docs/04-arquitectura/CONTRATOS_SISTEMA.md`
+- `docs/04-arquitectura/GUIA_C4.md`
+- `docs/04-arquitectura/GUIA_SELECCION_ARQUITECTURA.md`
+- `docs/04-arquitectura/HLD.md`
+- `docs/04-arquitectura/PERFILES_TECNICOS.md`
+- `docs/04-arquitectura/RENDIMIENTO_CAPACIDAD.md`
+- `docs/04-arquitectura/RESILIENCIA.md`
+- `docs/04-arquitectura/RESUMEN_ARQUITECTURA.md`
+- `docs/04-arquitectura/SDD.md`
+- `docs/04-arquitectura/adr/PLANTILLA_ADR.md`
+- `docs/04-arquitectura/lld/README.md`
+- `docs/04-arquitectura/rfc/PLANTILLA_RFC.md`
+- `docs/05-datos/ARQUITECTURA_DATOS.md`
+- `docs/05-datos/CALIDAD_LINAJE_DATOS.md`
+- `docs/05-datos/CLASIFICACION_DATOS.md`
+- `docs/05-datos/COPIAS_SEGURIDAD_RECUPERACION.md`
+- `docs/05-datos/DICCIONARIO_DATOS.md`
+- `docs/05-datos/ERD.md`
+- `docs/05-datos/ESCALABILIDAD_DATOS.md`
+- `docs/05-datos/ESTRATEGIA_BASE_DATOS.md`
+- `docs/05-datos/ESTRATEGIA_DATOS_INICIALES.md`
+- `docs/05-datos/ESTRATEGIA_MIGRACIONES.md`
+- `docs/05-datos/GOBIERNO_DATOS.md`
+- `docs/05-datos/RETENCION_DATOS.md`
+- `docs/06-backend/ARQUITECTURA_BACKEND.md`
+- `docs/06-backend/CONTRATOS_API.md`
+- `docs/06-backend/ESTANDARES_CODIGO.md`
+- `docs/06-backend/GUIAS_API.md`
+- `docs/06-backend/GUIAS_BACKEND.md`
+- `docs/06-backend/MANEJO_ERRORES.md`
+- `docs/06-backend/REGISTRO_EVENTOS.md`
+- `docs/06-backend/SEGURIDAD.md`
+- `docs/06-backend/VALIDACION.md`
+- `docs/07-frontend/ACCESIBILIDAD.md`
+- `docs/07-frontend/ARQUITECTURA_FRONTEND.md`
+- `docs/07-frontend/DISENO_ADAPTABLE.md`
+- `docs/07-frontend/ENRUTAMIENTO.md`
+- `docs/07-frontend/ESTANDARES_CODIGO.md`
+- `docs/07-frontend/GESTION_ESTADO.md`
+- `docs/07-frontend/GUIAS_COMPONENTES.md`
+- `docs/07-frontend/GUIAS_FRONTEND.md`
+- `docs/07-frontend/INTERNACIONALIZACION.md`
+- `docs/07-frontend/MANEJO_ERRORES.md`
+- `docs/07-frontend/OBSERVABILIDAD_FRONTEND.md`
+- `docs/07-frontend/RENDERIZADO_ENTREGA.md`
+- `docs/07-frontend/RENDIMIENTO_FRONTEND.md`
+- `docs/07-frontend/SISTEMA_DISENO.md`
+- `docs/08-seguridad/AUTENTICACION.md`
+- `docs/08-seguridad/AUTORIZACION.md`
+- `docs/08-seguridad/CADENA_SUMINISTRO_SOFTWARE.md`
+- `docs/08-seguridad/CRIPTOGRAFIA.md`
+- `docs/08-seguridad/GESTION_SECRETOS.md`
+- `docs/08-seguridad/LISTA_SEGURIDAD.md`
+- `docs/08-seguridad/MODELO_AMENAZAS.md`
+- `docs/08-seguridad/PRUEBAS_SEGURIDAD.md`
+- `docs/08-seguridad/REQUISITOS_SEGURIDAD.md`
+- `docs/08-seguridad/SEGURIDAD_DEPENDENCIAS.md`
+- `docs/09-pruebas/DATOS_PRUEBA.md`
+- `docs/09-pruebas/ENTORNOS_PRUEBA.md`
+- `docs/09-pruebas/ESTRATEGIA_AUTOMATIZACION_PRUEBAS.md`
+- `docs/09-pruebas/ESTRATEGIA_PRUEBAS.md`
+- `docs/09-pruebas/POLITICA_EJECUCION_PRUEBAS.md`
+- `docs/09-pruebas/POLITICA_TDD.md`
+- `docs/09-pruebas/PRUEBAS_ACCESIBILIDAD.md`
+- `docs/09-pruebas/PRUEBAS_COMPONENTE.md`
+- `docs/09-pruebas/PRUEBAS_CONTRATO.md`
+- `docs/09-pruebas/PRUEBAS_E2E.md`
+- `docs/09-pruebas/PRUEBAS_INTEGRACION.md`
+- `docs/09-pruebas/PRUEBAS_MIGRACIONES.md`
+- `docs/09-pruebas/PRUEBAS_REGRESION.md`
+- `docs/09-pruebas/PRUEBAS_RENDIMIENTO.md`
+- `docs/09-pruebas/PRUEBAS_RESILIENCIA.md`
+- `docs/09-pruebas/PRUEBAS_SEGURIDAD.md`
+- `docs/09-pruebas/PRUEBAS_SISTEMA.md`
+- `docs/09-pruebas/PRUEBAS_UNITARIAS.md`
+- `docs/09-pruebas/VALIDACION_SISTEMA_COMPLETO.md`
+- `docs/09-pruebas/agents/PLANTILLA_INTEGRACION_AGENTE.md`
+- `docs/09-pruebas/agents/POLITICA_AGENTES_QA.md`
+- `docs/10-devops/CONTENEDORES.md`
+- `docs/10-devops/CRITERIOS_CALIDAD.md`
+- `docs/10-devops/ENTORNOS.md`
+- `docs/10-devops/ESTRATEGIAS_DESPLIEGUE.md`
+- `docs/10-devops/ESTRATEGIA_CD.md`
+- `docs/10-devops/ESTRATEGIA_CI.md`
+- `docs/10-devops/ESTRATEGIA_DEVOPS.md`
+- `docs/10-devops/ESTRATEGIA_RAMAS.md`
+- `docs/10-devops/ESTRATEGIA_RELEASES.md`
+- `docs/10-devops/INFRAESTRUCTURA.md`
+- `docs/10-devops/INFRAESTRUCTURA_COMO_CODIGO.md`
+- `docs/10-devops/VERSIONADO.md`
+- `docs/10-devops/providers/README.md`
+- `docs/11-observabilidad/ALERTAS.md`
+- `docs/11-observabilidad/CHEQUEOS_SALUD.md`
+- `docs/11-observabilidad/ESTRATEGIA_OBSERVABILIDAD.md`
+- `docs/11-observabilidad/METRICAS.md`
+- `docs/11-observabilidad/REGISTRO_EVENTOS.md`
+- `docs/11-observabilidad/SLO_SLA_SLI.md`
+- `docs/11-observabilidad/TRAZAS.md`
+- `docs/12-agil/AUTOMATIZACION_GITHUB.md`
+- `docs/12-agil/FLUJO_KANBAN.md`
+- `docs/12-agil/GESTION_BACKLOG.md`
+- `docs/12-agil/GUIAS_DEUDA_TECNICA.md`
+- `docs/12-agil/GUIAS_EPICAS.md`
+- `docs/12-agil/GUIAS_ERRORES.md`
+- `docs/12-agil/GUIAS_FUNCIONALIDADES.md`
+- `docs/12-agil/GUIAS_HISTORIAS_USUARIO.md`
+- `docs/12-agil/GUIAS_SPIKES.md`
+- `docs/12-agil/GUIAS_TAREAS.md`
+- `docs/12-agil/GUIA_ESTIMACION.md`
+- `docs/12-agil/PROCESO_SCRUM.md`
+- `docs/12-agil/PROCESO_SPRINT.md`
+- `docs/13-trazabilidad/GESTION_CAMBIOS.md`
+- `docs/13-trazabilidad/MODELO_TRAZABILIDAD.md`
+- `docs/13-trazabilidad/PLANTILLA_NOTAS_VERSION.md`
+- `docs/14-operaciones/GESTION_INCIDENTES.md`
+- `docs/14-operaciones/GUIA_OPERATIVA.md`
+- `docs/14-operaciones/GUIA_OPERATIVA_DESPLIEGUE.md`
+- `docs/14-operaciones/POSTMORTEM.md`
+- `docs/14-operaciones/PRACTICAS_SRE.md`
+- `docs/14-operaciones/RECUPERACION_DESASTRES.md`
+- `docs/14-operaciones/REVERSION.md`
+- `docs/15-ia/REGLAS_ANALISIS_IA.md`
+- `docs/15-ia/REGLAS_ARQUITECTURA_IA.md`
+- `docs/15-ia/REGLAS_BACKEND_IA.md`
+- `docs/15-ia/REGLAS_BASE_DATOS_IA.md`
+- `docs/15-ia/REGLAS_DATOS_IA.md`
+- `docs/15-ia/REGLAS_DESARROLLO_IA.md`
+- `docs/15-ia/REGLAS_DEVOPS_IA.md`
+- `docs/15-ia/REGLAS_DOCUMENTACION_IA.md`
+- `docs/15-ia/REGLAS_FRONTEND_IA.md`
+- `docs/15-ia/REGLAS_OPERACIONES_IA.md`
+- `docs/15-ia/REGLAS_PLANIFICACION_IA.md`
+- `docs/15-ia/REGLAS_PRUEBAS_IA.md`
+- `docs/15-ia/REGLAS_REVISION_CODIGO_IA.md`
+- `docs/15-ia/REGLAS_SEGURIDAD_IA.md`
+- `docs/16-contexto/ENRUTADOR_DOCUMENTACION.md`
+- `docs/16-contexto/EVIDENCIA_LEGADO_SNAPSHOTS.md`
+- `docs/16-contexto/INICIO_NUEVO_CHAT.md`
+- `docs/16-contexto/PENDIENTES_JAXON.md`
+- `docs/16-contexto/PLANTILLA_CONTEXTO_MODULO.md`
+- `docs/16-contexto/POLITICA_CONTEXTO_IA.md`
+- `docs/16-contexto/TRABAJO_ACTUAL.md`
+- `docs/17-plantillas/PLANTILLA_CONTRATO.md`
+- `docs/17-plantillas/PLANTILLA_DECISION.md`
+- `docs/17-plantillas/PLANTILLA_EPICA.md`
+- `docs/17-plantillas/PLANTILLA_ERROR.md`
+- `docs/17-plantillas/PLANTILLA_FUNCIONALIDAD.md`
+- `docs/17-plantillas/PLANTILLA_HISTORIA_USUARIO.md`
+- `docs/17-plantillas/PLANTILLA_INCIDENTE.md`
+- `docs/17-plantillas/PLANTILLA_MANIFIESTO_SISTEMA.md`
+- `docs/17-plantillas/PLANTILLA_PLAN_PRUEBAS.md`
+- `docs/17-plantillas/PLANTILLA_PULL_REQUEST.md`
+- `docs/17-plantillas/PLANTILLA_SPIKE.md`
+- `docs/17-plantillas/PLANTILLA_TAREA.md`
+- `docs/18-plataformas/BATCH_WORKERS.md`
+- `docs/18-plataformas/CLI.md`
+- `docs/18-plataformas/ESCRITORIO.md`
+- `docs/18-plataformas/MOVIL.md`
+- `docs/18-plataformas/SERVERLESS.md`
+- `ejemplos/modulo-ejemplo/CONTEXTO_MODULO.md`
+- `ejemplos/modulo-ejemplo/FLOW-ORD-001-CREAR_PEDIDO.md`
+- `tools/README.md`
+- `tools/validate_docs.py`
