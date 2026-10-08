@@ -46,13 +46,15 @@ Si la respuesta es no, no cargarlo.
 
 ## Instancia J-AXON -- ruta inmediata CKP-JAXON-005
 
-Estado: baseline `DESIGN_READY`; Lotes 30--54 aprobados; implementación incremental iniciada de forma acotada; `PRODUCTION_READY = NO`. `TEC-PLT-001a` y `TEC-PLT-002a` fueron completadas y verificadas el 2026-10-06, y `TEC-PLT-003a` el 2026-10-08: existen el bootstrap estructural, la integración PostgreSQL 18.6/pgvector 0.8.6/Flyway con los ocho schemas aprobados y la CI base del backend, todavía sin tablas de negocio ni lógica funcional.
+Estado: baseline `DESIGN_READY`; Lotes 30--54 aprobados; implementación incremental iniciada de forma acotada; `PRODUCTION_READY = NO`. Las fundaciones backend/frontend, la persistencia PostgreSQL 18.6/pgvector 0.8.6/Flyway con ocho schemas y las CI base independientes están verificadas, todavía sin tablas ni funcionalidad de negocio.
 
 Estado remoto histórico verificado el 2026-10-07: la organización oficial nueva `J-AXON-PLATFORM` contiene los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos canónicos `backend`, `frontend` y `automation-collector`; `backend` fue inicializado y publicado mediante `TEC-GIT-001C`.
 
-Estado remoto con el cierre de `TEC-PLT-003a` verificado el 2026-10-08: `Backend CI` fue integrado en `develop` mediante el Pull Request `#1`, fusionado con `Squash and merge` tras checks verdes de la última revisión. `main` no fue modificado y puede diferir temporalmente de `develop`. `frontend` y `automation-collector` permanecen vacíos y sin Git local. No se crearon backlog remoto, Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues. La organización histórica distinta `j-axon` no fue modificada.
+Estado remoto histórico al cierre de `TEC-PLT-003a`, verificado el 2026-10-08: `Backend CI` fue integrado en `develop` mediante el Pull Request `#1`, fusionado con `Squash and merge` tras checks verdes de la última revisión. `main` no fue modificado y podía diferir temporalmente de `develop`. En ese corte, `frontend` y `automation-collector` permanecían vacíos y sin Git local. No se crearon backlog remoto, Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues. La organización histórica distinta `j-axon` no fue modificada.
 
-La siguiente tarea técnica no ha sido iniciada. La ruta inmediata es analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0. Para ese análisis, cargar obligatoriamente las cinco fuentes de continuidad y luego:
+Estado frontend verificado el 2026-10-08: `FRONTEND` fue publicado con `main` y `develop`; `Frontend CI` fue integrado en `develop` mediante el Pull Request `#1` y squash `0a34d6dadacc95351544996235faf6bcb0b21b65`; los runs de PR `37849248403` y post-merge `37849379045` quedaron verdes. La producción npm está limpia y la auditoría completa controla una excepción temporal única para `GHSA-vfj7-8cjw-p6xm` en `braces@3.0.3` de desarrollo. ESLint 9.39.5 permanece como riesgo EOL. `automation-collector` sigue vacío. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues.
+
+El bloque de fundación frontend fue completado. La ruta inmediata vuelve a ser analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0. Para ese análisis, cargar obligatoriamente las cinco fuentes de continuidad y luego:
 
 - `docs/12-agil/GESTION_BACKLOG.md`, `DEFINICION_PREPARADO.md` y `DEFINICION_TERMINADO.md`;
 - los documentos específicos de plataforma, arquitectura, contratos, datos, seguridad y pruebas capaces de delimitar el incremento;
@@ -62,4 +64,4 @@ LUIS autorizó un flujo de continuación incremental: después de verificar cada
 
 Para cambios backend, `Backend CI` verifica mediante `clean verify` los checks actualmente ejecutables en PR hacia `develop/main` y push a `develop`. Contratos y SFTP se incorporarán cuando sean aplicables. Los rulesets permanecen pendientes por la limitación del plan para repositorios privados; PR y checks verdes se aplican como disciplina operativa, no como bloqueo técnico de GitHub.
 
-Para trabajo remoto, cualquier inicialización y publicación de `frontend` o `automation-collector` debe analizarse y delimitarse en una tarea independiente, solicitando antes autorización expresa de LUIS. La autorización consumida por `TEC-GIT-001C` se limitó a `backend` y no cubre CI/CD, backlog, reglas de protección, releases ni despliegue.
+Para trabajo remoto, cualquier inicialización/publicación de `automation-collector` o cambio adicional en `frontend`/`backend` debe analizarse y delimitarse en una tarea independiente, solicitando antes autorización expresa de LUIS. Las autorizaciones consumidas no cubren backlog, nuevas CI, reglas de protección, releases ni despliegue.

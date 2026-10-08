@@ -3,6 +3,18 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Fundación, publicación y CI base del frontend -- TEC-PLT-004a, TEC-GIT-002, TEC-QLT-001a y TEC-DOC-005, 2026-10-08
+
+Se crea y verifica la fundación técnica de `frontend` con Node.js 24.21.0, npm 11.19.0, Next.js 16.3.8, React 19.3.0, TypeScript 5.9.3, App Router, Server Components por defecto, Vitest y React Testing Library. La página mínima identifica J-AXON sin simular funcionalidad de negocio y queda no-indexable mediante metadata y `robots.txt`. La validación local confirma `npm ci`, lint, typecheck, una prueba, build, `verify` y smoke tests de `/` y `/robots.txt`.
+
+ESLint 10.12.0 se intentó según la decisión condicionada, pero `eslint-plugin-react@7.37.5` falló de forma ejecutable. Con autorización expresa de LUIS se fijó temporalmente ESLint 9.39.5, compatible pero EOL. La auditoría de producción queda limpia. La auditoría completa conserva una excepción aprobada el 2026-10-08 exclusivamente para `GHSA-vfj7-8cjw-p6xm` / `CVE-2026-93687` en `braces@3.0.3`, transitiva de herramientas de desarrollo y sin versión corregida disponible; un verificador cerrado falla ante cualquier advisory, paquete, versión, alcance o error diferente.
+
+`FRONTEND` se publica como repositorio privado con commit inicial `ffec9bdd39d5168ed5f7d3bbaa68d5d4bc5860ab` y ramas permanentes `main` y `develop`. `Frontend CI` se integra en `develop` mediante el Pull Request `#1` y squash `0a34d6dadacc95351544996235faf6bcb0b21b65`. El run de PR `37849248403` y el run post-merge `37849379045` terminan verdes con `npm ci`, lint, typecheck, Vitest/RTL, build y las auditorías de producción/completa. Las actions externas quedan fijadas por SHA completo, los permisos se limitan a `contents: read` y no se usan secretos, artefactos ni despliegues.
+
+La documentación canónica continúa en `backend/doc`. No se crean lógica de negocio, APIs, contratos, migraciones, Dockerfile, Compose, Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados ni despliegues. `automation-collector` permanece vacío, J-AXON conserva `DESIGN_READY` y `PRODUCTION_READY = NO`.
+
+---
+
 ## CI base del backend -- TEC-PLT-003a, 2026-10-08
 
 Se implementa y verifica `Backend CI` en `.github/workflows/backend-ci.yml`. El workflow ejecuta `./mvnw --batch-mode --no-transfer-progress clean verify` con Java 25 Temurin sobre `ubuntu-24.04` en Pull Requests hacia `develop` o `main`, pushes a `develop` y ejecuciones manuales. La evidencia local y GitHub Actions confirma compilación, tres pruebas sin fallos, verificación Spring Modulith y la integración Testcontainers con PostgreSQL 18.6, pgvector 0.8.6, Flyway y los ocho schemas aprobados.

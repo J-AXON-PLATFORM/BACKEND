@@ -2,13 +2,13 @@
 
 > **Clasificación:** CONDICIONAL, activa para continuidad.  
 > **Checkpoint externo:** CKP-JAXON-005 | 2026-09-29.  
-> **Estado:** descubrimiento y refinamiento/diseño v1 cerrados hasta Lote 54; baseline `DESIGN_READY`; implementación iniciada de forma acotada con `TEC-PLT-001a`, `TEC-PLT-002a` y `TEC-PLT-003a`; `PRODUCTION_READY = NO`.
+> **Estado:** descubrimiento y refinamiento/diseño v1 cerrados hasta Lote 54; baseline `DESIGN_READY`; implementación iniciada de forma acotada con fundaciones backend/frontend y sus CI base verificadas; `PRODUCTION_READY = NO`.
 
 ## Punto de reanudación
 
 No reabrir AC-JAXON-001..058 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
 
-`TEC-PLT-001a` y `TEC-PLT-002a` fueron completadas y verificadas el 2026-10-06; `TEC-PLT-003a` fue completada y verificada el 2026-10-08. Existen el bootstrap estructural del backend, la integración JDBC/Flyway probada contra PostgreSQL 18.6 con pgvector 0.8.6 y la CI base que ejecuta `clean verify` en GitHub Actions. La migración inicial habilita `vector` y crea exactamente los ocho schemas aprobados, sin tablas de negocio ni lógica funcional.
+`TEC-PLT-001a` y `TEC-PLT-002a` fueron completadas y verificadas el 2026-10-06; `TEC-PLT-003a`, `TEC-PLT-004a`, `TEC-GIT-002` y `TEC-QLT-001a` fueron completadas y verificadas el 2026-10-08. Existen las fundaciones backend/frontend, la persistencia PostgreSQL/pgvector/Flyway con ocho schemas y las CI base independientes. No existen tablas ni funcionalidad de negocio.
 
 El resto de OLA 0 y la primera vertical E2E continúan pendientes. La siguiente tarea técnica no ha sido iniciada y debe analizarse y delimitarse como incremento pequeño antes de ejecutarse. LUIS autorizó la continuidad incremental para que, después de verificar cada tarea, el coordinador determine el siguiente incremento y prepare un alcance concreto; esto no equivale a autorización general para implementar toda OLA 0.
 
@@ -56,12 +56,14 @@ El resto de OLA 0 y la primera vertical E2E continúan pendientes. La siguiente 
 
 - Estado remoto verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada y repositorios privados `BACKEND` (`https://github.com/J-AXON-PLATFORM/BACKEND`), `FRONTEND` (`https://github.com/J-AXON-PLATFORM/FRONTEND`) y `AUTOMATION-COLLECTOR` (`https://github.com/J-AXON-PLATFORM/AUTOMATION-COLLECTOR`) creados. Los nombres lógicos canónicos siguen siendo `backend`, `frontend` y `automation-collector`.
 - GitHub trata estos identificadores sin distinción efectiva entre mayúsculas y minúsculas. La organización histórica distinta `j-axon` y sus repositorios preexistentes no fueron modificados y no forman parte del nuevo inicio oficial.
-- `backend` fue inicializado y publicado mediante `TEC-GIT-001C`, con dos commits y ramas permanentes `main`/`develop` sincronizadas. `frontend` y `automation-collector` continúan vacíos y sin Git local. No existen Issues, Projects, Pull Requests, workflows, rulesets, tags, releases, artefactos o despliegues creados por esta publicación.
+- `backend` fue inicializado y publicado mediante `TEC-GIT-001C`. `frontend` fue inicializado y publicado mediante `TEC-GIT-002`: `main` apunta a `ffec9bdd39d5168ed5f7d3bbaa68d5d4bc5860ab` y `develop` a `0a34d6dadacc95351544996235faf6bcb0b21b65`. `automation-collector` continúa vacío y sin Git local.
 - Estado remoto con el cierre de `TEC-PLT-003a` verificado el 2026-10-08: `Backend CI` fue integrado en `develop` mediante el Pull Request `#1`, fusionado con `Squash and merge` tras verificar en verde la última revisión. El workflow corre en PR hacia `develop/main`, push a `develop` y manualmente; usa Java 25, Maven Wrapper, acciones fijadas por SHA completo y permisos `contents: read`, sin secretos ni despliegues. `main` no fue modificado y puede quedar temporalmente detrás de `develop`.
+- Estado remoto frontend verificado el 2026-10-08: `Frontend CI` fue integrado en `develop` mediante el Pull Request `#1`, squash `0a34d6dadacc95351544996235faf6bcb0b21b65`; el run de PR `37849248403` y el post-merge `37849379045` quedaron verdes. Ejecuta `npm ci`, lint, typecheck, Vitest/RTL, build y auditorías bloqueantes, con acciones fijadas por SHA, permisos `contents: read`, sin secretos ni despliegues.
+- Riesgo temporal frontend: la producción npm está limpia, pero la auditoría completa acepta solo `GHSA-vfj7-8cjw-p6xm` / `CVE-2026-93687` en `braces@3.0.3`, transitiva de desarrollo sin parche oficial al 2026-10-08. Cerrar al publicar corrección oficial, desaparecer la cadena o sustituir la herramienta mediante decisión aprobada. ESLint 9.39.5 está EOL y debe migrarse cuando la cadena oficial sea compatible con ESLint 10.
 - Contratos y SFTP siguen pendientes en CI hasta que existan artefactos ejecutables aplicables. Rulesets y protecciones automáticas continúan pendientes por la limitación del plan actual para repositorios privados; la disciplina de PR y checks verdes es operativa, no forzada técnicamente por GitHub.
-- La autorización específica de `TEC-GIT-001C` fue consumida y se limitó a `backend`. No publicar los otros repositorios, operar Issues/Projects/PRs, crear workflows o rulesets, tags, releases o artefactos, ni desplegar sin autorización expresa de LUIS.
-- No asumir autorización general para nuevas tareas de implementación a partir de `TEC-PLT-001a`, `TEC-PLT-002a` o `TEC-PLT-003a`; cada incremento requiere alcance concreto.
-- Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier inicialización y publicación de `frontend` o `automation-collector`, solicitando antes autorización expresa de LUIS para ese alcance.
+- Las autorizaciones de `TEC-GIT-001C`, `TEC-PLT-003a` y del bloque frontend fueron consumidas y se limitaron a sus repositorios, ramas, Pull Requests, workflows y sincronizaciones documentales expresamente indicados. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases o artefactos, ni desplegar sin autorización expresa de LUIS.
+- No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
+- Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier inicialización/publicación de `automation-collector` o cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
 - Próxima acción técnica: analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0, sin iniciar todavía su ejecución.
 - El objetivo sigue siendo avanzar por OLA 0 y alcanzar temprano la primera vertical E2E, no implementar “todo J-AXON de una vez”.
 
