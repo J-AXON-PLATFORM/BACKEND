@@ -3,7 +3,7 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
-## CI base del backend -- TEC-PLT-003a, 2026-10-07
+## CI base del backend -- TEC-PLT-003a, 2026-10-08
 
 Se implementa y verifica `Backend CI` en `.github/workflows/backend-ci.yml`. El workflow ejecuta `./mvnw --batch-mode --no-transfer-progress clean verify` con Java 25 Temurin sobre `ubuntu-24.04` en Pull Requests hacia `develop` o `main`, pushes a `develop` y ejecuciones manuales. La evidencia local y GitHub Actions confirma compilación, tres pruebas sin fallos, verificación Spring Modulith y la integración Testcontainers con PostgreSQL 18.6, pgvector 0.8.6, Flyway y los ocho schemas aprobados.
 
