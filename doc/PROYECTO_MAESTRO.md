@@ -3,7 +3,7 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | sincronización TEC-DOC-002 del estado remoto, 2026-10-07  
+> **Revisión de continuidad:** CKP-JAXON-005 | publicación controlada TEC-GIT-001C de `backend`, 2026-10-07  
 > **Estado documental:** baseline v1 `DESIGN_READY`; implementación nueva iniciada de forma acotada con bootstrap estructural y de persistencia backend verificados; `PRODUCTION_READY = NO`.  
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
@@ -15,7 +15,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Implementación verificada: bootstrap estructural del backend con Java 25, Spring Boot 4.1.1, Spring Modulith 2.1.1, Maven Wrapper con Maven 3.9.16 y los ocho módulos; integración de PostgreSQL 18.6 y pgvector 0.8.6 mediante Testcontainers; Flyway 12.4.0; y migración bootstrap que habilita `vector` y crea los ocho schemas aprobados. No contiene tablas de negocio ni lógica funcional.
 - Madurez: baseline documental `DESIGN_READY` e implementación incremental iniciada; `PRE_IMPLEMENTACION` fue el estado anterior al inicio de `TEC-PLT-001a`.
 - Modelo de repositorios: `MULTIREPO`: `frontend`, `backend`, `automation-collector`.
-- Estado remoto verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada con tres repositorios privados vacíos: `https://github.com/J-AXON-PLATFORM/BACKEND`, `https://github.com/J-AXON-PLATFORM/FRONTEND` y `https://github.com/J-AXON-PLATFORM/AUTOMATION-COLLECTOR`. No se publicaron archivos ni código y no existen todavía historial de commits, ramas remotas, remotos locales, Issues, Projects, Pull Requests, workflows, rulesets, releases, artefactos ni despliegues como parte de esta preparación.
+- Estado remoto verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada con tres repositorios privados. `backend` fue inicializado y publicado de forma controlada en `https://github.com/J-AXON-PLATFORM/BACKEND`, con ramas permanentes `main` y `develop`; `https://github.com/J-AXON-PLATFORM/FRONTEND` y `https://github.com/J-AXON-PLATFORM/AUTOMATION-COLLECTOR` permanecen vacíos y sin Git local. No se crearon Issues, Projects, Pull Requests, workflows, rulesets, tags, releases, artefactos ni despliegues.
 - Los nombres lógicos canónicos continúan siendo `backend`, `frontend` y `automation-collector`; las mayúsculas visibles en GitHub no cambian la arquitectura MULTIREPO. GitHub trata estos identificadores sin distinción efectiva entre mayúsculas y minúsculas. La organización histórica distinta `j-axon` y sus repositorios preexistentes son ajenos al nuevo inicio controlado y no fueron modificados.
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
@@ -479,10 +479,10 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 
 ## 19. Git y colaboración
 
-- Organización oficial nueva verificada: `J-AXON-PLATFORM`. Repositorios privados vacíos verificados: `BACKEND` (`https://github.com/J-AXON-PLATFORM/BACKEND`), `FRONTEND` (`https://github.com/J-AXON-PLATFORM/FRONTEND`) y `AUTOMATION-COLLECTOR` (`https://github.com/J-AXON-PLATFORM/AUTOMATION-COLLECTOR`).
+- Organización oficial nueva verificada: `J-AXON-PLATFORM`. Repositorios privados verificados: `BACKEND` (`https://github.com/J-AXON-PLATFORM/BACKEND`), `FRONTEND` (`https://github.com/J-AXON-PLATFORM/FRONTEND`) y `AUTOMATION-COLLECTOR` (`https://github.com/J-AXON-PLATFORM/AUTOMATION-COLLECTOR`).
 - Los nombres lógicos canónicos permanecen `backend`, `frontend` y `automation-collector`; GitHub no distingue efectivamente mayúsculas y minúsculas en estos identificadores. La separación respecto de la organización histórica `j-axon` se debe al identificador distinto `J-AXON-PLATFORM`; `j-axon` y sus repositorios preexistentes no fueron modificados y no son los repositorios oficiales de este nuevo inicio.
-- Los tres repositorios oficiales están vacíos: no tienen archivos o código publicados, historial de commits, ramas remotas, Issues, Projects, Pull Requests, workflows, rulesets, releases, artefactos ni despliegues. Git no está inicializado en los repositorios locales y no existen remotos locales configurados.
-- La autorización para crear la organización y los tres repositorios privados vacíos fue consumida. No autoriza inicializar Git local, publicar contenido, crear commits o ramas, configurar remotos, operar backlog remoto, configurar CI/CD o rulesets ni desplegar.
+- `backend` tiene Git local, remoto SSH `origin` y contenido publicado mediante dos commits trazables: bootstrap del repositorio y sincronización documental de la publicación. `main` y `develop` apuntan al mismo commit final y siguen sus ramas remotas. `frontend` y `automation-collector` continúan vacíos y sin Git local.
+- La autorización específica de `TEC-GIT-001C` fue consumida y se limitó a `backend`. No autoriza publicar los otros repositorios, operar backlog remoto, crear Pull Requests, configurar CI/CD o rulesets, crear tags/releases/artefactos ni desplegar.
 - Ramas permanentes: `main` (producción) y `develop` (integración/candidato a producción, no entorno físico).
 - Ramas cortas desde `develop`: `feature/*`, `fix/*`, `refactor/*`, `test/*`, `docs/*`, `chore/*`, `ci/*`.
 - Hotfix: nace de `main`, PR a `main`, luego sincronizar a `develop`.
@@ -601,4 +601,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con implementación incremental iniciada de forma acotada por `TEC-PLT-001a` y `TEC-PLT-002a`, ambas completadas y verificadas. Lotes 30--54 aprobados y consolidados. La siguiente tarea técnica no ha sido iniciada: el próximo paso es analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0. Como siguiente paso remoto pendiente, se debe analizar y delimitar una tarea independiente para inicializar Git y publicar controladamente el contenido correspondiente en los tres repositorios, solicitando antes autorización expresa de LUIS para ese alcance. Esta continuidad no constituye autorización ilimitada para implementar toda OLA 0 ni para GitHub, CI/CD, backlog o despliegues.
+Baseline `DESIGN_READY`, con implementación incremental iniciada de forma acotada por `TEC-PLT-001a` y `TEC-PLT-002a`, ambas completadas y verificadas. `TEC-GIT-001C` publicó de forma controlada únicamente `backend`; `frontend` y `automation-collector` permanecen vacíos. Lotes 30--54 aprobados y consolidados. La siguiente tarea técnica no ha sido iniciada: el próximo paso es analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0. Cualquier publicación posterior de los otros repositorios requiere una tarea y autorización independientes. Esta continuidad no constituye autorización ilimitada para implementar toda OLA 0 ni para GitHub, CI/CD, backlog o despliegues.

@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Publicación controlada del repositorio backend -- TEC-GIT-001C, 2026-10-07
+
+Se inicializa Git exclusivamente en `backend`, se configura el remoto SSH oficial `git@github.com:J-AXON-PLATFORM/BACKEND.git` y se publica la baseline verificada. El historial queda formado por los commits `chore: bootstrap backend repository` y `docs: record backend repository publication`; las ramas permanentes `main` y `develop` apuntan al mismo commit final y siguen sus ramas remotas.
+
+La publicación fue autenticada mediante una clave SSH Ed25519 dedicada y verificación estricta de la huella oficial de `github.com`. Antes de inicializar Git se ejecutaron satisfactoriamente las pruebas Maven con Java 25 y las validaciones documentales normal y estricta.
+
+`frontend` y `automation-collector` permanecen vacíos y sin Git local. No se crearon Issues, Projects, Pull Requests, workflows, rulesets, tags, releases, artefactos ni despliegues. No se modificaron código, pruebas, dependencias, contratos, datos, migraciones, `VERSION` ni el Registro de Acuerdos; `DESIGN_READY` y `PRODUCTION_READY = NO` se conservan.
+
+---
+
 ## Corrección del nombre documental REVERSION -- TEC-DOC-003, 2026-10-07
 
 Se corrige un nombre documental afectado por mojibake y se adopta el nombre ASCII `docs/14-operaciones/REVERSION.md`. El contenido documental no cambia y se actualiza únicamente su referencia en `MANIFIESTO_FRAMEWORK.md`.

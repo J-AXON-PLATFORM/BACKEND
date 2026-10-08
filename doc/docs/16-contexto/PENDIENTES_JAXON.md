@@ -54,12 +54,12 @@ El resto de OLA 0 y la primera vertical E2E continúan pendientes. La siguiente 
 
 ## Implementación y Git
 
-- Estado remoto verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada y repositorios privados vacíos `BACKEND` (`https://github.com/J-AXON-PLATFORM/BACKEND`), `FRONTEND` (`https://github.com/J-AXON-PLATFORM/FRONTEND`) y `AUTOMATION-COLLECTOR` (`https://github.com/J-AXON-PLATFORM/AUTOMATION-COLLECTOR`) creados. Los nombres lógicos canónicos siguen siendo `backend`, `frontend` y `automation-collector`.
+- Estado remoto verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada y repositorios privados `BACKEND` (`https://github.com/J-AXON-PLATFORM/BACKEND`), `FRONTEND` (`https://github.com/J-AXON-PLATFORM/FRONTEND`) y `AUTOMATION-COLLECTOR` (`https://github.com/J-AXON-PLATFORM/AUTOMATION-COLLECTOR`) creados. Los nombres lógicos canónicos siguen siendo `backend`, `frontend` y `automation-collector`.
 - GitHub trata estos identificadores sin distinción efectiva entre mayúsculas y minúsculas. La organización histórica distinta `j-axon` y sus repositorios preexistentes no fueron modificados y no forman parte del nuevo inicio oficial.
-- Los repositorios oficiales continúan vacíos: sin archivos, código, commits, ramas, Issues, Projects, Pull Requests, workflows, rulesets, releases, artefactos o despliegues. Git local no está inicializado y no hay remotos locales configurados.
-- La autorización para crear la organización y los tres repositorios privados vacíos fue consumida. No inicializar Git, publicar contenido, configurar remotos, crear commits o ramas, operar Issues/Projects/PRs, crear workflows o rulesets ni desplegar sin autorización expresa de LUIS.
+- `backend` fue inicializado y publicado mediante `TEC-GIT-001C`, con dos commits y ramas permanentes `main`/`develop` sincronizadas. `frontend` y `automation-collector` continúan vacíos y sin Git local. No existen Issues, Projects, Pull Requests, workflows, rulesets, tags, releases, artefactos o despliegues creados por esta publicación.
+- La autorización específica de `TEC-GIT-001C` fue consumida y se limitó a `backend`. No publicar los otros repositorios, operar Issues/Projects/PRs, crear workflows o rulesets, tags, releases o artefactos, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de `TEC-PLT-001a` o `TEC-PLT-002a`; cada incremento requiere alcance concreto.
-- Siguiente paso remoto pendiente: analizar y delimitar una tarea independiente para inicializar Git y publicar controladamente el contenido correspondiente en los tres repositorios, solicitando antes autorización expresa de LUIS para ese alcance.
+- Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier inicialización y publicación de `frontend` o `automation-collector`, solicitando antes autorización expresa de LUIS para ese alcance.
 - Próxima acción técnica: analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0, sin iniciar todavía su ejecución.
 - El objetivo sigue siendo avanzar por OLA 0 y alcanzar temprano la primera vertical E2E, no implementar “todo J-AXON de una vez”.
 

@@ -8,10 +8,10 @@ Mantener este archivo corto: orienta a una IA sin sustituir el Registro de Acuer
 - Estado actual: baseline documental v1 `DESIGN_READY`; implementación iniciada de forma acotada; `PRODUCTION_READY = NO`.
 - Descubrimiento inicial: cerrado.
 - Refinamiento/diseño v1: **Lotes 30--54 aprobados y consolidados**.
-- Última tarea completada: `TEC-PLT-002a`, autorizada, ejecutada y verificada el 2026-10-06.
+- Última tarea completada: `TEC-GIT-001C`, autorizada, ejecutada y verificada el 2026-10-07.
 - Implementado: bootstrap estructural de backend de `TEC-PLT-001a`; integración JDBC/Flyway con PostgreSQL 18.6 y pgvector 0.8.6 verificada mediante Testcontainers; y migración bootstrap que crea exactamente los ocho schemas aprobados, sin tablas de negocio.
 - No implementado: lógica funcional, entidades, repositorios de dominio, servicios, APIs, OpenAPI ejecutable, CI, Dockerfile, Compose, frontend y `automation-collector`; tampoco existe infraestructura PostgreSQL Production.
-- Estado remoto verificado el 2026-10-07: existe la organización `J-AXON-PLATFORM` con repositorios privados vacíos `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`; corresponden a los nombres lógicos `backend`, `frontend` y `automation-collector`. No se publicó contenido ni se crearon commits, ramas, remotos locales, Issues, Projects, Pull Requests, workflows, rulesets, releases, artefactos o despliegues.
+- Estado remoto verificado el 2026-10-07: existe la organización `J-AXON-PLATFORM` con los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos `backend`, `frontend` y `automation-collector`. `backend` fue inicializado y publicado con dos commits y ramas `main`/`develop` sincronizadas; los otros dos repositorios permanecen vacíos y sin Git local. No se crearon Issues, Projects, Pull Requests, workflows, rulesets, tags, releases, artefactos o despliegues.
 - Organización histórica: `j-axon` es distinta, contiene repositorios preexistentes ajenos al nuevo inicio controlado, no fue modificada y no debe confundirse con `J-AXON-PLATFORM`. La diferencia depende del identificador de organización, no solo de mayúsculas, que GitHub trata sin distinción efectiva.
 - Autorización general para implementar/modificar GitHub/desplegar: **NO EXISTE**.
 - Sprint actual: ninguno iniciado.
@@ -21,7 +21,7 @@ Mantener este archivo corto: orienta a una IA sin sustituir el Registro de Acuer
 - Contratos internos: commands/queries in-process; eventos durables por Transactional Outbox PostgreSQL `at-least-once`; SSE best-effort y REST fuente de verdad.
 - IDs técnicos: UUIDv4; externos como strings opacos.
 - Próxima acción técnica: analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0; la siguiente tarea técnica todavía no ha sido iniciada.
-- Próxima acción remota pendiente: analizar y delimitar una tarea independiente para inicializar Git y publicar controladamente el contenido correspondiente en los tres repositorios, solicitando antes autorización expresa de LUIS para ese alcance.
+- Próxima acción remota pendiente: cualquier inicialización y publicación de `frontend` o `automation-collector` debe analizarse, delimitarse y autorizarse de forma independiente.
 - Continuidad: LUIS autorizó que, después de verificar cada tarea, el coordinador determine el siguiente incremento pequeño y prepare un alcance concreto. Esto no autoriza de forma ilimitada toda OLA 0 ni permite ejecutar el siguiente incremento sin su delimitación y autorización aplicable.
 
 ## Reanudación obligatoria
@@ -43,4 +43,4 @@ Antes de proponer una acción o implementación:
 - Decidido/documentado != implementado != verificado.
 - Los `POR_DECIDIR` restantes son deliberados y están ligados a Production, organización, evidencia o scope futuro; no rellenarlos artificialmente.
 - No asumir autorización de código, Git, GitHub, despliegues o infraestructura Production a partir de la aprobación de los Lotes 49--54 ni de la finalización de `TEC-PLT-001a` y `TEC-PLT-002a`.
-- La autorización ya consumida para crear la organización y los tres repositorios privados vacíos no autoriza inicialización Git, publicación, remotos, commits, ramas, Issues, Projects, Pull Requests, workflows, rulesets, releases, artefactos ni despliegues.
+- La autorización consumida por `TEC-GIT-001C` cubrió únicamente la publicación controlada de `backend`; no autoriza publicar `frontend` o `automation-collector`, operar Issues/Projects/Pull Requests, crear workflows o rulesets, publicar tags/releases/artefactos ni desplegar.
