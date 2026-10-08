@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## CI base del backend -- TEC-PLT-003a, 2026-10-07
+
+Se implementa y verifica `Backend CI` en `.github/workflows/backend-ci.yml`. El workflow ejecuta `./mvnw --batch-mode --no-transfer-progress clean verify` con Java 25 Temurin sobre `ubuntu-24.04` en Pull Requests hacia `develop` o `main`, pushes a `develop` y ejecuciones manuales. La evidencia local y GitHub Actions confirma compilación, tres pruebas sin fallos, verificación Spring Modulith y la integración Testcontainers con PostgreSQL 18.6, pgvector 0.8.6, Flyway y los ocho schemas aprobados.
+
+Las acciones externas están fijadas por SHA completo, los permisos se limitan a `contents: read`, `persist-credentials` está deshabilitado y no se usan secretos ni se publican artefactos o despliegues. Contratos y SFTP permanecen fuera hasta disponer de artefactos ejecutables aplicables. La activación se integra mediante el Pull Request `#1` hacia `develop`, con checks verdes sobre su última revisión y fusión `Squash and merge`.
+
+Los rulesets y protecciones automáticas siguen pendientes por la limitación del plan actual para repositorios privados. La disciplina de Pull Request y checks verdes se aplica operativamente, pero GitHub no impide técnicamente una fusión incorrecta. `main` no se modifica y puede quedar temporalmente detrás de `develop`. No se crean acuerdos, migraciones, contratos, lógica de negocio, tablas, tags, releases, Packages, artefactos publicados ni despliegues; `PRODUCTION_READY = NO`.
+
+---
+
 ## Publicación controlada del repositorio backend -- TEC-GIT-001C, 2026-10-07
 
 Se inicializa Git exclusivamente en `backend`, se configura el remoto SSH oficial `git@github.com:J-AXON-PLATFORM/BACKEND.git` y se publica la baseline verificada. El historial queda formado por los commits `chore: bootstrap backend repository` y `docs: record backend repository publication`; las ramas permanentes `main` y `develop` apuntan al mismo commit final y siguen sus ramas remotas.
