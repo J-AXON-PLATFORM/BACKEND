@@ -3,6 +3,18 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Health, contenedores backend/frontend y gates CI -- TEC-OPS-001a, TEC-PLT-006a, TEC-PLT-006b, TEC-QLT-003a y TEC-DOC-007, 2026-10-08
+
+Se implementan y verifican health general, liveness, readiness con PostgreSQL, detalles ocultos y shutdown graceful en backend. La integración ejecutable confirma Java 25, Spring Boot 4.1.1, PostgreSQL 18.6, pgvector 0.8.6, Flyway y los ocho schemas mediante cinco pruebas. Por hallazgos Trivy corregibles se fijan temporalmente Tomcat 11.0.26 y Jackson 3.1.7 dentro de las líneas compatibles gestionadas por Spring Boot.
+
+Se crean Dockerfiles multi-stage no-root para backend y frontend. Backend usa Temurin JDK/JRE 25 por digest y runtime UID/GID `10001`. Frontend usa Node.js 24.21.0 para build, Next.js standalone y runtime Alpine por digest con UID/GID `10001`, sin npm, npx, Corepack, yarn o pnpm. Una fixture exclusivamente local compila pgvector 0.8.6 desde fuente y checksum fijados sobre PostgreSQL 18.6 Alpine; Clang/LLVM queda solo en build y el runtime final reemplaza `gosu` por `su-exec` y se aplana para eliminar la capa vulnerable.
+
+Los smoke tests validan filesystem read-only, `/tmp` efímero, usuario no-root, puertos, contenido/health, migración, schemas, pgvector, señales y ausencia de secretos. Trivy 0.75.0 no detecta HIGH/CRITICAL en las imágenes finales backend, frontend o fixture. `Backend CI` y `Frontend CI` incorporan builds, smoke tests y scans bloqueantes sin excepciones ni `--ignore-unfixed`.
+
+`BACKEND#5` se integra en `develop` mediante squash `90c550714b861beb7d6388cf571744efcda4af8d`; los runs `37879426717` y `37879749721` quedan verdes. `FRONTEND#2` se integra mediante squash `94d8ce2e8dd3309b7683f09041785c000f6fe21d`; los runs `37879426584` y `37880065517` quedan verdes. No se publican imágenes, Packages o artefactos y no se crean Compose, SBOM, firma, tags, releases ni despliegues. No se implementa lógica de negocio ni infraestructura Production; `DESIGN_READY` se conserva y `PRODUCTION_READY = NO`.
+
+---
+
 ## Fundación, publicación y CI base de automation-collector -- TEC-PLT-005a, TEC-GIT-003, TEC-QLT-002a y TEC-DOC-006, 2026-10-08
 
 Se crea y verifica la fundación técnica de `automation-collector` con Python 3.14.8 administrado por uv 0.12.24, `pyproject.toml`, `uv.lock`, Hatchling 1.32.4, Ruff 0.16.10, pytest 9.1.1 y pip-audit 2.10.1. Las dependencias runtime permanecen vacías. `jaxon_agent` y `jaxon_discovery_executor` son paquetes y entrypoints distintos que solo identifican programa y versión; seis pruebas demuestran importación, ejecución e identidades inequívocas. Lint, formato, build, auditoría y reproducibilidad del lockfile quedan verdes, sin vulnerabilidades conocidas.
