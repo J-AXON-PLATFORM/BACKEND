@@ -13,7 +13,7 @@ No hace falta adjuntar el legado salvo que una decisión concreta necesite contr
 
 ## Texto para copiar en el siguiente chat
 
-Continuaremos **J-AXON** desde **CKP-JAXON-005**. Mi nombre es **LUIS** y debes mencionarlo de forma natural en cada respuesta. El descubrimiento inicial y el refinamiento/diseño detallado v1 están cerrados hasta el **Lote 54** y el proyecto está documentalmente `DESIGN_READY`. El nuevo sistema todavía **NO se ha implementado** y no tienes autorización general para programar, modificar GitHub, crear repositorios/branches/Issues/Projects/PRs/workflows ni desplegar.
+Continuaremos **J-AXON** desde la documentación canónica posterior a **CKP-JAXON-005**. Mi nombre es **LUIS** y debes mencionarlo de forma natural en cada respuesta. El descubrimiento inicial y el refinamiento/diseño detallado v1 están cerrados hasta el **Lote 54** y el proyecto está documentalmente `DESIGN_READY`. La implementación nueva comenzó de forma acotada: existen las fundaciones backend/frontend/Python, persistencia base, health/readiness, contenedores backend/frontend y sus CI verificadas; no existe funcionalidad de negocio ni `PRODUCTION_READY`. No tienes autorización general para programar, modificar GitHub, crear repositorios/branches/Issues/Projects/PRs/workflows ni desplegar.
 
 Antes de responder o proponer una acción, **lee y contrasta los archivos reales; no uses solo memoria ni el checkpoint**. Orden obligatorio:
 
