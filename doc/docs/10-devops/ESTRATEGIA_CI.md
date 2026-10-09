@@ -16,7 +16,7 @@
 - PRs no reciben secretos productivos. Cancelar runs obsoletos del mismo PR cuando no sean deployments/releases.
 <!-- JAXON-CKP003:END -->
 
-## Estado implementado en backend -- TEC-PLT-003a y TEC-QLT-003a
+## Estado implementado en backend -- TEC-PLT-003a, TEC-QLT-003a y TEC-QLT-004a
 
 El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, implementa la línea base ejecutable actual del backend:
 
@@ -26,11 +26,14 @@ El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, impleme
 - build y scan de una fixture local endurecida PostgreSQL 18.6 + pgvector 0.8.6 antes de las pruebas;
 - `./mvnw --batch-mode --no-transfer-progress clean verify` para compilación, cinco pruebas, modularidad, health/probes e integración Testcontainers/Flyway con los ocho schemas;
 - build multi-stage del backend, smoke no-root/read-only con PostgreSQL real y scan Trivy bloqueante HIGH/CRITICAL;
+- validación declarativa de `compose.yaml` y smoke Compose aislado con PostgreSQL predeterminado y backend opcional, reutilizando las imágenes construidas por los gates anteriores;
 - permisos mínimos `contents: read`, sin secretos, despliegues, publicación de artefactos ni escritura en el repositorio;
 - `actions/checkout` y `actions/setup-java` fijadas por SHA completo, con credenciales persistentes deshabilitadas;
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
 
 La ampliación se integró mediante `BACKEND#5`, squash `90c550714b861beb7d6388cf571744efcda4af8d`; los runs `37879426717` de PR y `37879749721` post-merge finalizaron correctamente. Las verificaciones de contratos y SFTP se incorporarán cuando existan artefactos ejecutables aplicables. Los rulesets y protecciones automáticas continúan pendientes porque el plan actual no los aplica sobre repositorios privados. `main` y `develop` pueden quedar temporalmente en commits distintos.
+
+`TEC-QLT-004a` amplía el mismo job `Backend verification`; no crea otro workflow ni elimina gates. El verificador Compose usa proyecto, puertos y volumen efímeros propios, y su cleanup no alcanza el volumen persistente de un entorno Local. La publicación de imágenes, artefactos y despliegues permanece fuera de alcance.
 
 ## Estado implementado en frontend -- TEC-QLT-001a y TEC-QLT-003a
 

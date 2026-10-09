@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Compose y configuración Local -- TEC-PLT-007a, TEC-QLT-004a y TEC-DOC-008, 2026-10-09
+
+Se implementa una baseline reproducible de Docker Compose para Local. El arranque predeterminado contiene únicamente PostgreSQL 18.6 con pgvector 0.8.6, construido desde la fixture endurecida existente, con healthcheck `pg_isready`, volumen nombrado, red dedicada y puerto publicado exclusivamente en loopback. El backend permanece opcional bajo el profile `application`, espera a PostgreSQL healthy, recibe configuración `JAXON_*`, conserva runtime no-root, filesystem read-only, `/tmp` efímero y probes, y publica HTTP solo en loopback.
+
+`.env.example` contiene exclusivamente valores ficticios y `.env` continúa ignorado por Git como conveniencia Local; QA y Production no usan este mecanismo como almacén de secretos. `scripts/verify-compose.sh` valida configuración, servicio predeterminado, aislamiento, puertos, persistencia, usuario no-root, health, Flyway, ocho schemas y pgvector mediante un proyecto y volumen efímeros únicos. Su cleanup elimina solo esos recursos propios y no toca el volumen persistente Local.
+
+El job estable `Backend verification` conserva Maven/Testcontainers, builds, smoke tests y scans Trivy existentes, y añade `docker compose config` y el smoke Compose reutilizando las imágenes ya construidas. No se añaden servicios, secretos, dependencias, contratos, migraciones o lógica de negocio; no se publican imágenes o artefactos ni se despliega. `DESIGN_READY` se conserva y `PRODUCTION_READY = NO`.
+
+---
+
 ## Health, contenedores backend/frontend y gates CI -- TEC-OPS-001a, TEC-PLT-006a, TEC-PLT-006b, TEC-QLT-003a y TEC-DOC-007, 2026-10-08
 
 Se implementan y verifican health general, liveness, readiness con PostgreSQL, detalles ocultos y shutdown graceful en backend. La integración ejecutable confirma Java 25, Spring Boot 4.1.1, PostgreSQL 18.6, pgvector 0.8.6, Flyway y los ocho schemas mediante cinco pruebas. Por hallazgos Trivy corregibles se fijan temporalmente Tomcat 11.0.26 y Jackson 3.1.7 dentro de las líneas compatibles gestionadas por Spring Boot.

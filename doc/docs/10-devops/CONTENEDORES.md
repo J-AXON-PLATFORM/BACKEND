@@ -14,7 +14,7 @@
 - DB y administración no se exponen innecesariamente; web HTTPS y SFTP solo para Agents autorizados.
 <!-- JAXON-CKP003:END -->
 
-## Estado implementado -- TEC-OPS-001a, TEC-PLT-006a y TEC-PLT-006b
+## Estado implementado -- TEC-OPS-001a, TEC-PLT-006a, TEC-PLT-006b y TEC-PLT-007a
 
 El 2026-10-08 se verificó la primera baseline ejecutable de contenedores, limitada a backend y frontend:
 
@@ -25,7 +25,18 @@ El 2026-10-08 se verificó la primera baseline ejecutable de contenedores, limit
 - smoke tests con filesystem read-only, `/tmp` efímero, puertos dinámicos locales, identidad no-root, metadata OCI, ausencia de archivos sensibles, health/contenido, migración Flyway, schemas y pgvector;
 - scans Trivy 0.75.0 completos y bloqueantes para severidades HIGH/CRITICAL, sin `--ignore-unfixed` ni excepciones de imagen.
 
-Las imágenes se construyen solo de forma local o efímera en CI. No se publicaron imágenes, Packages, artefactos, tags o releases. Compose, registry, promoción, SBOM, firma, infraestructura Production y despliegue permanecen pendientes y fuera de este incremento.
+Las imágenes se construyen solo de forma local o efímera en CI. No se publicaron imágenes, Packages, artefactos, tags o releases. Registry, promoción, SBOM, firma, infraestructura Production y despliegue permanecen pendientes y fuera de estos incrementos.
+
+El 2026-10-09 se verificó la baseline Compose Local:
+
+- `compose.yaml` levanta por defecto solo la fixture PostgreSQL/pgvector mediante build local, healthcheck `pg_isready`, volumen nombrado y red dedicada;
+- PostgreSQL y el backend opcional publican puertos exclusivamente en `127.0.0.1`;
+- el profile `application` añade el backend no-root y read-only, espera a PostgreSQL healthy y recibe `JAXON_DB_URL`, usuario, contraseña y `JAXON_ENVIRONMENT=local`;
+- `.env.example` contiene solo configuración ficticia y el `.env` Local real permanece fuera de Git;
+- `scripts/verify-compose.sh` usa puertos dinámicos, un proyecto único y cleanup restringido a su volumen efímero propio, sin eliminar datos Local persistentes ajenos;
+- la verificación cubre servicio predeterminado, health/probes, Flyway, ocho schemas, pgvector 0.8.6, loopback, persistencia y runtime backend endurecido.
+
+Compose no incluye frontend, SFTPGo, n8n, observabilidad, reverse proxy, TLS o topología Production.
 
 ## Propósito
 
