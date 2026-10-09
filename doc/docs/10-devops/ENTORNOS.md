@@ -15,6 +15,10 @@
 | Production | operación real | reales/aislados | mismo digest validado, aprobación explícita |
 
 Preproduction física separada no es obligatoria. `develop` es rama Git de integración/candidato, **no** el entorno Development. Misma build/artefacto se promueve con configuración y secretos externos separados; no copiar datos productivos a QA sin sanitización.
+
+### Baseline Local implementada
+
+Desde `TEC-PLT-007a`, `compose.yaml` ofrece PostgreSQL/pgvector como infraestructura Local predeterminada y un backend containerizado opcional mediante profile. `.env.example` usa valores ficticios; cada desarrollador crea su `.env` ignorado por Git. Este mecanismo no configura Development, Test, QA o Production y no altera la separación canónica de cinco entornos.
 <!-- JAXON-CKP003:END -->
 
 ## Propósito

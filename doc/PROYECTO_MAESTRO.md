@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | fundaciones y CI de los tres repositorios verificadas, 2026-10-08
-> **Estado documental:** baseline v1 `DESIGN_READY`; implementación nueva iniciada de forma acotada con fundaciones backend/frontend/Python, persistencia backend y CI base verificadas; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | fundaciones, CI y baseline Compose Local verificadas, 2026-10-09
+> **Estado documental:** baseline v1 `DESIGN_READY`; implementación nueva iniciada de forma acotada con fundaciones backend/frontend/Python, persistencia backend, contenedores, Compose Local y CI verificadas; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -12,7 +12,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 ## 0. Estado de inicialización
 
 - Estado: `DESIGN_READY`: descubrimiento y refinamiento/diseño detallado v1 cerrados documentalmente; la implementación comenzó de forma acotada con las tres fundaciones y sus CI base, sin autorización general para el resto del backlog.
-- Implementación verificada: bootstrap estructural del backend con Java 25/Spring Boot/Spring Modulith/Maven; PostgreSQL 18.6, pgvector 0.8.6, Flyway 12.4.0 y ocho schemas; `Backend CI`; fundación frontend y `Frontend CI`; y fundación de `automation-collector` con Python 3.14.8, uv 0.12.24, dos entrypoints separados, Ruff/pytest/pip-audit y `Python CI`. No contiene tablas ni funcionalidad de negocio.
+- Implementación verificada: bootstrap estructural del backend con Java 25/Spring Boot/Spring Modulith/Maven; PostgreSQL 18.6, pgvector 0.8.6, Flyway 12.4.0 y ocho schemas; health y contenedores backend/frontend; Compose Local para PostgreSQL con backend opcional; `Backend CI`; fundación frontend y `Frontend CI`; y fundación de `automation-collector` con Python 3.14.8, uv 0.12.24, dos entrypoints separados, Ruff/pytest/pip-audit y `Python CI`. No contiene tablas ni funcionalidad de negocio.
 - Madurez: baseline documental `DESIGN_READY` e implementación incremental iniciada; `PRE_IMPLEMENTACION` fue el estado anterior al inicio de `TEC-PLT-001a`.
 - Modelo de repositorios: `MULTIREPO`: `frontend`, `backend`, `automation-collector`.
 - Estado remoto histórico verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada con tres repositorios privados. `backend` fue inicializado y publicado de forma controlada en `https://github.com/J-AXON-PLATFORM/BACKEND` mediante `TEC-GIT-001C`.
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-08.
+- Fecha de última revisión: 2026-10-09.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: la primera vertical E2E y el resto no autorizado de OLA 0 continúan sin implementar. Las fundaciones frontend y Python existen, pero no contienen funcionalidad de negocio, SFTP ni discovery funcional. OpenAPI ejecutable, Dockerfile y Compose no están implementados. No existe despliegue ni infraestructura Production.
+- Estado funcional: la primera vertical E2E y el resto no autorizado de OLA 0 continúan sin implementar. Las fundaciones frontend y Python existen, pero no contienen funcionalidad de negocio, SFTP ni discovery funcional. Los Dockerfiles backend/frontend y Compose Local están implementados; OpenAPI ejecutable no está implementado. No existe despliegue ni infraestructura Production.
 
 ## 1. Identidad
 
@@ -368,7 +368,7 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 - GitHub Actions con permisos mínimos; actions externas fijadas por SHA completo. Dependabot mediante PR; CodeQL/GHAS donde esté disponible sin dependencia obligatoria de licencia.
 - CI de PR no usa secretos productivos; cancelar CI obsoleto del mismo PR cuando sea seguro.
 - Backend CI: compile, unit, verificación modular, PostgreSQL/Flyway, contratos y SFTP cuando aplique.
-- Estado backend: `Backend CI` ejecuta `./mvnw --batch-mode --no-transfer-progress clean verify` en PR hacia `develop/main`, push a `develop` y manualmente, con Java 25, permisos `contents: read`, acciones fijadas por SHA completo, cancelación de ejecuciones obsoletas y sin secretos, publicación o despliegue. Contratos/SFTP se añadirán cuando existan artefactos ejecutables aplicables.
+- Estado backend: `Backend CI` ejecuta `./mvnw --batch-mode --no-transfer-progress clean verify`, valida Compose Local, construye y escanea la fixture PostgreSQL/pgvector y la imagen backend, y ejecuta smoke tests de contenedor y Compose en PR hacia `develop/main`, push a `develop` y manualmente, con Java 25, permisos `contents: read`, acciones fijadas por SHA completo, cancelación de ejecuciones obsoletas y sin secretos, publicación o despliegue. Contratos/SFTP se añadirán cuando existan artefactos ejecutables aplicables.
 - Los rulesets y protecciones automáticas del repositorio privado no están aplicados por la limitación del plan actual. PR y checks verdes se exigen operativamente, pero GitHub no bloquea técnicamente una fusión incorrecta. `main` y `develop` pueden quedar temporalmente en commits distintos.
 - Frontend CI: `npm ci`, lint, typecheck, Vitest/RTL y `next build`.
 - Estado frontend: `Frontend CI` ejecuta esos gates y auditorías de producción/completa en PR hacia `develop/main`, push a `develop` y manualmente. La auditoría de producción está limpia; la completa acepta solo `GHSA-vfj7-8cjw-p6xm` en `braces@3.0.3` de desarrollo mediante verificador cerrado, pendiente de corrección upstream.
@@ -609,4 +609,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con las tres fundaciones, persistencia backend y CI base completadas y verificadas de forma acotada. `backend`, `frontend` y `automation-collector` están publicados en sus repositorios privados oficiales. Las fundaciones frontend/Python no contienen funcionalidad de negocio; SFTP, contratos y PyInstaller siguen pendientes. El frontend conserva como riesgos temporales ESLint 9.39.5 EOL y la excepción cerrada de desarrollo para `GHSA-vfj7-8cjw-p6xm`. Lotes 30--54 permanecen aprobados y consolidados. El próximo paso es analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0. Esta continuidad no constituye autorización ilimitada para implementar, operar GitHub, ampliar CI/CD, publicar backlog o desplegar.
+Baseline `DESIGN_READY`, con las tres fundaciones, persistencia backend, health/contenedores, Compose Local y CI completadas y verificadas de forma acotada. `backend`, `frontend` y `automation-collector` están publicados en sus repositorios privados oficiales. Las fundaciones frontend/Python no contienen funcionalidad de negocio; SFTP, contratos y PyInstaller siguen pendientes. El frontend conserva como riesgos temporales ESLint 9.39.5 EOL y la excepción cerrada de desarrollo para `GHSA-vfj7-8cjw-p6xm`. Lotes 30--54 permanecen aprobados y consolidados. El próximo paso es analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0. Esta continuidad no constituye autorización ilimitada para implementar, operar GitHub, ampliar CI/CD, publicar backlog o desplegar.

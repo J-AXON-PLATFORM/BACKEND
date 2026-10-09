@@ -46,7 +46,7 @@ Si la respuesta es no, no cargarlo.
 
 ## Instancia J-AXON -- ruta inmediata CKP-JAXON-005
 
-Estado: baseline `DESIGN_READY`; Lotes 30--54 aprobados; implementación incremental iniciada de forma acotada; `PRODUCTION_READY = NO`. Las tres fundaciones, la persistencia PostgreSQL 18.6/pgvector 0.8.6/Flyway con ocho schemas y las CI base independientes están verificadas, todavía sin tablas ni funcionalidad de negocio.
+Estado: baseline `DESIGN_READY`; Lotes 30--54 aprobados; implementación incremental iniciada de forma acotada; `PRODUCTION_READY = NO`. Las tres fundaciones, la persistencia PostgreSQL 18.6/pgvector 0.8.6/Flyway con ocho schemas, health/contenedores, Compose Local y las CI independientes están verificadas, todavía sin tablas ni funcionalidad de negocio.
 
 Estado remoto histórico verificado el 2026-10-07: la organización oficial nueva `J-AXON-PLATFORM` contiene los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos canónicos `backend`, `frontend` y `automation-collector`; `backend` fue inicializado y publicado mediante `TEC-GIT-001C`.
 
@@ -56,7 +56,7 @@ Estado frontend verificado el 2026-10-08: `FRONTEND` fue publicado con `main` y 
 
 Estado Python verificado el 2026-10-08: `AUTOMATION-COLLECTOR` fue publicado con `main` y `develop`; contiene una fundación Python 3.14.8/uv 0.12.24 con Agent y Discovery Executor separados, sin SFTP o discovery funcional. `Python CI` fue integrado en `develop` mediante el Pull Request `#1` y squash `a040c5fba34fae22903088b82191e8355deaab26`; los runs de PR `37852626079` y post-merge `37852683236` quedaron verdes, incluida la auditoría sin vulnerabilidades conocidas. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues.
 
-Los bloques de fundación frontend y Python fueron completados. La ruta inmediata vuelve a ser analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0. Para ese análisis, cargar obligatoriamente las cinco fuentes de continuidad y luego:
+Los bloques de fundación, health/contenedores y Compose Local fueron completados. La ruta inmediata vuelve a ser analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0. Para ese análisis, cargar obligatoriamente las cinco fuentes de continuidad y luego:
 
 - `docs/12-agil/GESTION_BACKLOG.md`, `DEFINICION_PREPARADO.md` y `DEFINICION_TERMINADO.md`;
 - los documentos específicos de plataforma, arquitectura, contratos, datos, seguridad y pruebas capaces de delimitar el incremento;
@@ -64,6 +64,6 @@ Los bloques de fundación frontend y Python fueron completados. La ruta inmediat
 
 LUIS autorizó un flujo de continuación incremental: después de verificar cada tarea, el coordinador determina el siguiente incremento pequeño y prepara un alcance concreto. No interpretar ese flujo, `DESIGN_READY` ni `TEC-PLT-001a` como permiso ilimitado para implementar toda OLA 0. Crear o modificar repositorios, ramas, Issues, Projects, workflows, GitHub, código, despliegues o infraestructura Production fuera de un alcance concreto requiere autorización expresa de LUIS.
 
-Para cambios backend, `Backend CI` verifica mediante `clean verify` los checks actualmente ejecutables en PR hacia `develop/main` y push a `develop`. Contratos y SFTP se incorporarán cuando sean aplicables. Los rulesets permanecen pendientes por la limitación del plan para repositorios privados; PR y checks verdes se aplican como disciplina operativa, no como bloqueo técnico de GitHub.
+Para cambios backend, `Backend CI` verifica mediante `clean verify`, gates de contenedor y smoke Compose los checks actualmente ejecutables en PR hacia `develop/main` y push a `develop`. Contratos y SFTP se incorporarán cuando sean aplicables. Los rulesets permanecen pendientes por la limitación del plan para repositorios privados; PR y checks verdes se aplican como disciplina operativa, no como bloqueo técnico de GitHub.
 
 Para trabajo remoto, cualquier cambio adicional en los tres repositorios debe analizarse y delimitarse en una tarea independiente, solicitando antes autorización expresa de LUIS. Las autorizaciones consumidas no cubren backlog, nuevas CI, reglas de protección, releases ni despliegue.
