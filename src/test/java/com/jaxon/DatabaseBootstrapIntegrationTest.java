@@ -32,7 +32,7 @@ class DatabaseBootstrapIntegrationTest {
     @Container
     @ServiceConnection
     static final PostgreSQLContainer postgres = new PostgreSQLContainer(
-            DockerImageName.parse("pgvector/pgvector:0.8.6-pg18-bookworm")
+            DockerImageName.parse("jaxon-postgres-pgvector-test:18.6-0.8.6")
                     .asCompatibleSubstituteFor("postgres"));
 
     @Autowired
