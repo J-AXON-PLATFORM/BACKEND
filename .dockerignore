@@ -1,0 +1,12 @@
+.git
+.github
+.idea
+.vscode
+doc
+logs
+target
+.env
+.env.*
+*.iml
+*.log
+hs_err_pid*
