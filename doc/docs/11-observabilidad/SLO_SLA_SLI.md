@@ -39,3 +39,5 @@ SLA comercial sigue `POR_DECIDIR`; no derivarlo automáticamente de los SLO inte
 ## Regla
 
 Los SLO solo se consideran significativos si las fuentes de medición son confiables y se revisan con operación real.
+
+La exposición de métricas Prometheus de la baseline backend habilita observación técnica, pero no constituye por sí sola medición validada de los SLI ni convierte los SLO internos en SLA. Dashboards, alertas, ventanas y evidencia operativa real permanecen pendientes.
