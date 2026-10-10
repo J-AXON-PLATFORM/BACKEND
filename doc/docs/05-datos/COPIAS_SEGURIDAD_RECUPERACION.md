@@ -2,7 +2,7 @@
 
 > **Clasificación:** CONDICIONAL  
 > **Instancia J-AXON:** CKP-JAXON-005 | 2026-09-29.  
-> **Estado:** política inicial aprobada; valores deben verificarse mediante restore tests.
+> **Estado:** política Production aprobada; baseline lógica PostgreSQL verificada en entorno aislado; RPO/RTO y recuperación Production siguen sin verificar.
 
 ## Propósito
 
@@ -14,6 +14,19 @@ Definir backups, restauración, RPO y RTO para J-AXON Production sin confundir b
 - herramienta concreta: `POR_DECIDIR` según infraestructura;
 - no depender únicamente de un dump nocturno para cumplir el RPO;
 - migraciones/upgrades con riesgo de datos deben enlazar plan de recuperación.
+
+## Baseline lógica implementada
+
+`TEC-OPS-005a` y `TEC-OPS-006a` proporcionan una regresión técnica reproducible para Local/CI:
+
+- `scripts/backup-postgresql.sh` genera un dump lógico custom mediante PostgreSQL 18 `pg_dump`, sin ownership ni privilegios, con temporales privados, permisos `0600`, publicación mediante rename y rechazo de sobrescritura;
+- antes de publicar valida PostgreSQL 18, pgvector 0.8.6, los ocho schemas aprobados y el historial Flyway;
+- el manifest cerrado `1.0` registra fecha UTC, identificador opaco de origen, versiones, formato, tamaño, SHA-256, versiones Flyway, schemas, pgvector, duración y resultado, sin hostname ni credenciales;
+- `scripts/restore-postgresql.sh` exige archivos regulares `0600` en un directorio privado, congela copias privadas para la validación, requiere manifest íntegro, tamaño y SHA-256 coincidentes, identificadores de origen/destino distintos y una base destino vacía y aislada sin otros escritores;
+- la restauración usa `pg_restore --exit-on-error --single-transaction --no-owner --no-privileges`, por lo que un fallo revierte la transacción;
+- `scripts/verify-postgresql-backup-restore.sh` crea origen y destino PostgreSQL efímeros aislados, aplica Flyway, incorpora datos sintéticos, verifica la restauración y ejecuta casos negativos de integridad, formato, permisos, sobrescritura, destino y fallos de herramientas.
+
+Esta baseline no implementa ni sustituye base backup, archivado WAL/PITR, cifrado, almacenamiento externo, scheduling, rotación, retención, backup documental, operación Production o demostración de RPO/RTO.
 
 ## Documentos permanentes
 
@@ -48,6 +61,8 @@ La retención de backup no sustituye la retención funcional de auditoría/ticke
 - mensual: restaurar PostgreSQL en entorno aislado + muestra representativa de documentos y validar SHA-256;
 - trimestral: restauración integral representativa PostgreSQL + storage documental, comprobando referencias DB->archivo e integridad;
 - antes de readiness comercial: al menos una restauración integral exitosa y documentada.
+
+El gate sintético de `TEC-OPS-006a` detecta regresiones del procedimiento lógico, pero no equivale al restore mensual representativo ni a la prueba integral trimestral de PostgreSQL y documentos.
 
 Registrar fecha, recovery point, tiempo empleado, errores, objetos verificados y acciones correctivas.
 
