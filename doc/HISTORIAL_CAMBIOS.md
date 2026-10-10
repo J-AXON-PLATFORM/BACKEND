@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Backup/restore lógico PostgreSQL y gate CI -- TEC-OPS-005a y TEC-OPS-006a, 2026-10-10
+
+Se implementan scripts versionados para crear un dump lógico custom de PostgreSQL 18 y un manifest cerrado con SHA-256, tamaño, versiones, schemas e historial Flyway, y para restaurarlo sobre un destino vacío mediante una única transacción. La publicación usa archivos temporales privados, permisos `0600`, rename y rechazo de sobrescritura; el manifest no contiene credenciales ni hostname.
+
+El harness aislado crea fuentes y destinos PostgreSQL 18.6/pgvector 0.8.6 efímeros, aplica la migración canónica, usa únicamente datos sintéticos y comprueba schemas, pgvector, Flyway y contenido restaurado. También verifica rechazo de artefactos o manifest alterados, incompletos o incompatibles, permisos inseguros, mismo origen/destino, sobrescritura, destino no vacío y fallos de `pg_dump`/`pg_restore` sin objetos parciales.
+
+`Backend CI` incorpora el harness al job existente y reutiliza las imágenes locales ya construidas; no crea workflows ni publica o conserva backups como artifacts. Permanecen fuera de alcance base backup, WAL/PITR, cifrado, storage externo, scheduling, rotación/retención, documentos, infraestructura y operación Production. Los objetivos RPO/RTO no quedan demostrados; `PRODUCTION_READY = NO`.
+
+---
+
 ## Observabilidad base backend -- TEC-OPS-002a, TEC-OPS-003a y TEC-OPS-004a, 2026-10-09
 
 Se implementan logs JSON estructurados con timestamps UTC, identidad de servicio/entorno, campos operativos y correlación HTTP segura mediante `X-Correlation-ID`; el identificador se valida como UUIDv4, se devuelve en la respuesta y se aísla en MDC entre solicitudes, incluso concurrentes y con excepciones. Trace/span IDs se incorporan al MDC cuando existe contexto activo y las pruebas verifican que la salida no contiene secretos configurados.

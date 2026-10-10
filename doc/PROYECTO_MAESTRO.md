@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | fundaciones, Compose Local y contratos ejecutables mínimos verificados, 2026-10-09
-> **Estado documental:** baseline v1 `DESIGN_READY`; implementación nueva acotada con fundaciones, persistencia técnica, contenedores, Compose Local y contratos ejecutables de AC-JAXON-059; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | fundaciones, contratos, observabilidad base y backup/restore lógico verificados, 2026-10-10
+> **Estado documental:** baseline v1 `DESIGN_READY`; implementación nueva acotada con fundaciones, persistencia técnica, contenedores, Compose Local, contratos, observabilidad y backup/restore lógico; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -12,7 +12,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 ## 0. Estado de inicialización
 
 - Estado: `DESIGN_READY`: descubrimiento y refinamiento/diseño detallado v1 cerrados documentalmente; la implementación comenzó de forma acotada con las tres fundaciones y sus CI base, sin autorización general para el resto del backlog.
-- Implementación verificada: bootstrap backend y persistencia técnica con ocho schemas; health y contenedores; Compose Local; OpenAPI 3.1.2 contract-first de cinco operaciones sin controladores; JSON Schema Agent 1.0, fixtures, manifest SHA-256 y pruebas; copia vendorizada y validador Agent Python offline; fundaciones frontend/Python y CI ampliadas. No contiene tablas ni funcionalidad de negocio.
+- Implementación verificada: bootstrap backend y persistencia técnica con ocho schemas; health, contenedores y Compose Local; observabilidad base; backup/restore lógico PostgreSQL con manifest SHA-256 y prueba aislada; OpenAPI 3.1.2 contract-first de cinco operaciones sin controladores; JSON Schema Agent 1.0, fixtures y pruebas; copia vendorizada y validador Agent Python offline; fundaciones frontend/Python y CI ampliadas. No contiene tablas ni funcionalidad de negocio.
 - Madurez: baseline documental `DESIGN_READY` e implementación incremental iniciada; `PRE_IMPLEMENTACION` fue el estado anterior al inicio de `TEC-PLT-001a`.
 - Modelo de repositorios: `MULTIREPO`: `frontend`, `backend`, `automation-collector`.
 - Estado remoto histórico verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada con tres repositorios privados. `backend` fue inicializado y publicado de forma controlada en `https://github.com/J-AXON-PLATFORM/BACKEND` mediante `TEC-GIT-001C`.
@@ -22,7 +22,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-09.
+- Fecha de última revisión: 2026-10-10.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
 - Estado funcional: la primera vertical E2E y el resto no autorizado de OLA 0 continúan sin implementar. OpenAPI y JSON Schema son ejecutables como contratos, pero no existen controladores, SFTP, snapshots reales, tareas reales ni discovery funcional. No existe despliegue ni infraestructura Production.
 
@@ -297,6 +297,7 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 - Production backups: PostgreSQL base backup + WAL/PITR; documentos recuperables con intervalo <=1 h; al menos una copia fuera del dominio de fallo primario; todos los backups cifrados; retención 14 diarios/8 semanales/12 mensuales.
 - Restore mensual (DB+muestra documental) y prueba integral trimestral; al menos un restore integral exitoso antes de readiness comercial.
 - Objetivos iniciales: **RPO <=1 h**, **RTO <=8 h** para core; se consideran cumplidos solo mediante pruebas representativas.
+- `TEC-OPS-005a`/`TEC-OPS-006a` implementan únicamente dump lógico custom, manifest SHA-256 y restore aislado automatizado. No sustituyen base backup + WAL/PITR ni cubren cifrado, storage externo, scheduling, retención, documentos o verificación Production de RPO/RTO.
 - v1 single-tenant por instalación; sin replicación/particionamiento/CDC/ETL inicial sin evidencia.
 - Migraciones destructivas requieren plan de preservación/transformación y recuperación.
 
@@ -369,7 +370,7 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 - GitHub Actions con permisos mínimos; actions externas fijadas por SHA completo. Dependabot mediante PR; CodeQL/GHAS donde esté disponible sin dependencia obligatoria de licencia.
 - CI de PR no usa secretos productivos; cancelar CI obsoleto del mismo PR cuando sea seguro.
 - Backend CI: compile, unit, verificación modular, PostgreSQL/Flyway, contratos y SFTP cuando aplique.
-- Estado backend: `Backend CI` ejecuta `clean verify`, incluidas seis pruebas de OpenAPI/JSON Schema/fixtures/manifest, y conserva Compose, Testcontainers, builds, smoke y scans. `oasdiff` 1.33.0 se descarga por versión exacta y SHA-256 para validar el documento y bloquear breaking changes cuando exista baseline. SFTP continúa pendiente; no hay secretos, publicación o despliegue.
+- Estado backend: `Backend CI` ejecuta `clean verify`, incluidas seis pruebas de OpenAPI/JSON Schema/fixtures/manifest, y conserva Compose, Testcontainers, builds, smoke y scans. También ejecuta un backup/restore lógico aislado con datos sintéticos, manifest verificable y casos negativos. `oasdiff` 1.33.0 se descarga por versión exacta y SHA-256 para validar el documento y bloquear breaking changes cuando exista baseline. SFTP continúa pendiente; no hay secretos, publicación o despliegue.
 - Los rulesets y protecciones automáticas del repositorio privado no están aplicados por la limitación del plan actual. PR y checks verdes se exigen operativamente, pero GitHub no bloquea técnicamente una fusión incorrecta. `main` y `develop` pueden quedar temporalmente en commits distintos.
 - Frontend CI: `npm ci`, lint, typecheck, Vitest/RTL y `next build`.
 - Estado frontend: `Frontend CI` ejecuta esos gates y auditorías de producción/completa en PR hacia `develop/main`, push a `develop` y manualmente. La auditoría de producción está limpia; la completa acepta solo `GHSA-vfj7-8cjw-p6xm` en `braces@3.0.3` de desarrollo mediante verificador cerrado, pendiente de corrección upstream.

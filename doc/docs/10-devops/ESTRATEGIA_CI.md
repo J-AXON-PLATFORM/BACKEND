@@ -16,7 +16,7 @@
 - PRs no reciben secretos productivos. Cancelar runs obsoletos del mismo PR cuando no sean deployments/releases.
 <!-- JAXON-CKP003:END -->
 
-## Estado implementado en backend -- TEC-PLT-003a, TEC-QLT-003a, TEC-QLT-004a, AC-JAXON-059 y observabilidad base
+## Estado implementado en backend -- TEC-PLT-003a, TEC-QLT-003a, TEC-QLT-004a, AC-JAXON-059, observabilidad base, TEC-OPS-005a y TEC-OPS-006a
 
 El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, implementa la línea base ejecutable actual del backend:
 
@@ -27,6 +27,7 @@ El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, impleme
 - `./mvnw --batch-mode --no-transfer-progress clean verify` para compilación, suite automatizada, modularidad, contratos, health/probes, logs JSON, correlación HTTP, métricas, tracing e integración Testcontainers/Flyway con los ocho schemas;
 - build multi-stage del backend, smoke no-root/read-only con PostgreSQL real y scan Trivy bloqueante HIGH/CRITICAL;
 - validación declarativa de `compose.yaml` y smoke Compose aislado con PostgreSQL predeterminado y backend opcional, reutilizando las imágenes construidas por los gates anteriores;
+- gate `scripts/verify-postgresql-backup-restore.sh` con dos PostgreSQL efímeros, dump lógico custom, manifest SHA-256, restore transaccional, datos sintéticos y casos negativos;
 - permisos mínimos `contents: read`, sin secretos, despliegues, publicación de artefactos ni escritura en el repositorio;
 - `actions/checkout` y `actions/setup-java` fijadas por SHA completo, con credenciales persistentes deshabilitadas;
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
@@ -36,6 +37,8 @@ La ampliación histórica de contenedores se integró mediante `BACKEND#5`, squa
 `TEC-QLT-004a` amplía el mismo job `Backend verification`; no crea otro workflow ni elimina gates. El verificador Compose usa proyecto, puertos y volumen efímeros propios, y su cleanup no alcanza el volumen persistente de un entorno Local. La publicación de imágenes, artefactos y despliegues permanece fuera de alcance.
 
 `TEC-OPS-002a`, `TEC-OPS-003a` y `TEC-OPS-004a` quedan cubiertas funcionalmente por `clean verify`, por lo que no requieren otro workflow ni nuevos pasos. Los smokes de contenedor/Compose existentes verifican que el runtime arranca sin collector, y las imágenes continúan sometidas a Trivy HIGH/CRITICAL bloqueante.
+
+`TEC-OPS-005a` y `TEC-OPS-006a` amplían el mismo job después de construir las imágenes locales. El harness usa red, contenedores, tmpfs y directorio temporal propios, no accede al volumen Local persistente, no recibe secretos reales y elimina sus recursos mediante ownership explícito. Los dumps no se cargan como artifacts ni se conservan tras el run. Se prueban alteraciones de backup/manifest, formato o permisos inválidos, sobrescritura, destino no vacío y rollback ante fallo de `pg_restore`. Este gate no valida DR, cifrado, retención, RPO o RTO Production.
 
 ## Estado implementado en frontend -- TEC-QLT-001a y TEC-QLT-003a
 

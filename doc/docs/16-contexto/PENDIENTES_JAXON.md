@@ -2,15 +2,15 @@
 
 > **Clasificación:** CONDICIONAL, activa para continuidad.  
 > **Checkpoint externo:** CKP-JAXON-005 | 2026-09-29.  
-> **Estado:** baseline `DESIGN_READY`; implementación acotada con fundaciones, health/contenedores, Compose Local, contratos ejecutables mínimos y observabilidad base backend verificados; `PRODUCTION_READY = NO`.
+> **Estado:** baseline `DESIGN_READY`; implementación acotada con fundaciones, health/contenedores, Compose Local, contratos, observabilidad y backup/restore lógico backend verificados; `PRODUCTION_READY = NO`.
 
 ## Punto de reanudación
 
 No reabrir AC-JAXON-001..058 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
 
-`TEC-PLT-001a` y `TEC-PLT-002a` fueron completadas y verificadas el 2026-10-06; los bloques de fundación/CI y `TEC-OPS-001a`, `TEC-PLT-006a`, `TEC-PLT-006b`, `TEC-QLT-003a` fueron completados y verificados el 2026-10-08; `TEC-PLT-007a` y `TEC-QLT-004a` fueron completadas y verificadas el 2026-10-09. Existen las tres fundaciones, persistencia PostgreSQL/pgvector/Flyway con ocho schemas, health/probes, imágenes locales backend/frontend, Compose Local y gates de contenedor/Compose. No existen tablas ni funcionalidad de negocio.
+`TEC-PLT-001a` y `TEC-PLT-002a` fueron completadas y verificadas el 2026-10-06; los bloques de fundación/CI y `TEC-OPS-001a`, `TEC-PLT-006a`, `TEC-PLT-006b`, `TEC-QLT-003a` fueron completados y verificados el 2026-10-08; `TEC-PLT-007a`/`TEC-QLT-004a`, contratos y observabilidad se completaron el 2026-10-09; `TEC-OPS-005a`/`TEC-OPS-006a` se verificaron localmente el 2026-10-10 y están pendientes de cierre remoto. Existen las tres fundaciones, persistencia PostgreSQL/pgvector/Flyway con ocho schemas, health/probes, imágenes locales, Compose Local y gates de contenedor, Compose y backup/restore lógico. No existen tablas ni funcionalidad de negocio.
 
-El resto de OLA 0 y la primera vertical E2E continúan pendientes. Los contratos ejecutables no implementan endpoints, persistencia o transporte. La observabilidad base no instala collectors, dashboards o alertas ni constituye evidencia operativa Production. La siguiente tarea técnica debe analizarse y delimitarse como incremento pequeño antes de ejecutarse; la continuidad incremental no equivale a autorización general.
+El resto de OLA 0 y la primera vertical E2E continúan pendientes. Los contratos ejecutables no implementan endpoints, persistencia o transporte. La observabilidad base no instala collectors, dashboards o alertas. La baseline lógica no implementa base backup, WAL/PITR, cifrado, scheduling, retención, storage externo, documentos ni prueba RPO/RTO. Ninguno de ambos bloques constituye evidencia operativa Production. La siguiente tarea técnica debe analizarse y delimitarse como incremento pequeño antes de ejecutarse; la continuidad incremental no equivale a autorización general.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -66,10 +66,11 @@ El resto de OLA 0 y la primera vertical E2E continúan pendientes. Los contratos
 - Los JSON Schemas Agent 1.0, su copia vendorizada, manifest, sincronización, validador offline y pruebas contractuales ya existen. SFTP, Paramiko, procesamiento funcional y PyInstaller siguen pendientes. Rulesets y protecciones automáticas continúan pendientes por la limitación del plan actual para repositorios privados.
 - La observabilidad base backend produce logs JSON con correlación, métricas Prometheus y trazas W3C/OpenTelemetry opcionales. Continúan pendientes la infraestructura centralizada, dashboards, alertas, validación operativa de SLI/SLO y una estrategia que pueda aproximar la aspiración de conservar trazas de error sin prometerla mediante head sampling.
 - La propagación del `correlationId` propio hacia ejecución servlet asíncrona o SSE permanece pendiente hasta que exista un flujo funcional que permita diseñarla y verificarla; la baseline actual cubre solicitudes síncronas.
-- Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local y observabilidad base fueron consumidas y se limitaron a sus repositorios, ramas, Pull Requests, workflows y sincronizaciones documentales expresamente indicados. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
+- La baseline de `TEC-OPS-005a`/`TEC-OPS-006a` crea dumps custom y manifests verificables, restaura únicamente sobre un destino vacío y separado, y prueba escenarios positivos/negativos en recursos efímeros. Backup/DR Production continúa pendiente.
+- Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas o están limitadas a su cierre expresamente autorizado. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
 - Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
-- Próxima acción técnica: analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0; contratos base, Compose Local y observabilidad base ya no forman parte de los pendientes de implementación.
+- Próxima acción técnica: completar el cierre remoto autorizado de `TEC-OPS-005a`/`TEC-OPS-006a`; después, analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0.
 - El objetivo sigue siendo avanzar por OLA 0 y alcanzar temprano la primera vertical E2E, no implementar “todo J-AXON de una vez”.
 
 ## Reglas de continuidad
