@@ -3,6 +3,18 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Observabilidad base backend -- TEC-OPS-002a, TEC-OPS-003a y TEC-OPS-004a, 2026-10-09
+
+Se implementan logs JSON estructurados con timestamps UTC, identidad de servicio/entorno, campos operativos y correlación HTTP segura mediante `X-Correlation-ID`; el identificador se valida como UUIDv4, se devuelve en la respuesta y se aísla en MDC entre solicitudes, incluso concurrentes y con excepciones. Trace/span IDs se incorporan al MDC cuando existe contexto activo y las pruebas verifican que la salida no contiene secretos configurados.
+
+Actuator expone únicamente health y Prometheus. Las métricas estándar JVM, HTTP y HikariCP incluyen tags comunes de baja cardinalidad sin IDs de usuario, activos, tareas, mensajes o correlación. Se incorpora OpenTelemetry con propagación W3C, head sampling inicial configurable de 10 % y exportación OTLP de trazas opcional, desactivada por defecto; los exportadores OTLP de logs y métricas permanecen desactivados.
+
+La suite Maven cubre el comportamiento del incremento; los smokes de contenedor y Compose confirman que el runtime arranca sin collector, y los scans existentes conservan el gate de imagen. No se crea otro workflow ni se instalan collectors, Prometheus, Grafana, Loki o Tempo; no se crean dashboards, alertas, funcionalidad de negocio, tablas, migraciones, artefactos publicados o despliegues. `DESIGN_READY = SI`, el readiness se limita a este alcance y `PRODUCTION_READY = NO`.
+
+Se corrige la ruta inmediata del enrutador para usar las guías ágiles existentes. El validador documental ya comprueba enlaces Markdown locales; detectar nombres de archivo escritos como texto inline permanece como revisión manual para evitar falsos positivos sobre ejemplos, inventarios y referencias históricas.
+
+---
+
 ## Contratos ejecutables mínimos OLA 0 -- AC-JAXON-059, 2026-10-09
 
 Se crea en backend la fuente canónica `doc/contracts/` con OpenAPI 3.1.2 versión 1.0 para cinco operaciones de la primera vertical y JSON Schema Draft 2020-12 Agent 1.0 para common/envelope, Snapshot, Task y Result. Los contratos fijan sesión opaca, CSRF, RFC 9457, UUIDv4, UTC `Z`, catálogos cerrados, payloads Task vacíos, Result sin `EXPIRED` y Snapshot técnico mínimo sin secretos, red, software exhaustivo o serial.

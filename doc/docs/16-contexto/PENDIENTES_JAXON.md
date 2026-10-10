@@ -2,7 +2,7 @@
 
 > **Clasificación:** CONDICIONAL, activa para continuidad.  
 > **Checkpoint externo:** CKP-JAXON-005 | 2026-09-29.  
-> **Estado:** baseline `DESIGN_READY`; implementación acotada con fundaciones, health/contenedores, Compose Local y contratos ejecutables mínimos de AC-JAXON-059 integrados y verificados; `PRODUCTION_READY = NO`.
+> **Estado:** baseline `DESIGN_READY`; implementación acotada con fundaciones, health/contenedores, Compose Local, contratos ejecutables mínimos y observabilidad base backend verificados; `PRODUCTION_READY = NO`.
 
 ## Punto de reanudación
 
@@ -10,7 +10,7 @@ No reabrir AC-JAXON-001..058 ni los Lotes 30--54 salvo instrucción expresa o co
 
 `TEC-PLT-001a` y `TEC-PLT-002a` fueron completadas y verificadas el 2026-10-06; los bloques de fundación/CI y `TEC-OPS-001a`, `TEC-PLT-006a`, `TEC-PLT-006b`, `TEC-QLT-003a` fueron completados y verificados el 2026-10-08; `TEC-PLT-007a` y `TEC-QLT-004a` fueron completadas y verificadas el 2026-10-09. Existen las tres fundaciones, persistencia PostgreSQL/pgvector/Flyway con ocho schemas, health/probes, imágenes locales backend/frontend, Compose Local y gates de contenedor/Compose. No existen tablas ni funcionalidad de negocio.
 
-El resto de OLA 0 y la primera vertical E2E continúan pendientes. Los contratos ejecutables no implementan endpoints, persistencia o transporte. La siguiente tarea técnica debe analizarse y delimitarse como incremento pequeño antes de ejecutarse; la continuidad incremental no equivale a autorización general.
+El resto de OLA 0 y la primera vertical E2E continúan pendientes. Los contratos ejecutables no implementan endpoints, persistencia o transporte. La observabilidad base no instala collectors, dashboards o alertas ni constituye evidencia operativa Production. La siguiente tarea técnica debe analizarse y delimitarse como incremento pequeño antes de ejecutarse; la continuidad incremental no equivale a autorización general.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -64,10 +64,12 @@ El resto de OLA 0 y la primera vertical E2E continúan pendientes. Los contratos
 - Estado Compose Local verificado el 2026-10-09: `compose.yaml`, `.env.example` y `scripts/verify-compose.sh` implementan PostgreSQL/pgvector predeterminado y backend opcional, puertos loopback, volumen/red dedicados, configuración ficticia y smoke aislado. `Backend CI` conserva sus gates y añade validación/smoke Compose sin publicación ni despliegue.
 - Riesgo temporal frontend: la producción npm está limpia, pero la auditoría completa acepta solo `GHSA-vfj7-8cjw-p6xm` / `CVE-2026-93687` en `braces@3.0.3`, transitiva de desarrollo sin parche oficial al 2026-10-08. Cerrar al publicar corrección oficial, desaparecer la cadena o sustituir la herramienta mediante decisión aprobada. ESLint 9.39.5 está EOL y debe migrarse cuando la cadena oficial sea compatible con ESLint 10.
 - Los JSON Schemas Agent 1.0, su copia vendorizada, manifest, sincronización, validador offline y pruebas contractuales ya existen. SFTP, Paramiko, procesamiento funcional y PyInstaller siguen pendientes. Rulesets y protecciones automáticas continúan pendientes por la limitación del plan actual para repositorios privados.
-- Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores y Compose Local fueron consumidas y se limitaron a sus repositorios, ramas, Pull Requests, workflows y sincronizaciones documentales expresamente indicados. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
+- La observabilidad base backend produce logs JSON con correlación, métricas Prometheus y trazas W3C/OpenTelemetry opcionales. Continúan pendientes la infraestructura centralizada, dashboards, alertas, validación operativa de SLI/SLO y una estrategia que pueda aproximar la aspiración de conservar trazas de error sin prometerla mediante head sampling.
+- La propagación del `correlationId` propio hacia ejecución servlet asíncrona o SSE permanece pendiente hasta que exista un flujo funcional que permita diseñarla y verificarla; la baseline actual cubre solicitudes síncronas.
+- Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local y observabilidad base fueron consumidas y se limitaron a sus repositorios, ramas, Pull Requests, workflows y sincronizaciones documentales expresamente indicados. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
 - Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
-- Próxima acción técnica: analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0; contratos base y Compose Local ya no forman parte de los pendientes.
+- Próxima acción técnica: analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0; contratos base, Compose Local y observabilidad base ya no forman parte de los pendientes de implementación.
 - El objetivo sigue siendo avanzar por OLA 0 y alcanzar temprano la primera vertical E2E, no implementar “todo J-AXON de una vez”.
 
 ## Reglas de continuidad

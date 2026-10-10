@@ -16,7 +16,7 @@
 - PRs no reciben secretos productivos. Cancelar runs obsoletos del mismo PR cuando no sean deployments/releases.
 <!-- JAXON-CKP003:END -->
 
-## Estado implementado en backend -- TEC-PLT-003a, TEC-QLT-003a, TEC-QLT-004a y AC-JAXON-059
+## Estado implementado en backend -- TEC-PLT-003a, TEC-QLT-003a, TEC-QLT-004a, AC-JAXON-059 y observabilidad base
 
 El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, implementa la línea base ejecutable actual del backend:
 
@@ -24,7 +24,7 @@ El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, impleme
 - job estable `Backend verification` sobre `ubuntu-24.04`, con timeout de 30 minutos;
 - Java 25 Temurin y caché Maven administrada por `setup-java`;
 - build y scan de una fixture local endurecida PostgreSQL 18.6 + pgvector 0.8.6 antes de las pruebas;
-- `./mvnw --batch-mode --no-transfer-progress clean verify` para compilación, cinco pruebas, modularidad, health/probes e integración Testcontainers/Flyway con los ocho schemas;
+- `./mvnw --batch-mode --no-transfer-progress clean verify` para compilación, suite automatizada, modularidad, contratos, health/probes, logs JSON, correlación HTTP, métricas, tracing e integración Testcontainers/Flyway con los ocho schemas;
 - build multi-stage del backend, smoke no-root/read-only con PostgreSQL real y scan Trivy bloqueante HIGH/CRITICAL;
 - validación declarativa de `compose.yaml` y smoke Compose aislado con PostgreSQL predeterminado y backend opcional, reutilizando las imágenes construidas por los gates anteriores;
 - permisos mínimos `contents: read`, sin secretos, despliegues, publicación de artefactos ni escritura en el repositorio;
@@ -34,6 +34,8 @@ El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, impleme
 La ampliación histórica de contenedores se integró mediante `BACKEND#5`, squash `90c550714b861beb7d6388cf571744efcda4af8d`, con runs verdes `37879426717` y `37879749721`. AC-JAXON-059 añade al mismo job pruebas contractuales Maven y `oasdiff` 1.33.0 verificado por SHA-256; SFTP sigue pendiente. Los rulesets continúan pendientes por el plan del repositorio privado.
 
 `TEC-QLT-004a` amplía el mismo job `Backend verification`; no crea otro workflow ni elimina gates. El verificador Compose usa proyecto, puertos y volumen efímeros propios, y su cleanup no alcanza el volumen persistente de un entorno Local. La publicación de imágenes, artefactos y despliegues permanece fuera de alcance.
+
+`TEC-OPS-002a`, `TEC-OPS-003a` y `TEC-OPS-004a` quedan cubiertas funcionalmente por `clean verify`, por lo que no requieren otro workflow ni nuevos pasos. Los smokes de contenedor/Compose existentes verifican que el runtime arranca sin collector, y las imágenes continúan sometidas a Trivy HIGH/CRITICAL bloqueante.
 
 ## Estado implementado en frontend -- TEC-QLT-001a y TEC-QLT-003a
 

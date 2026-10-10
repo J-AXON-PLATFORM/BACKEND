@@ -11,15 +11,35 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 20s
 
+jaxon:
+  environment: ${JAXON_ENVIRONMENT:local}
+
+logging:
+  structured:
+    format:
+      console: ${JAXON_LOG_FORMAT:logstash}
+    json:
+      add:
+        service.name: ${spring.application.name}
+        service.environment: ${jaxon.environment}
+
 server:
   port: ${SERVER_PORT:8080}
   shutdown: graceful
 
 management:
+  logging:
+    export:
+      otlp:
+        enabled: false
+  otlp:
+    metrics:
+      export:
+        enabled: false
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,prometheus
   endpoint:
     health:
       probes:
@@ -31,3 +51,24 @@ management:
           include: livenessState
         readiness:
           include: readinessState,db
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${jaxon.environment}
+  tracing:
+    propagation:
+      type: w3c
+    sampling:
+      probability: ${JAXON_TRACING_SAMPLING_PROBABILITY:0.10}
+    export:
+      otlp:
+        enabled: ${JAXON_TRACING_EXPORT_OTLP_ENABLED:false}
+  opentelemetry:
+    tracing:
+      limits:
+        max-attributes: 64
+        max-attribute-value-length: 256
+      export:
+        otlp:
+          endpoint: ${JAXON_TRACING_OTLP_ENDPOINT:http://127.0.0.1:4318/v1/traces}
+          timeout: ${JAXON_TRACING_OTLP_TIMEOUT:5s}

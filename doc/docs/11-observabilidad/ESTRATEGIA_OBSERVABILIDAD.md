@@ -18,6 +18,12 @@ Permitir responder qué está ocurriendo, por qué y qué capacidades están afe
 
 La aplicación produce estándares/desacoplamiento: Micrometer/Prometheus-compatible metrics, OpenTelemetry y logs JSON estructurados.
 
+## Estado implementado en backend -- TEC-OPS-002a, TEC-OPS-003a y TEC-OPS-004a
+
+El backend produce logs JSON estructurados, expone métricas Prometheus mediante Actuator e instrumenta trazas con OpenTelemetry y propagación W3C. La aplicación no instala ni requiere Loki, Prometheus, Grafana, Tempo u otro collector para arrancar; la pérdida del destino de telemetría no es una dependencia crítica del core.
+
+En Local, la exportación OTLP está desactivada por defecto. Solo la exportación de trazas puede habilitarse mediante configuración explícita; los exportadores OTLP de logs y métricas permanecen desactivados. No se implementan dashboards, alertas, retención centralizada ni infraestructura de observabilidad en este bloque.
+
 ## Señales
 
 - logs;
@@ -53,7 +59,7 @@ La aplicación produce estándares/desacoplamiento: Micrometer/Prometheus-compat
 
 ## Sampling
 
-- errores: 100 % de trazas cuando sea técnicamente posible/seguro;
+- errores: aspiración de 100 % cuando sea técnicamente posible/seguro; el head sampling inicial no lo garantiza;
 - operaciones normales: 10 % inicial, configurable;
 - no registrar contenido sensible indiscriminadamente.
 

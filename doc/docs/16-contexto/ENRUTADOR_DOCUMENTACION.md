@@ -58,7 +58,7 @@ Estado Python verificado el 2026-10-08: `AUTOMATION-COLLECTOR` fue publicado con
 
 Los bloques de fundación, health/contenedores, Compose Local y contratos ejecutables mínimos fueron completados, integrados y verificados en su alcance técnico. La ruta inmediata vuelve a ser analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0. Para ese análisis, cargar obligatoriamente las cinco fuentes de continuidad y luego:
 
-- `docs/12-agil/GESTION_BACKLOG.md`, `DEFINICION_PREPARADO.md` y `DEFINICION_TERMINADO.md`;
+- `docs/12-agil/GESTION_BACKLOG.md`, `docs/12-agil/GUIAS_TAREAS.md` y `docs/12-agil/FLUJO_KANBAN.md`;
 - los documentos específicos de plataforma, arquitectura, contratos, datos, seguridad y pruebas capaces de delimitar el incremento;
 - la primera vertical E2E solo si el alcance analizado la afecta.
 
