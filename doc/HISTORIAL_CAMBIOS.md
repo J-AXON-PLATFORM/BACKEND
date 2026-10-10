@@ -11,6 +11,8 @@ El harness aislado crea fuentes y destinos PostgreSQL 18.6/pgvector 0.8.6 efíme
 
 `Backend CI` incorpora el harness al job existente y reutiliza las imágenes locales ya construidas; no crea workflows ni publica o conserva backups como artifacts. Permanecen fuera de alcance base backup, WAL/PITR, cifrado, storage externo, scheduling, rotación/retención, documentos, infraestructura y operación Production. Los objetivos RPO/RTO no quedan demostrados; `PRODUCTION_READY = NO`.
 
+El bloque se integró en `develop` mediante `BACKEND#11`, squash `57dca8d0856618bac1fc2ae48ea3dfb630409fca`; los runs `38031629641` de PR y `38031904168` post-merge finalizaron correctamente, incluido el gate de backup/restore.
+
 ---
 
 ## Observabilidad base backend -- TEC-OPS-002a, TEC-OPS-003a y TEC-OPS-004a, 2026-10-09
