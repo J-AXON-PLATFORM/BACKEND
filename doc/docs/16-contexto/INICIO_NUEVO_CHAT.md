@@ -13,7 +13,7 @@ No hace falta adjuntar el legado salvo que una decisión concreta necesite contr
 
 ## Texto para copiar en el siguiente chat
 
-Continuaremos **J-AXON** desde la documentación canónica posterior a **CKP-JAXON-005**. Mi nombre es **LUIS** y debes mencionarlo de forma natural en cada respuesta. El descubrimiento inicial y el refinamiento/diseño detallado v1 están cerrados hasta el **Lote 54** y el proyecto está documentalmente `DESIGN_READY`. La implementación nueva comenzó de forma acotada: existen las fundaciones backend/frontend/Python, persistencia base, health/readiness, contenedores backend/frontend y sus CI verificadas; no existe funcionalidad de negocio ni `PRODUCTION_READY`. No tienes autorización general para programar, modificar GitHub, crear repositorios/branches/Issues/Projects/PRs/workflows ni desplegar.
+Continuaremos **J-AXON** desde la documentación canónica posterior a **CKP-JAXON-005**. Mi nombre es **LUIS** y debes mencionarlo de forma natural en cada respuesta. El descubrimiento inicial y el refinamiento/diseño detallado v1 están cerrados hasta el **Lote 54** y el proyecto está documentalmente `DESIGN_READY`. La baseline técnica de OLA 0 está cerrada e incluye las fundaciones backend/frontend/Python, persistencia base, health/readiness, contenedores, contratos, observabilidad, backup/restore lógico y supply-chain multirepo con Dependabot/Gitleaks; no existe funcionalidad de negocio ni `PRODUCTION_READY`. OLA 1 no está autorizada. No tienes autorización general para programar, modificar GitHub, crear repositorios/branches/Issues/Projects/PRs/workflows ni desplegar.
 
 Antes de responder o proponer una acción, **lee y contrasta los archivos reales; no uses solo memoria ni el checkpoint**. Orden obligatorio:
 
@@ -37,4 +37,4 @@ Reglas críticas:
 - `doc` permanece 1.0.0;
 - diseño/documentación aprobados != implementación/verificación.
 
-Si LUIS autoriza expresamente iniciar implementación, respeta el alcance exacto autorizado. La recomendación de readiness es empezar por **OLA 0 + mínimo necesario para alcanzar temprano la primera vertical E2E**, pero no ejecutes esa recomendación sin autorización.
+Si LUIS autoriza expresamente iniciar implementación, respeta el alcance exacto autorizado. El siguiente trabajo debe ser el análisis y delimitación de un primer incremento pequeño de OLA 1 orientado a alcanzar temprano la primera vertical E2E; no lo implementes sin autorización.

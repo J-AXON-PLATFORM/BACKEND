@@ -16,7 +16,7 @@
 - PRs no reciben secretos productivos. Cancelar runs obsoletos del mismo PR cuando no sean deployments/releases.
 <!-- JAXON-CKP003:END -->
 
-## Estado implementado en backend -- TEC-PLT-003a, TEC-QLT-003a, TEC-QLT-004a, AC-JAXON-059, observabilidad base, TEC-OPS-005a y TEC-OPS-006a
+## Estado implementado en backend -- TEC-PLT-003a, TEC-QLT-003a, TEC-QLT-004a, AC-JAXON-059, observabilidad, backup/restore y supply-chain base
 
 El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, implementa la línea base ejecutable actual del backend:
 
@@ -31,6 +31,7 @@ El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, impleme
 - permisos mínimos `contents: read`, sin secretos, despliegues, publicación de artefactos ni escritura en el repositorio;
 - `actions/checkout` y `actions/setup-java` fijadas por SHA completo, con credenciales persistentes deshabilitadas;
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
+- checkout de historial completo y Gitleaks 8.30.1 bloqueante, verificado mediante SHA-256 y ejecutado con redacción total antes de compilar.
 
 La ampliación histórica de contenedores se integró mediante `BACKEND#5`, squash `90c550714b861beb7d6388cf571744efcda4af8d`, con runs verdes `37879426717` y `37879749721`. AC-JAXON-059 añade al mismo job pruebas contractuales Maven y `oasdiff` 1.33.0 verificado por SHA-256; SFTP sigue pendiente. Los rulesets continúan pendientes por el plan del repositorio privado.
 
@@ -52,6 +53,7 @@ El workflow `.github/workflows/frontend-ci.yml`, denominado `Frontend CI`, imple
 - `NEXT_TELEMETRY_DISABLED=1`, permisos `contents: read`, sin secretos, artefactos, publicación o despliegue;
 - `actions/checkout@v7.0.1` y `actions/setup-node@v7.0.0` fijadas por SHA completo, con credenciales persistentes deshabilitadas;
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
+- checkout de historial completo y el mismo gate Gitleaks bloqueante, sin modificar las auditorías npm ni su excepción cerrada.
 
 La activación fue integrada mediante el Pull Request frontend `#1`, squash `0a34d6dadacc95351544996235faf6bcb0b21b65`. El run de PR `37849248403` y el run post-merge sobre `develop` `37849379045` finalizaron correctamente.
 
@@ -70,8 +72,15 @@ El workflow `.github/workflows/python-ci.yml`, denominado `Python CI`, implement
 - permisos `contents: read`, sin secretos, publicación, artefactos o despliegue;
 - `actions/checkout@v7.0.1`, `actions/setup-python@v7.0.0` y `astral-sh/setup-uv@v10.2.0` fijadas por SHA completo, con credenciales persistentes deshabilitadas;
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
+- checkout de historial completo y el mismo gate Gitleaks bloqueante, sin modificar `pyproject.toml` o `uv.lock`.
 
 La activación base fue integrada mediante `AUTOMATION-COLLECTOR#1`, squash `a040c5fba34fae22903088b82191e8355deaab26`, con runs verdes `37852626079` y `37852683236`. AC-JAXON-059 añade `jsonschema`/`referencing`, 27 pruebas contractuales adicionales y verificación local del manifest al mismo workflow. SFTP, Paramiko y PyInstaller quedan pendientes.
+
+## Baseline Dependabot y detección de secretos
+
+Los tres repositorios mantienen un único workflow y un único job por CI. Sus configuraciones Dependabot cubren los ecosistemas versionados y agrupan solo security updates; `open-pull-requests-limit: 0` impide PR ordinarios de versión y la ausencia deliberada de `target-branch` permite aplicar los security updates sobre la rama predeterminada `develop`. No hay auto-merge.
+
+Gitleaks se ejecuta dentro de cada job existente inmediatamente después del checkout. La descarga usa la release exacta 8.30.1 y SHA-256 `551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb`; cualquier hallazgo falla el job y `--redact=100` evita imprimir el valor. No existen allowlists o exclusiones. GitHub Secret Protection, CodeQL y Dependency Review Action permanecen fuera por disponibilidad del plan; no se crean workflows, artifacts o despliegues.
 
 ## Propósito
 
