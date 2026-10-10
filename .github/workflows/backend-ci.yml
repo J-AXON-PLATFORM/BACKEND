@@ -30,6 +30,20 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Scan Git history for secrets
+        env:
+          GITLEAKS_VERSION: "8.30.1"
+          GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          archive_path="${RUNNER_TEMP}/${archive}"
+          curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}" \
+            --output "${archive_path}"
+          printf '%s  %s\n' "${GITLEAKS_SHA256}" "${archive_path}" | sha256sum --check --strict
+          tar --extract --gzip --file "${archive_path}" --directory "${RUNNER_TEMP}" gitleaks
+          "${RUNNER_TEMP}/gitleaks" git --redact=100 --verbose .
+
       - name: Set up Java 25
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:

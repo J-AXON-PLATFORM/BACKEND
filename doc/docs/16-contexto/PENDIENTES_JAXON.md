@@ -2,7 +2,7 @@
 
 > **Clasificación:** CONDICIONAL, activa para continuidad.  
 > **Checkpoint externo:** CKP-JAXON-005 | 2026-09-29.  
-> **Estado:** baseline `DESIGN_READY`; implementación acotada con fundaciones, health/contenedores, Compose Local, contratos, observabilidad y backup/restore lógico backend verificados; `PRODUCTION_READY = NO`.
+> **Estado:** baseline `DESIGN_READY`; implementación técnica de OLA 0 cerrada con supply-chain multirepo; `PRODUCTION_READY = NO`.
 
 ## Punto de reanudación
 
@@ -10,7 +10,7 @@ No reabrir AC-JAXON-001..058 ni los Lotes 30--54 salvo instrucción expresa o co
 
 `TEC-PLT-001a` y `TEC-PLT-002a` fueron completadas y verificadas el 2026-10-06; los bloques de fundación/CI y `TEC-OPS-001a`, `TEC-PLT-006a`, `TEC-PLT-006b`, `TEC-QLT-003a` fueron completados y verificados el 2026-10-08; `TEC-PLT-007a`/`TEC-QLT-004a`, contratos y observabilidad se completaron el 2026-10-09; `TEC-OPS-005a`/`TEC-OPS-006a` fueron completadas, integradas y verificadas el 2026-10-10 mediante `BACKEND#11`, squash `57dca8d0856618bac1fc2ae48ea3dfb630409fca`, con runs `38031629641` y `38031904168` verdes. Existen las tres fundaciones, persistencia PostgreSQL/pgvector/Flyway con ocho schemas, health/probes, imágenes locales, Compose Local y gates de contenedor, Compose y backup/restore lógico. No existen tablas ni funcionalidad de negocio.
 
-El resto de OLA 0 y la primera vertical E2E continúan pendientes. Los contratos ejecutables no implementan endpoints, persistencia o transporte. La observabilidad base no instala collectors, dashboards o alertas. La baseline lógica no implementa base backup, WAL/PITR, cifrado, scheduling, retención, storage externo, documentos ni prueba RPO/RTO. Ninguno de ambos bloques constituye evidencia operativa Production. La siguiente tarea técnica debe analizarse y delimitarse como incremento pequeño antes de ejecutarse; la continuidad incremental no equivale a autorización general.
+La baseline técnica planificada para OLA 0 queda cerrada con Dependabot y detección de secretos multirepo. La primera vertical E2E y toda funcionalidad de OLA 1 continúan pendientes y sin autorización. Los contratos ejecutables no implementan endpoints, persistencia o transporte; observabilidad y backup/restore tampoco constituyen evidencia operativa Production. La siguiente tarea debe analizarse y delimitarse como incremento pequeño antes de ejecutarse; la continuidad incremental no equivale a autorización general.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -67,11 +67,12 @@ El resto de OLA 0 y la primera vertical E2E continúan pendientes. Los contratos
 - La observabilidad base backend produce logs JSON con correlación, métricas Prometheus y trazas W3C/OpenTelemetry opcionales. Continúan pendientes la infraestructura centralizada, dashboards, alertas, validación operativa de SLI/SLO y una estrategia que pueda aproximar la aspiración de conservar trazas de error sin prometerla mediante head sampling.
 - La propagación del `correlationId` propio hacia ejecución servlet asíncrona o SSE permanece pendiente hasta que exista un flujo funcional que permita diseñarla y verificarla; la baseline actual cubre solicitudes síncronas.
 - La baseline de `TEC-OPS-005a`/`TEC-OPS-006a` crea dumps custom y manifests verificables, restaura únicamente sobre un destino vacío y separado, y prueba escenarios positivos/negativos en recursos efímeros. Backup/DR Production continúa pendiente.
+- La baseline supply-chain final de OLA 0 usa `develop` como default branch sin cambiar el rol productivo de `main`; habilita Dependency Graph, Dependabot alerts y security updates agrupados; deshabilita version updates ordinarios; y añade Gitleaks bloqueante con historial completo y redacción a los tres jobs existentes. No habilita auto-merge, Secret Protection, CodeQL, SBOM, firma o publicación.
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
 - Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
-- Próxima acción técnica: analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0; contratos base, Compose Local, observabilidad y backup/restore lógico ya no forman parte de los pendientes de implementación.
-- El objetivo sigue siendo avanzar por OLA 0 y alcanzar temprano la primera vertical E2E, no implementar “todo J-AXON de una vez”.
+- Próxima acción técnica: analizar y delimitar exclusivamente el primer incremento pequeño de OLA 1. No existe autorización para implementarlo.
+- El objetivo siguiente es alcanzar temprano la primera vertical E2E mediante incrementos autorizados, no implementar “todo J-AXON de una vez”.
 
 ## Reglas de continuidad
 

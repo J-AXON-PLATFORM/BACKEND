@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | fundaciones, contratos, observabilidad base y backup/restore lógico verificados, 2026-10-10
-> **Estado documental:** baseline v1 `DESIGN_READY`; implementación nueva acotada con fundaciones, persistencia técnica, contenedores, Compose Local, contratos, observabilidad y backup/restore lógico; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | baseline técnica de OLA 0 cerrada con supply-chain multirepo, 2026-10-10
+> **Estado documental:** baseline v1 `DESIGN_READY`; implementación técnica de OLA 0 cerrada sin funcionalidad de negocio; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -12,7 +12,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 ## 0. Estado de inicialización
 
 - Estado: `DESIGN_READY`: descubrimiento y refinamiento/diseño detallado v1 cerrados documentalmente; la implementación comenzó de forma acotada con las tres fundaciones y sus CI base, sin autorización general para el resto del backlog.
-- Implementación verificada: bootstrap backend y persistencia técnica con ocho schemas; health, contenedores y Compose Local; observabilidad base; backup/restore lógico PostgreSQL con manifest SHA-256 y prueba aislada; OpenAPI 3.1.2 contract-first de cinco operaciones sin controladores; JSON Schema Agent 1.0, fixtures y pruebas; copia vendorizada y validador Agent Python offline; fundaciones frontend/Python y CI ampliadas. No contiene tablas ni funcionalidad de negocio.
+- Implementación técnica de OLA 0: bootstrap backend y persistencia técnica con ocho schemas; health, contenedores y Compose Local; observabilidad base; backup/restore lógico PostgreSQL con manifest SHA-256 y prueba aislada; OpenAPI 3.1.2 contract-first de cinco operaciones sin controladores; JSON Schema Agent 1.0, fixtures y pruebas; copia vendorizada y validador Agent Python offline; fundaciones frontend/Python; Dependabot y Gitleaks multirepo; CI ampliadas. No contiene tablas ni funcionalidad de negocio.
 - Madurez: baseline documental `DESIGN_READY` e implementación incremental iniciada; `PRE_IMPLEMENTACION` fue el estado anterior al inicio de `TEC-PLT-001a`.
 - Modelo de repositorios: `MULTIREPO`: `frontend`, `backend`, `automation-collector`.
 - Estado remoto histórico verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada con tres repositorios privados. `backend` fue inicializado y publicado de forma controlada en `https://github.com/J-AXON-PLATFORM/BACKEND` mediante `TEC-GIT-001C`.
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-10-10.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: la primera vertical E2E y el resto no autorizado de OLA 0 continúan sin implementar. OpenAPI y JSON Schema son ejecutables como contratos, pero no existen controladores, SFTP, snapshots reales, tareas reales ni discovery funcional. No existe despliegue ni infraestructura Production.
+- Estado funcional: OLA 1 y la primera vertical E2E continúan sin implementar ni autorización. OpenAPI y JSON Schema son ejecutables como contratos, pero no existen controladores, SFTP, snapshots reales, tareas reales ni discovery funcional. No existe despliegue ni infraestructura Production.
 
 ## 1. Identidad
 
@@ -368,6 +368,7 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 - Push/merge válido a `develop`: construir/publicar artefacto inmutable para Development.
 - CD progresivo: Development -> QA -> Production usando **el mismo digest**, sin rebuild; Production requiere aprobación explícita.
 - GitHub Actions con permisos mínimos; actions externas fijadas por SHA completo. Dependabot mediante PR; CodeQL/GHAS donde esté disponible sin dependencia obligatoria de licencia.
+- Estado supply-chain OLA 0: `develop` es la default branch de los tres repositorios y `main` conserva su rol de producción. Dependency Graph, Dependabot alerts y security updates agrupados están habilitados; `.github/dependabot.yml` bloquea version updates ordinarios. Los jobs existentes ejecutan Gitleaks 8.30.1 sobre historial completo, fijado por SHA-256, bloqueante y con redacción total.
 - CI de PR no usa secretos productivos; cancelar CI obsoleto del mismo PR cuando sea seguro.
 - Backend CI: compile, unit, verificación modular, PostgreSQL/Flyway, contratos y SFTP cuando aplique.
 - Estado backend: `Backend CI` ejecuta `clean verify`, incluidas seis pruebas de OpenAPI/JSON Schema/fixtures/manifest, y conserva Compose, Testcontainers, builds, smoke y scans. También ejecuta un backup/restore lógico aislado con datos sintéticos, manifest verificable y casos negativos. `oasdiff` 1.33.0 se descarga por versión exacta y SHA-256 para validar el documento y bloquear breaking changes cuando exista baseline. SFTP continúa pendiente; no hay secretos, publicación o despliegue.
@@ -494,6 +495,7 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 - Los tres repositorios tienen Git local y remoto SSH `origin`. En `frontend`, `main` apunta a `ffec9bdd39d5168ed5f7d3bbaa68d5d4bc5860ab` y `develop` al squash de CI `0a34d6dadacc95351544996235faf6bcb0b21b65`. En `automation-collector`, `main` apunta a `a1079d8d5bac0d0436daae844e0b1ba9e42a9d12` y `develop` al squash de CI `a040c5fba34fae22903088b82191e8355deaab26`. Las ramas siguen sus remotos.
 - Las autorizaciones específicas consumidas se limitaron a las fundaciones, publicaciones, CI y sincronizaciones documentales ejecutadas. No autorizan operar backlog remoto, crear otros Pull Requests o workflows, configurar rulesets, crear tags/releases/Packages/artefactos ni desplegar.
 - Ramas permanentes: `main` (producción) y `develop` (integración/candidato a producción, no entorno físico).
+- Rama predeterminada remota: `develop` en los tres repositorios; esta selección alinea Dependency Graph, Dependabot y PR normales con la integración vigente sin promover cambios a `main`.
 - Ramas cortas desde `develop`: `feature/*`, `fix/*`, `refactor/*`, `test/*`, `docs/*`, `chore/*`, `ci/*`.
 - Hotfix: nace de `main`, PR a `main`, luego sincronizar a `develop`.
 - Ramas cortas se eliminan tras merge; `main`/`develop` permanentes.
@@ -611,4 +613,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con fundaciones, persistencia técnica, health/contenedores, Compose Local y contratos ejecutables mínimos verificados de forma acotada. Los tres repositorios oficiales están publicados. OpenAPI/JSON Schema no implican endpoints ni transporte; SFTP, funcionalidad Agent y PyInstaller siguen pendientes. El frontend conserva sus riesgos temporales documentados. Lotes 30--54 y AC-JAXON-059 permanecen aprobados. El próximo paso es analizar y delimitar exclusivamente otro incremento pequeño de OLA 0; no existe autorización ilimitada para implementar, operar GitHub o desplegar.
+Baseline `DESIGN_READY`, con la base técnica de OLA 0 cerrada de forma acotada, incluida la baseline supply-chain multirepo. Los tres repositorios oficiales están publicados. OpenAPI/JSON Schema no implican endpoints ni transporte; SFTP, funcionalidad Agent y PyInstaller siguen pendientes para incrementos futuros. El frontend conserva sus riesgos temporales documentados. Lotes 30--54 y AC-JAXON-059 permanecen aprobados. El próximo paso es analizar y delimitar exclusivamente el primer incremento pequeño de OLA 1; no existe autorización para implementarlo, operar GitHub fuera de un nuevo alcance o desplegar.

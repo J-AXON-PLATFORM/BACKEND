@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Baseline supply-chain multirepo y cierre técnico de OLA 0, 2026-10-10
+
+Los tres repositorios configuran Dependabot exclusivamente para security updates agrupados, con `open-pull-requests-limit: 0`, sin `target-branch` ni auto-merge. La rama predeterminada pasa a ser `develop` sin modificar la historia ni la semántica de producción de `main`; Dependency Graph y Dependabot alerts quedan habilitados antes de activar los security updates.
+
+Los workflows existentes incorporan Gitleaks 8.30.1 bloqueante sobre el historial completo. El binario se descarga por versión exacta, se valida con SHA-256 y se ejecuta con redacción total, sin allowlists. Frontend y automation-collector amplían el checkout a historial completo; no se crean workflows o jobs y no se relajan auditorías, scans o excepciones existentes.
+
+No cambian manifiestos, lockfiles, contratos, migraciones o lógica funcional. Permanecen diferidos SBOM, CodeQL, Dependency Review Action, Secret Protection, SAST/DAST adicional, firma y provenance. No se publican artefactos, imágenes o releases y no se despliega. La baseline técnica de OLA 0 queda cerrada; OLA 1 requiere análisis, delimitación y autorización independiente. `PRODUCTION_READY = NO`.
+
+---
+
 ## Backup/restore lógico PostgreSQL y gate CI -- TEC-OPS-005a y TEC-OPS-006a, 2026-10-10
 
 Se implementan scripts versionados para crear un dump lógico custom de PostgreSQL 18 y un manifest cerrado con SHA-256, tamaño, versiones, schemas e historial Flyway, y para restaurarlo sobre un destino vacío mediante una única transacción. La publicación usa archivos temporales privados, permisos `0600`, rename y rechazo de sobrescritura; el manifest no contiene credenciales ni hostname.
