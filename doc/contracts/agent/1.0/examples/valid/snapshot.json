@@ -1,0 +1,27 @@
+{
+  "contractVersion": "1.0",
+  "messageType": "AGENT_SNAPSHOT",
+  "messageId": "6f69bb91-ef36-4c9f-a025-9a4c8ee96b43",
+  "agentId": "b74f39ce-e229-4a0f-9da3-42e28f96377f",
+  "createdAt": "2026-10-09T10:15:30Z",
+  "snapshotId": "c7ed2de8-4962-4fb1-83b3-9ff62ee607cc",
+  "capturedAt": "2026-10-09T10:15:00Z",
+  "payload": {
+    "hostname": "workstation-042.example.internal",
+    "operatingSystem": {
+      "family": "LINUX",
+      "name": "Example Linux",
+      "version": "1.0"
+    },
+    "architecture": "X86_64",
+    "logicalCpuCount": 8,
+    "memoryBytes": 17179869184,
+    "storageVolumes": [
+      {
+        "name": "/",
+        "totalBytes": 512000000000,
+        "availableBytes": 320000000000
+      }
+    ]
+  }
+}

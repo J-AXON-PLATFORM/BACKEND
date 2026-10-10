@@ -21,6 +21,8 @@
         <jackson-bom.version>3.1.7</jackson-bom.version>
         <project.build.outputTimestamp>2026-10-08T00:00:00Z</project.build.outputTimestamp>
         <spring-modulith.version>2.1.1</spring-modulith.version>
+        <swagger-parser.version>2.1.48</swagger-parser.version>
+        <json-schema-validator.version>3.0.6</json-schema-validator.version>
         <tomcat.version>11.0.26</tomcat.version>
     </properties>
 
@@ -93,6 +95,18 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.parser.v3</groupId>
+            <artifactId>swagger-parser</artifactId>
+            <version>${swagger-parser.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>json-schema-validator</artifactId>
+            <version>${json-schema-validator.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

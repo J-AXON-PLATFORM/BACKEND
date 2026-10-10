@@ -1,0 +1,16 @@
+{
+  "contractVersion": "1.0",
+  "messageType": "AGENT_RESULT",
+  "messageId": "46582f73-bf95-48b8-a33c-19fc18b53f36",
+  "agentId": "b74f39ce-e229-4a0f-9da3-42e28f96377f",
+  "createdAt": "2026-10-09T10:25:00Z",
+  "resultId": "7fe3d240-89d1-4f74-888c-e9842808c820",
+  "taskId": "f835564e-a343-417b-a27e-850d3d2c3915",
+  "taskType": "COLLECT_NETWORK_STATE",
+  "status": "FAILED",
+  "completedAt": "2026-10-09T10:24:50Z",
+  "error": {
+    "code": "COLLECTION_FAILED",
+    "message": "The authorized collection could not be completed."
+  }
+}

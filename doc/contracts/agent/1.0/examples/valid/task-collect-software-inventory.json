@@ -1,0 +1,11 @@
+{
+  "contractVersion": "1.0",
+  "messageType": "AGENT_TASK",
+  "messageId": "c873405c-8a45-43f3-8290-b09b43bfa0b7",
+  "agentId": "b74f39ce-e229-4a0f-9da3-42e28f96377f",
+  "createdAt": "2026-10-09T10:20:00Z",
+  "taskId": "64cfb078-ea3e-42c0-b9d6-b2b7331875aa",
+  "taskType": "COLLECT_SOFTWARE_INVENTORY",
+  "expiresAt": "2026-10-09T11:20:00Z",
+  "payload": {}
+}

@@ -1,0 +1,11 @@
+{
+  "contractVersion": "1.0",
+  "messageType": "AGENT_TASK",
+  "messageId": "e527ac83-4c62-42d0-ae3b-a5a48312a715",
+  "agentId": "b74f39ce-e229-4a0f-9da3-42e28f96377f",
+  "createdAt": "2026-10-09T10:20:00Z",
+  "taskId": "3405710d-52db-44a2-825a-0da389ccbc7f",
+  "taskType": "COLLECT_SNAPSHOT",
+  "expiresAt": "2026-10-09T10:35:00Z",
+  "payload": {}
+}

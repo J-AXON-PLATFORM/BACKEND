@@ -1,0 +1,304 @@
+package com.jaxon.contracts;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.networknt.schema.InputFormat;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaLocation;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.SchemaRegistryConfig;
+import com.networknt.schema.SpecificationVersion;
+import com.networknt.schema.dialect.Dialects;
+import io.swagger.v3.core.util.Yaml31;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.parser.OpenAPIV3Parser;
+import io.swagger.v3.parser.core.models.ParseOptions;
+import io.swagger.v3.parser.core.models.SwaggerParseResult;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+
+class ExecutableContractsTest {
+
+    private static final Path AGENT_ROOT = Path.of("doc/contracts/agent/1.0");
+    private static final Path OPENAPI_ROOT = Path.of("doc/contracts/openapi/1.0");
+    private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
+    private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
+    private static final List<String> AGENT_SCHEMAS = List.of(
+            "common.schema.json", "snapshot.schema.json", "task.schema.json", "result.schema.json");
+    private static final ObjectMapper JSON = new ObjectMapper();
+
+    @Test
+    void openApiIsResolvedAndLimitedToApprovedOperations() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(true);
+        options.setResolveFully(false);
+
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(api.getOpenapi()).isEqualTo("3.1.2");
+        assertThat(api.getInfo().getVersion()).isEqualTo("1.0");
+        assertThat(api.getServers()).singleElement().extracting("url").isEqualTo("/api/v1");
+        assertThat(api.getPaths().keySet())
+                .containsExactlyInAnyOrder(
+                        "/auth/login",
+                        "/auth/me",
+                        "/assets",
+                        "/assets/{assetId}",
+                        "/assets/{assetId}/technical-state");
+
+        List<Operation> operations = operations(api);
+        assertThat(operations).hasSize(5);
+        assertThat(operations.stream().map(Operation::getOperationId))
+                .doesNotContainNull()
+                .doesNotHaveDuplicates();
+
+        operations.forEach(operation -> operation.getResponses().forEach((status, response) -> {
+            if (Integer.parseInt(status) >= 400) {
+                assertThat(response.get$ref() != null
+                                || response.getContent().containsKey("application/problem+json"))
+                        .as("error response %s for %s uses RFC 9457", status, operation.getOperationId())
+                        .isTrue();
+            }
+        }));
+    }
+
+    @Test
+    void openApiExamplesMatchTheirSchemas() throws IOException {
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_ROOT.resolve("openapi.yaml").toFile());
+        Map<String, String> examples = Map.of(
+                "asset-create-request.json", "AssetCreateRequest",
+                "asset-response.json", "AssetResponse",
+                "technical-state-response.json", "TechnicalStateResponse",
+                "technical-state-empty-response.json", "TechnicalStateResponse",
+                "problem-validation.json", "Problem");
+
+        examples.forEach((file, component) -> {
+            ObjectNode wrapper = JSON.createObjectNode();
+            wrapper.put("$schema", DRAFT_2020_12);
+            try {
+                String definitions = root.get("components")
+                        .get("schemas")
+                        .toString()
+                        .replace("#/components/schemas/", "#/$defs/");
+                wrapper.set("$defs", JSON.readTree(definitions));
+            } catch (IOException exception) {
+                throw new IllegalStateException("Cannot prepare OpenAPI schemas", exception);
+            }
+            wrapper.put("$ref", "#/$defs/" + component);
+            Schema schema = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12)
+                    .getSchema(wrapper.toString(), InputFormat.JSON);
+            List<com.networknt.schema.Error> errors = schema.validate(
+                    read(OPENAPI_ROOT.resolve("examples").resolve(file)),
+                    InputFormat.JSON,
+                    context -> context.executionConfig(config -> config.formatAssertionsEnabled(true)));
+            assertThat(errors).as("OpenAPI example %s", file).isEmpty();
+        });
+    }
+
+    @Test
+    void agentSchemasAreValidDraft202012AndResolveOffline() throws IOException {
+        Map<String, String> schemas = agentSchemaData();
+        Schema metaSchema = SchemaRegistry.withDialect(Dialects.getDraft202012())
+                .getSchema(SchemaLocation.of(DRAFT_2020_12));
+
+        for (String file : AGENT_SCHEMAS) {
+            List<com.networknt.schema.Error> errors = metaSchema.validate(
+                    schemas.get(SCHEMA_BASE + file), InputFormat.JSON);
+            assertThat(errors).as("meta-schema validation for %s", file).isEmpty();
+        }
+
+        SchemaRegistry registry = agentRegistry(schemas);
+        for (String file : List.of("snapshot.schema.json", "task.schema.json", "result.schema.json")) {
+            assertThat(registry.getSchema(SchemaLocation.of(SCHEMA_BASE + file))).isNotNull();
+        }
+    }
+
+    @Test
+    void agentFixturesEnforceApprovedBoundaries() throws IOException {
+        SchemaRegistry registry = agentRegistry(agentSchemaData());
+
+        try (Stream<Path> files = Files.list(AGENT_ROOT.resolve("examples/valid"))) {
+            files.sorted().forEach(path -> assertThat(validate(registry, schemaFor(path), path))
+                    .as("valid fixture %s", path.getFileName())
+                    .isEmpty());
+        }
+        try (Stream<Path> files = Files.list(AGENT_ROOT.resolve("examples/invalid"))) {
+            files.sorted().forEach(path -> assertThat(validate(registry, schemaFor(path), path))
+                    .as("invalid fixture %s", path.getFileName())
+                    .isNotEmpty());
+        }
+    }
+
+    @Test
+    void agentSchemasRejectRemoteAndTraversalReferences() throws IOException {
+        for (String file : AGENT_SCHEMAS) {
+            JsonNode schema = JSON.readTree(AGENT_ROOT.resolve(file).toFile());
+            assertThat(invalidReferences(schema)).as("safe references in %s", file).isEmpty();
+        }
+
+        assertThat(invalidReferences(JSON.readTree("{\"$ref\":\"https://example.com/schema.json\"}")))
+                .containsExactly("https://example.com/schema.json");
+        assertThat(invalidReferences(JSON.readTree("{\"$ref\":\"../secret.schema.json\"}")))
+                .containsExactly("../secret.schema.json");
+    }
+
+    @Test
+    void manifestIsCompleteDeterministicAndTamperEvident() throws IOException {
+        JsonNode manifest = JSON.readTree(AGENT_ROOT.resolve("manifest.json").toFile());
+        assertThat(verifyManifest(manifest)).isTrue();
+
+        ObjectNode tampered = manifest.deepCopy();
+        ((ObjectNode) tampered.get("files").get(0)).put("sha256", "0".repeat(64));
+        assertThat(verifyManifest(tampered)).isFalse();
+    }
+
+    private static List<Operation> operations(OpenAPI api) {
+        List<Operation> result = new ArrayList<>();
+        api.getPaths().values().forEach(path -> {
+            add(result, path.getGet());
+            add(result, path.getPost());
+            add(result, path.getPut());
+            add(result, path.getPatch());
+            add(result, path.getDelete());
+        });
+        return result;
+    }
+
+    private static void add(List<Operation> operations, Operation operation) {
+        if (operation != null) {
+            operations.add(operation);
+        }
+    }
+
+    private static Map<String, String> agentSchemaData() throws IOException {
+        Map<String, String> schemas = new HashMap<>();
+        for (String file : AGENT_SCHEMAS) {
+            schemas.put(SCHEMA_BASE + file, read(AGENT_ROOT.resolve(file)));
+        }
+        return schemas;
+    }
+
+    private static SchemaRegistry agentRegistry(Map<String, String> schemas) {
+        return SchemaRegistry.withDefaultDialect(
+                SpecificationVersion.DRAFT_2020_12,
+                builder -> builder.schemas(schemas).schemaRegistryConfig(SchemaRegistryConfig.builder()
+                        .formatAssertionsEnabled(true)
+                        .failFast(false)
+                        .build()));
+    }
+
+    private static List<com.networknt.schema.Error> validate(
+            SchemaRegistry registry, String schemaFile, Path fixture) {
+        Schema schema = registry.getSchema(SchemaLocation.of(SCHEMA_BASE + schemaFile));
+        return schema.validate(
+                read(fixture),
+                InputFormat.JSON,
+                context -> context.executionConfig(config -> config.formatAssertionsEnabled(true)));
+    }
+
+    private static String schemaFor(Path fixture) {
+        String name = fixture.getFileName().toString();
+        if (name.equals("snapshot.json") || name.startsWith("snapshot-")) {
+            return "snapshot.schema.json";
+        }
+        if (name.startsWith("task-")) {
+            return "task.schema.json";
+        }
+        if (name.startsWith("result-")) {
+            return "result.schema.json";
+        }
+        throw new IllegalArgumentException("Unknown fixture family: " + name);
+    }
+
+    private static List<String> invalidReferences(JsonNode node) {
+        List<String> invalid = new ArrayList<>();
+        node.findValuesAsText("$ref").forEach(reference -> {
+            if (reference.contains("..")
+                    || (!reference.startsWith("#") && !reference.startsWith(SCHEMA_BASE))) {
+                invalid.add(reference);
+            }
+        });
+        return invalid;
+    }
+
+    private static boolean verifyManifest(JsonNode manifest) throws IOException {
+        if (!"1.0".equals(manifest.path("manifestVersion").asText())
+                || !"agent".equals(manifest.path("contractFamily").asText())
+                || !"1.0".equals(manifest.path("contractVersion").asText())
+                || !DRAFT_2020_12.equals(manifest.path("schemaDialect").asText())) {
+            return false;
+        }
+
+        List<String> manifestPaths = new ArrayList<>();
+        StringBuilder canonical = new StringBuilder();
+        for (JsonNode entry : manifest.path("files")) {
+            String relative = entry.path("path").asText();
+            if (relative.isBlank() || relative.contains("..") || relative.startsWith("/")) {
+                return false;
+            }
+            Path file = AGENT_ROOT.resolve(relative).normalize();
+            if (!file.startsWith(AGENT_ROOT) || !Files.isRegularFile(file)) {
+                return false;
+            }
+            String digest = sha256(Files.readAllBytes(file));
+            if (!digest.equals(entry.path("sha256").asText())) {
+                return false;
+            }
+            manifestPaths.add(relative);
+            canonical.append(digest).append("  ").append(relative).append('\n');
+        }
+
+        List<String> sorted = manifestPaths.stream().sorted().toList();
+        if (!manifestPaths.equals(sorted) || new HashSet<>(manifestPaths).size() != manifestPaths.size()) {
+            return false;
+        }
+        List<String> diskPaths;
+        try (Stream<Path> files = Files.walk(AGENT_ROOT)) {
+            diskPaths = files.filter(Files::isRegularFile)
+                    .filter(path -> !path.equals(AGENT_ROOT.resolve("manifest.json")))
+                    .map(AGENT_ROOT::relativize)
+                    .map(Path::toString)
+                    .map(path -> path.replace('\\', '/'))
+                    .sorted()
+                    .toList();
+        }
+        return manifestPaths.equals(diskPaths)
+                && sha256(canonical.toString().getBytes(StandardCharsets.UTF_8))
+                        .equals(manifest.path("bundleSha256").asText());
+    }
+
+    private static String sha256(byte[] value) {
+        try {
+            return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value));
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException(exception);
+        }
+    }
+
+    private static String read(Path path) {
+        try {
+            return Files.readString(path, StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Cannot read " + path, exception);
+        }
+    }
+}

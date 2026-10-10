@@ -1,0 +1,15 @@
+{
+  "assetId": "0b2b7ee9-017e-4d62-83e0-87056735e71e",
+  "name": "Workstation 042",
+  "assetType": "DESKTOP",
+  "status": "ACTIVE",
+  "assetTag": "ASSET-0042",
+  "serialNumber": null,
+  "manufacturer": "Example Manufacturer",
+  "model": "Example Model",
+  "responsibleUserId": null,
+  "locationLabel": "Example office",
+  "createdAt": "2026-10-09T09:00:00Z",
+  "updatedAt": "2026-10-09T09:00:00Z",
+  "version": 0
+}

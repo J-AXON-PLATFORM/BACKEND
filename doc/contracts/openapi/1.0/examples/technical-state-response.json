@@ -1,0 +1,25 @@
+{
+  "assetId": "0b2b7ee9-017e-4d62-83e0-87056735e71e",
+  "lastSeenAt": "2026-10-09T10:15:30Z",
+  "lastSnapshotAt": "2026-10-09T10:15:00Z",
+  "latestObservation": {
+    "snapshotId": "c7ed2de8-4962-4fb1-83b3-9ff62ee607cc",
+    "capturedAt": "2026-10-09T10:15:00Z",
+    "hostname": "workstation-042.example.internal",
+    "operatingSystem": {
+      "family": "LINUX",
+      "name": "Example Linux",
+      "version": "1.0"
+    },
+    "architecture": "X86_64",
+    "logicalCpuCount": 8,
+    "memoryBytes": 17179869184,
+    "storageVolumes": [
+      {
+        "name": "/",
+        "totalBytes": 512000000000,
+        "availableBytes": 320000000000
+      }
+    ]
+  }
+}

@@ -26,9 +26,15 @@
 - Validación de entrada antes de mutar estado oficial.
 - SSE se usa selectivamente para avisos servidor->browser; browser->backend sigue REST/HTTPS.
 
+## Contrato ejecutable inicial -- AC-JAXON-059
+
+`doc/contracts/openapi/1.0/openapi.yaml` implementa OpenAPI 3.1.2 con `info.version: 1.0` y server relativo `/api/v1`. Incluye exclusivamente `POST /auth/login`, `GET /auth/me`, `POST /assets`, `GET /assets/{assetId}` y `GET /assets/{assetId}/technical-state`.
+
+Modela sesión opaca por cookie, CSRF en `SessionResponse` y header `X-CSRF-Token`, `LoginRequest`, `SessionResponse`, `AssetCreateRequest`, `AssetResponse`, `TechnicalStateResponse`, RFC 9457 `Problem` y error de campo. Los ejemplos no contienen credenciales o tokens. Este contrato no demuestra ni implementa controladores.
+
 ## Pendiente de diseño detallado
 
-Operaciones/rutas, campos, errores, auth exacta de Swagger, prefijo de versión, generación de cliente y librería concreta. SFTP/JSON Schema permanece separado para Agent; no crear endpoint HTTP de snapshot por herencia del legado.
+Permanecen pendientes Swagger UI runtime, controladores/proveedor, generación de cliente y contratos de operaciones posteriores. SFTP/JSON Schema permanece separado para Agent; no crear endpoint HTTP de snapshot por herencia del legado.
 
 ---
 > **Clasificación:** CONDICIONAL  

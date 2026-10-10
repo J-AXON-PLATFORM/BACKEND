@@ -50,6 +50,14 @@ Además de OpenAPI y JSON Schema, los contratos internos del Lote 53 requieren:
 
 No se introduce una plataforma externa de consumer-driven contracts por defecto mientras el backend siga siendo un único artefacto desplegable.
 
+## Estado ejecutable inicial -- AC-JAXON-059
+
+- Backend parsea OpenAPI 3.1.2, comprueba rutas/`operationId`/RFC 9457 y valida fixtures externos contra schemas de componentes.
+- Backend valida los cuatro JSON Schemas Agent contra Draft 2020-12, resuelve `$ref` locales, prueba fixtures positivos/negativos y verifica manifest SHA-256.
+- `automation-collector` repite los fixtures con `jsonschema`/`referencing`, impide resolución remota y prueba sincronización e integridad.
+- `oasdiff` 1.33.0 valida la primera incorporación y compara breaking changes cuando exista baseline.
+- Estas pruebas verifican contratos, no conformidad de controladores, SFTP o comportamiento E2E todavía inexistentes.
+
 ## Regla de fallo
 
 Un contrato roto debe clasificarse antes de modificar tests:

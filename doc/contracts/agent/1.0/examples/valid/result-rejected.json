@@ -1,0 +1,16 @@
+{
+  "contractVersion": "1.0",
+  "messageType": "AGENT_RESULT",
+  "messageId": "cc67d0b5-917d-4243-af9d-61400c6dc6fc",
+  "agentId": "b74f39ce-e229-4a0f-9da3-42e28f96377f",
+  "createdAt": "2026-10-09T10:25:00Z",
+  "resultId": "41b313b1-fd13-42a4-b31a-42c436cc9a34",
+  "taskId": "64cfb078-ea3e-42c0-b9d6-b2b7331875aa",
+  "taskType": "COLLECT_SOFTWARE_INVENTORY",
+  "status": "REJECTED",
+  "completedAt": "2026-10-09T10:24:50Z",
+  "error": {
+    "code": "CAPABILITY_NOT_AVAILABLE",
+    "message": "The requested capability is not available."
+  }
+}

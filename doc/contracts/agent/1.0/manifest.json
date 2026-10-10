@@ -1,0 +1,95 @@
+{
+  "manifestVersion": "1.0",
+  "contractFamily": "agent",
+  "contractVersion": "1.0",
+  "schemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "sourceRepository": "J-AXON-PLATFORM/BACKEND",
+  "sourcePath": "doc/contracts/agent/1.0",
+  "files": [
+    {
+      "path": "common.schema.json",
+      "sha256": "8243d1753ba7e95737658eaf35def6de2d9e08c70d082904c31bd73c39c1adb9"
+    },
+    {
+      "path": "examples/invalid/result-expired-status.json",
+      "sha256": "c224fd92d3faa8deba0795d6ba9be6381a0474c1ca81df6c2d006792549caa31"
+    },
+    {
+      "path": "examples/invalid/result-failed-without-error.json",
+      "sha256": "ae267b2c4171b2dc8048a735018f3a9823815c8a066f4bacf754ca54e6ca3c18"
+    },
+    {
+      "path": "examples/invalid/result-succeeded-with-error.json",
+      "sha256": "d1f7d576724c41df32e234bd465916579b201ff6577d65cf4b7e41bc71107d15"
+    },
+    {
+      "path": "examples/invalid/snapshot-forbidden-field.json",
+      "sha256": "ab78b74eef09f72f16f12862098393e217a754c1e8136150f1c15d1c4a42be38"
+    },
+    {
+      "path": "examples/invalid/snapshot-invalid-uuid.json",
+      "sha256": "639658452a43b5ba6fa0bd0f69ec5b2a9b3bc305d437f8f0e8d2ba02e4dfacc8"
+    },
+    {
+      "path": "examples/invalid/snapshot-non-utc-time.json",
+      "sha256": "7cb08bf027f2fd238afb30976980970b221b489e86c618ad5fcf83a749e51c80"
+    },
+    {
+      "path": "examples/invalid/snapshot-unknown-version.json",
+      "sha256": "0f3e766ddea24ee68a4b1500d59f46108e625536052b7905c35724a69b554d25"
+    },
+    {
+      "path": "examples/invalid/snapshot-wrong-message-type.json",
+      "sha256": "0e07c97dc3502f06c8dec1d78f0c5d1f9140058c47bbd61d85c07c90cb00373c"
+    },
+    {
+      "path": "examples/invalid/task-arbitrary-payload.json",
+      "sha256": "23d82f5343e06a80262f647a081f812eabe7544ac81ed49d3a571ca6981ca082"
+    },
+    {
+      "path": "examples/invalid/task-unknown-type.json",
+      "sha256": "bd99005af9fefe1559254ca6dfa5f4b70d12de3072151c3575e02523eebd882a"
+    },
+    {
+      "path": "examples/valid/result-failed.json",
+      "sha256": "042ca0ca40b239964763e7bad3af09f97ca3f1fb8e27bfd9f8f1d9f908e0d2c7"
+    },
+    {
+      "path": "examples/valid/result-rejected.json",
+      "sha256": "8bd8e28c5203ea0642702852ad0b933baaa1b59fee1bcf5882e8f2564eee836d"
+    },
+    {
+      "path": "examples/valid/result-succeeded.json",
+      "sha256": "32bbb676dab6fc804d17f47c61ee72a4e65ea02f0f83bac753efd383359d5a30"
+    },
+    {
+      "path": "examples/valid/snapshot.json",
+      "sha256": "4a25e1d8fc5ccc9d04958916271982a1bef07441a06bf0122e6515710d19dcdc"
+    },
+    {
+      "path": "examples/valid/task-collect-network-state.json",
+      "sha256": "5f6f87d461f9b39c22cdff98e57909bdd59b7dba06446eb6440fe4bd0b763196"
+    },
+    {
+      "path": "examples/valid/task-collect-snapshot.json",
+      "sha256": "eac9baf36a136ce5827e988c2ab586383c386ea823be0606087e7c73a909b884"
+    },
+    {
+      "path": "examples/valid/task-collect-software-inventory.json",
+      "sha256": "0174f5c66ed784794e45ee9c648084aeebbe04a88054491538198c0c3520112e"
+    },
+    {
+      "path": "result.schema.json",
+      "sha256": "5f7c85cecb30c85285a31cd0ab2c205c5a3ca9e1725d74ff06ed38e4b99e0301"
+    },
+    {
+      "path": "snapshot.schema.json",
+      "sha256": "bb06a9eeb4c55393cadab9f783462dba3d51ae726e09e6c73de222cb578b1b1f"
+    },
+    {
+      "path": "task.schema.json",
+      "sha256": "0c5e52286406efbcdf835503270654727703e8ad428dcc4abd6f3a87f92c9b63"
+    }
+  ],
+  "bundleSha256": "082547f944fcf649a29b2a6c6edabf5b825425e404b7884cd5038d5ba553b81d"
+}
