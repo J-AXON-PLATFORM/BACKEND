@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.j-axon.invalid/agent/1.0/task.schema.json",
+  "title": "J-AXON Agent Task 1.0",
+  "allOf": [
+    {
+      "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/envelope"
+    },
+    {
+      "type": "object",
+      "required": ["taskId", "taskType", "expiresAt", "payload"],
+      "properties": {
+        "contractVersion": {
+          "const": "1.0"
+        },
+        "messageType": {
+          "const": "AGENT_TASK"
+        },
+        "taskId": {
+          "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/uuidV4"
+        },
+        "expiresAt": {
+          "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/utcDateTime"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "taskType": {
+              "const": "COLLECT_SNAPSHOT"
+            },
+            "payload": {
+              "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/emptyPayload"
+            }
+          }
+        },
+        {
+          "properties": {
+            "taskType": {
+              "const": "COLLECT_NETWORK_STATE"
+            },
+            "payload": {
+              "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/emptyPayload"
+            }
+          }
+        },
+        {
+          "properties": {
+            "taskType": {
+              "const": "COLLECT_SOFTWARE_INVENTORY"
+            },
+            "payload": {
+              "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/emptyPayload"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "unevaluatedProperties": false
+}

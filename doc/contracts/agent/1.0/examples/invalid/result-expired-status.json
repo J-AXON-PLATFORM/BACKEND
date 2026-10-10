@@ -1,0 +1,12 @@
+{
+  "contractVersion": "1.0",
+  "messageType": "AGENT_RESULT",
+  "messageId": "a67cf033-e960-431d-be33-1747055be981",
+  "agentId": "b74f39ce-e229-4a0f-9da3-42e28f96377f",
+  "createdAt": "2026-10-09T10:25:00Z",
+  "resultId": "afc4fc74-c305-4936-9e31-d8a2950fcda1",
+  "taskId": "3405710d-52db-44a2-825a-0da389ccbc7f",
+  "taskType": "COLLECT_SNAPSHOT",
+  "status": "EXPIRED",
+  "completedAt": "2026-10-09T10:24:50Z"
+}

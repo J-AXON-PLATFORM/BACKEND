@@ -16,7 +16,7 @@
 - PRs no reciben secretos productivos. Cancelar runs obsoletos del mismo PR cuando no sean deployments/releases.
 <!-- JAXON-CKP003:END -->
 
-## Estado implementado en backend -- TEC-PLT-003a, TEC-QLT-003a y TEC-QLT-004a
+## Estado implementado en backend -- TEC-PLT-003a, TEC-QLT-003a, TEC-QLT-004a y AC-JAXON-059
 
 El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, implementa la línea base ejecutable actual del backend:
 
@@ -31,7 +31,7 @@ El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, impleme
 - `actions/checkout` y `actions/setup-java` fijadas por SHA completo, con credenciales persistentes deshabilitadas;
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
 
-La ampliación se integró mediante `BACKEND#5`, squash `90c550714b861beb7d6388cf571744efcda4af8d`; los runs `37879426717` de PR y `37879749721` post-merge finalizaron correctamente. Las verificaciones de contratos y SFTP se incorporarán cuando existan artefactos ejecutables aplicables. Los rulesets y protecciones automáticas continúan pendientes porque el plan actual no los aplica sobre repositorios privados. `main` y `develop` pueden quedar temporalmente en commits distintos.
+La ampliación histórica de contenedores se integró mediante `BACKEND#5`, squash `90c550714b861beb7d6388cf571744efcda4af8d`, con runs verdes `37879426717` y `37879749721`. AC-JAXON-059 añade al mismo job pruebas contractuales Maven y `oasdiff` 1.33.0 verificado por SHA-256; SFTP sigue pendiente. Los rulesets continúan pendientes por el plan del repositorio privado.
 
 `TEC-QLT-004a` amplía el mismo job `Backend verification`; no crea otro workflow ni elimina gates. El verificador Compose usa proyecto, puertos y volumen efímeros propios, y su cleanup no alcanza el volumen persistente de un entorno Local. La publicación de imágenes, artefactos y despliegues permanece fuera de alcance.
 
@@ -66,7 +66,7 @@ El workflow `.github/workflows/python-ci.yml`, denominado `Python CI`, implement
 - `actions/checkout@v7.0.1`, `actions/setup-python@v7.0.0` y `astral-sh/setup-uv@v10.2.0` fijadas por SHA completo, con credenciales persistentes deshabilitadas;
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
 
-La activación fue integrada mediante el Pull Request `AUTOMATION-COLLECTOR#1`, squash `a040c5fba34fae22903088b82191e8355deaab26`. El run de PR `37852626079` y el run post-merge `37852683236` finalizaron correctamente. La auditoría no detectó vulnerabilidades conocidas. Las dependencias runtime permanecen vacías; contratos JSON Schema, SFTP, Paramiko y PyInstaller quedan pendientes hasta incrementos funcionales aplicables.
+La activación base fue integrada mediante `AUTOMATION-COLLECTOR#1`, squash `a040c5fba34fae22903088b82191e8355deaab26`, con runs verdes `37852626079` y `37852683236`. AC-JAXON-059 añade `jsonschema`/`referencing`, 27 pruebas contractuales adicionales y verificación local del manifest al mismo workflow. SFTP, Paramiko y PyInstaller quedan pendientes.
 
 ## Propósito
 

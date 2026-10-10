@@ -5,7 +5,7 @@
 
 ## J-AXON: empezar aquí
 
-Esta es una **instancia J-AXON de la plantilla doc 1.0.0**. El descubrimiento inicial está cerrado y el refinamiento/diseño detallado v1 está cerrado hasta el **Lote 54** y el proyecto está `DESIGN_READY`; todavía no se ha implementado ni autorizado la implementación del nuevo sistema. El framework conserva su versión 1.0.0 porque estos cambios son de la instancia J-AXON, no una nueva versión genérica.
+Esta es una **instancia J-AXON de la plantilla doc 1.0.0**. El refinamiento/diseño v1 está cerrado hasta el **Lote 54** y el proyecto está `DESIGN_READY`. La implementación comenzó de forma incremental y AC-JAXON-059 añade contratos ejecutables mínimos, sin funcionalidad de negocio ni autorización general. El framework conserva su versión 1.0.0 porque estos cambios son de la instancia J-AXON, no una nueva versión genérica.
 
 **Orden obligatorio de continuidad dentro de `doc/`:**
 

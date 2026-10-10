@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Contratos ejecutables mínimos OLA 0 -- AC-JAXON-059, 2026-10-09
+
+Se crea en backend la fuente canónica `doc/contracts/` con OpenAPI 3.1.2 versión 1.0 para cinco operaciones de la primera vertical y JSON Schema Draft 2020-12 Agent 1.0 para common/envelope, Snapshot, Task y Result. Los contratos fijan sesión opaca, CSRF, RFC 9457, UUIDv4, UTC `Z`, catálogos cerrados, payloads Task vacíos, Result sin `EXPIRED` y Snapshot técnico mínimo sin secretos, red, software exhaustivo o serial.
+
+El bundle Agent contiene fixtures positivos/negativos y manifest determinista con SHA-256. `automation-collector` conserva una copia byte a byte, script stdlib `sync/check/verify` y un validador Agent offline con límites de tamaño y errores tipados seguros. Se añaden `swagger-parser` 2.1.48 y `json-schema-validator` 3.0.6 como test-only, y `jsonschema` 4.26.0/`referencing` 0.37.0 como runtime Agent. Las verificaciones locales concluyen con 11 pruebas backend y 33 Python, builds correctos, auditoría Python limpia y Trivy sin HIGH/CRITICAL.
+
+Los workflows existentes se amplían sin crear otros: backend ejecuta pruebas contractuales y `oasdiff` 1.33.0 fijado por checksum; Python verifica el bundle local sin checkout cross-repo ni secretos. No se implementan controladores, tablas, migraciones, SFTP, snapshots/tareas funcionales, frontend, publicación de artefactos o despliegues. `DESIGN_READY = SI`; el alcance concreto queda implementation-ready al integrarse y verificarse; `PRODUCTION_READY = NO`.
+
+---
+
 ## Compose y configuración Local -- TEC-PLT-007a, TEC-QLT-004a y TEC-DOC-008, 2026-10-09
 
 Se implementa una baseline reproducible de Docker Compose para Local. El arranque predeterminado contiene únicamente PostgreSQL 18.6 con pgvector 0.8.6, construido desde la fixture endurecida existente, con healthcheck `pg_isready`, volumen nombrado, red dedicada y puerto publicado exclusivamente en loopback. El backend permanece opcional bajo el profile `application`, espera a PostgreSQL healthy, recibe configuración `JAXON_*`, conserva runtime no-root, filesystem read-only, `/tmp` efímero y probes, y publica HTTP solo en loopback.

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.j-axon.invalid/agent/1.0/result.schema.json",
+  "title": "J-AXON Agent Result 1.0",
+  "allOf": [
+    {
+      "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/envelope"
+    },
+    {
+      "type": "object",
+      "required": ["resultId", "taskId", "taskType", "status", "completedAt"],
+      "properties": {
+        "contractVersion": {
+          "const": "1.0"
+        },
+        "messageType": {
+          "const": "AGENT_RESULT"
+        },
+        "resultId": {
+          "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/uuidV4"
+        },
+        "taskId": {
+          "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/uuidV4"
+        },
+        "taskType": {
+          "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/taskType"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["SUCCEEDED", "FAILED", "REJECTED"]
+        },
+        "completedAt": {
+          "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/utcDateTime"
+        },
+        "error": {
+          "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/resultError"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": {
+              "const": "SUCCEEDED"
+            }
+          },
+          "not": {
+            "required": ["error"]
+          }
+        },
+        {
+          "required": ["error"],
+          "properties": {
+            "status": {
+              "const": "FAILED"
+            }
+          }
+        },
+        {
+          "required": ["error"],
+          "properties": {
+            "status": {
+              "const": "REJECTED"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "unevaluatedProperties": false
+}

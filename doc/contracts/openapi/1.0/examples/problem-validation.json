@@ -1,0 +1,14 @@
+{
+  "type": "https://problems.j-axon.invalid/validation-failed",
+  "title": "Validation failed",
+  "status": 422,
+  "code": "VALIDATION_FAILED",
+  "correlationId": "0f5a855a-009c-44ea-a3e5-878435986ee2",
+  "errors": [
+    {
+      "pointer": "/name",
+      "code": "REQUIRED",
+      "message": "The field is required."
+    }
+  ]
+}

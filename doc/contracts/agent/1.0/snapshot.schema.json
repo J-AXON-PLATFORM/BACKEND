@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.j-axon.invalid/agent/1.0/snapshot.schema.json",
+  "title": "J-AXON Agent Snapshot 1.0",
+  "allOf": [
+    {
+      "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/envelope"
+    },
+    {
+      "type": "object",
+      "required": ["snapshotId", "capturedAt", "payload"],
+      "properties": {
+        "contractVersion": {
+          "const": "1.0"
+        },
+        "messageType": {
+          "const": "AGENT_SNAPSHOT"
+        },
+        "snapshotId": {
+          "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/uuidV4"
+        },
+        "capturedAt": {
+          "$ref": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json#/$defs/utcDateTime"
+        },
+        "payload": {
+          "$ref": "#/$defs/snapshotPayload"
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "snapshotPayload": {
+      "type": "object",
+      "required": [
+        "hostname",
+        "operatingSystem",
+        "architecture",
+        "logicalCpuCount",
+        "memoryBytes",
+        "storageVolumes"
+      ],
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 253
+        },
+        "operatingSystem": {
+          "type": "object",
+          "required": ["family", "name", "version"],
+          "properties": {
+            "family": {
+              "type": "string",
+              "enum": ["WINDOWS", "LINUX", "MACOS", "OTHER"]
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "additionalProperties": false
+        },
+        "architecture": {
+          "type": "string",
+          "enum": ["X86_64", "X86", "ARM64", "ARM32", "OTHER"]
+        },
+        "logicalCpuCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "memoryBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "storageVolumes": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "required": ["name", "totalBytes", "availableBytes"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "totalBytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "availableBytes": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "unevaluatedProperties": false
+}

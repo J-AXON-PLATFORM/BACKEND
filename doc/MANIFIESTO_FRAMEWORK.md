@@ -42,7 +42,7 @@ Se conserva el framework 1.0.0. CKP-JAXON-005 consolida decisiones de la instanc
 
 ## Inventario
 
-Total de archivos: **221**
+Total de archivos: **250**
 
 - `.github/ISSUE_TEMPLATE/bug.yml`
 - `.github/ISSUE_TEMPLATE/config.yml`
@@ -62,6 +62,35 @@ Total de archivos: **221**
 - `PROYECTO_MAESTRO.md`
 - `README.md`
 - `VERSION`
+- `contracts/README.md`
+- `contracts/agent/1.0/common.schema.json`
+- `contracts/agent/1.0/examples/invalid/result-expired-status.json`
+- `contracts/agent/1.0/examples/invalid/result-failed-without-error.json`
+- `contracts/agent/1.0/examples/invalid/result-succeeded-with-error.json`
+- `contracts/agent/1.0/examples/invalid/snapshot-forbidden-field.json`
+- `contracts/agent/1.0/examples/invalid/snapshot-invalid-uuid.json`
+- `contracts/agent/1.0/examples/invalid/snapshot-non-utc-time.json`
+- `contracts/agent/1.0/examples/invalid/snapshot-unknown-version.json`
+- `contracts/agent/1.0/examples/invalid/snapshot-wrong-message-type.json`
+- `contracts/agent/1.0/examples/invalid/task-arbitrary-payload.json`
+- `contracts/agent/1.0/examples/invalid/task-unknown-type.json`
+- `contracts/agent/1.0/examples/valid/result-failed.json`
+- `contracts/agent/1.0/examples/valid/result-rejected.json`
+- `contracts/agent/1.0/examples/valid/result-succeeded.json`
+- `contracts/agent/1.0/examples/valid/snapshot.json`
+- `contracts/agent/1.0/examples/valid/task-collect-network-state.json`
+- `contracts/agent/1.0/examples/valid/task-collect-snapshot.json`
+- `contracts/agent/1.0/examples/valid/task-collect-software-inventory.json`
+- `contracts/agent/1.0/manifest.json`
+- `contracts/agent/1.0/result.schema.json`
+- `contracts/agent/1.0/snapshot.schema.json`
+- `contracts/agent/1.0/task.schema.json`
+- `contracts/openapi/1.0/examples/asset-create-request.json`
+- `contracts/openapi/1.0/examples/asset-response.json`
+- `contracts/openapi/1.0/examples/problem-validation.json`
+- `contracts/openapi/1.0/examples/technical-state-empty-response.json`
+- `contracts/openapi/1.0/examples/technical-state-response.json`
+- `contracts/openapi/1.0/openapi.yaml`
 - `docs/00-gobierno/CONSTITUCION_IA.md`
 - `docs/00-gobierno/CRITERIOS_CALIDAD.md`
 - `docs/00-gobierno/DEFINICION_PREPARADO.md`

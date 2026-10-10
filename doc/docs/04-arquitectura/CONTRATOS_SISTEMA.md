@@ -24,11 +24,11 @@
 
 | ID | Frontera | Acuerdo vigente | Pendiente de diseño detallado |
 |---|---|---|---|
-| CTR-JAXON-WEB | Web/backend | REST/HTTPS + OpenAPI + Swagger UI; fuente oficial backend; contrato MAJOR.MINOR | operaciones, campos, errores, auth/exposición Swagger, librería concreta |
+| CTR-JAXON-WEB | Web/backend | OpenAPI 3.1.2 ejecutable 1.0 para login, `/auth/me`, alta/consulta Asset y technical-state; sesión opaca, CSRF y RFC 9457 | controladores/proveedor y Swagger UI runtime no implementados |
 | CTR-JAXON-SSE | Backend/navegador | SSE/HTTPS selectivo servidor->browser, best-effort; browser->backend REST | eventos concretos/UX por feature; sin replay durable v1 |
-| CTR-JAXON-SNAPSHOT | Agent/Collector | SFTP + JSON/JSON Schema versionado; Collector valida/procesa | schema ejecutable, límites/frecuencias |
-| CTR-JAXON-TASK | Backend/buzón/Agent | tarea con ID estable, buzón SFTP, Agent hace polling/validación; catálogo read-only v1 y capability allowlist | schemas ejecutables exactos y ajustes medidos de límites |
-| CTR-JAXON-RESULT | Agent/backend | respuesta SFTP correlacionada; `SUCCEEDED|FAILED|REJECTED`, Collector valida antes de aceptar negocio | schemas/campos ejecutables exactos |
+| CTR-JAXON-SNAPSHOT | Agent/Collector | JSON Schema 2020-12 ejecutable 1.0; hostname, OS, arquitectura, CPU lógica, RAM y storage; validación offline | transporte/procesamiento SFTP e identidad de negocio no implementados |
+| CTR-JAXON-TASK | Backend/buzón/Agent | schema 1.0 para tres tareas read-only con payload vacío/cerrado, UUIDv4 y UTC | polling, capabilities y ejecución no implementados |
+| CTR-JAXON-RESULT | Agent/backend | schema 1.0 correlacionado por `taskId`; solo `SUCCEEDED|FAILED|REJECTED`, error seguro | observaciones funcionales de red/software y procesamiento no implementados |
 | CTR-JAXON-INTERNAL | módulo/módulo | commands/queries in-process por API pública; hechos por eventos internos; outbox PostgreSQL durable, at-least-once e idempotencia | tipos Java/event payloads ejecutables por caso de uso |
 | CTR-JAXON-AI | Backend/proveedor IA | adapters `EmbeddingProvider`/`GenerationProvider`; retrieval autorizado, fuentes/citas y degradación segura | proveedor/modelo/protocolo concreto |
 | CTR-JAXON-N8N | Backend/n8n | async start + callback; `executionId`; HMAC-SHA-256/timestamp/`eventId`; backend conserva estado | endpoints/headers exactos y workflows concretos |

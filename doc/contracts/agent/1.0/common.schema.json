@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.j-axon.invalid/agent/1.0/common.schema.json",
+  "title": "J-AXON Agent common definitions 1.0",
+  "type": "object",
+  "$defs": {
+    "uuidV4": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "utcDateTime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "messageType": {
+      "type": "string",
+      "enum": ["AGENT_SNAPSHOT", "AGENT_TASK", "AGENT_RESULT"]
+    },
+    "taskType": {
+      "type": "string",
+      "enum": [
+        "COLLECT_SNAPSHOT",
+        "COLLECT_NETWORK_STATE",
+        "COLLECT_SOFTWARE_INVENTORY"
+      ]
+    },
+    "envelope": {
+      "type": "object",
+      "required": [
+        "contractVersion",
+        "messageType",
+        "messageId",
+        "agentId",
+        "createdAt"
+      ],
+      "properties": {
+        "contractVersion": {
+          "const": "1.0"
+        },
+        "messageType": {
+          "$ref": "#/$defs/messageType"
+        },
+        "messageId": {
+          "$ref": "#/$defs/uuidV4"
+        },
+        "agentId": {
+          "$ref": "#/$defs/uuidV4"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/utcDateTime"
+        }
+      }
+    },
+    "emptyPayload": {
+      "type": "object",
+      "maxProperties": 0,
+      "additionalProperties": false
+    },
+    "resultError": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
