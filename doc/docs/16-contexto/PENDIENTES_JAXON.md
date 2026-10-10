@@ -2,7 +2,7 @@
 
 > **Clasificación:** CONDICIONAL, activa para continuidad.  
 > **Checkpoint externo:** CKP-JAXON-005 | 2026-09-29.  
-> **Estado:** baseline `DESIGN_READY`; implementación acotada con fundaciones, health/contenedores, Compose Local y contratos ejecutables mínimos de AC-JAXON-059 verificados localmente; `PRODUCTION_READY = NO`.
+> **Estado:** baseline `DESIGN_READY`; implementación acotada con fundaciones, health/contenedores, Compose Local y contratos ejecutables mínimos de AC-JAXON-059 integrados y verificados; `PRODUCTION_READY = NO`.
 
 ## Punto de reanudación
 
@@ -67,7 +67,7 @@ El resto de OLA 0 y la primera vertical E2E continúan pendientes. Los contratos
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores y Compose Local fueron consumidas y se limitaron a sus repositorios, ramas, Pull Requests, workflows y sincronizaciones documentales expresamente indicados. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
 - Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
-- Próxima acción técnica: tras verificar la integración remota de AC-JAXON-059, analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0; contratos base y Compose Local ya no forman parte de los pendientes.
+- Próxima acción técnica: analizar y delimitar exclusivamente el siguiente incremento pequeño de OLA 0; contratos base y Compose Local ya no forman parte de los pendientes.
 - El objetivo sigue siendo avanzar por OLA 0 y alcanzar temprano la primera vertical E2E, no implementar “todo J-AXON de una vez”.
 
 ## Reglas de continuidad
