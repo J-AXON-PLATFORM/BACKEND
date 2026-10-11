@@ -13,8 +13,16 @@
 Mantener una vista lógica de entidades y relaciones cuando aplique.
 
 
+## Identity implementado en OLA1-IAM-001a
+
+Todas las tablas siguientes pertenecen exclusivamente al schema `identity`.
+
 ```mermaid
 erDiagram
-    USER ||--o{ ORDER : places
-    ORDER ||--|{ ORDER_ITEM : contains
+    HUMAN_USERS ||--o{ HUMAN_USER_ROLES : has
+    ROLES ||--o{ HUMAN_USER_ROLES : assigns
+    HUMAN_USERS ||--o{ HUMAN_SESSIONS : owns
+    HUMAN_USERS ||--o{ OUTBOX_EVENTS : may_identify_actor
 ```
+
+`LOGIN_ATTEMPTS` usa una clave SHA-256 no reversible y no conserva username o IP cruda. `OUTBOX_EVENTS` permite actor nulo exclusivamente para el caso aprobado en `AC-JAXON-060`. No existen FKs cross-module.

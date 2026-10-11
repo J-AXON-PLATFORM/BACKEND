@@ -93,7 +93,7 @@ database_query() {
 
 wait_for_flyway() {
   for _ in {1..90}; do
-    if [[ "$(database_query "${SOURCE_NAME}" "${SOURCE_DATABASE}" "SELECT count(*) FROM public.flyway_schema_history WHERE success AND version = '20261006000000'" 2>/dev/null || true)" == "1" ]]; then
+    if [[ "$(database_query "${SOURCE_NAME}" "${SOURCE_DATABASE}" "SELECT count(*) FROM public.flyway_schema_history WHERE success AND version = '20261010000000'" 2>/dev/null || true)" == "1" ]]; then
       return
     fi
     if [[ "$(docker inspect --format '{{.State.Running}}' "${APP_NAME}" 2>/dev/null || true)" != "true" ]]; then
@@ -308,7 +308,7 @@ readonly TARGET_SCHEMAS="$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" 
 [[ "${TARGET_SCHEMAS}" == "${EXPECTED_SCHEMAS}" ]] || fail "restored schemas do not match"
 [[ "$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SHOW server_version")" == 18.6* ]] || fail "target PostgreSQL version is not 18.6"
 [[ "$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SELECT extversion FROM pg_extension WHERE extname = 'vector'")" == "0.8.6" ]] || fail "restored pgvector version is not 0.8.6"
-[[ "$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SELECT string_agg(version, ',' ORDER BY installed_rank) FROM public.flyway_schema_history WHERE success")" == "20261006000000" ]] || fail "restored Flyway history is incorrect"
+[[ "$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SELECT string_agg(version, ',' ORDER BY installed_rank) FROM public.flyway_schema_history WHERE success")" == "20261006000000,20261010000000" ]] || fail "restored Flyway history is incorrect"
 readonly RESTORED_DATA="$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SELECT probe_id || ':' || marker FROM public.jaxon_backup_restore_probe ORDER BY probe_id")"
 [[ "${RESTORED_DATA}" == $'1:synthetic-alpha\n2:synthetic-beta' ]] || fail "synthetic verification data does not match"
 

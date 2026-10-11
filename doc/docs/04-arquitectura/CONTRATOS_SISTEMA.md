@@ -24,7 +24,7 @@
 
 | ID | Frontera | Acuerdo vigente | Pendiente de diseño detallado |
 |---|---|---|---|
-| CTR-JAXON-WEB | Web/backend | OpenAPI 3.1.2 ejecutable 1.0 para login, `/auth/me`, alta/consulta Asset y technical-state; sesión opaca, CSRF y RFC 9457 | controladores/proveedor y Swagger UI runtime no implementados |
+| CTR-JAXON-WEB | Web/backend | OpenAPI 3.1.2 ejecutable 1.0 para login, `/auth/me`, alta/consulta Asset y technical-state; sesión opaca, CSRF y RFC 9457 | login y `/auth/me` implementados por OLA1-IAM-001a; controladores Inventory, proveedor y Swagger UI runtime no implementados |
 | CTR-JAXON-SSE | Backend/navegador | SSE/HTTPS selectivo servidor->browser, best-effort; browser->backend REST | eventos concretos/UX por feature; sin replay durable v1 |
 | CTR-JAXON-SNAPSHOT | Agent/Collector | JSON Schema 2020-12 ejecutable 1.0; hostname, OS, arquitectura, CPU lógica, RAM y storage; validación offline | transporte/procesamiento SFTP e identidad de negocio no implementados |
 | CTR-JAXON-TASK | Backend/buzón/Agent | schema 1.0 para tres tareas read-only con payload vacío/cerrado, UUIDv4 y UTC | polling, capabilities y ejecución no implementados |

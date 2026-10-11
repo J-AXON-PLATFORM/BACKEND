@@ -6,11 +6,11 @@
 
 ## Punto de reanudación
 
-No reabrir AC-JAXON-001..058 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
+No reabrir AC-JAXON-001..060 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
 
-`TEC-PLT-001a` y `TEC-PLT-002a` fueron completadas y verificadas el 2026-10-06; los bloques de fundación/CI y `TEC-OPS-001a`, `TEC-PLT-006a`, `TEC-PLT-006b`, `TEC-QLT-003a` fueron completados y verificados el 2026-10-08; `TEC-PLT-007a`/`TEC-QLT-004a`, contratos y observabilidad se completaron el 2026-10-09; `TEC-OPS-005a`/`TEC-OPS-006a` fueron completadas, integradas y verificadas el 2026-10-10 mediante `BACKEND#11`, squash `57dca8d0856618bac1fc2ae48ea3dfb630409fca`, con runs `38031629641` y `38031904168` verdes. Existen las tres fundaciones, persistencia PostgreSQL/pgvector/Flyway con ocho schemas, health/probes, imágenes locales, Compose Local y gates de contenedor, Compose y backup/restore lógico. No existen tablas ni funcionalidad de negocio.
+La baseline técnica de OLA 0 fue completada y verificada. `OLA1-IAM-001a` incorpora la primera funcionalidad: tablas exclusivamente en `identity`, login, `/auth/me`, sesión opaca, bootstrap, límites de intentos, outbox productor, UI mínima y Playwright real. La integración remota se completa dentro del bloque autorizado.
 
-La baseline técnica planificada para OLA 0 queda cerrada con Dependabot y detección de secretos multirepo. La primera vertical E2E y toda funcionalidad de OLA 1 continúan pendientes y sin autorización. Los contratos ejecutables no implementan endpoints, persistencia o transporte; observabilidad y backup/restore tampoco constituyen evidencia operativa Production. La siguiente tarea debe analizarse y delimitarse como incremento pequeño antes de ejecutarse; la continuidad incremental no equivale a autorización general.
+La baseline técnica planificada para OLA 0 queda cerrada. De la primera vertical E2E solo el inicio de sesión humano queda implementado por `OLA1-IAM-001a`; Inventory, Agent, Collector, SFTP, SSE y el resto de OLA 1 continúan pendientes y sin autorización general. La continuidad incremental no equivale a autorización para el siguiente corte.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -71,7 +71,7 @@ La baseline técnica planificada para OLA 0 queda cerrada con Dependabot y detec
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
 - Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
-- Próxima acción técnica: analizar y delimitar exclusivamente el primer incremento pequeño de OLA 1. No existe autorización para implementarlo.
+- Próxima acción técnica: finalizar la evidencia remota de `OLA1-IAM-001a` y luego delimitar un siguiente incremento pequeño independiente; Inventory no está autorizado por este bloque.
 - El objetivo siguiente es alcanzar temprano la primera vertical E2E mediante incrementos autorizados, no implementar “todo J-AXON de una vez”.
 
 ## Reglas de continuidad
