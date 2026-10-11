@@ -54,6 +54,8 @@ class SecurityConfiguration {
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/assets").hasRole("IT_OPERATOR")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/assets/*").hasRole("IT_OPERATOR")
                         .anyRequest().denyAll())
                 .addFilterBefore(sessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

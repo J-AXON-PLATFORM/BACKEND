@@ -93,7 +93,7 @@ database_query() {
 
 wait_for_flyway() {
   for _ in {1..90}; do
-    if [[ "$(database_query "${SOURCE_NAME}" "${SOURCE_DATABASE}" "SELECT count(*) FROM public.flyway_schema_history WHERE success AND version = '20261010000000'" 2>/dev/null || true)" == "1" ]]; then
+    if [[ "$(database_query "${SOURCE_NAME}" "${SOURCE_DATABASE}" "SELECT EXISTS (SELECT 1 FROM public.flyway_schema_history WHERE success AND version = '20261011000000')" 2>/dev/null || true)" == "t" ]]; then
       return
     fi
     if [[ "$(docker inspect --format '{{.State.Running}}' "${APP_NAME}" 2>/dev/null || true)" != "true" ]]; then
@@ -217,6 +217,8 @@ readonly SOURCE_SCHEMAS="$(database_query "${SOURCE_NAME}" "${SOURCE_DATABASE}" 
 
 database_query "${SOURCE_NAME}" "${SOURCE_DATABASE}" \
   "CREATE TABLE public.jaxon_backup_restore_probe (probe_id integer PRIMARY KEY, marker text NOT NULL); INSERT INTO public.jaxon_backup_restore_probe VALUES (1, 'synthetic-alpha'), (2, 'synthetic-beta');" >/dev/null
+database_query "${SOURCE_NAME}" "${SOURCE_DATABASE}" \
+  "INSERT INTO inventory.assets (id, name, asset_type, status, created_at, updated_at, version) VALUES ('8b90cfac-9304-4a11-9422-7c834431f920', 'restore-inventory-probe', 'DESKTOP', 'ACTIVE', now(), now(), 0); INSERT INTO inventory.outbox_events (event_id, event_type, event_version, occurred_at, producer_module, actor_type, actor_id, resource_type, resource_id, resource_version, result, correlation_id, payload, next_attempt_at) VALUES ('fb7560d3-405a-4053-b948-5bb2d410ced4', 'ASSET_CREATED', '1.0', now(), 'INVENTORY', 'HUMAN_USER', '89c15d62-ae46-46aa-b985-a1b1a3be13a1', 'ASSET', '8b90cfac-9304-4a11-9422-7c834431f920', 0, 'SUCCESS', '4d8561cf-cf2b-47cf-98a5-abda0b6d4414', '{}'::jsonb, now());" >/dev/null
 
 database_query "${SOURCE_NAME}" "${SOURCE_DATABASE}" "CREATE SCHEMA undeclared_backup_probe" >/dev/null
 expect_failure "undeclared source schema" run_backup "undeclared-schema-${RUN_TOKEN}"
@@ -308,9 +310,12 @@ readonly TARGET_SCHEMAS="$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" 
 [[ "${TARGET_SCHEMAS}" == "${EXPECTED_SCHEMAS}" ]] || fail "restored schemas do not match"
 [[ "$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SHOW server_version")" == 18.6* ]] || fail "target PostgreSQL version is not 18.6"
 [[ "$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SELECT extversion FROM pg_extension WHERE extname = 'vector'")" == "0.8.6" ]] || fail "restored pgvector version is not 0.8.6"
-[[ "$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SELECT string_agg(version, ',' ORDER BY installed_rank) FROM public.flyway_schema_history WHERE success")" == "20261006000000,20261010000000" ]] || fail "restored Flyway history is incorrect"
+[[ "$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SELECT NOT EXISTS (SELECT required.version FROM (VALUES ('20261006000000'), ('20261010000000'), ('20261011000000')) AS required(version) EXCEPT SELECT version FROM public.flyway_schema_history WHERE success)")" == "t" ]] || fail "restored Flyway history is incomplete"
+[[ "$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SELECT count(*) FROM public.flyway_schema_history WHERE NOT success")" == "0" ]] || fail "restored Flyway history contains failed migrations"
 readonly RESTORED_DATA="$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SELECT probe_id || ':' || marker FROM public.jaxon_backup_restore_probe ORDER BY probe_id")"
 [[ "${RESTORED_DATA}" == $'1:synthetic-alpha\n2:synthetic-beta' ]] || fail "synthetic verification data does not match"
+[[ "$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SELECT name || ':' || asset_type || ':' || status || ':' || version FROM inventory.assets WHERE id = '8b90cfac-9304-4a11-9422-7c834431f920'")" == "restore-inventory-probe:DESKTOP:ACTIVE:0" ]] || fail "restored Inventory asset does not match"
+[[ "$(database_query "${TARGET_NAME}" "${TARGET_DATABASE}" "SELECT event_type || ':' || resource_type || ':' || result FROM inventory.outbox_events WHERE resource_id = '8b90cfac-9304-4a11-9422-7c834431f920'")" == "ASSET_CREATED:ASSET:SUCCESS" ]] || fail "restored Inventory outbox event does not match"
 
 expect_failure "non-empty destination" run_restore "/backup/${ARTIFACT_NAME}.dump" "/backup/${ARTIFACT_NAME}.manifest.json" "${TARGET_ID}"
 

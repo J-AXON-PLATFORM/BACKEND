@@ -44,14 +44,14 @@ class DatabaseBootstrapIntegrationTest {
         String vectorVersion = jdbcTemplate.queryForObject(
                 "SELECT extversion FROM pg_extension WHERE extname = 'vector'",
                 String.class);
-        Integer appliedMigrationCount = jdbcTemplate.queryForObject(
+        List<String> appliedMigrations = jdbcTemplate.queryForList(
                 """
-                SELECT count(*)
+                SELECT version
                 FROM public.flyway_schema_history
-                WHERE version IN ('20261006000000', '20261010000000')
-                  AND success
+                WHERE success
+                ORDER BY installed_rank
                 """,
-                Integer.class);
+                String.class);
         List<String> modularSchemas = jdbcTemplate.queryForList(
                 """
                 SELECT schema_name
@@ -84,7 +84,8 @@ class DatabaseBootstrapIntegrationTest {
 
         assertThat(serverVersion).startsWith("18.");
         assertThat(vectorVersion).isEqualTo("0.8.6");
-        assertThat(appliedMigrationCount).isEqualTo(2);
+        assertThat(appliedMigrations)
+                .contains("20261006000000", "20261010000000", "20261011000000");
         assertThat(modularSchemas).containsExactlyInAnyOrderElementsOf(EXPECTED_SCHEMAS);
         assertThat(modularTables).containsExactly(
                 "identity.human_sessions",
@@ -92,7 +93,10 @@ class DatabaseBootstrapIntegrationTest {
                 "identity.human_users",
                 "identity.login_attempts",
                 "identity.outbox_events",
-                "identity.roles");
+                "identity.roles",
+                "inventory.asset_types",
+                "inventory.assets",
+                "inventory.outbox_events");
         assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM identity.human_users", Integer.class))
                 .isZero();
         assertThat(publicTables).containsExactly("flyway_schema_history");

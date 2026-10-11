@@ -8,9 +8,9 @@
 
 No reabrir AC-JAXON-001..060 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
 
-La baseline técnica de OLA 0 fue completada y verificada. `OLA1-IAM-001a` incorpora la primera funcionalidad: tablas exclusivamente en `identity`, login, `/auth/me`, sesión opaca, bootstrap, límites de intentos, outbox productor, UI mínima y Playwright real. La integración remota se completa dentro del bloque autorizado.
+La baseline técnica de OLA 0 fue completada y verificada. `OLA1-IAM-001a` incorpora la primera funcionalidad: tablas exclusivamente en `identity`, login, `/auth/me`, sesión opaca, bootstrap, límites de intentos, outbox productor, UI mínima y Playwright real. El bloque fue completado, integrado y verificado el 2026-10-11.
 
-La baseline técnica planificada para OLA 0 queda cerrada. De la primera vertical E2E solo el inicio de sesión humano queda implementado por `OLA1-IAM-001a`; Inventory, Agent, Collector, SFTP, SSE y el resto de OLA 1 continúan pendientes y sin autorización general. La continuidad incremental no equivale a autorización para el siguiente corte.
+La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` implementa y verifica localmente el corte mínimo de Inventory: correcciones acotadas de sesión, alta y consulta por ID para `IT_OPERATOR`, persistencia y outbox `ASSET_CREATED`, UI y E2E real. Su integración remota permanece en curso dentro del bloque autorizado. Agent, Collector, SFTP, SSE y el resto de OLA 1 continúan pendientes y sin autorización general.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -71,7 +71,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. De la primera vertica
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
 - Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
-- Próxima acción técnica: finalizar la evidencia remota de `OLA1-IAM-001a` y luego delimitar un siguiente incremento pequeño independiente; Inventory no está autorizado por este bloque.
+- Próxima acción técnica: completar la integración y verificación remota autorizada de `OLA1-INV-001a`; después delimitar un siguiente incremento pequeño independiente. El corte actual no autoriza listado, actualización, gestión de catálogo, Agent, Collector ni el resto de OLA 1.
 - El objetivo siguiente es alcanzar temprano la primera vertical E2E mediante incrementos autorizados, no implementar “todo J-AXON de una vez”.
 
 ## Reglas de continuidad

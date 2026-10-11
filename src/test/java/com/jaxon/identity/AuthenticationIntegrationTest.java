@@ -7,6 +7,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.sql.Timestamp;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
@@ -163,6 +166,10 @@ class AuthenticationIntegrationTest {
     @Test
     void rejectsAbsentAndExpiredSessions() throws Exception {
         assertThat(getMe(null).statusCode()).isEqualTo(401);
+        HttpResponse<String> unknown = getMe("__Host-JAXON_SESSION=unknown-session");
+        assertThat(unknown.statusCode()).isEqualTo(401);
+        assertExpiredSessionCookie(unknown);
+
         HttpResponse<String> login = login("Bootstrap.Admin", PASSWORD);
         String setCookie = login.headers().firstValue("set-cookie").orElseThrow();
         String cookie = setCookie.substring(0, setCookie.indexOf(';'));
@@ -178,6 +185,7 @@ class AuthenticationIntegrationTest {
         assertThat(expired.headers().firstValue("content-type")).hasValueSatisfying(
                 value -> assertThat(value).startsWith("application/problem+json"));
         assertThat(expired.body()).contains("\"code\":\"AUTHENTICATION_REQUIRED\"");
+        assertExpiredSessionCookie(expired);
 
         HttpResponse<String> secondLogin = login("Bootstrap.Admin", PASSWORD);
         String secondCookie = secondLogin.headers().firstValue("set-cookie").orElseThrow();
@@ -189,33 +197,51 @@ class AuthenticationIntegrationTest {
                     last_activity_at = now() - interval '1 hour',
                     absolute_expires_at = now() - interval '1 second'
                 """);
-        assertThat(getMe(secondCookie).statusCode()).isEqualTo(401);
+        HttpResponse<String> absoluteExpired = getMe(secondCookie);
+        assertThat(absoluteExpired.statusCode()).isEqualTo(401);
+        assertExpiredSessionCookie(absoluteExpired);
 
         HttpResponse<String> thirdLogin = login("Bootstrap.Admin", PASSWORD);
         String thirdCookie = thirdLogin.headers().firstValue("set-cookie").orElseThrow();
         thirdCookie = thirdCookie.substring(0, thirdCookie.indexOf(';'));
         jdbc.update("UPDATE identity.human_users SET status = 'DISABLED'");
         try {
-            assertThat(getMe(thirdCookie).statusCode()).isEqualTo(401);
+            HttpResponse<String> disabled = getMe(thirdCookie);
+            assertThat(disabled.statusCode()).isEqualTo(401);
+            assertExpiredSessionCookie(disabled);
         } finally {
             jdbc.update("UPDATE identity.human_users SET status = 'ACTIVE'");
         }
     }
 
     @Test
-    void enforcesCsrfBeforeDefaultDenyOnAuthenticatedMutations() throws Exception {
+    void rejectsCsrfWithoutRenewingAndRenewsValidAuthenticatedMutations() throws Exception {
         HttpResponse<String> login = login("Bootstrap.Admin", PASSWORD);
         String setCookie = login.headers().firstValue("set-cookie").orElseThrow();
         String cookie = setCookie.substring(0, setCookie.indexOf(';'));
         var matcher = Pattern.compile("\\\"csrfToken\\\":\\\"([^\\\"]+)\\\"").matcher(login.body());
         assertThat(matcher.find()).isTrue();
         String csrfToken = matcher.group(1);
+        jdbc.update(
+                """
+                UPDATE identity.human_sessions
+                SET created_at = now() - interval '6 minutes',
+                    last_activity_at = now() - interval '5 minutes'
+                WHERE token_hash = ?
+                """,
+                tokenHash(cookie));
+        Timestamp activityBefore = lastActivity(cookie);
 
         HttpResponse<String> missingCsrf = postAsset(cookie, null);
         assertThat(missingCsrf.statusCode()).isEqualTo(403);
         assertThat(missingCsrf.body()).contains("\"code\":\"CSRF_INVALID\"");
+        assertThat(lastActivity(cookie)).isEqualTo(activityBefore);
 
-        HttpResponse<String> deniedByDefault = postAsset(cookie, csrfToken);
+        HttpResponse<String> validCsrf = postAsset(cookie, csrfToken);
+        assertThat(validCsrf.statusCode()).isEqualTo(422);
+        assertThat(lastActivity(cookie)).isAfter(activityBefore);
+
+        HttpResponse<String> deniedByDefault = postDeniedPath(cookie, csrfToken);
         assertThat(deniedByDefault.statusCode()).isEqualTo(403);
         assertThat(deniedByDefault.body()).contains("\"code\":\"ACCESS_DENIED\"");
     }
@@ -241,6 +267,30 @@ class AuthenticationIntegrationTest {
                 .contains("\"code\":\"AUTHENTICATION_FAILED\"")
                 .contains("Las credenciales proporcionadas no son válidas.")
                 .doesNotContain("missing", "disabled", "password");
+    }
+
+    private void assertExpiredSessionCookie(HttpResponse<String> response) {
+        assertThat(response.headers().firstValue("set-cookie")).hasValueSatisfying(cookie -> assertThat(cookie)
+                .startsWith("__Host-JAXON_SESSION=")
+                .contains("Path=/", "Max-Age=0", "Secure", "HttpOnly", "SameSite=Strict")
+                .doesNotContain("Domain="));
+    }
+
+    private Timestamp lastActivity(String cookie) {
+        return jdbc.queryForObject(
+                "SELECT last_activity_at FROM identity.human_sessions WHERE token_hash = ?",
+                Timestamp.class,
+                tokenHash(cookie));
+    }
+
+    private static String tokenHash(String cookie) {
+        try {
+            String rawToken = cookie.substring(cookie.indexOf('=') + 1);
+            return java.util.HexFormat.of().formatHex(
+                    MessageDigest.getInstance("SHA-256").digest(rawToken.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception exception) {
+            throw new IllegalStateException(exception);
+        }
     }
 
     private HttpResponse<String> login(String username, String password) throws Exception {
@@ -278,5 +328,16 @@ class AuthenticationIntegrationTest {
             request.header("X-CSRF-Token", csrfToken);
         }
         return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> postDeniedPath(String cookie, String csrfToken) throws Exception {
+        return httpClient.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://127.0.0.1:" + port + "/api/v1/not-authorized"))
+                        .header("Cookie", cookie)
+                        .header("X-CSRF-Token", csrfToken)
+                        .POST(HttpRequest.BodyPublishers.noBody())
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
     }
 }
