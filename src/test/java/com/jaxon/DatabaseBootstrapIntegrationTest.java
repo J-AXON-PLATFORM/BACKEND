@@ -48,8 +48,7 @@ class DatabaseBootstrapIntegrationTest {
                 """
                 SELECT count(*)
                 FROM public.flyway_schema_history
-                WHERE version = '20261006000000'
-                  AND script = 'V20261006000000__bootstrap_schemas.sql'
+                WHERE version IN ('20261006000000', '20261010000000')
                   AND success
                 """,
                 Integer.class);
@@ -85,9 +84,17 @@ class DatabaseBootstrapIntegrationTest {
 
         assertThat(serverVersion).startsWith("18.");
         assertThat(vectorVersion).isEqualTo("0.8.6");
-        assertThat(appliedMigrationCount).isEqualTo(1);
+        assertThat(appliedMigrationCount).isEqualTo(2);
         assertThat(modularSchemas).containsExactlyInAnyOrderElementsOf(EXPECTED_SCHEMAS);
-        assertThat(modularTables).isEmpty();
+        assertThat(modularTables).containsExactly(
+                "identity.human_sessions",
+                "identity.human_user_roles",
+                "identity.human_users",
+                "identity.login_attempts",
+                "identity.outbox_events",
+                "identity.roles");
+        assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM identity.human_users", Integer.class))
+                .isZero();
         assertThat(publicTables).containsExactly("flyway_schema_history");
     }
 }

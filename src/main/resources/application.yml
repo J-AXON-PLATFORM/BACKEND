@@ -1,6 +1,8 @@
 spring:
   application:
     name: jaxon-backend
+  autoconfigure:
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
   datasource:
     url: ${JAXON_DB_URL}
     username: ${JAXON_DB_USERNAME}
@@ -8,11 +10,20 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
   lifecycle:
     timeout-per-shutdown-phase: 20s
 
 jaxon:
   environment: ${JAXON_ENVIRONMENT:local}
+  identity:
+    frontend-origin: ${JAXON_FRONTEND_ORIGIN:http://localhost:3000}
+    bootstrap:
+      enabled: ${JAXON_IDENTITY_BOOTSTRAP_ENABLED:false}
+      username: ${JAXON_IDENTITY_BOOTSTRAP_USERNAME:}
+      password: ${JAXON_IDENTITY_BOOTSTRAP_PASSWORD:}
 
 logging:
   structured:

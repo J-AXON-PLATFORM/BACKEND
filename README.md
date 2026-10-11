@@ -1,6 +1,6 @@
 # J-AXON Backend
 
-Fundación del monolito modular backend de J-AXON. La baseline actual incluye Spring Boot, PostgreSQL, pgvector, Flyway, health/probes y contenedores; todavía no contiene funcionalidad de negocio.
+Monolito modular backend de J-AXON. Además de la baseline técnica, implementa el inicio de sesión humano acotado de `OLA1-IAM-001a` en el módulo Identity.
 
 ## Requisitos Local
 
@@ -17,6 +17,8 @@ docker compose up --detach --wait
 ```
 
 El comando predeterminado levanta únicamente PostgreSQL 18.6 con pgvector 0.8.6, publica el puerto en `127.0.0.1:5432` y conserva los datos en un volumen nombrado. Ajuste los valores ficticios de `.env` si lo necesita; `.env` está ignorado por Git y no debe contener credenciales de QA o Production.
+
+El bootstrap Identity está desactivado por defecto. Para una base vacía Local, configure explícitamente `JAXON_IDENTITY_BOOTSTRAP_ENABLED=true`, `JAXON_IDENTITY_BOOTSTRAP_USERNAME` y `JAXON_IDENTITY_BOOTSTRAP_PASSWORD` en `.env`. La contraseña debe tener entre 15 y 256 caracteres y no pertenecer a la blocklist local. El arranque falla si falta configuración, la política no se cumple o ya existe cualquier usuario; no hay credenciales predeterminadas.
 
 Para ejecutar el backend de forma nativa contra esa base de datos:
 

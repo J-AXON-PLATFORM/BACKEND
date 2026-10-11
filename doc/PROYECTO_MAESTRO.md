@@ -12,7 +12,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 ## 0. Estado de inicialización
 
 - Estado: `DESIGN_READY`: descubrimiento y refinamiento/diseño detallado v1 cerrados documentalmente; la implementación comenzó de forma acotada con las tres fundaciones y sus CI base, sin autorización general para el resto del backlog.
-- Implementación técnica de OLA 0: bootstrap backend y persistencia técnica con ocho schemas; health, contenedores y Compose Local; observabilidad base; backup/restore lógico PostgreSQL con manifest SHA-256 y prueba aislada; OpenAPI 3.1.2 contract-first de cinco operaciones sin controladores; JSON Schema Agent 1.0, fixtures y pruebas; copia vendorizada y validador Agent Python offline; fundaciones frontend/Python; Dependabot y Gitleaks multirepo; CI ampliadas. No contiene tablas ni funcionalidad de negocio.
+- Implementación técnica de OLA 0: bootstrap backend y persistencia técnica con ocho schemas; health, contenedores y Compose Local; observabilidad base; backup/restore lógico PostgreSQL con manifest SHA-256 y prueba aislada; OpenAPI 3.1.2 contract-first de cinco operaciones; JSON Schema Agent 1.0, fixtures y pruebas; copia vendorizada y validador Agent Python offline; fundaciones frontend/Python; Dependabot y Gitleaks multirepo; CI ampliadas. OLA1-IAM-001a incorpora después las tablas y controladores exclusivos de autenticación humana.
 - Madurez: baseline documental `DESIGN_READY` e implementación incremental iniciada; `PRE_IMPLEMENTACION` fue el estado anterior al inicio de `TEC-PLT-001a`.
 - Modelo de repositorios: `MULTIREPO`: `frontend`, `backend`, `automation-collector`.
 - Estado remoto histórico verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada con tres repositorios privados. `backend` fue inicializado y publicado de forma controlada en `https://github.com/J-AXON-PLATFORM/BACKEND` mediante `TEC-GIT-001C`.
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-10-10.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: OLA 1 y la primera vertical E2E continúan sin implementar ni autorización. OpenAPI y JSON Schema son ejecutables como contratos, pero no existen controladores, SFTP, snapshots reales, tareas reales ni discovery funcional. No existe despliegue ni infraestructura Production.
+- Estado funcional: OLA1-IAM-001a implementa el inicio de sesión humano; el resto de OLA 1 y la primera vertical E2E continúan sin implementar ni autorización. No existen controladores de Inventory, SFTP, snapshots reales, tareas reales ni discovery funcional. No existe despliegue ni infraestructura Production.
 
 ## 1. Identidad
 
@@ -613,4 +613,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con la base técnica de OLA 0 cerrada de forma acotada, incluida la baseline supply-chain multirepo. Los tres repositorios oficiales están publicados. OpenAPI/JSON Schema no implican endpoints ni transporte; SFTP, funcionalidad Agent y PyInstaller siguen pendientes para incrementos futuros. El frontend conserva sus riesgos temporales documentados. Lotes 30--54 y AC-JAXON-059 permanecen aprobados. El próximo paso es analizar y delimitar exclusivamente el primer incremento pequeño de OLA 1; no existe autorización para implementarlo, operar GitHub fuera de un nuevo alcance o desplegar.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y el primer incremento funcional acotado `OLA1-IAM-001a` implementado: login humano, `/auth/me`, sesión opaca PostgreSQL, bootstrap explícito, controles de intentos, outbox Identity, UI mínima y Playwright Chromium real. Esto no implementa ni autoriza Inventory, Agent/SFTP, Collector, SSE o el resto de OLA 1. `PRODUCTION_READY = NO`; el siguiente incremento requiere delimitación y autorización propias.

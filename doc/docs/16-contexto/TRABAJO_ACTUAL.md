@@ -8,9 +8,9 @@ Mantener este archivo corto: orienta a una IA sin sustituir el Registro de Acuer
 - Estado actual: baseline documental v1 `DESIGN_READY`; implementación iniciada de forma acotada; `PRODUCTION_READY = NO`.
 - Descubrimiento inicial: cerrado.
 - Refinamiento/diseño v1: **Lotes 30--54 aprobados y consolidados**.
-- Último bloque técnico: baseline supply-chain final de OLA 0 en los tres repositorios, con `develop` como default branch, Dependency Graph/Dependabot para security updates agrupados y Gitleaks 8.30.1 bloqueante en los jobs existentes. No incluye version updates ordinarios, auto-merge, nuevos workflows, publicación o despliegue.
-- Implementado: bootstrap estructural y de persistencia del backend; health/liveness/readiness y shutdown graceful; logs JSON y `X-Correlation-ID`; métricas Actuator/Prometheus; tracing OpenTelemetry W3C opcional; scripts y gate de backup/restore lógico; Dockerfiles multi-stage no-root para backend/frontend; fixture local endurecida PostgreSQL 18.6 + pgvector 0.8.6; Compose Local con PostgreSQL predeterminado y backend opcional; OpenAPI contract-first de cinco operaciones sin controladores; cuatro JSON Schemas Agent, fixtures y manifest; validador Agent Python y sincronización vendorizada; smoke tests, scans, Dependabot y CI ampliadas; fundación de `automation-collector` con Agent y Discovery Executor separados.
-- No implementado: lógica funcional, entidades, repositorios de dominio, servicios, controladores/APIs de negocio ejecutables, funcionalidades frontend de negocio, SFTP, generación real de snapshots, polling, ejecución real de tareas, discovery de red, enrolamiento, claves SSH y PyInstaller; tampoco existen tablas de negocio o infraestructura PostgreSQL Production. La baseline lógica no implementa base backup, WAL/PITR, cifrado, storage externo, scheduling, retención, documentos ni validación Production de RPO/RTO.
+- Último bloque técnico: `OLA1-IAM-001a`, primer incremento funcional acotado de OLA 1, implementa inicio de sesión humano en `identity` y frontend sin Inventory. La evidencia de integración remota se completa dentro del bloque autorizado; no crea workflows, publicación o despliegue.
+- Implementado: baseline técnica completa de OLA 0; `POST /api/v1/auth/login`; `GET /api/v1/auth/me`; usuario bootstrap explícito; Argon2id; sesión opaca PostgreSQL; cookie `__Host-JAXON_SESSION`; CSRF; límites de sesión e intentos; outbox Identity para login; `/login`, vista de identidad/roles, TanStack Query y Playwright Chromium real.
+- No implementado: Inventory/Assets y sus permisos; logout; gestión de usuarios, roles o contraseñas; consumidor de auditoría; SFTP, snapshots, polling, tareas, Discovery, enrolamiento, claves SSH, SSE o PyInstaller. Tampoco existe infraestructura PostgreSQL Production. La baseline lógica no implementa base backup, WAL/PITR, cifrado, storage externo, scheduling, retención, documentos ni validación Production de RPO/RTO.
 - Estado remoto histórico verificado el 2026-10-07: existe la organización `J-AXON-PLATFORM` con los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos `backend`, `frontend` y `automation-collector`; `backend` fue publicado inicialmente mediante `TEC-GIT-001C`.
 - Estado remoto de contenedores verificado el 2026-10-08: `BACKEND#5` fue integrado en `develop` con squash `90c550714b861beb7d6388cf571744efcda4af8d`; los runs `37879426717` de PR y `37879749721` post-merge quedaron verdes. `FRONTEND#2` fue integrado con squash `94d8ce2e8dd3309b7683f09041785c000f6fe21d`; los runs `37879426584` de PR y `37880065517` post-merge quedaron verdes. No se publicaron imágenes ni artefactos.
 - Estado remoto Python verificado el 2026-10-08: `AUTOMATION-COLLECTOR` es privado; `main` apunta a `a1079d8d5bac0d0436daae844e0b1ba9e42a9d12`; `Python CI` fue integrado en `develop` mediante el Pull Request `#1` y squash `a040c5fba34fae22903088b82191e8355deaab26`; los runs `37852626079` de PR y `37852683236` post-merge quedaron verdes. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues.
@@ -18,7 +18,7 @@ Mantener este archivo corto: orienta a una IA sin sustituir el Registro de Acuer
 - Autorización general para implementar/modificar GitHub/desplegar: **NO EXISTE**.
 - Sprint actual: ninguno iniciado.
 - Backlog: inicial aprobado; no publicado en GitHub.
-- Primera vertical: diseño aprobado (`IT_OPERATOR -> login -> activo -> Agent -> snapshot SFTP -> Collector -> PostgreSQL -> SSE -> REST -> visualización técnica`), pero no implementada.
+- Primera vertical: el tramo de login `IT_OPERATOR` está implementado por `OLA1-IAM-001a`; activo, Agent, snapshot SFTP, Collector, SSE y visualización técnica siguen pendientes.
 - Dominios refinados: Identity, Discovery, Support, Inventory, Collector tasks, AI/RAG, Automation, Audit/Reporting.
 - Contratos internos: commands/queries in-process; eventos durables por Transactional Outbox PostgreSQL `at-least-once`; SSE best-effort y REST fuente de verdad.
 - CI backend: conserva los gates existentes, integra seis pruebas contractuales en `clean verify` y ejecuta el harness aislado de backup/restore lógico reutilizando las imágenes locales. Valida OpenAPI 3.1.2, JSON Schema, ejemplos, manifest y descarga `oasdiff` 1.33.0 fijado con SHA-256 para validación y comparación contra baseline cuando exista. No incorpora SFTP, secretos, artifacts de backups o despliegues.
@@ -26,7 +26,7 @@ Mantener este archivo corto: orienta a una IA sin sustituir el Registro de Acuer
 - CI Python: conserva sync/lock, Ruff, build, auditoría y ambos entrypoints; ejecuta 33 pruebas y verificación local del bundle Agent, sin clonar backend, secretos cross-repo, artefactos o despliegues.
 - Riesgos frontend abiertos: ESLint 9.39.5 está EOL y debe migrarse cuando la cadena oficial soporte ESLint 10; Dependabot confirma como única alerta inicial `GHSA-vfj7-8cjw-p6xm` / `CVE-2026-93687` en `braces@3.0.3`, y la excepción debe retirarse cuando exista corrección oficial o desaparezca la cadena.
 - IDs técnicos: UUIDv4; externos como strings opacos.
-- Próxima acción técnica: analizar y delimitar el primer incremento pequeño de OLA 1; OLA 1 no está autorizada para implementación y el cierre técnico de OLA 0 no concede autorización general.
+- Próxima acción técnica: completar la integración y verificación remota autorizada de `OLA1-IAM-001a`; después delimitar separadamente el siguiente incremento pequeño, sin asumir autorización para Inventory ni para el resto de OLA 1.
 - Próxima acción remota pendiente: cualquier cambio GitHub adicional fuera de los bloques consumidos debe analizarse, delimitarse y autorizarse de forma independiente.
 - Continuidad: LUIS autorizó que, después de verificar cada tarea, el coordinador determine el siguiente incremento pequeño y prepare un alcance concreto. Esto no autoriza de forma ilimitada toda OLA 0 ni permite ejecutar el siguiente incremento sin su delimitación y autorización aplicable.
 
@@ -43,9 +43,9 @@ Antes de proponer una acción o implementación:
 
 ## Regla de continuidad
 
-- No reabrir AC-JAXON-001..058 salvo contradicción documental real o instrucción expresa.
+- No reabrir AC-JAXON-001..060 salvo contradicción documental real o instrucción expresa.
 - `DESIGN_READY` != `IMPLEMENTATION_READY` != `PRODUCTION_READY`.
-- `IMPLEMENTATION_READY` se evalúa por alcance concreto; las fundaciones, health/contenedores, Compose Local, AC-JAXON-059, observabilidad base, backup/restore lógico y la baseline supply-chain de OLA 0 fueron autorizados dentro de su alcance, sin extender esa autorización a OLA 1.
+- `IMPLEMENTATION_READY` se evalúa por alcance concreto; `OLA1-IAM-001a` fue autorizado dentro de su alcance y no extiende autorización a Inventory ni al resto de OLA 1.
 - Decidido/documentado != implementado != verificado.
 - Los `POR_DECIDIR` restantes son deliberados y están ligados a Production, organización, evidencia o scope futuro; no rellenarlos artificialmente.
 - No asumir autorización de código, Git, GitHub, despliegues o infraestructura Production a partir de la aprobación de los Lotes 49--54 ni de la finalización de los incrementos backend/frontend ya verificados.

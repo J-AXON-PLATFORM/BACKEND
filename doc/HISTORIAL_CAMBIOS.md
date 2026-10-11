@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Inicio de sesión humano ejecutable -- OLA1-IAM-001a, 2026-10-10
+
+Se implementan en Identity `POST /api/v1/auth/login` y `GET /api/v1/auth/me` sin alterar semánticamente OpenAPI 1.0. Una única migración Flyway crea usuarios humanos, roles, relación usuario-rol, sesiones opacas, intentos de login y outbox del productor. El bootstrap explícito está desactivado por defecto y exige store vacío; Argon2id usa 19 MiB, `t=2`, `p=1`; la sesión aplica 30 minutos de inactividad y 12 horas absolutas con token CSPRNG persistido solo por SHA-256.
+
+Se registran en `AC-JAXON-060` los roles bootstrap, la excepción mínima de actor nulo para login fallido sin principal verificable y el bloqueo desde el sexto fallo en 15 minutos. Los eventos `HUMAN_LOGIN_SUCCEEDED` y `HUMAN_LOGIN_FAILED` quedan `PENDING` en el outbox Identity; no se crea consumidor ni tabla en Audit/Reporting.
+
+Frontend incorpora `/login`, recuperación `/auth/me`, vista mínima de identidad/roles, TanStack Query y un harness Playwright Chromium contra frontend/backend reales y PostgreSQL efímero. Inventory, logout, gestión de usuarios, SFTP, Agent, Collector, SSE, infraestructura Production y workflows nuevos permanecen fuera de alcance. `PRODUCTION_READY = NO`.
+
+---
+
 ## Baseline supply-chain multirepo y cierre técnico de OLA 0, 2026-10-10
 
 Los tres repositorios configuran Dependabot exclusivamente para security updates agrupados, con `open-pull-requests-limit: 0`, sin `target-branch` ni auto-merge. La rama predeterminada pasa a ser `develop` sin modificar la historia ni la semántica de producción de `main`; Dependency Graph y Dependabot alerts quedan habilitados antes de activar los security updates.

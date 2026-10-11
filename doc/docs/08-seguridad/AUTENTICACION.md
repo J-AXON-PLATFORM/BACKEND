@@ -24,6 +24,16 @@
 - Identidad Agent está completamente separada de identidad humana.
 <!-- JAXON-CKP003:END -->
 
+## Estado ejecutable -- OLA1-IAM-001a
+
+- `POST /api/v1/auth/login` y `GET /api/v1/auth/me` implementan el contrato OpenAPI 1.0 sin cambios semánticos.
+- El token de sesión CSPRNG de 256 bits se conserva únicamente en la cookie `__Host-JAXON_SESSION`; PostgreSQL persiste su SHA-256.
+- El CSRF CSPRNG queda asociado a la sesión y el frontend lo conserva solo en memoria.
+- El bootstrap está desactivado por defecto y crea exactamente `SYSTEM_ADMIN` + `IT_OPERATOR` en un store vacío.
+- Los intentos se serializan por clave hash y aplican cinco fallos permitidos en 15 minutos; el sexto se limita.
+- `HUMAN_LOGIN_SUCCEEDED` y `HUMAN_LOGIN_FAILED` se capturan de forma durable en el outbox de Identity conforme a `AC-JAXON-060`.
+- La evidencia automatizada cubre PostgreSQL/Flyway real, Argon2id, sesión, inactividad/expiración absoluta, cookie, CSRF, default deny, errores genéricos, rate limit y journey Playwright Chromium.
+
 ## Propósito
 
 Definir mecanismo de identidad y ciclo de sesión
