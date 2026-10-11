@@ -107,7 +107,7 @@ class AuthenticationService {
     }
 
     @Transactional
-    Optional<SessionPrincipal> resolveSession(String rawToken) {
+    Optional<SessionPrincipal> resolveSession(String rawToken, boolean renew) {
         Instant now = Instant.now(clock);
         Optional<SessionRecord> session = jdbc.query(
                         """
@@ -135,13 +135,26 @@ class AuthenticationService {
             jdbc.update("DELETE FROM identity.human_sessions WHERE id = ?", current.id());
             return Optional.empty();
         }
-        jdbc.update("UPDATE identity.human_sessions SET last_activity_at = ? WHERE id = ?", timestamp(now), current.id());
+        if (renew) {
+            now = jdbc.queryForObject(
+                            """
+                            UPDATE identity.human_sessions
+                            SET last_activity_at = GREATEST(last_activity_at, ?)
+                            WHERE id = ?
+                            RETURNING last_activity_at
+                            """,
+                            Timestamp.class,
+                            timestamp(now),
+                            current.id())
+                    .toInstant();
+        }
+        Instant lastActivity = renew ? now : current.lastActivityAt();
         return Optional.of(new SessionPrincipal(
                 current.userId(),
                 current.username(),
                 findRoles(current.userId()),
                 current.csrfToken(),
-                minimum(now.plus(INACTIVITY_LIMIT), current.absoluteExpiresAt())));
+                minimum(lastActivity.plus(INACTIVITY_LIMIT), current.absoluteExpiresAt())));
     }
 
     private Optional<UserRecord> findUser(String normalizedUsername) {

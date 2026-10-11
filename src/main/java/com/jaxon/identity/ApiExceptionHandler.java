@@ -65,7 +65,7 @@ class ApiExceptionHandler {
 
     @ExceptionHandler(DataAccessException.class)
     ResponseEntity<ApiProblem> unavailable(DataAccessException exception, HttpServletRequest request) {
-        LOGGER.error("Identity persistence is unavailable", exception);
+        LOGGER.error("API persistence is unavailable", exception);
         return response(ApiProblem.of(
                 request,
                 HttpStatus.SERVICE_UNAVAILABLE.value(),
@@ -76,7 +76,7 @@ class ApiExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiProblem> unexpected(Exception exception, HttpServletRequest request) {
-        LOGGER.error("Identity API request failed safely", exception);
+        LOGGER.error("API request failed safely", exception);
         return response(ApiProblem.of(
                 request,
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
