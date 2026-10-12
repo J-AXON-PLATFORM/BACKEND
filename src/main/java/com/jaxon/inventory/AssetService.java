@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-class AssetService {
+class AssetService implements AssetLookup {
 
     private final JdbcTemplate jdbc;
     private final Clock clock;
@@ -83,6 +83,14 @@ class AssetService {
                         assetId)
                 .stream()
                 .findFirst();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean exists(UUID assetId) {
+        Integer count = jdbc.queryForObject(
+                "SELECT count(*) FROM inventory.assets WHERE id = ?", Integer.class, assetId);
+        return count != null && count == 1;
     }
 }
 

@@ -7,7 +7,7 @@
 <!-- JAXON-CKP005:START -->
 ## Instancia J-AXON -- contratos concretados
 
-- Web: OpenAPI 3.1.2, REST/HTTPS, `/api/v1`, contrato MAJOR.MINOR independiente de SemVer.
+- Web: OpenAPI 3.1.2, REST/HTTPS, `/api/v1`, versiones ejecutables 1.0 y 1.1 compatible, contrato MAJOR.MINOR independiente de SemVer.
 - Agent: JSON Schema Draft 2020-12 sobre SFTP; fuente canónica de schemas en backend.
 - Discovery Executor: contrato propio versionado sobre buzón SFTP dedicado; no reutilizar identidad/schema Agent por conveniencia.
 - JSON `camelCase`; enums `UPPER_SNAKE_CASE`; IDs técnicos v1 UUIDv4 y externos strings opacos; tiempos RFC3339 UTC.
@@ -24,7 +24,7 @@
 
 | ID | Frontera | Acuerdo vigente | Pendiente de diseño detallado |
 |---|---|---|---|
-| CTR-JAXON-WEB | Web/backend | OpenAPI 3.1.2 ejecutable 1.0 para login, `/auth/me`, alta/consulta Asset y technical-state; sesión opaca, CSRF y RFC 9457 | login y `/auth/me` implementados por OLA1-IAM-001a; controladores Inventory, proveedor y Swagger UI runtime no implementados |
+| CTR-JAXON-WEB | Web/backend | OpenAPI 3.1.2: 1.0 inmutable y 1.1 compatible; 1.1 añade pre-registro/consulta/public key Agent para sesión humana, CSRF y RFC 9457 | technical-state, generación de cliente y Swagger UI runtime no implementados; Agent HTTP directo prohibido |
 | CTR-JAXON-SSE | Backend/navegador | SSE/HTTPS selectivo servidor->browser, best-effort; browser->backend REST | eventos concretos/UX por feature; sin replay durable v1 |
 | CTR-JAXON-SNAPSHOT | Agent/Collector | JSON Schema 2020-12 ejecutable 1.0; hostname, OS, arquitectura, CPU lógica, RAM y storage; validación offline | transporte/procesamiento SFTP e identidad de negocio no implementados |
 | CTR-JAXON-TASK | Backend/buzón/Agent | schema 1.0 para tres tareas read-only con payload vacío/cerrado, UUIDv4 y UTC | polling, capabilities y ejecución no implementados |
@@ -33,6 +33,8 @@
 | CTR-JAXON-AI | Backend/proveedor IA | adapters `EmbeddingProvider`/`GenerationProvider`; retrieval autorizado, fuentes/citas y degradación segura | proveedor/modelo/protocolo concreto |
 | CTR-JAXON-N8N | Backend/n8n | async start + callback; `executionId`; HMAC-SHA-256/timestamp/`eventId`; backend conserva estado | endpoints/headers exactos y workflows concretos |
 | CTR-JAXON-DISCOVERY | Backend/SFTPGo/Discovery Executor | job/result sobre SFTP, identidad separada; scope/executor/job validados | schema/archivo ejecutable y límites exactos por perfil |
+
+`OLA2-AGT-001a` materializa `CTR-JAXON-INTERNAL` mediante `AssetLookup` de Inventory y `AgentIdentityRegistry` de Identity. Collector genera/vincula el Agent y emite `AGENT_PRE_REGISTERED`; Identity crea su identidad técnica, normaliza/valida la public key y emite `AGENT_PUBLIC_KEY_REGISTERED`. La transacción puede ser común, pero ningún módulo lee o escribe tablas ajenas y no existen FKs cross-schema.
 
 ## Contrato interno aprobado -- Lote 53
 

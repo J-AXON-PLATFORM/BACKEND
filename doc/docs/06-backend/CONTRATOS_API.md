@@ -32,9 +32,15 @@
 
 Modela sesión opaca por cookie, CSRF en `SessionResponse` y header `X-CSRF-Token`, `LoginRequest`, `SessionResponse`, `AssetCreateRequest`, `AssetResponse`, `TechnicalStateResponse`, RFC 9457 `Problem` y error de campo. Los ejemplos no contienen credenciales o tokens. OLA1-IAM-001a implementa solo los controladores de login y `/auth/me`; el contrato por sí solo no acredita las operaciones restantes.
 
+## Contrato compatible 1.1 -- OLA2-AGT-001a
+
+`doc/contracts/openapi/1.1/openapi.yaml` conserva las cinco operaciones 1.0 y añade solo `POST /agents`, `GET /agents/{agentId}` y `PUT /agents/{agentId}/ssh-key`. OpenAPI 1.0 conserva checksum fijo y continúa disponible como minor anterior; `oasdiff` bloquea incompatibilidad 1.0 -> 1.1.
+
+Las tres operaciones nuevas pertenecen al canal web humano, requieren `IT_OPERATOR`, y POST/PUT requieren CSRF. La public key se acepta únicamente como OpenSSH Ed25519, se normaliza sin comentario y se responde solo mediante indicador y huella `SHA256:...`; nunca se expone material privado. Repetir la misma key es idempotente, una key diferente o duplicada produce `409`, y el estado permanece `PENDING`.
+
 ## Pendiente de diseño detallado
 
-Permanecen pendientes Swagger UI runtime, controladores Inventory/proveedor, generación de cliente y contratos de operaciones posteriores. SFTP/JSON Schema permanece separado para Agent; no crear endpoint HTTP de snapshot por herencia del legado.
+Permanecen pendientes Swagger UI runtime, technical-state, generación de cliente y contratos posteriores. SFTP/JSON Schema permanece separado para el ejecutable Agent; las operaciones web de enrolamiento humano no crean un canal HTTP Agent ni autorizan snapshots HTTP.
 
 ---
 > **Clasificación:** CONDICIONAL  

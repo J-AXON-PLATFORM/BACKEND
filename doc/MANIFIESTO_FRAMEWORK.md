@@ -42,7 +42,7 @@ Se conserva el framework 1.0.0. CKP-JAXON-005 consolida decisiones de la instanc
 
 ## Inventario
 
-Total de archivos: **250**
+Total de archivos: **255**
 
 - `.github/ISSUE_TEMPLATE/bug.yml`
 - `.github/ISSUE_TEMPLATE/config.yml`
@@ -91,6 +91,11 @@ Total de archivos: **250**
 - `contracts/openapi/1.0/examples/technical-state-empty-response.json`
 - `contracts/openapi/1.0/examples/technical-state-response.json`
 - `contracts/openapi/1.0/openapi.yaml`
+- `contracts/openapi/1.1/examples/agent-create-request.json`
+- `contracts/openapi/1.1/examples/agent-response-key-registered.json`
+- `contracts/openapi/1.1/examples/agent-response-pending.json`
+- `contracts/openapi/1.1/examples/agent-ssh-key-request.json`
+- `contracts/openapi/1.1/openapi.yaml`
 - `docs/00-gobierno/CONSTITUCION_IA.md`
 - `docs/00-gobierno/CRITERIOS_CALIDAD.md`
 - `docs/00-gobierno/DEFINICION_PREPARADO.md`

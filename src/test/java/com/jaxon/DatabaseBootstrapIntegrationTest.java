@@ -85,15 +85,18 @@ class DatabaseBootstrapIntegrationTest {
         assertThat(serverVersion).startsWith("18.");
         assertThat(vectorVersion).isEqualTo("0.8.6");
         assertThat(appliedMigrations)
-                .contains("20261006000000", "20261010000000", "20261011000000");
+                .contains("20261006000000", "20261010000000", "20261011000000", "20261011010000");
         assertThat(modularSchemas).containsExactlyInAnyOrderElementsOf(EXPECTED_SCHEMAS);
         assertThat(modularTables).containsExactly(
+                "collector.agents",
+                "collector.outbox_events",
                 "identity.human_sessions",
                 "identity.human_user_roles",
                 "identity.human_users",
                 "identity.login_attempts",
                 "identity.outbox_events",
                 "identity.roles",
+                "identity.technical_identities",
                 "inventory.asset_types",
                 "inventory.assets",
                 "inventory.outbox_events");

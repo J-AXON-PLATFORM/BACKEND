@@ -252,6 +252,14 @@ Como excepción mínima a `AC-JAXON-056`, únicamente `HUMAN_LOGIN_FAILED` sin p
 
 La protección inicial permite cinco fallos durante una ventana móvil de 15 minutos; el sexto y posteriores devuelven `429` hasta salir de la ventana. Un login correcto elimina el contador aplicable. La clave combina de forma hash el username normalizado y la dirección remota observada directamente por la aplicación; no confía en headers de forwarding mientras no exista un proxy confiable aprobado.
 
+## AC-JAXON-061 -- Decisiones ejecutables del primer incremento Agent de OLA 2
+
+`OLA2-AGT-001a` autoriza pre-registro humano de Agent, identidad técnica separada y generación local Ed25519 sin conectividad. `collector` conserva Agent/vínculo/estado `PENDING`; `identity` conserva identidad técnica, public key normalizada y huella OpenSSH SHA-256; `inventory` valida existencia mediante contrato público in-process. No existen FKs ni escrituras directas cross-module. La transacción local común invoca exclusivamente operaciones públicas de los módulos dueños.
+
+OpenAPI 3.1.2 versión 1.1 conserva todas las operaciones 1.0 y añade solo `POST /agents`, `GET /agents/{agentId}` y `PUT /agents/{agentId}/ssh-key` para sesión humana `IT_OPERATOR` con CSRF en mutaciones. La misma clave es idempotente; sustitución, rotación o clave asignada a otro Agent producen conflicto. El comentario OpenSSH no integra la huella. OpenAPI 1.0 y JSON Schema Agent 1.0 permanecen inmutables.
+
+El inicializador `jaxon-agent initialize` valida UUIDv4, genera y conserva localmente la private key, muestra únicamente clave pública/huella/ruta pública, no sobrescribe estado y falla cerrado ante estado parcial o incompatible. Registrar la public key no activa el Agent: `ACTIVE` requiere provisionamiento SFTPGo futuro. Este acuerdo no implementa SFTPGo, buzón, SFTP, host-key verification, snapshots, tareas, polling, spool, SSE, revocación, rotación, PyInstaller ni servicio del sistema.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)
