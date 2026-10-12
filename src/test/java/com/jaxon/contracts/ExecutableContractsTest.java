@@ -35,7 +35,8 @@ import org.junit.jupiter.api.Test;
 class ExecutableContractsTest {
 
     private static final Path AGENT_ROOT = Path.of("doc/contracts/agent/1.0");
-    private static final Path OPENAPI_ROOT = Path.of("doc/contracts/openapi/1.0");
+    private static final Path OPENAPI_V10_ROOT = Path.of("doc/contracts/openapi/1.0");
+    private static final Path OPENAPI_V11_ROOT = Path.of("doc/contracts/openapi/1.1");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -49,7 +50,7 @@ class ExecutableContractsTest {
         options.setResolveFully(false);
 
         SwaggerParseResult result = new OpenAPIV3Parser()
-                .readLocation(OPENAPI_ROOT.resolve("openapi.yaml").toString(), null, options);
+                .readLocation(OPENAPI_V10_ROOT.resolve("openapi.yaml").toString(), null, options);
 
         assertThat(result.getMessages()).isEmpty();
         OpenAPI api = result.getOpenAPI();
@@ -83,7 +84,7 @@ class ExecutableContractsTest {
 
     @Test
     void openApiExamplesMatchTheirSchemas() throws IOException {
-        JsonNode root = Yaml31.mapper().readTree(OPENAPI_ROOT.resolve("openapi.yaml").toFile());
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_V10_ROOT.resolve("openapi.yaml").toFile());
         Map<String, String> examples = Map.of(
                 "asset-create-request.json", "AssetCreateRequest",
                 "asset-response.json", "AssetResponse",
@@ -107,10 +108,79 @@ class ExecutableContractsTest {
             Schema schema = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12)
                     .getSchema(wrapper.toString(), InputFormat.JSON);
             List<com.networknt.schema.Error> errors = schema.validate(
-                    read(OPENAPI_ROOT.resolve("examples").resolve(file)),
+                    read(OPENAPI_V10_ROOT.resolve("examples").resolve(file)),
                     InputFormat.JSON,
                     context -> context.executionConfig(config -> config.formatAssertionsEnabled(true)));
             assertThat(errors).as("OpenAPI example %s", file).isEmpty();
+        });
+    }
+
+    @Test
+    void openApi11Preserves10AndAddsOnlyApprovedAgentOperations() {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(true);
+        options.setResolveFully(false);
+
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V11_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(api.getOpenapi()).isEqualTo("3.1.2");
+        assertThat(api.getInfo().getVersion()).isEqualTo("1.1");
+        assertThat(api.getServers()).singleElement().extracting("url").isEqualTo("/api/v1");
+        assertThat(api.getPaths().keySet())
+                .containsExactlyInAnyOrder(
+                        "/auth/login",
+                        "/auth/me",
+                        "/assets",
+                        "/assets/{assetId}",
+                        "/assets/{assetId}/technical-state",
+                        "/agents",
+                        "/agents/{agentId}",
+                        "/agents/{agentId}/ssh-key");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .containsExactlyInAnyOrder(
+                        "login",
+                        "getCurrentSession",
+                        "createAsset",
+                        "getAsset",
+                        "getAssetTechnicalState",
+                        "preRegisterAgent",
+                        "getAgent",
+                        "registerAgentSshKey");
+    }
+
+    @Test
+    void openApi11AgentExamplesMatchTheirSchemas() throws IOException {
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_V11_ROOT.resolve("openapi.yaml").toFile());
+        Map<String, String> examples = Map.of(
+                "agent-create-request.json", "AgentCreateRequest",
+                "agent-ssh-key-request.json", "AgentSshKeyRequest",
+                "agent-response-pending.json", "AgentResponse",
+                "agent-response-key-registered.json", "AgentResponse");
+
+        examples.forEach((file, component) -> {
+            ObjectNode wrapper = JSON.createObjectNode();
+            wrapper.put("$schema", DRAFT_2020_12);
+            try {
+                String definitions = root.get("components")
+                        .get("schemas")
+                        .toString()
+                        .replace("#/components/schemas/", "#/$defs/");
+                wrapper.set("$defs", JSON.readTree(definitions));
+            } catch (IOException exception) {
+                throw new IllegalStateException("Cannot prepare OpenAPI schemas", exception);
+            }
+            wrapper.put("$ref", "#/$defs/" + component);
+            Schema schema = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12)
+                    .getSchema(wrapper.toString(), InputFormat.JSON);
+            List<com.networknt.schema.Error> errors = schema.validate(
+                    read(OPENAPI_V11_ROOT.resolve("examples").resolve(file)),
+                    InputFormat.JSON,
+                    context -> context.executionConfig(config -> config.formatAssertionsEnabled(true)));
+            assertThat(errors).as("OpenAPI 1.1 example %s", file).isEmpty();
         });
     }
 

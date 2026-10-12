@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | baseline técnica de OLA 0 cerrada con supply-chain multirepo, 2026-10-10
-> **Estado documental:** baseline v1 `DESIGN_READY`; implementación técnica de OLA 0 cerrada sin funcionalidad de negocio; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | OLA 0 cerrada y primeros incrementos funcionales de OLA 1 verificados, 2026-10-11
+> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 0 cerrada y `OLA1-IAM-001a`/`OLA1-INV-001a` integrados; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -12,7 +12,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 ## 0. Estado de inicialización
 
 - Estado: `DESIGN_READY`: descubrimiento y refinamiento/diseño detallado v1 cerrados documentalmente; la implementación comenzó de forma acotada con las tres fundaciones y sus CI base, sin autorización general para el resto del backlog.
-- Implementación técnica de OLA 0: bootstrap backend y persistencia técnica con ocho schemas; health, contenedores y Compose Local; observabilidad base; backup/restore lógico PostgreSQL con manifest SHA-256 y prueba aislada; OpenAPI 3.1.2 contract-first de cinco operaciones; JSON Schema Agent 1.0, fixtures y pruebas; copia vendorizada y validador Agent Python offline; fundaciones frontend/Python; Dependabot y Gitleaks multirepo; CI ampliadas. OLA1-IAM-001a incorpora después las tablas y controladores exclusivos de autenticación humana.
+- Implementación técnica de OLA 0: bootstrap backend y persistencia técnica con ocho schemas; health, contenedores y Compose Local; observabilidad base; backup/restore lógico PostgreSQL con manifest SHA-256 y prueba aislada; OpenAPI 3.1.2 contract-first; JSON Schema Agent 1.0, fixtures y pruebas; copia vendorizada y validador Agent Python offline; fundaciones frontend/Python; Dependabot y Gitleaks multirepo; CI ampliadas. `OLA1-IAM-001a` añadió autenticación humana, `OLA1-INV-001a` alta/consulta mínima de activos y `OLA2-AGT-001a` pre-registro, identidad técnica y registro de public key Agent.
 - Madurez: baseline documental `DESIGN_READY` e implementación incremental iniciada; `PRE_IMPLEMENTACION` fue el estado anterior al inicio de `TEC-PLT-001a`.
 - Modelo de repositorios: `MULTIREPO`: `frontend`, `backend`, `automation-collector`.
 - Estado remoto histórico verificado el 2026-10-07: organización `J-AXON-PLATFORM` creada con tres repositorios privados. `backend` fue inicializado y publicado de forma controlada en `https://github.com/J-AXON-PLATFORM/BACKEND` mediante `TEC-GIT-001C`.
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-10.
+- Fecha de última revisión: 2026-10-11.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: OLA1-IAM-001a implementa el inicio de sesión humano; el resto de OLA 1 y la primera vertical E2E continúan sin implementar ni autorización. No existen controladores de Inventory, SFTP, snapshots reales, tareas reales ni discovery funcional. No existe despliegue ni infraestructura Production.
+- Estado funcional: login humano y alta/consulta mínima de activos están implementados; Agent dispone de pre-registro humano, identidad técnica, inicialización Ed25519 local y registro de public key, siempre `PENDING`. SFTPGo, activación, SFTP, snapshots reales, tareas, procesamiento Collector, SSE, estado técnico y Discovery continúan sin implementar ni autorización. No existe despliegue ni infraestructura Production.
 
 ## 1. Identidad
 
@@ -371,12 +371,12 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 - Estado supply-chain OLA 0: `develop` es la default branch de los tres repositorios y `main` conserva su rol de producción. Dependency Graph, Dependabot alerts y security updates agrupados están habilitados; `.github/dependabot.yml` bloquea version updates ordinarios. Los jobs existentes ejecutan Gitleaks 8.30.1 sobre historial completo, fijado por SHA-256, bloqueante y con redacción total.
 - CI de PR no usa secretos productivos; cancelar CI obsoleto del mismo PR cuando sea seguro.
 - Backend CI: compile, unit, verificación modular, PostgreSQL/Flyway, contratos y SFTP cuando aplique.
-- Estado backend: `Backend CI` ejecuta `clean verify`, incluidas seis pruebas de OpenAPI/JSON Schema/fixtures/manifest, y conserva Compose, Testcontainers, builds, smoke y scans. También ejecuta un backup/restore lógico aislado con datos sintéticos, manifest verificable y casos negativos. `oasdiff` 1.33.0 se descarga por versión exacta y SHA-256 para validar el documento y bloquear breaking changes cuando exista baseline. SFTP continúa pendiente; no hay secretos, publicación o despliegue.
+- Estado backend: `Backend CI` ejecuta `clean verify`, incluidas pruebas OpenAPI 1.0/1.1, JSON Schema/fixtures/manifest, PostgreSQL/Flyway y modularidad, y conserva Compose, Testcontainers, builds, smoke y scans. El backup/restore lógico incluye Agent, identidad técnica y outboxes. `oasdiff` 1.33.0 se descarga por versión exacta y SHA-256 para validar ambos documentos y bloquear breaking changes desde 1.0. SFTP continúa pendiente; no hay secretos, publicación o despliegue.
 - Los rulesets y protecciones automáticas del repositorio privado no están aplicados por la limitación del plan actual. PR y checks verdes se exigen operativamente, pero GitHub no bloquea técnicamente una fusión incorrecta. `main` y `develop` pueden quedar temporalmente en commits distintos.
 - Frontend CI: `npm ci`, lint, typecheck, Vitest/RTL y `next build`.
 - Estado frontend: `Frontend CI` ejecuta esos gates y auditorías de producción/completa en PR hacia `develop/main`, push a `develop` y manualmente. La auditoría de producción está limpia; la completa acepta solo `GHSA-vfj7-8cjw-p6xm` en `braces@3.0.3` de desarrollo mediante verificador cerrado, pendiente de corrección upstream.
 - Python CI: `uv sync --locked`, Ruff, pytest, contratos/SFTP y packaging cuando aplique.
-- Estado Python: `Python CI` ejecuta sincronización estricta, lock, Ruff, 33 pruebas, build, auditoría, verificación local del bundle y ambos entrypoints. `jsonschema` 4.26.0 y `referencing` 0.37.0 validan únicamente Agent; SFTP, Paramiko y PyInstaller permanecen pendientes.
+- Estado Python: `Python CI` ejecuta sincronización estricta, lock, Ruff, pytest, build, auditoría, verificación local del bundle y ambos entrypoints. `cryptography` 50.0.2 genera la identidad Ed25519 local; `jsonschema` 4.26.0 y `referencing` 0.37.0 validan contratos Agent offline. SFTP, Paramiko y PyInstaller permanecen pendientes.
 - Dockerfiles backend/frontend multi-stage; runtime no-root.
 - Una imagen por componente/version; tags SemVer + Git SHA y promoción por digest inmutable. `latest` no es identidad de deployment.
 - Local usa Compose principalmente para infraestructura y permite ejecución nativa de backend/frontend; Development integra imágenes de CI; Test es efímero; QA estable con datos sintéticos; Production consume artefactos publicados/promovidos y no compila código fuente.
@@ -613,4 +613,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada y el primer incremento funcional acotado `OLA1-IAM-001a` implementado: login humano, `/auth/me`, sesión opaca PostgreSQL, bootstrap explícito, controles de intentos, outbox Identity, UI mínima y Playwright Chromium real. Esto no implementa ni autoriza Inventory, Agent/SFTP, Collector, SSE o el resto de OLA 1. `PRODUCTION_READY = NO`; el siguiente incremento requiere delimitación y autorización propias.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y tres incrementos funcionales acotados: Identity aporta login humano y sesión opaca; Inventory aporta alta/consulta mínima de activos; `OLA2-AGT-001a` aporta pre-registro Agent, identidad técnica, Ed25519 local, public key/huella y estado `PENDING`. No implementa ni autoriza SFTPGo, activación, SFTP, snapshots, Collector funcional, SSE o estado técnico. `PRODUCTION_READY = NO`; el siguiente incremento requiere delimitación y autorización propias.

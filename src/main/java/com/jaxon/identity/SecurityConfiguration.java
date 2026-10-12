@@ -56,6 +56,9 @@ class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/assets").hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/assets/*").hasRole("IT_OPERATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/agents").hasRole("IT_OPERATOR")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/agents/*").hasRole("IT_OPERATOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/agents/*/ssh-key").hasRole("IT_OPERATOR")
                         .anyRequest().denyAll())
                 .addFilterBefore(sessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -66,7 +69,7 @@ class SecurityConfiguration {
             @Value("${jaxon.identity.frontend-origin}") String frontendOrigin) {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(frontendOrigin));
-        configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Content-Type", "X-CSRF-Token", "X-Correlation-ID"));
         configuration.setExposedHeaders(List.of("X-Correlation-ID"));
         configuration.setAllowCredentials(true);

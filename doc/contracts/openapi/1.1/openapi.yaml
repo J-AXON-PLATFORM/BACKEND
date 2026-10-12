@@ -1,0 +1,230 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "1.1"
+  description: >-
+    Minor compatible que conserva OpenAPI 1.0 y añade exclusivamente el
+    pre-registro y registro manual de clave pública de Agents.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Assets
+  - name: Agents
+paths:
+  /auth/login:
+    $ref: "../1.0/openapi.yaml#/paths/~1auth~1login"
+  /auth/me:
+    $ref: "../1.0/openapi.yaml#/paths/~1auth~1me"
+  /assets:
+    $ref: "../1.0/openapi.yaml#/paths/~1assets"
+  /assets/{assetId}:
+    $ref: "../1.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D"
+  /assets/{assetId}/technical-state:
+    $ref: "../1.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state"
+  /agents:
+    post:
+      tags: [Agents]
+      operationId: preRegisterAgent
+      summary: Pre-registra un Agent vinculado a un activo existente
+      description: >-
+        Crea un Agent PENDING y su identidad técnica separada. No crea token,
+        buzón SFTP ni activa el Agent.
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentCreateRequest"
+      responses:
+        "201":
+          description: Agent pre-registrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/AuthenticationRequired"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /agents/{agentId}:
+    get:
+      tags: [Agents]
+      operationId: getAgent
+      summary: Consulta un Agent pre-registrado
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+      responses:
+        "200":
+          description: Estado oficial del Agent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentResponse"
+        "401":
+          $ref: "#/components/responses/AuthenticationRequired"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /agents/{agentId}/ssh-key:
+    put:
+      tags: [Agents]
+      operationId: registerAgentSshKey
+      summary: Registra o confirma la clave pública Ed25519 del Agent
+      description: >-
+        La misma clave es idempotente. Una clave distinta o asignada a otro
+        Agent produce conflicto. El estado permanece PENDING.
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentSshKeyRequest"
+      responses:
+        "200":
+          description: Clave pública registrada o confirmada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/AuthenticationRequired"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+components:
+  securitySchemes:
+    SessionCookie:
+      $ref: "../1.0/openapi.yaml#/components/securitySchemes/SessionCookie"
+  parameters:
+    AgentId:
+      name: agentId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/UuidV4"
+    CsrfToken:
+      name: X-CSRF-Token
+      in: header
+      required: true
+      description: Token recibido en SessionResponse; nunca se persiste en el navegador.
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 512
+  schemas:
+    UuidV4:
+      type: string
+      format: uuid
+      pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    UtcDateTime:
+      type: string
+      format: date-time
+      pattern: "Z$"
+    AgentCreateRequest:
+      type: object
+      required: [assetId]
+      properties:
+        assetId:
+          $ref: "#/components/schemas/UuidV4"
+      additionalProperties: false
+    AgentSshKeyRequest:
+      type: object
+      required: [publicKey]
+      properties:
+        publicKey:
+          type: string
+          minLength: 1
+          maxLength: 4096
+          pattern: "^ssh-ed25519[ \\t]+[A-Za-z0-9+/]+={0,2}([ \\t]+.*)?$"
+          writeOnly: true
+          description: Clave pública OpenSSH; el comentario opcional no participa en la huella.
+      additionalProperties: false
+    AgentResponse:
+      type: object
+      required:
+        - agentId
+        - assetId
+        - status
+        - publicKeyRegistered
+        - publicKeyFingerprint
+        - createdAt
+        - updatedAt
+        - version
+      properties:
+        agentId:
+          $ref: "#/components/schemas/UuidV4"
+        assetId:
+          $ref: "#/components/schemas/UuidV4"
+        status:
+          type: string
+          const: PENDING
+        publicKeyRegistered:
+          type: boolean
+        publicKeyFingerprint:
+          type: [string, "null"]
+          pattern: "^SHA256:[A-Za-z0-9+/]{43}$"
+        createdAt:
+          $ref: "#/components/schemas/UtcDateTime"
+        updatedAt:
+          $ref: "#/components/schemas/UtcDateTime"
+        version:
+          type: integer
+          minimum: 0
+      additionalProperties: false
+    FieldError:
+      $ref: "../1.0/openapi.yaml#/components/schemas/FieldError"
+    Problem:
+      $ref: "../1.0/openapi.yaml#/components/schemas/Problem"
+  responses:
+    BadRequest:
+      $ref: "../1.0/openapi.yaml#/components/responses/BadRequest"
+    AuthenticationRequired:
+      $ref: "../1.0/openapi.yaml#/components/responses/AuthenticationRequired"
+    Forbidden:
+      $ref: "../1.0/openapi.yaml#/components/responses/Forbidden"
+    NotFound:
+      $ref: "../1.0/openapi.yaml#/components/responses/NotFound"
+    Conflict:
+      $ref: "../1.0/openapi.yaml#/components/responses/Conflict"
+    ValidationFailed:
+      $ref: "../1.0/openapi.yaml#/components/responses/ValidationFailed"
+    InternalError:
+      $ref: "../1.0/openapi.yaml#/components/responses/InternalError"
+    ServiceUnavailable:
+      $ref: "../1.0/openapi.yaml#/components/responses/ServiceUnavailable"
+security:
+  - SessionCookie: []

@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Pre-registro e identidad técnica Agent -- OLA2-AGT-001a, 2026-10-11
+
+Se implementan `POST /api/v1/agents`, `GET /api/v1/agents/{agentId}` y `PUT /api/v1/agents/{agentId}/ssh-key` como extensión compatible OpenAPI 1.1, manteniendo 1.0 inmutable. Collector conserva Agent/vínculo/estado `PENDING`; Identity conserva identidad técnica, public key Ed25519 normalizada y huella OpenSSH SHA-256; Inventory valida el activo por contrato público in-process. Los eventos allowlisted `AGENT_PRE_REGISTERED` y `AGENT_PUBLIC_KEY_REGISTERED` se capturan atómicamente en el outbox del productor.
+
+`automation-collector` añade `jaxon-agent initialize` con `cryptography` fijada: UUIDv4, generación Ed25519 local, permisos privados, idempotencia y fallo cerrado sin conectividad ni exposición de private key. Frontend añade pre-registro, instrucciones, pegado de public key, huella y reconsulta con TanStack Query. El E2E Chromium cruza frontend/backend/PostgreSQL/inicializador Python real.
+
+No se implementan SFTPGo, buzón/cuenta SFTP, conexión, host-key verification, `ACTIVE`, revocación, rotación, snapshots, procesamiento Collector, SSE, polling, tareas, spool, PyInstaller, servicio del sistema, publicación de artefactos o despliegue. `DESIGN_READY` se conserva y `PRODUCTION_READY = NO`.
+
+---
+
 ## Inicio de sesión humano ejecutable -- OLA1-IAM-001a, 2026-10-10
 
 Se implementan en Identity `POST /api/v1/auth/login` y `GET /api/v1/auth/me` sin alterar semánticamente OpenAPI 1.0. Una única migración Flyway crea usuarios humanos, roles, relación usuario-rol, sesiones opacas, intentos de login y outbox del productor. El bootstrap explícito está desactivado por defecto y exige store vacío; Argon2id usa 19 MiB, `t=2`, `p=1`; la sesión aplica 30 minutos de inactividad y 12 horas absolutas con token CSPRNG persistido solo por SHA-256.
