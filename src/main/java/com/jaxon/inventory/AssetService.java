@@ -92,6 +92,16 @@ class AssetService implements AssetLookup {
                 "SELECT count(*) FROM inventory.assets WHERE id = ?", Integer.class, assetId);
         return count != null && count == 1;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isActive(UUID assetId) {
+        Integer count = jdbc.queryForObject(
+                "SELECT count(*) FROM inventory.assets WHERE id = ? AND status = 'ACTIVE'",
+                Integer.class,
+                assetId);
+        return count != null && count == 1;
+    }
 }
 
 final class AssetValidationException extends RuntimeException {}

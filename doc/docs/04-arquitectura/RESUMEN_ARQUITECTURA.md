@@ -21,7 +21,7 @@
 - Collector: catálogo read-only de tareas/capabilities/estados/límites refinado.
 - Audit/Reporting: eventos auditables, append-only, reportes Assets/Agents/Tickets y CSV refinados.
 - Interno: APIs in-process para commands/queries + Transactional Outbox PostgreSQL `at-least-once` para hechos durables; sin broker.
-- Readiness: IDs UUIDv4, baseline v1 controlada y estado `DESIGN_READY` documental; implementación sigue no iniciada ni autorizada.
+- Readiness: IDs UUIDv4, baseline v1 controlada y estado `DESIGN_READY` documental; OLA 0, `OLA1-IAM-001a`, `OLA1-INV-001a` y `OLA2-AGT-001a` están implementados y verificados, sin autorización general para nuevos incrementos.
 <!-- JAXON-CKP005-DETAIL:END -->
 
 ## Arquitectura vigente

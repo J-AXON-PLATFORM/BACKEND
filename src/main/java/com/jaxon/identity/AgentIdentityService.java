@@ -116,6 +116,23 @@ class AgentIdentityService implements AgentIdentityRegistry {
                 .findFirst();
     }
 
+    @Override
+    public RegisteredPublicKey requireRegisteredPublicKey(UUID agentId) {
+        return jdbc.query(
+                        """
+                        SELECT public_key, public_key_fingerprint
+                        FROM identity.technical_identities
+                        WHERE agent_id = ? AND public_key IS NOT NULL
+                        """,
+                        (resultSet, row) -> new RegisteredPublicKey(
+                                resultSet.getString("public_key"),
+                                resultSet.getString("public_key_fingerprint")),
+                        agentId)
+                .stream()
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+    }
+
     private IdentityRow rowForUpdate(UUID agentId) {
         return jdbc.query(
                         """

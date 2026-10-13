@@ -38,6 +38,12 @@ Modela sesión opaca por cookie, CSRF en `SessionResponse` y header `X-CSRF-Toke
 
 Las tres operaciones nuevas pertenecen al canal web humano, requieren `IT_OPERATOR`, y POST/PUT requieren CSRF. La public key se acepta únicamente como OpenSSH Ed25519, se normaliza sin comentario y se responde solo mediante indicador y huella `SHA256:...`; nunca se expone material privado. Repetir la misma key es idempotente, una key diferente o duplicada produce `409`, y el estado permanece `PENDING`.
 
+## Contrato major 2.0 -- OLA2-SFTP-001a
+
+`doc/contracts/openapi/2.0/openapi.yaml` conserva las ocho operaciones 1.1 y añade solo `POST /agents/{agentId}/activate`. La mutación requiere sesión `IT_OPERATOR` y CSRF; devuelve exclusivamente `host`, `port`, `username` y public host key Ed25519. La activación exige activo `ACTIVE` y public key registrada, reconcilia idempotentemente la cuenta lógica SFTPGo, limita a un Agent `ACTIVE` por activo y no expone credenciales administrativas o material privado.
+
+OpenAPI 1.0 y 1.1 permanecen byte a byte inmutables; `oasdiff` mantiene el gate de compatibilidad minor 1.0 -> 1.1 y valida estructuralmente 2.0. El salto major es necesario porque `AgentResponse.status` deja de ser constante `PENDING` y admite `ACTIVE`. Este contrato web no crea un canal HTTP para el ejecutable Agent ni autoriza snapshots o tareas.
+
 ## Pendiente de diseño detallado
 
 Permanecen pendientes Swagger UI runtime, technical-state, generación de cliente y contratos posteriores. SFTP/JSON Schema permanece separado para el ejecutable Agent; las operaciones web de enrolamiento humano no crean un canal HTTP Agent ni autorizan snapshots HTTP.

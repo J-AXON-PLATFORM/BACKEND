@@ -8,6 +8,7 @@ readonly OASDIFF_SHA256="43a4e328e2d13ba1552d760aa68d2485c75c5621f309f6ff64ae895
 readonly OASDIFF_URL="https://github.com/oasdiff/oasdiff/releases/download/v${OASDIFF_VERSION}/${OASDIFF_ARCHIVE}"
 readonly SPEC_V10="doc/contracts/openapi/1.0/openapi.yaml"
 readonly SPEC_V11="doc/contracts/openapi/1.1/openapi.yaml"
+readonly SPEC_V20="doc/contracts/openapi/2.0/openapi.yaml"
 readonly SPEC_V10_SHA256="bf3b1df5f28fb2e1c34f55b645312e7df896aa8a50fa8fbbec4b7e72d2068236"
 
 work_dir="$(mktemp -d)"
@@ -23,6 +24,7 @@ tar -xzf "${work_dir}/${OASDIFF_ARCHIVE}" -C "${work_dir}" oasdiff
 printf '%s  %s\n' "${SPEC_V10_SHA256}" "${SPEC_V10}" | sha256sum --check --strict
 "${work_dir}/oasdiff" validate "${SPEC_V10}"
 "${work_dir}/oasdiff" validate "${SPEC_V11}"
+"${work_dir}/oasdiff" validate "${SPEC_V20}"
 "${work_dir}/oasdiff" breaking "${SPEC_V10}" "${SPEC_V11}"
 
 base_ref=""
@@ -33,8 +35,10 @@ elif git rev-parse --verify --quiet HEAD^ >/dev/null; then
 fi
 
 if [[ -n "${base_ref}" ]] && git cat-file -e "${base_ref}:${SPEC_V11}" 2>/dev/null; then
-  git show "${base_ref}:${SPEC_V11}" >"${work_dir}/base-openapi.yaml"
-  "${work_dir}/oasdiff" breaking "${work_dir}/base-openapi.yaml" "${SPEC_V11}"
+  mkdir -p "${work_dir}/base/1.0" "${work_dir}/base/1.1"
+  git show "${base_ref}:${SPEC_V10}" >"${work_dir}/base/1.0/openapi.yaml"
+  git show "${base_ref}:${SPEC_V11}" >"${work_dir}/base/1.1/openapi.yaml"
+  "${work_dir}/oasdiff" breaking "${work_dir}/base/1.1/openapi.yaml" "${SPEC_V11}"
 else
   printf 'No previous OpenAPI 1.1 baseline exists; 1.0 to 1.1 compatibility completed.\n'
 fi

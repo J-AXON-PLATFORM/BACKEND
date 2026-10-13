@@ -74,7 +74,7 @@ El workflow `.github/workflows/python-ci.yml`, denominado `Python CI`, implement
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
 - checkout de historial completo y el mismo gate Gitleaks bloqueante, sin modificar `pyproject.toml` o `uv.lock`.
 
-La activación base fue integrada mediante `AUTOMATION-COLLECTOR#1`, squash `a040c5fba34fae22903088b82191e8355deaab26`, con runs verdes `37852626079` y `37852683236`. AC-JAXON-059 añade `jsonschema`/`referencing`, 27 pruebas contractuales adicionales y verificación local del manifest al mismo workflow. SFTP, Paramiko y PyInstaller quedan pendientes.
+La activación base fue integrada mediante `AUTOMATION-COLLECTOR#1`, squash `a040c5fba34fae22903088b82191e8355deaab26`, con runs verdes `37852626079` y `37852683236`. AC-JAXON-059 añade `jsonschema`/`referencing`, pruebas contractuales y verificación local del manifest al mismo workflow. El candidato `OLA2-SFTP-001a` añade Paramiko 5.0.0 y pruebas de configuración/host-key/conexión; PyInstaller, snapshots, polling y tareas quedan pendientes.
 
 ## Baseline Dependabot y detección de secretos
 

@@ -36,7 +36,9 @@ El 2026-10-09 se verificó la baseline Compose Local:
 - `scripts/verify-compose.sh` usa puertos dinámicos, un proyecto único y cleanup restringido a su volumen efímero propio, sin eliminar datos Local persistentes ajenos;
 - la verificación cubre servicio predeterminado, health/probes, Flyway, ocho schemas, pgvector 0.8.6, loopback, persistencia y runtime backend endurecido.
 
-Compose no incluye frontend, SFTPGo, n8n, observabilidad, reverse proxy, TLS o topología Production.
+El candidato local `OLA2-SFTP-001a` añade SFTPGo 2.7.6 al Compose predeterminado: build desde fuente fijada por commit/checksum/firma, runtime distroless UID/GID `65532`, autenticación exclusiva por public key, comandos SSH auxiliares deshabilitados, SFTP limitado a loopback, API administrativa solo interna y volúmenes separados para estado y buzones. El gate ejecuta pruebas upstream, `govulncheck`, Trivy HIGH/CRITICAL y SBOM CycloneDX temporal; no publica la imagen.
+
+Compose no incluye frontend, n8n, observabilidad, reverse proxy, TLS o topología Production.
 
 ## Propósito
 

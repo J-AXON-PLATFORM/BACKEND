@@ -59,6 +59,7 @@ class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/v1/agents").hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/agents/*").hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/agents/*/ssh-key").hasRole("IT_OPERATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/agents/*/activate").hasRole("IT_OPERATOR")
                         .anyRequest().denyAll())
                 .addFilterBefore(sessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

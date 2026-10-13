@@ -29,6 +29,38 @@ services:
     networks:
       - jaxon-local
 
+  sftpgo:
+    image: ${JAXON_SFTPGO_IMAGE:-jaxon-sftpgo:2.7.6-local}
+    build:
+      context: .
+      dockerfile: docker/sftpgo/Dockerfile
+    environment:
+      SFTPGO_DATA_PROVIDER__CREATE_DEFAULT_ADMIN: "true"
+      SFTPGO_DEFAULT_ADMIN_PASSWORD: ${JAXON_SFTPGO_ADMIN_PASSWORD:?Set JAXON_SFTPGO_ADMIN_PASSWORD in .env}
+      SFTPGO_DEFAULT_ADMIN_USERNAME: ${JAXON_SFTPGO_ADMIN_USERNAME:?Set JAXON_SFTPGO_ADMIN_USERNAME in .env}
+      SFTPGO_SFTPD__ENABLED_SSH_COMMANDS: ""
+      SFTPGO_SFTPD__KEYBOARD_INTERACTIVE_AUTHENTICATION: "false"
+      SFTPGO_SFTPD__PASSWORD_AUTHENTICATION: "false"
+    labels:
+      com.jaxon.resource-owner: ${JAXON_RESOURCE_OWNER:-local-persistent}
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/sftpgo", "ping", "http://127.0.0.1:8080/healthz"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    ports:
+      - name: sftp
+        target: 2022
+        published: "${JAXON_SFTP_HOST_PORT:-2022}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    volumes:
+      - jaxon-sftpgo-data:/var/lib/sftpgo
+      - jaxon-sftpgo-mailboxes:/srv/sftpgo/data
+    networks:
+      - jaxon-local
+
   backend:
     profiles: ["application"]
     image: ${JAXON_BACKEND_IMAGE:-jaxon-backend:local}
@@ -38,6 +70,8 @@ services:
         VCS_REF: local
     depends_on:
       database:
+        condition: service_healthy
+      sftpgo:
         condition: service_healthy
     environment:
       JAXON_DB_PASSWORD: ${JAXON_DB_PASSWORD:?Set JAXON_DB_PASSWORD in .env}
@@ -49,6 +83,13 @@ services:
       JAXON_IDENTITY_BOOTSTRAP_PASSWORD: ${JAXON_IDENTITY_BOOTSTRAP_PASSWORD:-}
       JAXON_IDENTITY_BOOTSTRAP_USERNAME: ${JAXON_IDENTITY_BOOTSTRAP_USERNAME:-}
       JAXON_LOG_FORMAT: ${JAXON_LOG_FORMAT:-logstash}
+      JAXON_SFTP_ENABLED: ${JAXON_SFTP_ENABLED:-false}
+      JAXON_SFTPGO_ADMIN_API_URL: http://sftpgo:8080/api/v2
+      JAXON_SFTPGO_ADMIN_PASSWORD: ${JAXON_SFTPGO_ADMIN_PASSWORD:?Set JAXON_SFTPGO_ADMIN_PASSWORD in .env}
+      JAXON_SFTPGO_ADMIN_USERNAME: ${JAXON_SFTPGO_ADMIN_USERNAME:?Set JAXON_SFTPGO_ADMIN_USERNAME in .env}
+      JAXON_SFTP_PUBLIC_HOST: ${JAXON_SFTP_PUBLIC_HOST:-127.0.0.1}
+      JAXON_SFTP_PUBLIC_HOST_KEY: ${JAXON_SFTP_PUBLIC_HOST_KEY:-}
+      JAXON_SFTP_PUBLIC_PORT: ${JAXON_SFTP_PUBLIC_PORT:-2022}
       JAXON_TRACING_EXPORT_OTLP_ENABLED: ${JAXON_TRACING_EXPORT_OTLP_ENABLED:-false}
       JAXON_TRACING_OTLP_ENDPOINT: ${JAXON_TRACING_OTLP_ENDPOINT:-http://127.0.0.1:4318/v1/traces}
       JAXON_TRACING_OTLP_TIMEOUT: ${JAXON_TRACING_OTLP_TIMEOUT:-5s}
@@ -69,6 +110,12 @@ services:
 
 volumes:
   jaxon-postgres-data:
+    labels:
+      com.jaxon.resource-owner: ${JAXON_RESOURCE_OWNER:-local-persistent}
+  jaxon-sftpgo-data:
+    labels:
+      com.jaxon.resource-owner: ${JAXON_RESOURCE_OWNER:-local-persistent}
+  jaxon-sftpgo-mailboxes:
     labels:
       com.jaxon.resource-owner: ${JAXON_RESOURCE_OWNER:-local-persistent}
 

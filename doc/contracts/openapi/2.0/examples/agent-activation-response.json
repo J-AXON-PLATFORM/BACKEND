@@ -1,0 +1,6 @@
+{
+  "host": "sftp.example.internal",
+  "port": 2022,
+  "username": "agent-07f234fd-21fe-4f86-bb1c-bfb34aeb189d",
+  "publicHostKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKg2VaOybk2P/sGQKcJkL7QWqLpzaxLfOjfPCsqSy5aL"
+}

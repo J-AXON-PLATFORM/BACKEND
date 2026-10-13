@@ -37,6 +37,7 @@ class ExecutableContractsTest {
     private static final Path AGENT_ROOT = Path.of("doc/contracts/agent/1.0");
     private static final Path OPENAPI_V10_ROOT = Path.of("doc/contracts/openapi/1.0");
     private static final Path OPENAPI_V11_ROOT = Path.of("doc/contracts/openapi/1.1");
+    private static final Path OPENAPI_V20_ROOT = Path.of("doc/contracts/openapi/2.0");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -181,6 +182,64 @@ class ExecutableContractsTest {
                     InputFormat.JSON,
                     context -> context.executionConfig(config -> config.formatAssertionsEnabled(true)));
             assertThat(errors).as("OpenAPI 1.1 example %s", file).isEmpty();
+        });
+    }
+
+    @Test
+    void openApi20AddsOnlyAgentActivation() {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(true);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V20_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("2.0");
+        assertThat(api.getPaths().keySet())
+                .containsExactlyInAnyOrder(
+                        "/auth/login",
+                        "/auth/me",
+                        "/assets",
+                        "/assets/{assetId}",
+                        "/assets/{assetId}/technical-state",
+                        "/agents",
+                        "/agents/{agentId}",
+                        "/agents/{agentId}/ssh-key",
+                        "/agents/{agentId}/activate");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .contains("activateAgent")
+                .doesNotHaveDuplicates();
+    }
+
+    @Test
+    void openApi20ActivationExamplesMatchTheirSchemas() throws IOException {
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_V20_ROOT.resolve("openapi.yaml").toFile());
+        Map<String, String> examples = Map.of(
+                "agent-response-active.json", "AgentResponse",
+                "agent-activation-response.json", "AgentActivationResponse");
+
+        examples.forEach((file, component) -> {
+            ObjectNode wrapper = JSON.createObjectNode();
+            wrapper.put("$schema", DRAFT_2020_12);
+            try {
+                String definitions = root.get("components")
+                        .get("schemas")
+                        .toString()
+                        .replace("#/components/schemas/", "#/$defs/");
+                wrapper.set("$defs", JSON.readTree(definitions));
+            } catch (IOException exception) {
+                throw new IllegalStateException("Cannot prepare OpenAPI schemas", exception);
+            }
+            wrapper.put("$ref", "#/$defs/" + component);
+            Schema schema = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12)
+                    .getSchema(wrapper.toString(), InputFormat.JSON);
+            List<com.networknt.schema.Error> errors = schema.validate(
+                    read(OPENAPI_V20_ROOT.resolve("examples").resolve(file)),
+                    InputFormat.JSON,
+                    context -> context.executionConfig(config -> config.formatAssertionsEnabled(true)));
+            assertThat(errors).as("OpenAPI 2.0 example %s", file).isEmpty();
         });
     }
 

@@ -13,11 +13,15 @@ public interface AgentIdentityRegistry {
 
     Optional<KeyState> find(UUID agentId);
 
+    RegisteredPublicKey requireRegisteredPublicKey(UUID agentId);
+
     record KeyState(
             boolean publicKeyRegistered,
             String publicKeyFingerprint,
             Instant updatedAt,
             long version) {}
+
+    record RegisteredPublicKey(String publicKey, String fingerprint) {}
 
     final class InvalidPublicKeyException extends RuntimeException {}
 

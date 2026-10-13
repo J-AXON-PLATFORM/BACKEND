@@ -2,6 +2,8 @@ package com.jaxon.collector;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -24,6 +26,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -55,6 +58,9 @@ class AgentIntegrationTest {
 
     @Autowired
     JdbcTemplate jdbc;
+
+    @MockitoBean
+    SftpGoProvisioner sftpGoProvisioner;
 
     @Test
     void preRegistersPendingAgentAndTechnicalIdentityAtomically() throws Exception {
@@ -245,6 +251,77 @@ class AgentIntegrationTest {
     }
 
     @Test
+    void activatesAgentIdempotentlyAndWritesOneOutboxEvent() throws Exception {
+        Session session = login();
+        UUID assetId = seedAsset();
+        UUID agentId = createAgent(session, assetId);
+        String key = publicKey();
+        assertThat(putKey(session, agentId, key).statusCode()).isEqualTo(200);
+        AgentActivationResponse connection = new AgentActivationResponse(
+                "sftp.example.internal", 2022, "agent-" + agentId, publicKey());
+        when(sftpGoProvisioner.ensureProvisioned(agentId, key)).thenReturn(connection);
+
+        HttpResponse<String> activated = activate(session, agentId);
+
+        assertThat(activated.statusCode()).isEqualTo(200);
+        assertThat(activated.body())
+                .contains("\"host\":\"sftp.example.internal\"")
+                .contains("\"port\":2022")
+                .contains("\"username\":\"agent-" + agentId + "\"")
+                .contains("\"publicHostKey\":\"")
+                .doesNotContain(key);
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT status, sftp_username, activated_at, version
+                        FROM collector.agents WHERE id = ?
+                        """,
+                        agentId))
+                .containsEntry("status", "ACTIVE")
+                .containsEntry("sftp_username", "agent-" + agentId)
+                .containsEntry("version", 1L);
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM collector.outbox_events
+                        WHERE event_type = 'AGENT_ACTIVATED' AND resource_id = ?
+                        """,
+                        Integer.class,
+                        agentId))
+                .isEqualTo(1);
+        assertThat(getAgent(session.cookie(), agentId.toString()).body())
+                .contains("\"status\":\"ACTIVE\"")
+                .contains("\"version\":1");
+
+        assertThat(activate(session, agentId).statusCode()).isEqualTo(200);
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM collector.outbox_events
+                        WHERE event_type = 'AGENT_ACTIVATED' AND resource_id = ?
+                        """,
+                        Integer.class,
+                        agentId))
+                .isEqualTo(1);
+        verify(sftpGoProvisioner, org.mockito.Mockito.times(2)).ensureProvisioned(agentId, key);
+    }
+
+    @Test
+    void refusesActivationWithoutKeyOrWhenProvisioningIsUnavailable() throws Exception {
+        Session session = login();
+        UUID agentId = createAgent(session, seedAsset());
+        assertThat(activate(session, agentId).statusCode()).isEqualTo(409);
+
+        String key = publicKey();
+        assertThat(putKey(session, agentId, key).statusCode()).isEqualTo(200);
+        when(sftpGoProvisioner.ensureProvisioned(agentId, key))
+                .thenThrow(new SftpProvisioningUnavailableException());
+        HttpResponse<String> unavailable = activate(session, agentId);
+        assertThat(unavailable.statusCode()).isEqualTo(503);
+        assertThat(unavailable.body()).contains("\"code\":\"SFTP_PROVISIONING_UNAVAILABLE\"");
+        assertThat(jdbc.queryForObject(
+                        "SELECT status FROM collector.agents WHERE id = ?", String.class, agentId))
+                .isEqualTo("PENDING");
+    }
+
+    @Test
     void keepsModuleOwnershipWithoutCrossSchemaForeignKeysOrSecretColumns() {
         List<String> crossSchemaForeignKeys = jdbc.queryForList(
                 """
@@ -278,7 +355,7 @@ class AgentIntegrationTest {
                         """,
                         UUID.randomUUID(),
                         UUID.randomUUID()))
-                .hasMessageContaining("agents_status_check");
+                .hasMessageContaining("collector_agents_activation_state_check");
     }
 
     private UUID createAgent(Session session, UUID assetId) throws Exception {
@@ -354,6 +431,16 @@ class AgentIntegrationTest {
                 .header("X-CSRF-Token", session.csrfToken())
                 .header("Content-Type", "application/json")
                 .PUT(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> activate(Session session, UUID agentId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/agents/" + agentId + "/activate"))
+                .header("Cookie", session.cookie())
+                .header("X-CSRF-Token", session.csrfToken())
+                .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     }
