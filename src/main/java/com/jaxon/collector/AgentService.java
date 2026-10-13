@@ -19,16 +19,19 @@ class AgentService {
     private final Clock clock;
     private final AssetLookup assetLookup;
     private final AgentIdentityRegistry identityRegistry;
+    private final SftpGoProvisioner sftpGoProvisioner;
 
     AgentService(
             JdbcTemplate jdbc,
             Clock clock,
             AssetLookup assetLookup,
-            AgentIdentityRegistry identityRegistry) {
+            AgentIdentityRegistry identityRegistry,
+            SftpGoProvisioner sftpGoProvisioner) {
         this.jdbc = jdbc;
         this.clock = clock;
         this.assetLookup = assetLookup;
         this.identityRegistry = identityRegistry;
+        this.sftpGoProvisioner = sftpGoProvisioner;
     }
 
     @Transactional
@@ -83,10 +86,82 @@ class AgentService {
         return response(agent, key);
     }
 
+    @Transactional
+    AgentActivationResponse activate(UUID agentId, UUID actorId, UUID correlationId) {
+        AgentRow agent = findAgentForUpdate(agentId).orElseThrow(AgentNotFoundException::new);
+        jdbc.query(
+                "SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
+                resultSet -> null,
+                agent.assetId().toString());
+        if (!assetLookup.isActive(agent.assetId())) {
+            throw new AssetNotActiveException();
+        }
+        Integer activeAgents = jdbc.queryForObject(
+                """
+                SELECT count(*) FROM collector.agents
+                WHERE asset_id = ? AND status = 'ACTIVE' AND id <> ?
+                """,
+                Integer.class,
+                agent.assetId(),
+                agentId);
+        if (activeAgents != null && activeAgents > 0) {
+            throw new AssetActiveAgentConflictException();
+        }
+        if (!"PENDING".equals(agent.status()) && !"ACTIVE".equals(agent.status())) {
+            throw new AgentStateConflictException();
+        }
+        AgentIdentityRegistry.RegisteredPublicKey key;
+        try {
+            key = identityRegistry.requireRegisteredPublicKey(agentId);
+        } catch (IllegalStateException exception) {
+            throw new AgentPublicKeyRequiredException();
+        }
+        AgentActivationResponse connection = sftpGoProvisioner.ensureProvisioned(agentId, key.publicKey());
+        if ("ACTIVE".equals(agent.status())) {
+            if (!connection.username().equals(agent.sftpUsername())) {
+                throw new SftpProvisioningConflictException();
+            }
+            return connection;
+        }
+
+        Instant occurredAt = now();
+        long version = agent.version() + 1;
+        jdbc.update(
+                """
+                UPDATE collector.agents
+                SET status = 'ACTIVE', sftp_username = ?, activated_at = ?, updated_at = ?, version = ?
+                WHERE id = ? AND version = ?
+                """,
+                connection.username(),
+                Timestamp.from(occurredAt),
+                Timestamp.from(occurredAt),
+                version,
+                agentId,
+                agent.version());
+        jdbc.update(
+                """
+                INSERT INTO collector.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, 'AGENT_ACTIVATED', '1.0', ?, 'COLLECTOR',
+                        'HUMAN_USER', ?, 'AGENT', ?, ?,
+                        'SUCCESS', ?, '{}'::jsonb, ?)
+                """,
+                UUID.randomUUID(),
+                Timestamp.from(occurredAt),
+                actorId,
+                agentId,
+                version,
+                correlationId,
+                Timestamp.from(occurredAt));
+        return connection;
+    }
+
     private Optional<AgentRow> findAgent(UUID agentId) {
         return queryAgent(
                 """
-                SELECT id, asset_id, status, created_at, updated_at, version
+                SELECT id, asset_id, status, sftp_username, activated_at, created_at, updated_at, version
                 FROM collector.agents WHERE id = ?
                 """,
                 agentId);
@@ -95,7 +170,7 @@ class AgentService {
     private Optional<AgentRow> findAgentForUpdate(UUID agentId) {
         return queryAgent(
                 """
-                SELECT id, asset_id, status, created_at, updated_at, version
+                SELECT id, asset_id, status, sftp_username, activated_at, created_at, updated_at, version
                 FROM collector.agents WHERE id = ? FOR UPDATE
                 """,
                 agentId);
@@ -108,6 +183,10 @@ class AgentService {
                                 resultSet.getObject("id", UUID.class),
                                 resultSet.getObject("asset_id", UUID.class),
                                 resultSet.getString("status"),
+                                resultSet.getString("sftp_username"),
+                                resultSet.getTimestamp("activated_at") == null
+                                        ? null
+                                        : resultSet.getTimestamp("activated_at").toInstant(),
                                 resultSet.getTimestamp("created_at").toInstant(),
                                 resultSet.getTimestamp("updated_at").toInstant(),
                                 resultSet.getLong("version")),
@@ -143,6 +222,8 @@ class AgentService {
             UUID agentId,
             UUID assetId,
             String status,
+            String sftpUsername,
+            Instant activatedAt,
             Instant createdAt,
             Instant updatedAt,
             long version) {}

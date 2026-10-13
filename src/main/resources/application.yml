@@ -24,6 +24,16 @@ jaxon:
       enabled: ${JAXON_IDENTITY_BOOTSTRAP_ENABLED:false}
       username: ${JAXON_IDENTITY_BOOTSTRAP_USERNAME:}
       password: ${JAXON_IDENTITY_BOOTSTRAP_PASSWORD:}
+  sftp:
+    enabled: ${JAXON_SFTP_ENABLED:false}
+    admin-api-url: ${JAXON_SFTPGO_ADMIN_API_URL:}
+    admin-username: ${JAXON_SFTPGO_ADMIN_USERNAME:}
+    admin-password: ${JAXON_SFTPGO_ADMIN_PASSWORD:}
+    public-host: ${JAXON_SFTP_PUBLIC_HOST:}
+    public-port: ${JAXON_SFTP_PUBLIC_PORT:2022}
+    public-host-key: ${JAXON_SFTP_PUBLIC_HOST_KEY:}
+    connect-timeout: ${JAXON_SFTPGO_CONNECT_TIMEOUT:5s}
+    request-timeout: ${JAXON_SFTPGO_REQUEST_TIMEOUT:10s}
 
 logging:
   structured:

@@ -2,7 +2,7 @@
 
 > **Clasificación:** OBLIGATORIO  
 > **Instancia:** J-AXON | CKP-JAXON-005 | 2026-09-29  
-> **Estado:** descubrimiento inicial y refinamiento/diseño v1 cerrados hasta Lote 54; implementación no iniciada ni autorizada.
+> **Estado:** descubrimiento inicial y refinamiento/diseño v1 cerrados hasta Lote 54; implementación incremental iniciada y verificada hasta `OLA2-AGT-001a`, sin autorización general para nuevos incrementos.
 
 ## Índice
 
@@ -99,4 +99,3 @@ Mutación `AUDIT_REQUIRED` -> cambio de negocio + captura durable `AuditFact` ->
 ### FL-AUT-001 / eventos internos
 
 Command/query entre módulos -> API pública in-process. Hecho durable -> outbox del productor -> consumidores idempotentes `at-least-once`. Automation solo procesa eventos elegibles y cualquier mutación vuelve al contrato del módulo dueño. n8n no consume el bus interno directamente. SSE es adaptación best-effort y REST conserva verdad.
-

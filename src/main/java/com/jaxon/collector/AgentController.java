@@ -67,6 +67,18 @@ class AgentController {
                 UUID.fromString(agentId), request, actorId(authentication), correlationId()));
     }
 
+    @PostMapping("/{agentId}/activate")
+    ResponseEntity<?> activate(
+            @PathVariable String agentId,
+            Authentication authentication,
+            HttpServletRequest servletRequest) {
+        if (!UUID_V4.matcher(agentId).matches()) {
+            return notFound(servletRequest);
+        }
+        return ResponseEntity.ok(agentService.activate(
+                UUID.fromString(agentId), actorId(authentication), correlationId()));
+    }
+
     @ExceptionHandler({AssetNotFoundException.class})
     ResponseEntity<AgentProblem> assetNotFound(RuntimeException exception, HttpServletRequest request) {
         return problem(
@@ -100,6 +112,42 @@ class AgentController {
                 "Conflicto de clave pública",
                 "La clave no puede asociarse al Agent indicado.",
                 "AGENT_KEY_CONFLICT");
+    }
+
+    @ExceptionHandler(AgentPublicKeyRequiredException.class)
+    ResponseEntity<AgentProblem> publicKeyRequired(RuntimeException exception, HttpServletRequest request) {
+        return problem(request, HttpStatus.CONFLICT, "Clave pública requerida",
+                "El Agent debe tener una clave pública registrada.", "AGENT_PUBLIC_KEY_REQUIRED");
+    }
+
+    @ExceptionHandler(AssetNotActiveException.class)
+    ResponseEntity<AgentProblem> assetNotActive(RuntimeException exception, HttpServletRequest request) {
+        return problem(request, HttpStatus.CONFLICT, "Activo no disponible",
+                "El activo debe estar ACTIVE para activar su Agent.", "ASSET_NOT_ACTIVE");
+    }
+
+    @ExceptionHandler({AgentStateConflictException.class, AssetActiveAgentConflictException.class})
+    ResponseEntity<AgentProblem> activationConflict(RuntimeException exception, HttpServletRequest request) {
+        String code = exception instanceof AssetActiveAgentConflictException
+                ? "ASSET_ACTIVE_AGENT_CONFLICT"
+                : "AGENT_STATE_CONFLICT";
+        return problem(request, HttpStatus.CONFLICT, "Conflicto de activación",
+                "El Agent no puede activarse en su estado actual.", code);
+    }
+
+    @ExceptionHandler(SftpProvisioningConflictException.class)
+    ResponseEntity<AgentProblem> provisioningConflict(RuntimeException exception, HttpServletRequest request) {
+        return problem(request, HttpStatus.CONFLICT, "Conflicto de aprovisionamiento",
+                "El buzón SFTP existente no coincide con el Agent.", "SFTP_PROVISIONING_CONFLICT");
+    }
+
+    @ExceptionHandler({SftpProvisioningUnavailableException.class, SftpHostKeyMismatchException.class})
+    ResponseEntity<AgentProblem> provisioningUnavailable(RuntimeException exception, HttpServletRequest request) {
+        String code = exception instanceof SftpHostKeyMismatchException
+                ? "SFTP_HOST_KEY_MISMATCH"
+                : "SFTP_PROVISIONING_UNAVAILABLE";
+        return problem(request, HttpStatus.SERVICE_UNAVAILABLE, "SFTP no disponible",
+                "No se pudo confirmar el aprovisionamiento SFTP de forma segura.", code);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

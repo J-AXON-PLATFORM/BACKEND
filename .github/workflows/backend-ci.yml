@@ -69,6 +69,9 @@ jobs:
           image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --no-progress
           jaxon-postgres-pgvector-test:18.6-0.8.6
 
+      - name: Build and verify Local/Test SFTPGo fixture
+        run: ./docker/sftpgo/build-local.sh
+
       - name: Verify backend
         run: ./mvnw --batch-mode --no-transfer-progress clean verify
 
