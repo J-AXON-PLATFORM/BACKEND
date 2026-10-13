@@ -35,8 +35,10 @@ elif git rev-parse --verify --quiet HEAD^ >/dev/null; then
 fi
 
 if [[ -n "${base_ref}" ]] && git cat-file -e "${base_ref}:${SPEC_V11}" 2>/dev/null; then
-  git show "${base_ref}:${SPEC_V11}" >"${work_dir}/base-openapi.yaml"
-  "${work_dir}/oasdiff" breaking "${work_dir}/base-openapi.yaml" "${SPEC_V11}"
+  mkdir -p "${work_dir}/base/1.0" "${work_dir}/base/1.1"
+  git show "${base_ref}:${SPEC_V10}" >"${work_dir}/base/1.0/openapi.yaml"
+  git show "${base_ref}:${SPEC_V11}" >"${work_dir}/base/1.1/openapi.yaml"
+  "${work_dir}/oasdiff" breaking "${work_dir}/base/1.1/openapi.yaml" "${SPEC_V11}"
 else
   printf 'No previous OpenAPI 1.1 baseline exists; 1.0 to 1.1 compatibility completed.\n'
 fi
