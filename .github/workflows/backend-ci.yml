@@ -72,6 +72,9 @@ jobs:
       - name: Build and verify Local/Test SFTPGo fixture
         run: ./docker/sftpgo/build-local.sh
 
+      - name: Release SFTPGo build cache
+        run: docker builder prune --all --force
+
       - name: Verify backend
         run: ./mvnw --batch-mode --no-transfer-progress clean verify
 
