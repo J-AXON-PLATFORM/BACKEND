@@ -36,7 +36,9 @@ El 2026-10-09 se verificó la baseline Compose Local:
 - `scripts/verify-compose.sh` usa puertos dinámicos, un proyecto único y cleanup restringido a su volumen efímero propio, sin eliminar datos Local persistentes ajenos;
 - la verificación cubre servicio predeterminado, health/probes, Flyway, ocho schemas, pgvector 0.8.6, loopback, persistencia y runtime backend endurecido.
 
-El candidato local `OLA2-SFTP-001a` añade SFTPGo 2.7.6 al Compose predeterminado: build desde fuente fijada por commit/checksum/firma, runtime distroless UID/GID `65532`, autenticación exclusiva por public key, comandos SSH auxiliares deshabilitados, SFTP limitado a loopback, API administrativa solo interna y volúmenes separados para estado y buzones. El gate ejecuta pruebas upstream, `govulncheck`, Trivy HIGH/CRITICAL y SBOM CycloneDX temporal; no publica la imagen.
+`OLA2-SFTP-001a` añade SFTPGo 2.7.6 al Compose predeterminado: build desde fuente fijada por commit/checksum/firma, runtime distroless UID/GID `65532`, autenticación exclusiva por public key, comandos SSH auxiliares deshabilitados, SFTP limitado a loopback, API administrativa solo interna y volúmenes separados para estado y buzones. El gate ejecuta pruebas upstream, `govulncheck`, Trivy HIGH/CRITICAL y SBOM CycloneDX temporal; no publica la imagen.
+
+`OLA2-SNP-001a` no cambia la imagen ni Compose. Evoluciona solo el aprovisionamiento Local/Test: cada Agent recibe un virtual folder `/snapshots` determinista, aislado y mapeado fuera de su `home_dir`, con límite global de upload de 5 MiB y permisos mínimos para carga, rename, creación de directorios y limpieza de archivos parciales. El perfil anterior exacto puede actualizarse; cualquier otro drift se rechaza.
 
 Compose no incluye frontend, n8n, observabilidad, reverse proxy, TLS o topología Production.
 

@@ -33,7 +33,7 @@ El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, impleme
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
 - checkout de historial completo y Gitleaks 8.30.1 bloqueante, verificado mediante SHA-256 y ejecutado con redacción total antes de compilar.
 
-La ampliación histórica de contenedores se integró mediante `BACKEND#5`, squash `90c550714b861beb7d6388cf571744efcda4af8d`, con runs verdes `37879426717` y `37879749721`. AC-JAXON-059 añade al mismo job pruebas contractuales Maven y `oasdiff` 1.33.0 verificado por SHA-256; SFTP sigue pendiente. Los rulesets continúan pendientes por el plan del repositorio privado.
+La ampliación histórica de contenedores se integró mediante `BACKEND#5`, squash `90c550714b861beb7d6388cf571744efcda4af8d`, con runs verdes `37879426717` y `37879749721`. AC-JAXON-059 añade al mismo job pruebas contractuales Maven y `oasdiff` 1.33.0 verificado por SHA-256. `OLA2-SFTP-001a` añade al job existente el build/verificación de la fixture SFTPGo Local/Test y libera después su caché de construcción para preservar espacio sin eliminar gates. `OLA2-SNP-001a` amplía la prueba existente contra SFTPGo real para perfil, upgrade, límite 5 MiB, ACLs, transferencia atómica e aislamiento, sin cambiar el workflow. Los rulesets continúan pendientes por el plan del repositorio privado.
 
 `TEC-QLT-004a` amplía el mismo job `Backend verification`; no crea otro workflow ni elimina gates. El verificador Compose usa proyecto, puertos y volumen efímeros propios, y su cleanup no alcanza el volumen persistente de un entorno Local. La publicación de imágenes, artefactos y despliegues permanece fuera de alcance.
 
@@ -74,7 +74,7 @@ El workflow `.github/workflows/python-ci.yml`, denominado `Python CI`, implement
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
 - checkout de historial completo y el mismo gate Gitleaks bloqueante, sin modificar `pyproject.toml` o `uv.lock`.
 
-La activación base fue integrada mediante `AUTOMATION-COLLECTOR#1`, squash `a040c5fba34fae22903088b82191e8355deaab26`, con runs verdes `37852626079` y `37852683236`. AC-JAXON-059 añade `jsonschema`/`referencing`, pruebas contractuales y verificación local del manifest al mismo workflow. El candidato `OLA2-SFTP-001a` añade Paramiko 5.0.0 y pruebas de configuración/host-key/conexión; PyInstaller, snapshots, polling y tareas quedan pendientes.
+La activación base fue integrada mediante `AUTOMATION-COLLECTOR#1`, squash `a040c5fba34fae22903088b82191e8355deaab26`, con runs verdes `37852626079` y `37852683236`. AC-JAXON-059 añade `jsonschema`/`referencing`, pruebas contractuales y verificación local del manifest al mismo workflow. `OLA2-SFTP-001a` añade Paramiko 5.0.0 y pruebas de configuración/host-key/conexión. `OLA2-SNP-001a` añade al mismo pytest generación mínima, validación offline previa a red, límite, transferencia/cleanup atómicos y salida segura; no cambia el workflow. PyInstaller, polling, retries, spool y tareas quedan pendientes.
 
 ## Baseline Dependabot y detección de secretos
 

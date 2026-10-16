@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | OLA 0 cerrada; incrementos `OLA1-IAM-001a`, `OLA1-INV-001a` y `OLA2-AGT-001a` verificados, 2026-10-11
-> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 0 cerrada y `OLA1-IAM-001a`/`OLA1-INV-001a`/`OLA2-AGT-001a` integrados; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | OLA 0 cerrada; cuatro incrementos integrados y candidato `OLA2-SNP-001a` verificado localmente, 2026-10-16
+> **Estado documental:** baseline v1 `DESIGN_READY`; implementación incremental acotada hasta snapshot puntual, pendiente de evidencia remota de `OLA2-SNP-001a`; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-11.
+- Fecha de última revisión: 2026-10-16.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: login humano, alta/consulta mínima de activos y pre-registro Agent están integrados. `OLA2-SFTP-001a`, implementado y verificado localmente, añade SFTPGo Local/Test, aprovisionamiento lógico aislado, transición idempotente `PENDING -> ACTIVE`, host-key verification y verificación SFTP puntual con Paramiko. Automation y frontend ya están integrados; el cierre backend solo se acredita si el PR que contiene este documento figura `MERGED` y su run post-merge está verde. Snapshots, transferencias funcionales, polling, tareas, procesamiento Collector, SSE, estado técnico, Discovery y Production siguen fuera del corte.
+- Estado funcional: login humano, alta/consulta mínima de activos, pre-registro y enrolamiento SFTP Agent están integrados. El candidato `OLA2-SNP-001a` añade únicamente generación puntual del snapshot mínimo Agent 1.0 y transferencia SFTP atómica Local/Test, con perfil SFTPGo aislado y límite 5 MiB. La integración se determina por los PR y runs reales, no por este texto. Procesamiento Collector, polling, tareas, spool, SSE, estado técnico, Discovery y Production siguen fuera del corte.
 
 ## 1. Identidad
 
@@ -613,4 +613,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada y tres incrementos funcionales integrados: Identity aporta login humano y sesión opaca; Inventory aporta alta/consulta mínima de activos; `OLA2-AGT-001a` aporta pre-registro Agent, identidad técnica, Ed25519 local, public key/huella y estado `PENDING`. `OLA2-SFTP-001a` está implementado y verificado localmente; añade únicamente SFTPGo Local/Test, activación `ACTIVE`, buzón lógico aislado y verificación SFTP puntual. Su integración se determina mediante la evidencia remota del PR backend y no por este texto. No implementa snapshots, transferencias funcionales, Collector funcional, SSE o estado técnico. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y cuatro incrementos funcionales integrados. El candidato acotado `OLA2-SNP-001a` genera y transfiere un snapshot técnico puntual por SFTP, pero no lo procesa ni persiste en Collector. Tampoco implementa polling, tareas, spool, SSE o estado técnico. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.

@@ -3,6 +3,30 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Snapshot técnico puntual Agent -- OLA2-SNP-001a, 2026-10-16
+
+Se implementa el comando único `jaxon-agent send-snapshot --state-dir <ruta>` para POSIX/Linux. Recoge únicamente hostname, familia/nombre/versión del sistema operativo, arquitectura, CPU lógicas, memoria total y total/disponible del volumen raíz; genera UUIDv4 y timestamps UTC, serializa JSON UTF-8 compacto y determinista, valida offline contra Agent 1.0 antes de conectar y rechaza mensajes mayores de 5 MiB.
+
+La transferencia usa la private key Ed25519 local exacta y la host key fijada, con `allow_agent=false`, `look_for_keys=false` y timeouts `10/10/10/60`. Publica exclusivamente `/snapshots/{messageId}.json.part`, verifica tamaño, renombra atómicamente a `.json`, comprueba el resultado y solo intenta limpiar su propio parcial. La salida no expone payload, claves ni secretos.
+
+SFTPGo usa un virtual folder determinista y aislado por Agent, fuera de su `home_dir`, limita cada upload a 5 MiB y concede `delete_files` solo en `/snapshots`. El aprovisionamiento admite creación, idempotencia o upgrade exacto desde el perfil de `OLA2-SFTP-001a`; cualquier otro drift falla cerrado. OpenAPI 1.0/1.1/2.0, JSON Schema Agent 1.0 y su copia vendorizada permanecen byte a byte inmutables. No se crean migraciones ni se modifican workflows o frontend.
+
+No se implementan polling, retries automáticos, spool, tareas, daemon/servicio, procesamiento Collector, persistencia de observaciones, `technical-state`, SSE, revocación, rotación, Discovery, PyInstaller o infraestructura Production. `PRODUCTION_READY = NO`.
+
+---
+
+## Enrolamiento SFTP seguro Local/Test -- OLA2-SFTP-001a, 2026-10-12
+
+Se integra el enrolamiento SFTP controlado de Agents mediante SFTPGo 2.7.6 reproducible para Local/Test, activación humana idempotente `PENDING -> ACTIVE`, máximo un Agent activo por activo, buzón lógico aislado, reconciliación estricta, evento `AGENT_ACTIVATED` y OpenAPI major 2.0. OpenAPI 1.0/1.1 y JSON Schema Agent 1.0 permanecen inmutables.
+
+`automation-collector` añade Paramiko 5.0.0, configuración POSIX y verificación puntual con private key exacta y host key Ed25519 fijada. Frontend añade activación y presenta únicamente datos públicos de conexión en memoria. El E2E Chromium cruza frontend, backend, PostgreSQL, SFTPGo y Agent Python reales.
+
+El bloque fue integrado mediante `AUTOMATION-COLLECTOR#5`, `FRONTEND#7` y `BACKEND#17`, con squashes `61805a7822d32db6dd1d99f2d5f15d26ee7474f1`, `4937641729f0efa36d8c0ac735d1d3e4ac661006` y `3e901a67b2230113798ba010f55201c698dd9161`; sus runs de PR y post-merge quedaron verdes. No se publicaron imágenes o artefactos ni se desplegó. Snapshots, transferencias funcionales, polling, tareas, spool, procesamiento Collector, estado técnico, SSE, revocación, rotación y Production permanecen fuera del alcance. `PRODUCTION_READY = NO`.
+
+El 2026-10-15 LUIS ratificó de forma limitada la modificación ya integrada del workflow backend que añadió el gate de build/verificación SFTPGo y la limpieza exclusiva de su caché de construcción. La ratificación no amplía permisos para cambios GitHub posteriores.
+
+---
+
 ## Pre-registro e identidad técnica Agent -- OLA2-AGT-001a, 2026-10-11
 
 Se implementan `POST /api/v1/agents`, `GET /api/v1/agents/{agentId}` y `PUT /api/v1/agents/{agentId}/ssh-key` como extensión compatible OpenAPI 1.1, manteniendo 1.0 inmutable. Collector conserva Agent/vínculo/estado `PENDING`; Identity conserva identidad técnica, public key Ed25519 normalizada y huella OpenSSH SHA-256; Inventory valida el activo por contrato público in-process. Los eventos allowlisted `AGENT_PRE_REGISTERED` y `AGENT_PUBLIC_KEY_REGISTERED` se capturan atómicamente en el outbox del productor.

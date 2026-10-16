@@ -6,15 +6,17 @@
 
 ## Punto de reanudación
 
-No reabrir AC-JAXON-001..061 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
+No reabrir AC-JAXON-001..063 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
 
 La baseline técnica de OLA 0 fue completada y verificada. `OLA1-IAM-001a` incorpora la primera funcionalidad: tablas exclusivamente en `identity`, login, `/auth/me`, sesión opaca, bootstrap, límites de intentos, outbox productor, UI mínima y Playwright real. El bloque fue completado, integrado y verificado el 2026-10-11.
 
 La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` completó, integró y verificó el corte mínimo de Inventory: correcciones acotadas de sesión, alta y consulta por ID para `IT_OPERATOR`, persistencia y outbox `ASSET_CREATED`, UI y E2E real. La funcionalidad Agent posterior al pre-registro, Collector, SFTP, SSE y el resto no autorizado continúan pendientes.
 
-`OLA2-AGT-001a` implementa el primer corte de OLA 2: pre-registro Agent, identidad técnica, generación Ed25519 local, registro humano de public key, huella, UI y E2E multirepo. El Agent permanece `PENDING`; no existe SFTPGo, cuenta/buzón SFTP, conexión, snapshot ni activación.
+`OLA2-AGT-001a` implementó pre-registro, identidad técnica y clave Ed25519; `OLA2-SFTP-001a` añadió después SFTPGo Local/Test, activación y verificación de conexión. `OLA2-SNP-001a` es el candidato actual para el primer snapshot técnico puntual y su transferencia atómica.
 
-`OLA2-SFTP-001a` está implementado y verificado localmente. `AUTOMATION-COLLECTOR#5` y `FRONTEND#7` están integrados; el cierre multirepo depende todavía de la evidencia real del PR backend. Añade únicamente imagen SFTPGo Local/Test reproducible, cuenta y buzón lógico aislados, activación idempotente a `ACTIVE`, host key Ed25519 preprovisionada, configuración/verificación Paramiko y UI/E2E multirepo. No añade snapshots, transferencia funcional, polling, tareas, spool, procesamiento Collector, SSE, revocación, rotación ni Production.
+`OLA2-SFTP-001a` está completado, integrado y verificado. Añade únicamente imagen SFTPGo Local/Test reproducible, cuenta y buzón lógico aislados, activación idempotente a `ACTIVE`, host key Ed25519 preprovisionada, configuración/verificación Paramiko y UI/E2E multirepo. No añade snapshots, transferencia funcional, polling, tareas, spool, procesamiento Collector, SSE, revocación, rotación ni Production.
+
+`OLA2-SNP-001a` está implementado y verificado localmente. Añade solo recolección mínima POSIX/Linux, validación Agent 1.0 offline y transferencia `/snapshots/{messageId}.json.part -> .json`, más el virtual folder/perfil SFTPGo requerido. No procesa ni persiste el snapshot en Collector y no añade migraciones, contratos, frontend, workflows, polling, retries, spool, tareas, SSE, revocación, rotación o Production. El cierre depende de la integración y CI remotas reales.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -67,7 +69,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - Estado remoto de health/contenedores verificado el 2026-10-08: `BACKEND#5`, squash `90c550714b861beb7d6388cf571744efcda4af8d`, tuvo runs verdes `37879426717` y `37879749721`; `FRONTEND#2`, squash `94d8ce2e8dd3309b7683f09041785c000f6fe21d`, tuvo runs verdes `37879426584` y `37880065517`. Backend valida health/probes, fixture PostgreSQL/pgvector, build/smoke y scans; frontend valida standalone, runtime sin gestores JavaScript, smoke y scan. No se publicaron imágenes, Packages ni artefactos.
 - Estado Compose Local verificado el 2026-10-09: `compose.yaml`, `.env.example` y `scripts/verify-compose.sh` implementan PostgreSQL/pgvector predeterminado y backend opcional, puertos loopback, volumen/red dedicados, configuración ficticia y smoke aislado. `Backend CI` conserva sus gates y añade validación/smoke Compose sin publicación ni despliegue.
 - Riesgo temporal frontend: la producción npm está limpia, pero la auditoría completa acepta solo `GHSA-vfj7-8cjw-p6xm` / `CVE-2026-93687` en `braces@3.0.3`, transitiva de desarrollo sin parche oficial al 2026-10-08. Cerrar al publicar corrección oficial, desaparecer la cadena o sustituir la herramienta mediante decisión aprobada. ESLint 9.39.5 está EOL y debe migrarse cuando la cadena oficial sea compatible con ESLint 10.
-- OpenAPI 1.0 y 1.1 permanecen inmutables y disponibles; el candidato major 2.0 amplía `AgentResponse.status` con `ACTIVE` y añade solo `POST /agents/{agentId}/activate`. Los JSON Schemas Agent 1.0, su copia vendorizada, manifest, sincronización y validador offline no cambian. Snapshots, procesamiento funcional, polling, tareas y PyInstaller siguen pendientes.
+- OpenAPI 1.0, 1.1 y 2.0 permanecen inmutables. JSON Schema Agent 1.0, copia vendorizada y manifest tampoco cambian; `OLA2-SNP-001a` consume el snapshot ya aprobado. Procesamiento Collector, polling, tareas y PyInstaller siguen pendientes.
 - La observabilidad base backend produce logs JSON con correlación, métricas Prometheus y trazas W3C/OpenTelemetry opcionales. Continúan pendientes la infraestructura centralizada, dashboards, alertas, validación operativa de SLI/SLO y una estrategia que pueda aproximar la aspiración de conservar trazas de error sin prometerla mediante head sampling.
 - La propagación del `correlationId` propio hacia ejecución servlet asíncrona o SSE permanece pendiente hasta que exista un flujo funcional que permita diseñarla y verificarla; la baseline actual cubre solicitudes síncronas.
 - La baseline de `TEC-OPS-005a`/`TEC-OPS-006a` crea dumps custom y manifests verificables, restaura únicamente sobre un destino vacío y separado, y prueba escenarios positivos/negativos en recursos efímeros. Backup/DR Production continúa pendiente.
@@ -75,7 +77,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
 - Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
-- Próxima acción técnica: cerrar validaciones e integración de `OLA2-SFTP-001a` sin ampliar el corte. Tras su cierre, delimitar separadamente cualquier snapshot o transferencia; no asumir autorización para polling, tareas ni procesamiento Collector.
+- Próxima acción técnica: cerrar la integración remota de `OLA2-SNP-001a` sin ampliar alcance. Después deberá delimitarse por separado el procesamiento Collector; no asumir autorización para polling, tareas, spool, SSE o estado técnico.
 - El objetivo siguiente es alcanzar temprano la primera vertical E2E mediante incrementos autorizados, no implementar “todo J-AXON de una vez”.
 
 ## Reglas de continuidad
