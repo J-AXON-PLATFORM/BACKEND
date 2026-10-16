@@ -38,11 +38,11 @@ La existencia de una plantilla no obliga a usar la tecnología o patrón asociad
 
 ## Instancia de proyecto J-AXON
 
-Se conserva el framework 1.0.0. CKP-JAXON-005 consolida decisiones de la instancia hasta el Lote 54 y deja el proyecto `DESIGN_READY`, sin cambiar la versión genérica ni autorizar implementación. Para evitar confundir la plantilla con artefactos conversacionales, `CHECKPOINT_JAXON.md`, `CONTROL_CAMBIOS_CHECKPOINT.md` e `INVENTARIO_ARCHIVOS_CHECKPOINT.json` ya no se incluyen dentro de `doc/`; el checkpoint se distribuye externamente. `docs/16-contexto/` sí se conserva porque es parte del mecanismo reutilizable de contexto dinámico del framework.
+Se conserva el framework 1.0.0. CKP-JAXON-005 consolida decisiones de la instancia hasta el Lote 54 y deja el proyecto `DESIGN_READY`, sin cambiar la versión genérica ni autorizar implementación general. La continuidad de la instancia registra después incrementos expresamente autorizados hasta `AC-JAXON-063` sin alterar el framework genérico. Para evitar confundir la plantilla con artefactos conversacionales, `CHECKPOINT_JAXON.md`, `CONTROL_CAMBIOS_CHECKPOINT.md` e `INVENTARIO_ARCHIVOS_CHECKPOINT.json` ya no se incluyen dentro de `doc/`; el checkpoint se distribuye externamente. `docs/16-contexto/` sí se conserva porque es parte del mecanismo reutilizable de contexto dinámico del framework.
 
 ## Inventario
 
-Total de archivos: **255**
+Total de archivos: **258**
 
 - `.github/ISSUE_TEMPLATE/bug.yml`
 - `.github/ISSUE_TEMPLATE/config.yml`
@@ -96,6 +96,9 @@ Total de archivos: **255**
 - `contracts/openapi/1.1/examples/agent-response-pending.json`
 - `contracts/openapi/1.1/examples/agent-ssh-key-request.json`
 - `contracts/openapi/1.1/openapi.yaml`
+- `contracts/openapi/2.0/examples/agent-activation-response.json`
+- `contracts/openapi/2.0/examples/agent-response-active.json`
+- `contracts/openapi/2.0/openapi.yaml`
 - `docs/00-gobierno/CONSTITUCION_IA.md`
 - `docs/00-gobierno/CRITERIOS_CALIDAD.md`
 - `docs/00-gobierno/DEFINICION_PREPARADO.md`

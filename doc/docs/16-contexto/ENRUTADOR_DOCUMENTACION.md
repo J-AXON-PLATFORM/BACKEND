@@ -46,7 +46,7 @@ Si la respuesta es no, no cargarlo.
 
 ## Instancia J-AXON -- ruta inmediata CKP-JAXON-005
 
-Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..061 aprobados; OLA 0 cerrada y tres incrementos funcionales acotados implementados: Identity, Inventory y pre-registro/clave pública Agent; `PRODUCTION_READY = NO`.
+Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..063 aprobados; OLA 0 cerrada, cuatro incrementos integrados y snapshot técnico puntual con Agent integrado/backend candidato; `PRODUCTION_READY = NO`.
 
 Estado remoto histórico verificado el 2026-10-07: la organización oficial nueva `J-AXON-PLATFORM` contiene los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos canónicos `backend`, `frontend` y `automation-collector`; `backend` fue inicializado y publicado mediante `TEC-GIT-001C`.
 
@@ -56,7 +56,7 @@ Estado frontend verificado el 2026-10-08: `FRONTEND` fue publicado con `main` y 
 
 Estado Python verificado el 2026-10-08: `AUTOMATION-COLLECTOR` fue publicado con `main` y `develop`; contiene una fundación Python 3.14.8/uv 0.12.24 con Agent y Discovery Executor separados, sin SFTP o discovery funcional. `Python CI` fue integrado en `develop` mediante el Pull Request `#1` y squash `a040c5fba34fae22903088b82191e8355deaab26`; los runs de PR `37852626079` y post-merge `37852683236` quedaron verdes, incluida la auditoría sin vulnerabilidades conocidas. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues.
 
-Los bloques técnicos de OLA 0 fueron completados. `OLA1-IAM-001a` implementa login, `OLA1-INV-001a` alta/consulta de activos y `OLA2-AGT-001a` pre-registro Agent. El candidato local `OLA2-SFTP-001a`, todavía pendiente de integración remota, añade SFTPGo Local/Test, activación y verificación puntual SFTP. Snapshot, transferencia funcional, Collector funcional, SSE y estado técnico siguen fuera de alcance. Para cualquier siguiente incremento, cargar obligatoriamente las cinco fuentes de continuidad y luego:
+Los bloques técnicos de OLA 0 fueron completados. Identity, Inventory, pre-registro y enrolamiento SFTP están integrados. `OLA2-SNP-001a` tiene integrada su parte Agent y mantiene backend como candidato; añade solo generación puntual del snapshot mínimo y transferencia SFTP atómica Local/Test. Procesamiento Collector, polling, tareas, spool, SSE y estado técnico siguen fuera de alcance. Para cualquier siguiente incremento, cargar obligatoriamente las cinco fuentes de continuidad y luego:
 
 - `docs/12-agil/GESTION_BACKLOG.md`, `docs/12-agil/GUIAS_TAREAS.md` y `docs/12-agil/FLUJO_KANBAN.md`;
 - los documentos específicos de plataforma, arquitectura, contratos, datos, seguridad y pruebas capaces de delimitar el incremento;

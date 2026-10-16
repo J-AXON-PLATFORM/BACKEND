@@ -260,6 +260,26 @@ OpenAPI 3.1.2 versión 1.1 conserva todas las operaciones 1.0 y añade solo `POS
 
 El inicializador `jaxon-agent initialize` valida UUIDv4, genera y conserva localmente la private key, muestra únicamente clave pública/huella/ruta pública, no sobrescribe estado y falla cerrado ante estado parcial o incompatible. Registrar la public key no activa el Agent: `ACTIVE` requiere provisionamiento SFTPGo futuro. Este acuerdo no implementa SFTPGo, buzón, SFTP, host-key verification, snapshots, tareas, polling, spool, SSE, revocación, rotación, PyInstaller ni servicio del sistema.
 
+## AC-JAXON-062 -- Enrolamiento SFTP seguro Local/Test de OLA 2
+
+`OLA2-SFTP-001a` autoriza exclusivamente SFTPGo Local/Test reproducible, cuenta y buzón lógico aislados, activación humana idempotente `PENDING -> ACTIVE`, máximo un Agent `ACTIVE` por activo y verificación puntual SFTP con host key Ed25519 preprovisionada. Collector conserva el estado oficial y emite `AGENT_ACTIVATED`; Identity entrega la public key mediante su contrato público e Inventory confirma que el activo está `ACTIVE`. El aprovisionamiento usa la API administrativa de SFTPGo, reconcilia de forma estricta y falla cerrado ante drift o indisponibilidad.
+
+OpenAPI 1.0 y 1.1 permanecen inmutables. OpenAPI 2.0 registra el cambio major de `AgentResponse.status` y añade `POST /agents/{agentId}/activate`. El Agent usa Paramiko 5.0.0 con private key local exacta, `RejectPolicy`, `allow_agent=false` y `look_for_keys=false`; la configuración pública se persiste con controles POSIX y no admite sustitución silenciosa.
+
+La fixture deriva de SFTPGo 2.7.6, commit firmado `62ae9ba3957e9ed52b44a4f885e805e2d7b35972`, compila con Go 1.26.9 y actualiza únicamente `golang.org/x/net` a 0.60.0 para cerrar los hallazgos bloqueantes conocidos. Usa runtime distroless no-root y gates de pruebas upstream, `govulncheck`, Trivy y SBOM temporal. No se publica ni despliega. Este acuerdo no autoriza snapshots o transferencias funcionales, polling, tareas, spool, procesamiento Collector, estado técnico, SSE, revocación, rotación, Discovery, PyInstaller, servicio del sistema o infraestructura Production.
+
+El 2026-10-15 LUIS ratificó de forma limitada la ampliación ya integrada del workflow backend existente que construye/verifica la fixture SFTPGo y elimina exclusivamente su caché de construcción después de consumirla. La ratificación no autoriza nuevos workflows, jobs, relajación de gates, publicaciones, despliegues ni cambios GitHub posteriores.
+
+## AC-JAXON-063 -- Snapshot técnico puntual y transferencia SFTP atómica
+
+`OLA2-SNP-001a` autoriza exclusivamente `jaxon-agent send-snapshot --state-dir <ruta>` en POSIX/Linux para recoger una vez hostname, familia/nombre/versión del sistema operativo, arquitectura, CPU lógicas, memoria total y total/disponible del volumen raíz `/`. El Agent genera `messageId` y `snapshotId` UUIDv4 independientes, `capturedAt` y `createdAt` RFC3339 UTC, serializa JSON UTF-8 compacto/determinista y valida offline los bytes contra Agent 1.0 antes de cualquier conexión. El mensaje no puede superar 5 MiB y no se persiste localmente.
+
+La transferencia conserva private key Ed25519 local exacta, host key fijada, `allow_agent=false`, `look_for_keys=false` y timeouts connect/banner/auth/operación `10/10/10/60` segundos. Solo crea de forma exclusiva `/snapshots/{messageId}.json.part`, verifica su tamaño, renombra atómicamente a `.json`, verifica final presente y parcial ausente, y ante fallo solo intenta borrar su propio `.part`. La salida segura se limita a `agentId`, `messageId`, `snapshotId`, `remotePath`, `status` y timestamps.
+
+SFTPGo Local/Test crea server-side `/snapshots` mediante un virtual folder determinista, aislado por Agent y mapeado fuera de su `home_dir`; mantiene `/` con `list`, `/tasks` sin cambios y `/responses` sin funcionalidad nueva. `/snapshots` recibe únicamente `list`, `upload`, `rename_files`, `create_dirs` y `delete_files`; `delete_files` no se concede en otra ruta. `filters.max_upload_file_size=5242880` es un límite global de la cuenta. El aprovisionamiento solo crea, acepta el perfil objetivo exacto o actualiza el perfil anterior exacto de `OLA2-SFTP-001a`; cualquier otro drift falla cerrado.
+
+OpenAPI 1.0/1.1/2.0, JSON Schema Agent 1.0, manifest y bundle vendorizado permanecen inmutables. No se crean migraciones ni se modifican frontend o workflows. No se autorizan polling, retries automáticos, spool, tareas, daemon/servicio, procesamiento Collector, persistencia de observaciones, `technical-state`, SSE, revocación, rotación, Discovery, PyInstaller, infraestructura Production, publicación de artefactos o despliegues.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)
