@@ -12,11 +12,11 @@ La baseline técnica de OLA 0 fue completada y verificada. `OLA1-IAM-001a` incor
 
 La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` completó, integró y verificó el corte mínimo de Inventory: correcciones acotadas de sesión, alta y consulta por ID para `IT_OPERATOR`, persistencia y outbox `ASSET_CREATED`, UI y E2E real. La funcionalidad Agent posterior al pre-registro, Collector, SFTP, SSE y el resto no autorizado continúan pendientes.
 
-`OLA2-AGT-001a` implementó pre-registro, identidad técnica y clave Ed25519; `OLA2-SFTP-001a` añadió después SFTPGo Local/Test, activación y verificación de conexión. `OLA2-SNP-001a` es el candidato actual para el primer snapshot técnico puntual y su transferencia atómica.
+`OLA2-AGT-001a` implementó pre-registro, identidad técnica y clave Ed25519; `OLA2-SFTP-001a` añadió después SFTPGo Local/Test, activación y verificación de conexión. En `OLA2-SNP-001a`, el comando Agent para el primer snapshot técnico puntual y su transferencia atómica ya está integrado; el perfil backend permanece como candidato.
 
 `OLA2-SFTP-001a` está completado, integrado y verificado. Añade únicamente imagen SFTPGo Local/Test reproducible, cuenta y buzón lógico aislados, activación idempotente a `ACTIVE`, host key Ed25519 preprovisionada, configuración/verificación Paramiko y UI/E2E multirepo. No añade snapshots, transferencia funcional, polling, tareas, spool, procesamiento Collector, SSE, revocación, rotación ni Production.
 
-`OLA2-SNP-001a` está implementado y verificado localmente. Añade solo recolección mínima POSIX/Linux, validación Agent 1.0 offline y transferencia `/snapshots/{messageId}.json.part -> .json`, más el virtual folder/perfil SFTPGo requerido. No procesa ni persiste el snapshot en Collector y no añade migraciones, contratos, frontend, workflows, polling, retries, spool, tareas, SSE, revocación, rotación o Production. El cierre depende de la integración y CI remotas reales.
+`OLA2-SNP-001a` está implementado y verificado localmente; su parte Agent también está integrada y verificada remotamente. Añade solo recolección mínima POSIX/Linux, validación Agent 1.0 offline y transferencia `/snapshots/{messageId}.json.part -> .json`, más el virtual folder/perfil SFTPGo requerido. No procesa ni persiste el snapshot en Collector y no añade migraciones, contratos, frontend, workflows, polling, retries, spool, tareas, SSE, revocación, rotación o Production. El cierre depende de la integración y CI remotas de backend.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -77,7 +77,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
 - Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
-- Próxima acción técnica: cerrar la integración remota de `OLA2-SNP-001a` sin ampliar alcance. Después deberá delimitarse por separado el procesamiento Collector; no asumir autorización para polling, tareas, spool, SSE o estado técnico.
+- Próxima acción técnica: integrar y verificar remotamente backend para cerrar `OLA2-SNP-001a` sin ampliar alcance. Después deberá delimitarse por separado el procesamiento Collector; no asumir autorización para polling, tareas, spool, SSE o estado técnico.
 - El objetivo siguiente es alcanzar temprano la primera vertical E2E mediante incrementos autorizados, no implementar “todo J-AXON de una vez”.
 
 ## Reglas de continuidad

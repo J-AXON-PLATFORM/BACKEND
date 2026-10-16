@@ -13,6 +13,8 @@ SFTPGo usa un virtual folder determinista y aislado por Agent, fuera de su `home
 
 No se implementan polling, retries automáticos, spool, tareas, daemon/servicio, procesamiento Collector, persistencia de observaciones, `technical-state`, SSE, revocación, rotación, Discovery, PyInstaller o infraestructura Production. `PRODUCTION_READY = NO`.
 
+La parte Agent fue integrada mediante `AUTOMATION-COLLECTOR#6`, squash `5bec06539b7fa3014e8231cde84b960bf4f74a50`; los runs `38935923442` de PR y `38935999273` post-merge quedaron verdes. La integración backend y su verificación remota permanecen pendientes en este punto documental.
+
 ---
 
 ## Enrolamiento SFTP seguro Local/Test -- OLA2-SFTP-001a, 2026-10-12
