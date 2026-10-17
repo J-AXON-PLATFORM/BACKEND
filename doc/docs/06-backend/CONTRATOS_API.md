@@ -46,7 +46,7 @@ OpenAPI 1.0 y 1.1 permanecen byte a byte inmutables; `oasdiff` mantiene el gate 
 
 ## Pendiente de diseño detallado
 
-Permanecen pendientes Swagger UI runtime, technical-state, generación de cliente y contratos posteriores. SFTP/JSON Schema permanece separado para el ejecutable Agent; las operaciones web de enrolamiento humano no crean un canal HTTP Agent ni autorizan snapshots HTTP.
+Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores. `OLA2-COL-001a` implementa `technical-state` sin modificar OpenAPI. SFTP/JSON Schema permanece separado para el ejecutable Agent; las operaciones web de enrolamiento humano no crean un canal HTTP Agent ni autorizan snapshots HTTP.
 
 ---
 > **Clasificación:** CONDICIONAL  

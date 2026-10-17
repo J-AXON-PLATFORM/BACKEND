@@ -34,6 +34,12 @@ jaxon:
     public-host-key: ${JAXON_SFTP_PUBLIC_HOST_KEY:}
     connect-timeout: ${JAXON_SFTPGO_CONNECT_TIMEOUT:5s}
     request-timeout: ${JAXON_SFTPGO_REQUEST_TIMEOUT:10s}
+  collector:
+    snapshot-ingestion:
+      mailbox-root: ${JAXON_COLLECTOR_MAILBOX_ROOT:}
+      reconciliation-interval: ${JAXON_COLLECTOR_RECONCILIATION_INTERVAL:4m}
+      stability-age: ${JAXON_COLLECTOR_SNAPSHOT_STABILITY_AGE:2s}
+      batch-size: ${JAXON_COLLECTOR_SNAPSHOT_BATCH_SIZE:100}
 
 logging:
   structured:

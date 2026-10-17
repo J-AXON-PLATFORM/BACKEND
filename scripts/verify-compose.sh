@@ -8,6 +8,7 @@ readonly DATABASE_CONTAINER_NAME="${PROJECT_NAME}-database-1"
 readonly APP_CONTAINER_NAME="${PROJECT_NAME}-backend-1"
 readonly SFTPGO_CONTAINER_NAME="${PROJECT_NAME}-sftpgo-1"
 readonly DATABASE_VOLUME_NAME="${PROJECT_NAME}_jaxon-postgres-data"
+readonly MAILBOX_VOLUME_NAME="${PROJECT_NAME}_jaxon-sftpgo-mailboxes"
 readonly NETWORK_NAME="${PROJECT_NAME}_jaxon-local"
 readonly DATABASE_IMAGE="${1:-jaxon-postgres-pgvector-test:18.6-0.8.6}"
 readonly APP_IMAGE="${2:-jaxon-backend:local}"
@@ -183,8 +184,15 @@ readonly APP_CONTAINER="$("${COMPOSE[@]}" --profile application ps --quiet backe
   fail "backend runtime user is not 10001:10001"
 [[ "$(docker inspect --format '{{.HostConfig.ReadonlyRootfs}}' "${APP_CONTAINER}")" == "true" ]] || \
   fail "backend root filesystem is not read-only"
+readonly APP_MAILBOX_MOUNT="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/srv/sftpgo/data"}}{{.Name}}:{{.RW}}{{end}}{{end}}' "${APP_CONTAINER}")"
+[[ "${APP_MAILBOX_MOUNT}" == "${MAILBOX_VOLUME_NAME}:false" ]] || \
+  fail "backend mailbox volume is not the isolated read-only project volume"
+readonly APP_GROUPS="$(docker inspect --format '{{json .HostConfig.GroupAdd}}' "${APP_CONTAINER}")"
+[[ "${APP_GROUPS}" == *'65532'* ]] || fail "backend lacks the SFTPGo mailbox supplementary group"
 docker exec "${APP_CONTAINER}" sh -c '[ "${JAXON_ENVIRONMENT}" = "local" ]' || \
   fail "backend did not receive JAXON_ENVIRONMENT=local"
+docker exec "${APP_CONTAINER}" sh -c '[ -r /srv/sftpgo/data ] && [ ! -w /srv/sftpgo/data ]' || \
+  fail "backend mailbox root is not safely readable and read-only"
 
 readonly APP_BINDING="$("${COMPOSE[@]}" --profile application port backend 8080)"
 [[ "${APP_BINDING}" =~ ^127\.0\.0\.1:[0-9]+$ ]] || \

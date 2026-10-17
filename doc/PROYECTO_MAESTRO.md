@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | OLA 0 cerrada; cuatro incrementos integrados y `OLA2-SNP-001a` con Agent integrado y backend candidato, 2026-10-16
-> **Estado documental:** baseline v1 `DESIGN_READY`; implementación incremental acotada hasta snapshot puntual, con evidencia remota Agent y pendiente de integración backend; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA2-COL-001a` integrado y verificado, 2026-10-17
+> **Estado documental:** baseline v1 `DESIGN_READY`; primera vertical hasta persistencia y visualización técnica integrada sin SSE; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-16.
+- Fecha de última revisión: 2026-10-17.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: login humano, alta/consulta mínima de activos, pre-registro y enrolamiento SFTP Agent están integrados. En `OLA2-SNP-001a`, el comando Agent para generación y transferencia puntual del snapshot mínimo Agent 1.0 está integrado; el perfil SFTPGo aislado y el límite 5 MiB permanecen como candidato backend hasta su evidencia remota. Procesamiento Collector, polling, tareas, spool, SSE, estado técnico, Discovery y Production siguen fuera del corte.
+- Estado funcional: login humano, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual y `OLA2-COL-001a` están integrados. Collector valida/persiste la observación en tablas propias y frontend compone la ficha oficial con `technical-state`; polling Agent, tareas/respuestas, spool, SSE, Discovery y Production siguen fuera del corte.
 
 ## 1. Identidad
 
@@ -613,4 +613,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada y cuatro incrementos funcionales integrados. El candidato acotado `OLA2-SNP-001a` genera y transfiere un snapshot técnico puntual por SFTP, pero no lo procesa ni persiste en Collector. Tampoco implementa polling, tareas, spool, SSE o estado técnico. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y seis incrementos funcionales acotados integrados. `OLA2-COL-001a` cierra la recepción, validación, persistencia y consulta/visualización mínima del snapshot puntual sin alterar contratos. No implementa polling Agent, tareas/respuestas, spool, SSE, cuarentena o borrado. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.

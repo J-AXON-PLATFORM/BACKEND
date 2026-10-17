@@ -280,6 +280,16 @@ SFTPGo Local/Test crea server-side `/snapshots` mediante un virtual folder deter
 
 OpenAPI 1.0/1.1/2.0, JSON Schema Agent 1.0, manifest y bundle vendorizado permanecen inmutables. No se crean migraciones ni se modifican frontend o workflows. No se autorizan polling, retries automáticos, spool, tareas, daemon/servicio, procesamiento Collector, persistencia de observaciones, `technical-state`, SSE, revocación, rotación, Discovery, PyInstaller, infraestructura Production, publicación de artefactos o despliegues.
 
+## AC-JAXON-064 -- Ingestión mínima Collector y estado técnico consultable
+
+`OLA2-COL-001a` autoriza exclusivamente en `backend` y `frontend` la recepción indirecta del snapshot final ya transferido por `OLA2-SNP-001a`: Collector monta en solo lectura el almacenamiento operacional de SFTPGo, reconcilia como máximo 1000 mensajes nuevos por ciclo con intervalo predeterminado de cuatro minutos e ignora siempre `.part`. Solo admite buzones y nombres UUIDv4 canónicos, archivos regulares sin symlinks, estables, UTF-8 estricto y de hasta 5 MiB; valida offline contra la fuente canónica Agent 1.0 empaquetada desde `backend/doc/contracts/agent/1.0/`.
+
+Antes de persistir, Collector comprueba coincidencia de Agent/message entre ruta y payload, Agent `ACTIVE`, usuario SFTP esperado e identidad técnica registrada. Una única migración crea exclusivamente en schema `collector` el ledger de ingestiones y las observaciones aceptadas; la deduplicación/conflicto cubre ruta+fingerprint, `messageId` y `snapshotId`, con locks transaccionales e idempotencia. Collector no borra, renombra, mueve ni reescribe archivos y no escribe tablas ajenas; consulta Inventory e Identity por contratos públicos in-process.
+
+Se implementa el `GET /api/v1/assets/{assetId}/technical-state` ya aprobado en OpenAPI 1.0 y heredado por 1.1/2.0, exclusivo para `IT_OPERATOR`: `200` con estado nulo para un activo existente sin observaciones y `404` para UUID inválido o activo inexistente. Inventory conserva la ficha oficial y Collector la observación técnica; frontend presenta ambas separadas, mantiene estado sensible solo en memoria y segmenta la caché por usuario. OpenAPI 1.0/1.1/2.0, JSON Schema Agent 1.0, fixtures, manifest y copia vendorizada permanecen byte a byte inmutables; `automation-collector` no cambia.
+
+El corte exige pruebas unitarias, integración PostgreSQL/Flyway real, autorización, idempotencia, conflictos, batch retenido y un E2E Chromium real Agent -> SFTPGo -> Collector -> PostgreSQL -> REST -> UI, incluyendo `.part`, ciclos repetidos, aislamiento y rechazo de atribución cruzada. Autoriza una rama, un push inicial y un Pull Request por `frontend` y `backend`, integración squash en ese orden y verificación post-merge. No autoriza SSE, polling Agent, tareas/respuestas, retries automáticos, spool, cuarentena, borrado/purga, revocación/rotación, Discovery, cambios de contratos, workflows, `automation-collector`, infraestructura Production, artefactos publicados o despliegues.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)

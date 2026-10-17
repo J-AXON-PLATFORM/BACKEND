@@ -129,11 +129,23 @@
             <groupId>com.networknt</groupId>
             <artifactId>json-schema-validator</artifactId>
             <version>${json-schema-validator.version}</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>doc/contracts/agent/1.0</directory>
+                <targetPath>contracts/agent/1.0</targetPath>
+                <includes>
+                    <include>common.schema.json</include>
+                    <include>snapshot.schema.json</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
