@@ -49,6 +49,8 @@ Actuator expone únicamente `health` y `prometheus`. `/actuator/prometheus` publ
 
 No se añaden labels con identidades de usuario, activo, tarea, mensaje o correlación. La exportación OTLP de métricas permanece desactivada y no se instala un servidor Prometheus en este bloque.
 
+`OLA2-SSE-001a` añade `jaxon.collector.sse.connections.active`, `jaxon.collector.sse.events.sent`, `jaxon.collector.sse.failures` y `jaxon.collector.sse.limit.rejections`. No usan labels con IDs y permiten observar conexiones actuales, entregas, fallos de envío y rechazos por los límites global/per-user.
+
 `/actuator/prometheus` es una interfaz operacional, no una interfaz de usuario. Local publica el puerto completo solo en loopback; en otros entornos su acceso debe restringirse en la red o reverse proxy de la instalación, todavía `POR_DECIDIR`, sin asumir que esta baseline incorpora autenticación de aplicación.
 
 ## SLO

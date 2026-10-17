@@ -38,6 +38,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V10_ROOT = Path.of("doc/contracts/openapi/1.0");
     private static final Path OPENAPI_V11_ROOT = Path.of("doc/contracts/openapi/1.1");
     private static final Path OPENAPI_V20_ROOT = Path.of("doc/contracts/openapi/2.0");
+    private static final Path OPENAPI_V21_ROOT = Path.of("doc/contracts/openapi/2.1");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -241,6 +242,58 @@ class ExecutableContractsTest {
                     context -> context.executionConfig(config -> config.formatAssertionsEnabled(true)));
             assertThat(errors).as("OpenAPI 2.0 example %s", file).isEmpty();
         });
+    }
+
+    @Test
+    void openApi21Preserves20AndAddsOnlyTechnicalStateEvents() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V21_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("2.1");
+        assertThat(api.getPaths().keySet())
+                .containsExactlyInAnyOrder(
+                        "/auth/login",
+                        "/auth/me",
+                        "/assets",
+                        "/assets/{assetId}",
+                        "/assets/{assetId}/technical-state",
+                        "/assets/{assetId}/technical-state/events",
+                        "/agents",
+                        "/agents/{agentId}",
+                        "/agents/{agentId}/ssh-key",
+                        "/agents/{agentId}/activate");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .contains("subscribeAssetTechnicalStateEvents")
+                .doesNotHaveDuplicates();
+        JsonNode event = Yaml31.mapper()
+                .readTree(OPENAPI_V21_ROOT.resolve("openapi.yaml").toFile())
+                .path("components")
+                .path("schemas")
+                .path("TechnicalStateUpdatedEvent");
+        assertThat(event.path("required").toString())
+                .isEqualTo("[\"eventId\",\"eventType\",\"occurredAt\",\"assetId\",\"correlationId\"]");
+        assertThat(event.path("additionalProperties").asBoolean()).isFalse();
+        assertThat(Yaml31.mapper()
+                        .readTree(OPENAPI_V21_ROOT.resolve("openapi.yaml").toFile())
+                        .at("/paths/~1assets~1{assetId}~1technical-state~1events/get/responses/200/content/text~1event-stream/x-jaxon-sse-events/ASSET_TECHNICAL_STATE_UPDATED/$ref")
+                        .asText())
+                .isEqualTo("#/components/schemas/TechnicalStateUpdatedEvent");
+    }
+
+    @Test
+    void previousOpenApiContractsRemainByteIdentical() throws IOException {
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V10_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("bf3b1df5f28fb2e1c34f55b645312e7df896aa8a50fa8fbbec4b7e72d2068236");
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V11_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("96dfa1d01c63339089685a2e6c3011e050d24727dad71863df244a631b3c1d3b");
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V20_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("832037d2e554ca680b89776430d8a01a12a945215ba5cac0335c849e349732fe");
     }
 
     @Test

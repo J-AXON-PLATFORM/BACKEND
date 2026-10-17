@@ -28,8 +28,9 @@
 5. Tras enrolamiento, Agent genera snapshot inicial automático con hostname, OS, arquitectura, CPU lógica, RAM y almacenamiento.
 6. Sube `.part` y finaliza por rename atómico. Collector valida ruta/JSON/versión/schema/identidad/deduplicación/reglas.
 7. Collector persiste historial, separando `capturedAt` y `receivedAt`; Inventory no recibe copias de observaciones técnicas.
-8. SSE `ASSET_TECHNICAL_STATE_UPDATED` avisa; frontend consulta `GET /api/v1/assets/{assetId}/technical-state`.
-9. UI distingue datos oficiales del activo de datos observados y muestra `lastSeenAt` separado de `lastSnapshotAt`.
+8. Tras el commit de la primera aceptación, `GET /api/v1/assets/{assetId}/technical-state/events` emite SSE `ASSET_TECHNICAL_STATE_UPDATED`; duplicados, conflictos, rechazos y reprocesados no emiten.
+9. Frontend valida el aviso, invalida solo la query técnica del usuario/activo y consulta `GET /api/v1/assets/{assetId}/technical-state`.
+10. UI distingue datos oficiales del activo de datos observados y muestra `lastSeenAt` separado de `lastSnapshotAt`.
 
 Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaustivo.
 

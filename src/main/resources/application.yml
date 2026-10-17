@@ -40,6 +40,11 @@ jaxon:
       reconciliation-interval: ${JAXON_COLLECTOR_RECONCILIATION_INTERVAL:5m}
       stability-age: ${JAXON_COLLECTOR_SNAPSHOT_STABILITY_AGE:2s}
       batch-size: ${JAXON_COLLECTOR_SNAPSHOT_BATCH_SIZE:100}
+    technical-state-events:
+      global-connection-limit: ${JAXON_COLLECTOR_SSE_GLOBAL_CONNECTION_LIMIT:100}
+      user-connection-limit: ${JAXON_COLLECTOR_SSE_USER_CONNECTION_LIMIT:3}
+      heartbeat-interval: ${JAXON_COLLECTOR_SSE_HEARTBEAT_INTERVAL:15s}
+      timeout: ${JAXON_COLLECTOR_SSE_TIMEOUT:60s}
 
 logging:
   structured:

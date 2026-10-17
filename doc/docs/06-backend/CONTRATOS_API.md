@@ -44,9 +44,15 @@ Las tres operaciones nuevas pertenecen al canal web humano, requieren `IT_OPERAT
 
 OpenAPI 1.0 y 1.1 permanecen byte a byte inmutables; `oasdiff` mantiene el gate de compatibilidad minor 1.0 -> 1.1 y valida estructuralmente 2.0. El salto major es necesario porque `AgentResponse.status` deja de ser constante `PENDING` y admite `ACTIVE`. Este contrato web no crea un canal HTTP para el ejecutable Agent ni autoriza snapshots o tareas.
 
+## Contrato compatible 2.1 -- OLA2-SSE-001a
+
+`doc/contracts/openapi/2.1/openapi.yaml` conserva las nueve operaciones 2.0 y añade solo `GET /assets/{assetId}/technical-state/events`. La operación requiere sesión `IT_OPERATOR`, produce `text/event-stream`, valida activo antes de abrir el stream y declara `401`, `403`, `404` y `429` como RFC 9457. El evento `ASSET_TECHNICAL_STATE_UPDATED` contiene exclusivamente `eventId`, `eventType`, `occurredAt`, `assetId` y `correlationId`; el `id` SSE coincide con `eventId`.
+
+El contrato no promete replay ni estado oficial dentro del stream: el cliente vuelve a consultar `GET /assets/{assetId}/technical-state`. `oasdiff` bloquea incompatibilidad 2.0 -> 2.1 y los checksums fijados protegen byte a byte OpenAPI 1.0/1.1/2.0. JSON Schema Agent 1.0 no cambia.
+
 ## Pendiente de diseño detallado
 
-Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores. `OLA2-COL-001a` implementa `technical-state` sin modificar OpenAPI. SFTP/JSON Schema permanece separado para el ejecutable Agent; las operaciones web de enrolamiento humano no crean un canal HTTP Agent ni autorizan snapshots HTTP.
+Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 2.1. SFTP/JSON Schema permanece separado para el ejecutable Agent; SSE solo notifica al navegador y no crea un canal HTTP Agent ni autoriza snapshots HTTP.
 
 ---
 > **Clasificación:** CONDICIONAL  

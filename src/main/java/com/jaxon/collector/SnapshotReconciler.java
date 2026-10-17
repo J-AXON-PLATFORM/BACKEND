@@ -1,5 +1,6 @@
 package com.jaxon.collector;
 
+import com.jaxon.CorrelationIdFilter;
 import io.micrometer.core.instrument.Timer;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -16,6 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -114,6 +116,14 @@ class SnapshotReconciler {
     }
 
     private boolean process(Candidate candidate) {
+        UUID correlationId = UUID.randomUUID();
+        try (MDC.MDCCloseable ignored = MDC.putCloseable(
+                CorrelationIdFilter.MDC_KEY, correlationId.toString())) {
+            return process(candidate, correlationId);
+        }
+    }
+
+    private boolean process(Candidate candidate, UUID correlationId) {
         Timer.Sample sample = metrics.start();
         try {
             SnapshotFileReader.ReadSnapshot read = fileReader.read(
@@ -131,7 +141,8 @@ class SnapshotReconciler {
                     relativePath(candidate.path()),
                     read.sha256(),
                     read.size(),
-                    message);
+                    message,
+                    correlationId);
             metric(outcome);
             return outcome != SnapshotIngestionService.IngestionOutcome.ALREADY_PROCESSED;
         } catch (SnapshotFileReader.SnapshotNotStableException exception) {

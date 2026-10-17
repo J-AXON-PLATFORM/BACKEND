@@ -29,6 +29,8 @@ Gestiona fetching, cache, stale/fresh, invalidación, refetch, cancelación, loa
 - SSE: invalida/refresca queries afectadas; no sustituye estado oficial con payload arbitrario;
 - sesión 401: limpiar server-state sensible en memoria y llevar a login.
 
+En `OLA2-SSE-001a`, una única `EventSource` con credenciales sigue al activo seleccionado. Solo un `ASSET_TECHNICAL_STATE_UPDATED` válido para ese activo invalida exactamente `['collector', userId, 'asset-technical-state', assetId]`; cambiar de activo o desmontar el workspace cierra la conexión. Un fallo SSE no elimina el último estado REST ni deshabilita la actualización manual.
+
 ## URL state
 
 Filtros, orden y paginación que deban sobrevivir refresh/back/forward o ser compartibles se representan en URL cuando tenga sentido.

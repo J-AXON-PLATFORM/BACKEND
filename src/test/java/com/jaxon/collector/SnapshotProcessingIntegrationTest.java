@@ -1,8 +1,12 @@
 package com.jaxon.collector;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -10,18 +14,26 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -52,6 +64,9 @@ class SnapshotProcessingIntegrationTest {
     @Autowired SnapshotIngestionService ingestionService;
     @Autowired TechnicalStateService technicalStateService;
     @Autowired MeterRegistry meterRegistry;
+    @Autowired TechnicalStateEventBroadcaster eventBroadcaster;
+    @Autowired ApplicationEventPublisher applicationEvents;
+    @Autowired TransactionTemplate transactions;
     @Autowired Clock clock;
     @LocalServerPort int port;
 
@@ -59,12 +74,18 @@ class SnapshotProcessingIntegrationTest {
 
     @BeforeEach
     void clearCollectorFixtures() {
+        eventBroadcaster.close();
         jdbc.update("DELETE FROM collector.accepted_snapshots");
         jdbc.update("DELETE FROM collector.snapshot_ingestions");
         jdbc.update("DELETE FROM collector.agents");
         jdbc.update("DELETE FROM identity.technical_identities");
         jdbc.update("DELETE FROM inventory.assets");
         restoreOperatorRole();
+    }
+
+    @AfterEach
+    void closeEventStreams() {
+        eventBroadcaster.close();
     }
 
     @Test
@@ -98,7 +119,8 @@ class SnapshotProcessingIntegrationTest {
                         "duplicate-copy/" + newestMessage + ".json",
                         contentSha256,
                         newestJson.getBytes(java.nio.charset.StandardCharsets.UTF_8).length,
-                        contractValidator.validate(newestJson)))
+                        contractValidator.validate(newestJson),
+                        UUID.randomUUID()))
                 .isEqualTo(SnapshotIngestionService.IngestionOutcome.DUPLICATE);
         assertThat(count("collector.snapshot_ingestions")).isEqualTo(1);
 
@@ -216,6 +238,128 @@ class SnapshotProcessingIntegrationTest {
         }
     }
 
+    @Test
+    void publishesOneIsolatedEventOnlyAfterAnAcceptedSnapshotCommits() throws Exception {
+        UUID assetId = seedAsset();
+        UUID otherAssetId = seedAsset();
+        UUID agentId = seedActiveAgent(assetId);
+        Path directory = Files.createDirectory(mailboxRoot.resolve("agent-" + agentId + "-snapshots"));
+        String cookie = login();
+        HttpResponse<InputStream> stream = getTechnicalStateEvents(cookie, assetId.toString());
+        HttpResponse<InputStream> otherStream = getTechnicalStateEvents(cookie, otherAssetId.toString());
+        assertThat(stream.statusCode()).isEqualTo(200);
+        assertThat(stream.headers().firstValue("content-type")).hasValueSatisfying(
+                value -> assertThat(value).startsWith("text/event-stream"));
+
+        double sentBefore = sseCounter("jaxon.collector.sse.events.sent");
+        UUID messageId = UUID.randomUUID();
+        UUID snapshotId = UUID.randomUUID();
+        String json = snapshot(agentId, messageId, snapshotId, "2026-10-17T20:00:00Z", "sse-host");
+        Path accepted = writeFinal(directory, messageId, json);
+        reconciler().reconcile();
+
+        String event = readEvent(stream.body());
+        assertThat(event)
+                .contains("event:ASSET_TECHNICAL_STATE_UPDATED")
+                .contains("data:{\"eventId\":")
+                .contains("\"eventType\":\"ASSET_TECHNICAL_STATE_UPDATED\"")
+                .contains("\"assetId\":\"" + assetId + "\"")
+                .contains("\"correlationId\":")
+                .doesNotContain("sse-host", snapshotId.toString(), agentId.toString());
+        assertThat(sseCounter("jaxon.collector.sse.events.sent")).isEqualTo(sentBefore + 1);
+
+        String sha256 = jdbc.queryForObject(
+                "SELECT content_sha256 FROM collector.accepted_snapshots WHERE message_id = ?",
+                String.class,
+                messageId);
+        assertThat(ingestionService.ingest(
+                        agentId,
+                        messageId,
+                        "duplicate/" + messageId + ".json",
+                        sha256,
+                        json.getBytes(StandardCharsets.UTF_8).length,
+                        contractValidator.validate(json),
+                        UUID.randomUUID()))
+                .isEqualTo(SnapshotIngestionService.IngestionOutcome.DUPLICATE);
+        Files.writeString(accepted,
+                snapshot(agentId, messageId, UUID.randomUUID(), "2026-10-17T21:00:00Z", "conflict-host"));
+        Files.setLastModifiedTime(accepted, FileTime.from(Instant.now().minusSeconds(5)));
+        UUID rejectedPathId = UUID.randomUUID();
+        writeFinal(directory, rejectedPathId,
+                snapshot(agentId, UUID.randomUUID(), UUID.randomUUID(), "2026-10-17T22:00:00Z", "rejected-host"));
+        reconciler().reconcile();
+
+        assertThat(sseCounter("jaxon.collector.sse.events.sent")).isEqualTo(sentBefore + 1);
+        stream.body().close();
+        otherStream.body().close();
+    }
+
+    @Test
+    void protectsAndLimitsEventStreamsWithoutRenewingThePassiveSession() throws Exception {
+        UUID assetId = seedAsset();
+        String cookie = login();
+        Timestamp activityBefore = lastActivity(cookie);
+        Timestamp absoluteExpiryBefore = absoluteExpiry(cookie);
+
+        HttpResponse<InputStream> first = getTechnicalStateEvents(cookie, assetId.toString());
+        HttpResponse<InputStream> second = getTechnicalStateEvents(cookie, assetId.toString());
+        HttpResponse<InputStream> third = getTechnicalStateEvents(cookie, assetId.toString());
+        assertThat(first.statusCode()).isEqualTo(200);
+        assertThat(second.statusCode()).isEqualTo(200);
+        assertThat(third.statusCode()).isEqualTo(200);
+        assertThat(meterRegistry.get("jaxon.collector.sse.connections.active").gauge().value()).isEqualTo(3);
+        assertThat(lastActivity(cookie)).isEqualTo(activityBefore);
+        assertThat(absoluteExpiry(cookie)).isEqualTo(absoluteExpiryBefore);
+
+        double rejectionsBefore = sseCounter("jaxon.collector.sse.limit.rejections");
+        HttpResponse<String> limited = getTechnicalStateEventsProblem(cookie, assetId.toString());
+        assertThat(limited.statusCode()).isEqualTo(429);
+        assertThat(limited.headers().firstValue("content-type")).hasValueSatisfying(
+                value -> assertThat(value).startsWith("application/problem+json"));
+        assertThat(limited.body()).contains("\"code\":\"SSE_CONNECTION_LIMIT_REACHED\"");
+        assertThat(sseCounter("jaxon.collector.sse.limit.rejections")).isEqualTo(rejectionsBefore + 1);
+        assertThat(getTechnicalStateEventsProblem(null, assetId.toString()).statusCode()).isEqualTo(401);
+        assertThat(getTechnicalStateEventsProblem(cookie, "not-a-uuid").statusCode()).isEqualTo(404);
+        assertThat(getTechnicalStateEventsProblem(cookie, UUID.randomUUID().toString()).statusCode()).isEqualTo(404);
+        eventBroadcaster.close();
+        assertThat(meterRegistry.get("jaxon.collector.sse.connections.active").gauge().value()).isZero();
+        HttpResponse<InputStream> replacement = getTechnicalStateEvents(cookie, assetId.toString());
+        assertThat(replacement.statusCode()).isEqualTo(200);
+        jdbc.update("DELETE FROM identity.human_user_roles WHERE role_code = 'IT_OPERATOR'");
+        try {
+            assertThat(getTechnicalStateEventsProblem(cookie, assetId.toString()).statusCode()).isEqualTo(403);
+        } finally {
+            restoreOperatorRole();
+        }
+
+        first.body().close();
+        second.body().close();
+        third.body().close();
+        replacement.body().close();
+    }
+
+    @Test
+    void doesNotPublishAnEventFromARolledBackTransaction() throws Exception {
+        UUID assetId = seedAsset();
+        HttpResponse<InputStream> stream = getTechnicalStateEvents(login(), assetId.toString());
+        double sentBefore = sseCounter("jaxon.collector.sse.events.sent");
+
+        assertThatThrownBy(() -> transactions.executeWithoutResult(status -> {
+                    applicationEvents.publishEvent(new TechnicalStateUpdatedEvent(
+                            UUID.randomUUID(),
+                            TechnicalStateUpdatedEvent.TYPE,
+                            Instant.now(clock),
+                            assetId,
+                            UUID.randomUUID()));
+                    throw new IllegalStateException("force rollback");
+                }))
+                .isInstanceOf(IllegalStateException.class);
+        Thread.sleep(100);
+
+        assertThat(sseCounter("jaxon.collector.sse.events.sent")).isEqualTo(sentBefore);
+        stream.body().close();
+    }
+
     private SnapshotReconciler reconciler() {
         return reconciler(100);
     }
@@ -302,6 +446,74 @@ class SnapshotProcessingIntegrationTest {
             request.header("Cookie", cookie);
         }
         return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<InputStream> getTechnicalStateEvents(String cookie, String assetId) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/assets/" + assetId + "/technical-state/events"))
+                .header("Accept", "text/event-stream")
+                .GET();
+        if (cookie != null) {
+            request.header("Cookie", cookie);
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofInputStream());
+    }
+
+    private HttpResponse<String> getTechnicalStateEventsProblem(String cookie, String assetId) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/assets/" + assetId + "/technical-state/events"))
+                .header("Accept", "text/event-stream")
+                .GET();
+        if (cookie != null) {
+            request.header("Cookie", cookie);
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private static String readEvent(InputStream input) throws Exception {
+        return CompletableFuture.supplyAsync(() -> {
+                    try {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
+                        StringBuilder event = new StringBuilder();
+                        boolean eventStarted = false;
+                        for (String line; (line = reader.readLine()) != null; ) {
+                            if (line.startsWith("id:") || line.startsWith("event:") || line.startsWith("data:")) {
+                                eventStarted = true;
+                                event.append(line).append('\n');
+                            } else if (eventStarted && line.isEmpty()) {
+                                return event.toString();
+                            }
+                        }
+                        throw new IllegalStateException("SSE stream ended before an event was received");
+                    } catch (Exception exception) {
+                        throw new IllegalStateException(exception);
+                    }
+                })
+                .get(5, TimeUnit.SECONDS);
+    }
+
+    private double sseCounter(String name) {
+        return meterRegistry.get(name).counter().count();
+    }
+
+    private Timestamp lastActivity(String cookie) throws Exception {
+        return jdbc.queryForObject(
+                "SELECT last_activity_at FROM identity.human_sessions WHERE token_hash = ?",
+                Timestamp.class,
+                tokenHash(cookie));
+    }
+
+    private Timestamp absoluteExpiry(String cookie) throws Exception {
+        return jdbc.queryForObject(
+                "SELECT absolute_expires_at FROM identity.human_sessions WHERE token_hash = ?",
+                Timestamp.class,
+                tokenHash(cookie));
+    }
+
+    private static String tokenHash(String cookie) throws Exception {
+        String rawToken = cookie.substring(cookie.indexOf('=') + 1);
+        return java.util.HexFormat.of().formatHex(
+                MessageDigest.getInstance("SHA-256").digest(rawToken.getBytes(StandardCharsets.UTF_8)));
     }
 
     private URI uri(String path) {

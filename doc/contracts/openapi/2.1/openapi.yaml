@@ -1,0 +1,106 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "2.1"
+  description: >-
+    Minor compatible que conserva OpenAPI 2.0 y añade notificación SSE selectiva
+    para refrescar mediante REST el estado técnico observado de un activo.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Assets
+  - name: Agents
+paths:
+  /auth/login:
+    $ref: "../2.0/openapi.yaml#/paths/~1auth~1login"
+  /auth/me:
+    $ref: "../2.0/openapi.yaml#/paths/~1auth~1me"
+  /assets:
+    $ref: "../2.0/openapi.yaml#/paths/~1assets"
+  /assets/{assetId}:
+    $ref: "../2.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D"
+  /assets/{assetId}/technical-state:
+    $ref: "../2.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state"
+  /assets/{assetId}/technical-state/events:
+    get:
+      tags: [Assets]
+      operationId: subscribeAssetTechnicalStateEvents
+      summary: Recibe avisos best-effort de actualización del estado técnico
+      description: >-
+        Stream SSE sin replay durable. Cada aviso indica únicamente que el cliente
+        debe volver a consultar GET /assets/{assetId}/technical-state, que continúa
+        siendo la fuente oficial. La conexión no renueva la inactividad de sesión.
+      parameters:
+        - $ref: "#/components/parameters/AssetId"
+      responses:
+        "200":
+          description: Stream SSE abierto
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              x-jaxon-sse-events:
+                ASSET_TECHNICAL_STATE_UPDATED:
+                  $ref: "#/components/schemas/TechnicalStateUpdatedEvent"
+              example: |-
+                id: 3495af6f-a455-4310-86f8-79a12be536d5
+                event: ASSET_TECHNICAL_STATE_UPDATED
+                data: {"eventId":"3495af6f-a455-4310-86f8-79a12be536d5","eventType":"ASSET_TECHNICAL_STATE_UPDATED","occurredAt":"2026-10-17T20:00:00Z","assetId":"0b2b7ee9-017e-4d62-83e0-87056735e71e","correlationId":"0b9e26a7-b98e-4b6e-9098-a0a531babd3c"}
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/SseConnectionLimit" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /agents:
+    $ref: "../2.0/openapi.yaml#/paths/~1agents"
+  /agents/{agentId}:
+    $ref: "../2.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D"
+  /agents/{agentId}/ssh-key:
+    $ref: "../2.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key"
+  /agents/{agentId}/activate:
+    $ref: "../2.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate"
+components:
+  securitySchemes:
+    SessionCookie:
+      $ref: "../2.0/openapi.yaml#/components/securitySchemes/SessionCookie"
+  parameters:
+    AssetId:
+      $ref: "../1.0/openapi.yaml#/components/parameters/AssetId"
+  schemas:
+    TechnicalStateUpdatedEvent:
+      type: object
+      required: [eventId, eventType, occurredAt, assetId, correlationId]
+      properties:
+        eventId:
+          $ref: "../2.0/openapi.yaml#/components/schemas/UuidV4"
+        eventType:
+          type: string
+          const: ASSET_TECHNICAL_STATE_UPDATED
+        occurredAt:
+          $ref: "../2.0/openapi.yaml#/components/schemas/UtcDateTime"
+        assetId:
+          $ref: "../2.0/openapi.yaml#/components/schemas/UuidV4"
+        correlationId:
+          $ref: "../2.0/openapi.yaml#/components/schemas/UuidV4"
+      additionalProperties: false
+  responses:
+    AuthenticationRequired:
+      $ref: "../2.0/openapi.yaml#/components/responses/AuthenticationRequired"
+    Forbidden:
+      $ref: "../2.0/openapi.yaml#/components/responses/Forbidden"
+    NotFound:
+      $ref: "../2.0/openapi.yaml#/components/responses/NotFound"
+    SseConnectionLimit:
+      description: Límite global o por usuario de conexiones SSE alcanzado
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../1.0/openapi.yaml#/components/schemas/Problem"
+    InternalError:
+      $ref: "../2.0/openapi.yaml#/components/responses/InternalError"
+    ServiceUnavailable:
+      $ref: "../2.0/openapi.yaml#/components/responses/ServiceUnavailable"
+security:
+  - SessionCookie: []
