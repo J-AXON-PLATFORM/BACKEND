@@ -37,7 +37,7 @@ jaxon:
   collector:
     snapshot-ingestion:
       mailbox-root: ${JAXON_COLLECTOR_MAILBOX_ROOT:}
-      reconciliation-interval: ${JAXON_COLLECTOR_RECONCILIATION_INTERVAL:4m}
+      reconciliation-interval: ${JAXON_COLLECTOR_RECONCILIATION_INTERVAL:5m}
       stability-age: ${JAXON_COLLECTOR_SNAPSHOT_STABILITY_AGE:2s}
       batch-size: ${JAXON_COLLECTOR_SNAPSHOT_BATCH_SIZE:100}
 

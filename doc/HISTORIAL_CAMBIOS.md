@@ -5,7 +5,7 @@
 
 ## Ingestión mínima Collector y estado técnico -- OLA2-COL-001a, 2026-10-17
 
-Collector procesa en solo lectura los snapshots finales del volumen SFTPGo Local/Test, ignora `.part` y aplica controles de ruta UUIDv4, symlink, estabilidad, tamaño, UTF-8, JSON Schema Agent 1.0, identidad y Agent activo. La reconciliación predeterminada es cada cuatro minutos, limita a 1000 mensajes nuevos por ciclo y no muta el buzón. El ledger conserva aceptaciones, rechazos y conflictos; las observaciones aceptadas permanecen en tablas propias de `collector`, con deduplicación transaccional por identificadores y fingerprint.
+Collector procesa en solo lectura los snapshots finales del volumen SFTPGo Local/Test, ignora `.part` y aplica controles de ruta UUIDv4, symlink, estabilidad, tamaño, UTF-8, JSON Schema Agent 1.0, identidad y Agent activo. La reconciliación predeterminada es cada cinco minutos conforme a `AC-JAXON-044`, limita a 1000 mensajes nuevos por ciclo y no muta el buzón. El ledger conserva aceptaciones, rechazos y conflictos; las observaciones aceptadas permanecen en tablas propias de `collector`, con deduplicación transaccional por identificadores y fingerprint.
 
 Se implementa la migración `V20261016000000__collector_snapshot_ingestion.sql` y el `GET /api/v1/assets/{assetId}/technical-state` contractual para `IT_OPERATOR`. Inventory conserva la ficha oficial y Collector compone la última observación por `capturedAt` junto con `lastSeenAt`; frontend presenta ambas fuentes separadas, con TanStack Query segmentado por usuario, estados de carga/vacío/error y actualización manual.
 
