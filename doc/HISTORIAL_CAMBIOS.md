@@ -3,6 +3,18 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Ingestión mínima Collector y estado técnico -- OLA2-COL-001a, 2026-10-17
+
+Collector procesa en solo lectura los snapshots finales del volumen SFTPGo Local/Test, ignora `.part` y aplica controles de ruta UUIDv4, symlink, estabilidad, tamaño, UTF-8, JSON Schema Agent 1.0, identidad y Agent activo. La reconciliación predeterminada es cada cuatro minutos, limita a 1000 mensajes nuevos por ciclo y no muta el buzón. El ledger conserva aceptaciones, rechazos y conflictos; las observaciones aceptadas permanecen en tablas propias de `collector`, con deduplicación transaccional por identificadores y fingerprint.
+
+Se implementa la migración `V20261016000000__collector_snapshot_ingestion.sql` y el `GET /api/v1/assets/{assetId}/technical-state` contractual para `IT_OPERATOR`. Inventory conserva la ficha oficial y Collector compone la última observación por `capturedAt` junto con `lastSeenAt`; frontend presenta ambas fuentes separadas, con TanStack Query segmentado por usuario, estados de carga/vacío/error y actualización manual.
+
+La verificación local concluye con 56 pruebas backend, 19 frontend, builds y auditorías verdes, y un E2E Chromium real que cruza Agent, SFTPGo, Collector, PostgreSQL, REST y UI; también demuestra `.part` ignorado, idempotencia tras ciclos repetidos, aislamiento y rechazo de payload cruzado entre Agents. OpenAPI 1.0/1.1/2.0, JSON Schema Agent 1.0, fixtures, manifest y copia vendorizada permanecen byte a byte inmutables; `automation-collector` no cambia.
+
+No se implementan SSE, polling Agent, tareas/respuestas, retries automáticos, spool, cuarentena, borrado/purga, revocación, rotación, Discovery, infraestructura Production, publicación de artefactos o despliegues. `PRODUCTION_READY = NO`.
+
+---
+
 ## Snapshot técnico puntual Agent -- OLA2-SNP-001a, 2026-10-16
 
 Se implementa el comando único `jaxon-agent send-snapshot --state-dir <ruta>` para POSIX/Linux. Recoge únicamente hostname, familia/nombre/versión del sistema operativo, arquitectura, CPU lógicas, memoria total y total/disponible del volumen raíz; genera UUIDv4 y timestamps UTC, serializa JSON UTF-8 compacto y determinista, valida offline contra Agent 1.0 antes de conectar y rechaza mensajes mayores de 5 MiB.
@@ -13,7 +25,7 @@ SFTPGo usa un virtual folder determinista y aislado por Agent, fuera de su `home
 
 No se implementan polling, retries automáticos, spool, tareas, daemon/servicio, procesamiento Collector, persistencia de observaciones, `technical-state`, SSE, revocación, rotación, Discovery, PyInstaller o infraestructura Production. `PRODUCTION_READY = NO`.
 
-La parte Agent fue integrada mediante `AUTOMATION-COLLECTOR#6`, squash `5bec06539b7fa3014e8231cde84b960bf4f74a50`; los runs `38935923442` de PR y `38935999273` post-merge quedaron verdes. La integración backend y su verificación remota permanecen pendientes en este punto documental.
+La parte Agent fue integrada mediante `AUTOMATION-COLLECTOR#6`, squash `5bec06539b7fa3014e8231cde84b960bf4f74a50`, con runs verdes `38935923442` de PR y `38935999273` post-merge. Backend fue integrado mediante `BACKEND#18`, squash `12c877b9f890e48e47bc338dcee024b155b92e09`, con runs verdes `38936213131` de PR y `38941377804` post-merge.
 
 ---
 

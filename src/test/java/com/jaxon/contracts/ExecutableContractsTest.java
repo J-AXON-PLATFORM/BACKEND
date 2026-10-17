@@ -262,6 +262,16 @@ class ExecutableContractsTest {
     }
 
     @Test
+    void runtimeSnapshotSchemasAreByteIdenticalToCanonicalSources() throws IOException {
+        for (String file : List.of("common.schema.json", "snapshot.schema.json")) {
+            try (var packaged = getClass().getResourceAsStream("/contracts/agent/1.0/" + file)) {
+                assertThat(packaged).as("packaged runtime schema %s", file).isNotNull();
+                assertThat(packaged.readAllBytes()).isEqualTo(Files.readAllBytes(AGENT_ROOT.resolve(file)));
+            }
+        }
+    }
+
+    @Test
     void agentFixturesEnforceApprovedBoundaries() throws IOException {
         SchemaRegistry registry = agentRegistry(agentSchemaData());
 

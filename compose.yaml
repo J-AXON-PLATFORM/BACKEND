@@ -36,6 +36,7 @@ services:
       dockerfile: docker/sftpgo/Dockerfile
     environment:
       SFTPGO_DATA_PROVIDER__CREATE_DEFAULT_ADMIN: "true"
+      SFTPGO_COMMON__UMASK: "0027"
       SFTPGO_DEFAULT_ADMIN_PASSWORD: ${JAXON_SFTPGO_ADMIN_PASSWORD:?Set JAXON_SFTPGO_ADMIN_PASSWORD in .env}
       SFTPGO_DEFAULT_ADMIN_USERNAME: ${JAXON_SFTPGO_ADMIN_USERNAME:?Set JAXON_SFTPGO_ADMIN_USERNAME in .env}
       SFTPGO_SFTPD__ENABLED_SSH_COMMANDS: ""
@@ -77,6 +78,10 @@ services:
       JAXON_DB_PASSWORD: ${JAXON_DB_PASSWORD:?Set JAXON_DB_PASSWORD in .env}
       JAXON_DB_URL: jdbc:postgresql://database:5432/${JAXON_DB_NAME:?Set JAXON_DB_NAME in .env}
       JAXON_DB_USERNAME: ${JAXON_DB_USERNAME:?Set JAXON_DB_USERNAME in .env}
+      JAXON_COLLECTOR_MAILBOX_ROOT: /srv/sftpgo/data
+      JAXON_COLLECTOR_RECONCILIATION_INTERVAL: ${JAXON_COLLECTOR_RECONCILIATION_INTERVAL:-4m}
+      JAXON_COLLECTOR_SNAPSHOT_BATCH_SIZE: ${JAXON_COLLECTOR_SNAPSHOT_BATCH_SIZE:-100}
+      JAXON_COLLECTOR_SNAPSHOT_STABILITY_AGE: ${JAXON_COLLECTOR_SNAPSHOT_STABILITY_AGE:-2s}
       JAXON_ENVIRONMENT: ${JAXON_ENVIRONMENT:?Set JAXON_ENVIRONMENT in .env}
       JAXON_FRONTEND_ORIGIN: ${JAXON_FRONTEND_ORIGIN:-http://localhost:3000}
       JAXON_IDENTITY_BOOTSTRAP_ENABLED: ${JAXON_IDENTITY_BOOTSTRAP_ENABLED:-false}
@@ -103,6 +108,10 @@ services:
         host_ip: 127.0.0.1
         protocol: tcp
     read_only: true
+    group_add:
+      - "65532"
+    volumes:
+      - jaxon-sftpgo-mailboxes:/srv/sftpgo/data:ro
     tmpfs:
       - /tmp:rw,nosuid,nodev,noexec,size=64m
     networks:

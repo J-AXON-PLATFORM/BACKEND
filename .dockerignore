@@ -3,6 +3,16 @@
 .idea
 .vscode
 doc
+!doc/
+doc/*
+!doc/contracts/
+doc/contracts/*
+!doc/contracts/agent/
+doc/contracts/agent/*
+!doc/contracts/agent/1.0/
+doc/contracts/agent/1.0/*
+!doc/contracts/agent/1.0/common.schema.json
+!doc/contracts/agent/1.0/snapshot.schema.json
 logs
 target
 .env
