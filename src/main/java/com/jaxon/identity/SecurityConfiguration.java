@@ -1,5 +1,6 @@
 package com.jaxon.identity;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +47,7 @@ class SecurityConfiguration {
                                 "La sesión no autoriza la operación.",
                                 "ACCESS_DENIED")))
                 .authorizeHttpRequests(authorize -> authorize
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers(
                                 "/actuator/health",
                                 "/actuator/health/**",
@@ -56,6 +58,8 @@ class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/assets").hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/assets/*/technical-state")
+                        .hasRole("IT_OPERATOR")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/assets/*/technical-state/events")
                         .hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/assets/*").hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/agents").hasRole("IT_OPERATOR")

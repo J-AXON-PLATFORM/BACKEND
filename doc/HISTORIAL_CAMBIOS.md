@@ -3,6 +3,18 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Aviso SSE selectivo de estado técnico -- OLA2-SSE-001a, 2026-10-17
+
+Backend añade `GET /api/v1/assets/{assetId}/technical-state/events` para sesión `IT_OPERATOR`, con validación previa del activo, RFC 9457 para errores, `SseEmitter` best-effort sin replay y aislamiento por activo/usuario. El único evento `ASSET_TECHNICAL_STATE_UPDATED` se publica mediante listener `AFTER_COMMIT` solo para el primer snapshot aceptado; duplicados, conflictos, rechazos y reprocesados son silenciosos. El payload mínimo no contiene observaciones técnicas y REST permanece como fuente oficial.
+
+Los límites predeterminados son 100 conexiones globales y 3 por usuario, con heartbeat comentario cada 15 segundos y timeout de 60 segundos, todos configurables. La ruta autentica sin renovar la inactividad de sesión, respeta su expiración absoluta y expone métricas de baja cardinalidad para conexiones activas, envíos, fallos y rechazos. La reconciliación crea correlación UUIDv4 explícita por candidato y no depende de MDC servlet.
+
+Frontend abre una sola `EventSource` con credenciales por activo seleccionado, valida el payload, cierra la conexión al desmontar/cambiar de activo e invalida exclusivamente la query técnica segmentada por usuario; el refetch REST actualiza la UI sin refresh manual. OpenAPI 2.1 añade solo la suscripción SSE y pasa compatibilidad 2.0 -> 2.1; checksums ejecutables conservan OpenAPI 1.0/1.1/2.0 byte a byte. No hay migraciones, nuevas dependencias, workflows, cambios en `automation-collector`, broker, Redis, WebSocket, polling Agent, tareas, spool, otros eventos SSE ni infraestructura Production. `PRODUCTION_READY = NO`.
+
+La verificación local concluye con 63 pruebas backend, 20 frontend, builds y auditorías verdes, validación OpenAPI/documental y un E2E Chromium real que cruza Agent, SFTPGo, Collector, PostgreSQL, SSE, REST y UI sin refresh manual.
+
+---
+
 ## Ingestión mínima Collector y estado técnico -- OLA2-COL-001a, 2026-10-17
 
 Collector procesa en solo lectura los snapshots finales del volumen SFTPGo Local/Test, ignora `.part` y aplica controles de ruta UUIDv4, symlink, estabilidad, tamaño, UTF-8, JSON Schema Agent 1.0, identidad y Agent activo. La reconciliación predeterminada es cada cinco minutos conforme a `AC-JAXON-044`, limita a 1000 mensajes nuevos por ciclo y no muta el buzón. El ledger conserva aceptaciones, rechazos y conflictos; las observaciones aceptadas permanecen en tablas propias de `collector`, con deduplicación transaccional por identificadores y fingerprint.

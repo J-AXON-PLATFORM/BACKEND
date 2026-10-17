@@ -32,7 +32,7 @@ Preferir JSON estructurado con, cuando aplique:
 
 El backend conserva únicamente un UUIDv4 válido recibido en `X-Correlation-ID`, normalizado a minúsculas; si falta o es inválido genera otro UUIDv4 y siempre devuelve el valor aprobado en la respuesta. El MDC se limpia en `finally` y las pruebas cubren solicitudes secuenciales, concurrentes y excepciones.
 
-La baseline cubre el ciclo servlet síncrono actualmente ejecutable. La propagación del `correlationId` propio hacia trabajo asíncrono o futuros flujos SSE debe resolverse y probarse cuando exista ese flujo funcional; no se asume automáticamente por el MDC de hilo.
+La baseline síncrona conserva correlación HTTP. Desde `OLA2-SSE-001a`, cada candidato de reconciliación Collector recibe un `correlationId` UUIDv4 explícito, instalado y limpiado de forma acotada en el MDC del scheduler y transportado en el evento posterior al commit. El flujo no reutiliza contexto servlet ni asume propagación implícita entre hilos.
 
 ## No registrar
 

@@ -9,7 +9,10 @@ readonly OASDIFF_URL="https://github.com/oasdiff/oasdiff/releases/download/v${OA
 readonly SPEC_V10="doc/contracts/openapi/1.0/openapi.yaml"
 readonly SPEC_V11="doc/contracts/openapi/1.1/openapi.yaml"
 readonly SPEC_V20="doc/contracts/openapi/2.0/openapi.yaml"
+readonly SPEC_V21="doc/contracts/openapi/2.1/openapi.yaml"
 readonly SPEC_V10_SHA256="bf3b1df5f28fb2e1c34f55b645312e7df896aa8a50fa8fbbec4b7e72d2068236"
+readonly SPEC_V11_SHA256="96dfa1d01c63339089685a2e6c3011e050d24727dad71863df244a631b3c1d3b"
+readonly SPEC_V20_SHA256="832037d2e554ca680b89776430d8a01a12a945215ba5cac0335c849e349732fe"
 
 work_dir="$(mktemp -d)"
 trap 'rm -rf "${work_dir}"' EXIT
@@ -22,10 +25,14 @@ printf '%s  %s\n' "${OASDIFF_SHA256}" "${work_dir}/${OASDIFF_ARCHIVE}" \
 tar -xzf "${work_dir}/${OASDIFF_ARCHIVE}" -C "${work_dir}" oasdiff
 
 printf '%s  %s\n' "${SPEC_V10_SHA256}" "${SPEC_V10}" | sha256sum --check --strict
+printf '%s  %s\n' "${SPEC_V11_SHA256}" "${SPEC_V11}" | sha256sum --check --strict
+printf '%s  %s\n' "${SPEC_V20_SHA256}" "${SPEC_V20}" | sha256sum --check --strict
 "${work_dir}/oasdiff" validate "${SPEC_V10}"
 "${work_dir}/oasdiff" validate "${SPEC_V11}"
 "${work_dir}/oasdiff" validate "${SPEC_V20}"
+"${work_dir}/oasdiff" validate "${SPEC_V21}"
 "${work_dir}/oasdiff" breaking "${SPEC_V10}" "${SPEC_V11}"
+"${work_dir}/oasdiff" breaking "${SPEC_V20}" "${SPEC_V21}"
 
 base_ref=""
 if [[ -n "${GITHUB_BASE_REF:-}" ]] && git rev-parse --verify --quiet "origin/${GITHUB_BASE_REF}" >/dev/null; then
@@ -35,10 +42,12 @@ elif git rev-parse --verify --quiet HEAD^ >/dev/null; then
 fi
 
 if [[ -n "${base_ref}" ]] && git cat-file -e "${base_ref}:${SPEC_V11}" 2>/dev/null; then
-  mkdir -p "${work_dir}/base/1.0" "${work_dir}/base/1.1"
+  mkdir -p "${work_dir}/base/1.0" "${work_dir}/base/1.1" "${work_dir}/base/2.0"
   git show "${base_ref}:${SPEC_V10}" >"${work_dir}/base/1.0/openapi.yaml"
   git show "${base_ref}:${SPEC_V11}" >"${work_dir}/base/1.1/openapi.yaml"
+  git show "${base_ref}:${SPEC_V20}" >"${work_dir}/base/2.0/openapi.yaml"
   "${work_dir}/oasdiff" breaking "${work_dir}/base/1.1/openapi.yaml" "${SPEC_V11}"
+  "${work_dir}/oasdiff" breaking "${work_dir}/base/2.0/openapi.yaml" "${SPEC_V20}"
 else
   printf 'No previous OpenAPI 1.1 baseline exists; 1.0 to 1.1 compatibility completed.\n'
 fi

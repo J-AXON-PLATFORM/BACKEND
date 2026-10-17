@@ -40,7 +40,7 @@ class SessionAuthenticationFilter extends OncePerRequestFilter {
         if (token.isPresent()) {
             boolean csrfRequired = requiresCsrf(request);
             Optional<SessionPrincipal> resolved = authenticationService.resolveSession(
-                    token.orElseThrow(), !csrfRequired);
+                    token.orElseThrow(), !csrfRequired && !isPassiveSse(request));
             if (resolved.isEmpty()) {
                 expireSessionCookie(response);
             } else {
@@ -98,6 +98,12 @@ class SessionAuthenticationFilter extends OncePerRequestFilter {
         return !request.getRequestURI().equals("/api/v1/auth/login")
                 && !List.of(HttpMethod.GET.name(), HttpMethod.HEAD.name(), HttpMethod.OPTIONS.name())
                         .contains(request.getMethod());
+    }
+
+    private static boolean isPassiveSse(HttpServletRequest request) {
+        return HttpMethod.GET.matches(request.getMethod())
+                && request.getRequestURI().matches(
+                        "^/api/v1/assets/[0-9a-fA-F-]+/technical-state/events$");
     }
 
     private static Optional<String> findCookie(HttpServletRequest request, String name) {

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.JacksonException;
@@ -22,11 +23,17 @@ class SnapshotIngestionService {
     private final JdbcTemplate jdbc;
     private final AgentIdentityRegistry identities;
     private final Clock clock;
+    private final ApplicationEventPublisher events;
 
-    SnapshotIngestionService(JdbcTemplate jdbc, AgentIdentityRegistry identities, Clock clock) {
+    SnapshotIngestionService(
+            JdbcTemplate jdbc,
+            AgentIdentityRegistry identities,
+            Clock clock,
+            ApplicationEventPublisher events) {
         this.jdbc = jdbc;
         this.identities = identities;
         this.clock = clock;
+        this.events = events;
     }
 
     @Transactional
@@ -36,7 +43,8 @@ class SnapshotIngestionService {
             String sourcePath,
             String sha256,
             long size,
-            SnapshotMessage message) {
+            SnapshotMessage message,
+            UUID correlationId) {
         Optional<String> previous = previousStatus(sourcePath, sha256);
         if (previous.isPresent()) {
             return IngestionOutcome.ALREADY_PROCESSED;
@@ -49,15 +57,15 @@ class SnapshotIngestionService {
             reject(pathAgentId, pathMessageId, sourcePath, sha256, size, "PATH_MESSAGE_ID_MISMATCH");
             return IngestionOutcome.REJECTED;
         }
-        Integer active = jdbc.queryForObject(
+        List<UUID> activeAssets = jdbc.queryForList(
                 """
-                SELECT count(*) FROM collector.agents
+                SELECT asset_id FROM collector.agents
                 WHERE id = ? AND status = 'ACTIVE' AND sftp_username = ?
                 """,
-                Integer.class,
+                UUID.class,
                 message.agentId(),
                 "agent-" + message.agentId());
-        if (active == null || active != 1) {
+        if (activeAssets.size() != 1) {
             reject(pathAgentId, pathMessageId, sourcePath, sha256, size, "AGENT_NOT_ACTIVE");
             return IngestionOutcome.REJECTED;
         }
@@ -133,6 +141,12 @@ class SnapshotIngestionService {
         if (accepted == 0) {
             throw new SnapshotRaceException();
         }
+        events.publishEvent(new TechnicalStateUpdatedEvent(
+                UUID.randomUUID(),
+                TechnicalStateUpdatedEvent.TYPE,
+                receivedAt,
+                activeAssets.getFirst(),
+                correlationId));
         return IngestionOutcome.ACCEPTED;
     }
 
