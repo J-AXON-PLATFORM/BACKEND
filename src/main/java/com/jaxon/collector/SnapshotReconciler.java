@@ -62,8 +62,8 @@ class SnapshotReconciler {
     }
 
     @Scheduled(
-            initialDelayString = "${jaxon.collector.snapshot-ingestion.reconciliation-interval:4m}",
-            fixedDelayString = "${jaxon.collector.snapshot-ingestion.reconciliation-interval:4m}")
+            initialDelayString = "${jaxon.collector.snapshot-ingestion.reconciliation-interval:5m}",
+            fixedDelayString = "${jaxon.collector.snapshot-ingestion.reconciliation-interval:5m}")
     void reconcile() {
         if (mailboxRoot == null || !running.compareAndSet(false, true)) {
             return;
