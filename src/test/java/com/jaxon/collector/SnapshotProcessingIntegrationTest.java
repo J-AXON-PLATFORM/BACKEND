@@ -20,6 +20,8 @@ import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +65,7 @@ class SnapshotProcessingIntegrationTest {
     @Autowired SnapshotContractValidator contractValidator;
     @Autowired SnapshotIngestionService ingestionService;
     @Autowired TechnicalStateService technicalStateService;
+    @Autowired AgentOperationalStateService agentOperationalStates;
     @Autowired MeterRegistry meterRegistry;
     @Autowired TechnicalStateEventBroadcaster eventBroadcaster;
     @Autowired ApplicationEventPublisher applicationEvents;
@@ -174,6 +177,115 @@ class SnapshotProcessingIntegrationTest {
         assertThat(jdbc.queryForList(
                         "SELECT status FROM collector.snapshot_ingestions ORDER BY received_at", String.class))
                 .containsExactlyInAnyOrder("ACCEPTED", "CONFLICT", "REJECTED");
+    }
+
+    @Test
+    void derivesAgentStatusOnlyFromAcceptedSnapshotsWithControlledTime() throws Exception {
+        UUID assetId = seedAsset();
+        UUID agentId = seedActiveAgent(assetId);
+        Path directory = Files.createDirectory(mailboxRoot.resolve("agent-" + agentId + "-snapshots"));
+
+        assertThat(agentOperationalStates.find(agentId))
+                .isEqualTo(AgentOperationalStateService.AgentOperationalState.unknown());
+
+        Files.writeString(directory.resolve(UUID.randomUUID() + ".json.part"), "partial");
+        UUID invalidMessage = UUID.randomUUID();
+        writeFinal(directory, invalidMessage, "{}");
+        reconciler().reconcile();
+        assertThat(agentOperationalStates.find(agentId))
+                .isEqualTo(AgentOperationalStateService.AgentOperationalState.unknown());
+
+        UUID messageId = UUID.randomUUID();
+        UUID snapshotId = UUID.randomUUID();
+        Instant capturedAt = Instant.parse("2026-10-18T09:00:00Z");
+        String json = snapshot(agentId, messageId, snapshotId, capturedAt.toString(), "status-host");
+        Path acceptedFile = writeFinal(directory, messageId, json);
+        reconciler().reconcile();
+
+        UUID olderMessageId = UUID.randomUUID();
+        String olderJson = snapshot(
+                agentId,
+                olderMessageId,
+                UUID.randomUUID(),
+                "2026-10-18T08:00:00Z",
+                "older-status-host");
+        assertThat(ingestionService.ingest(
+                        agentId,
+                        olderMessageId,
+                        "direct/" + olderMessageId + ".json",
+                        "b".repeat(64),
+                        olderJson.getBytes(StandardCharsets.UTF_8).length,
+                        contractValidator.validate(olderJson),
+                        UUID.randomUUID()))
+                .isEqualTo(SnapshotIngestionService.IngestionOutcome.ACCEPTED);
+        Instant latestContact = Instant.now(clock).minusSeconds(1).truncatedTo(ChronoUnit.MICROS);
+        jdbc.update(
+                "UPDATE collector.accepted_snapshots SET received_at = ? WHERE message_id = ?",
+                Timestamp.from(latestContact.minusSeconds(1)),
+                messageId);
+        jdbc.update(
+                "UPDATE collector.accepted_snapshots SET received_at = ? WHERE message_id = ?",
+                Timestamp.from(latestContact),
+                olderMessageId);
+
+        AgentOperationalStateService.AgentOperationalState accepted = agentOperationalStates.find(agentId);
+        assertThat(accepted.operationalStatus()).isEqualTo(AgentOperationalStatus.ONLINE);
+        assertThat(accepted.lastSeenAt()).isEqualTo(latestContact);
+        assertThat(accepted.lastSnapshotAt()).isEqualTo(capturedAt);
+        assertThat(accepted.lastSeenAt()).isNotEqualTo(accepted.lastSnapshotAt());
+
+        String sha256 = jdbc.queryForObject(
+                "SELECT content_sha256 FROM collector.accepted_snapshots WHERE message_id = ?",
+                String.class,
+                messageId);
+        assertThat(ingestionService.ingest(
+                        agentId,
+                        messageId,
+                        "duplicate/" + messageId + ".json",
+                        sha256,
+                        json.getBytes(StandardCharsets.UTF_8).length,
+                        contractValidator.validate(json),
+                        UUID.randomUUID()))
+                .isEqualTo(SnapshotIngestionService.IngestionOutcome.DUPLICATE);
+
+        Files.writeString(acceptedFile,
+                snapshot(agentId, messageId, UUID.randomUUID(), "2026-10-18T10:00:00Z", "conflict"));
+        Files.setLastModifiedTime(acceptedFile, FileTime.from(Instant.now().minusSeconds(5)));
+        UUID rejectedPath = UUID.randomUUID();
+        writeFinal(directory, rejectedPath,
+                snapshot(agentId, UUID.randomUUID(), UUID.randomUUID(),
+                        "2026-10-18T11:00:00Z", "rejected"));
+        reconciler().reconcile();
+
+        AgentOperationalStateService.AgentOperationalState unchanged = agentOperationalStates.find(agentId);
+        assertThat(unchanged.lastSeenAt()).isEqualTo(accepted.lastSeenAt());
+        assertThat(unchanged.lastSnapshotAt()).isEqualTo(accepted.lastSnapshotAt());
+        assertThat(jdbc.queryForList(
+                        "SELECT status FROM collector.snapshot_ingestions ORDER BY status", String.class))
+                .contains("ACCEPTED", "CONFLICT", "REJECTED");
+
+        Clock boundaryClock = Clock.fixed(accepted.lastSeenAt().plus(Duration.ofMinutes(5)), ZoneOffset.UTC);
+        AgentOperationalStateService boundaryStates = new AgentOperationalStateService(
+                jdbc, boundaryClock, Duration.ofMinutes(5));
+        assertThat(boundaryStates.find(agentId).operationalStatus())
+                .isEqualTo(AgentOperationalStatus.ONLINE);
+
+        jdbc.update(
+                "UPDATE collector.accepted_snapshots SET received_at = ? WHERE agent_id = ?",
+                Timestamp.from(accepted.lastSeenAt().minusNanos(1_000)),
+                agentId);
+        assertThat(boundaryStates.find(agentId).operationalStatus())
+                .isEqualTo(AgentOperationalStatus.OFFLINE);
+        assertThat(boundaryStates.find(agentId).lastSnapshotAt()).isEqualTo(capturedAt);
+
+        jdbc.update(
+                "UPDATE collector.accepted_snapshots SET received_at = ? WHERE agent_id = ?",
+                Timestamp.from(Instant.now(clock).minus(Duration.ofMinutes(6))),
+                agentId);
+        assertThat(agentStatusGauge("jaxon.collector.agents.administrative", "active")).isEqualTo(1);
+        assertThat(agentStatusGauge("jaxon.collector.agents.operational", "offline")).isEqualTo(1);
+        assertThat(agentStatusGauge("jaxon.collector.agents.operational", "online")).isZero();
+        assertThat(agentStatusGauge("jaxon.collector.agents.operational", "unknown")).isZero();
     }
 
     @Test
@@ -494,6 +606,10 @@ class SnapshotProcessingIntegrationTest {
 
     private double sseCounter(String name) {
         return meterRegistry.get(name).counter().count();
+    }
+
+    private double agentStatusGauge(String name, String status) {
+        return meterRegistry.get(name).tag("status", status).gauge().value();
     }
 
     private Timestamp lastActivity(String cookie) throws Exception {

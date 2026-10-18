@@ -35,6 +35,8 @@ jaxon:
     connect-timeout: ${JAXON_SFTPGO_CONNECT_TIMEOUT:5s}
     request-timeout: ${JAXON_SFTPGO_REQUEST_TIMEOUT:10s}
   collector:
+    agent-operational-status:
+      offline-threshold: ${JAXON_COLLECTOR_AGENT_OFFLINE_THRESHOLD:5m}
     snapshot-ingestion:
       mailbox-root: ${JAXON_COLLECTOR_MAILBOX_ROOT:}
       reconciliation-interval: ${JAXON_COLLECTOR_RECONCILIATION_INTERVAL:5m}

@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.Test;
 
 class ExecutableContractsTest {
@@ -39,6 +40,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V11_ROOT = Path.of("doc/contracts/openapi/1.1");
     private static final Path OPENAPI_V20_ROOT = Path.of("doc/contracts/openapi/2.0");
     private static final Path OPENAPI_V21_ROOT = Path.of("doc/contracts/openapi/2.1");
+    private static final Path OPENAPI_V22_ROOT = Path.of("doc/contracts/openapi/2.2");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -287,6 +289,73 @@ class ExecutableContractsTest {
     }
 
     @Test
+    void openApi22Preserves21AndExtendsOnlyTheAgentResponse() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V22_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("2.2");
+        assertThat(api.getPaths().keySet())
+                .containsExactlyInAnyOrder(
+                        "/auth/login",
+                        "/auth/me",
+                        "/assets",
+                        "/assets/{assetId}",
+                        "/assets/{assetId}/technical-state",
+                        "/assets/{assetId}/technical-state/events",
+                        "/agents",
+                        "/agents/{agentId}",
+                        "/agents/{agentId}/ssh-key",
+                        "/agents/{agentId}/activate");
+
+        JsonNode schema = Yaml31.mapper()
+                .readTree(OPENAPI_V22_ROOT.resolve("openapi.yaml").toFile())
+                .path("components")
+                .path("schemas")
+                .path("AgentResponse");
+        assertThat(textValues(schema.path("required")))
+                .contains("operationalStatus", "lastSeenAt", "lastSnapshotAt");
+        assertThat(textValues(schema.path("properties").path("operationalStatus").path("enum")))
+                .containsExactly("UNKNOWN", "ONLINE", "OFFLINE");
+    }
+
+    @Test
+    void openApi22AgentExamplesMatchTheirSchema() throws IOException {
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_V22_ROOT.resolve("openapi.yaml").toFile());
+        List<String> examples = List.of(
+                "agent-response-unknown.json",
+                "agent-response-online.json",
+                "agent-response-offline.json");
+
+        examples.forEach(file -> {
+            ObjectNode wrapper = JSON.createObjectNode();
+            wrapper.put("$schema", DRAFT_2020_12);
+            try {
+                String definitions = root.get("components")
+                        .get("schemas")
+                        .toString()
+                        .replace("#/components/schemas/", "#/$defs/");
+                wrapper.set("$defs", JSON.readTree(definitions));
+            } catch (IOException exception) {
+                throw new IllegalStateException("Cannot prepare OpenAPI schemas", exception);
+            }
+            wrapper.put("$ref", "#/$defs/AgentResponse");
+            Schema schema = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12)
+                    .getSchema(wrapper.toString(), InputFormat.JSON);
+            List<com.networknt.schema.Error> errors = schema.validate(
+                    read(OPENAPI_V22_ROOT.resolve("examples").resolve(file)),
+                    InputFormat.JSON,
+                    context -> context.executionConfig(config -> config.formatAssertionsEnabled(true)));
+            assertThat(errors).as("OpenAPI 2.2 example %s", file).isEmpty();
+        });
+    }
+
+    @Test
     void previousOpenApiContractsRemainByteIdentical() throws IOException {
         assertThat(sha256(Files.readAllBytes(OPENAPI_V10_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("bf3b1df5f28fb2e1c34f55b645312e7df896aa8a50fa8fbbec4b7e72d2068236");
@@ -484,6 +553,10 @@ class ExecutableContractsTest {
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException(exception);
         }
+    }
+
+    private static List<String> textValues(JsonNode array) {
+        return StreamSupport.stream(array.spliterator(), false).map(JsonNode::asText).toList();
     }
 
     private static String read(Path path) {

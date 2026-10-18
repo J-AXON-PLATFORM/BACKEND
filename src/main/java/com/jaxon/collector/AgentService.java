@@ -20,18 +20,21 @@ class AgentService {
     private final AssetLookup assetLookup;
     private final AgentIdentityRegistry identityRegistry;
     private final SftpGoProvisioner sftpGoProvisioner;
+    private final AgentOperationalStateService operationalStates;
 
     AgentService(
             JdbcTemplate jdbc,
             Clock clock,
             AssetLookup assetLookup,
             AgentIdentityRegistry identityRegistry,
-            SftpGoProvisioner sftpGoProvisioner) {
+            SftpGoProvisioner sftpGoProvisioner,
+            AgentOperationalStateService operationalStates) {
         this.jdbc = jdbc;
         this.clock = clock;
         this.assetLookup = assetLookup;
         this.identityRegistry = identityRegistry;
         this.sftpGoProvisioner = sftpGoProvisioner;
+        this.operationalStates = operationalStates;
     }
 
     @Transactional
@@ -69,7 +72,10 @@ class AgentService {
                 agentId,
                 correlationId,
                 Timestamp.from(now));
-        return new AgentResponse(agentId, assetId, "PENDING", false, null, now, now, 0);
+        return response(
+                new AgentRow(agentId, assetId, "PENDING", null, null, now, now, 0),
+                new AgentIdentityRegistry.KeyState(false, null, now, 0),
+                AgentOperationalStateService.AgentOperationalState.unknown());
     }
 
     @Transactional(readOnly = true)
@@ -201,12 +207,22 @@ class AgentService {
         return response(agent, key);
     }
 
-    private static AgentResponse response(AgentRow agent, AgentIdentityRegistry.KeyState key) {
+    private AgentResponse response(AgentRow agent, AgentIdentityRegistry.KeyState key) {
+        return response(agent, key, operationalStates.find(agent.agentId()));
+    }
+
+    private static AgentResponse response(
+            AgentRow agent,
+            AgentIdentityRegistry.KeyState key,
+            AgentOperationalStateService.AgentOperationalState operationalState) {
         Instant updatedAt = agent.updatedAt().isAfter(key.updatedAt()) ? agent.updatedAt() : key.updatedAt();
         return new AgentResponse(
                 agent.agentId(),
                 agent.assetId(),
                 agent.status(),
+                operationalState.operationalStatus(),
+                operationalState.lastSeenAt(),
+                operationalState.lastSnapshotAt(),
                 key.publicKeyRegistered(),
                 key.publicKeyFingerprint(),
                 agent.createdAt(),

@@ -300,6 +300,16 @@ Frontend abre una sola `EventSource` con credenciales por activo seleccionado, l
 
 El corte exige pruebas de contrato, post-commit/silencio para resultados no aceptados, aislamiento, autorización, límites, sesión pasiva, métricas, lifecycle frontend y un E2E Chromium Agent -> SFTPGo -> Collector -> PostgreSQL -> SSE -> REST -> UI sin refresh manual. Autoriza una rama, un push inicial y un Pull Request por `frontend` y `backend`, integración squash en ese orden y verificación post-merge. No crea migraciones ni modifica workflows o `automation-collector`; no autoriza polling Agent, tareas/respuestas, retries automáticos, spool, cuarentena, borrado/purga, revocación/rotación, Discovery, PyInstaller, servicios del sistema, infraestructura Production, otros eventos SSE, artefactos publicados o despliegues.
 
+## AC-JAXON-066 -- Estado operativo derivado del Agent
+
+`OLA2-STA-001a` autoriza exclusivamente en `backend` y `frontend` derivar `UNKNOWN|ONLINE|OFFLINE` al consultar un Agent, separado del estado administrativo persistido `PENDING|ACTIVE`. `UNKNOWN` significa ausencia de contacto válido; `ONLINE` significa que `now - lastSeenAt` es menor o igual al umbral configurable, predeterminado en cinco minutos; `OFFLINE` se alcanza solo al superar el umbral y no significa error o avería. El cálculo usa `Clock`, UTC y no persiste el resultado ni crea scheduler.
+
+La única evidencia válida procede de `collector.accepted_snapshots`: `lastSeenAt` es el máximo `received_at` y `lastSnapshotAt` el máximo `captured_at`, calculados de forma independiente. `.part`, mensajes inválidos, rechazos, conflictos y duplicados no renuevan el contacto. Las tablas existentes ya contienen la evidencia necesaria, por lo que el corte no crea migración ni escribe datos de Inventory, Identity u otro módulo.
+
+`GET /api/v1/agents/{agentId}` conserva autorización `IT_OPERATOR` y errores RFC 9457, y amplía `AgentResponse` con `operationalStatus`, `lastSeenAt` y `lastSnapshotAt`. OpenAPI 2.2 es compatible con 2.1; OpenAPI 1.0/1.1/2.0/2.1 y JSON Schema Agent 1.0 permanecen byte a byte inmutables. Frontend valida estrictamente la respuesta en runtime, segmenta la caché por usuario y muestra por separado estado administrativo, estado operativo, último contacto y último snapshot en UTC, con etiquetas `Sin contacto`, `En línea` y `Fuera de línea`. Una respuesta incompleta no produce un estado falso.
+
+Collector expone gauges agregados de baja cardinalidad por estados administrativos y operativos, sin IDs. El corte exige pruebas con tiempo controlado para el límite exacto, evidencia aceptada y resultados no aceptados, seguridad `401/403/404`, contrato, métricas y un E2E Chromium determinista `UNKNOWN -> ONLINE -> OFFLINE` que mantiene `ACTIVE` y demuestra que un rechazo no renueva contacto. Autoriza una rama, un push inicial y un Pull Request por `frontend` y `backend`, integración squash en ese orden y verificación post-merge. No modifica workflows ni `automation-collector` y no autoriza polling, heartbeat nuevo, tareas/respuestas, retries, spool, eventos SSE adicionales, alertas individuales, cuarentena/purga, revocación/rotación, Discovery, daemon, PyInstaller, infraestructura Production, artefactos publicados o despliegues.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)

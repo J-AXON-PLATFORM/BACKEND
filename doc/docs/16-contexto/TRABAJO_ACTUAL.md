@@ -8,9 +8,9 @@ Mantener este archivo corto: orienta a una IA sin sustituir el Registro de Acuer
 - Estado actual: baseline documental v1 `DESIGN_READY`; implementación iniciada de forma acotada; `PRODUCTION_READY = NO`.
 - Descubrimiento inicial: cerrado.
 - Refinamiento/diseño v1: **Lotes 30--54 aprobados y consolidados**.
-- Último bloque: `OLA2-SSE-001a`, completado, integrado y verificado en `backend` y `frontend` el 2026-10-17. Añade exclusivamente el aviso SSE selectivo posterior al commit y el refetch REST del estado técnico.
-- Implementado: endpoint autenticado por activo para `IT_OPERATOR`; `SseEmitter` best-effort sin replay; límites 100 global/3 por usuario, heartbeat 15 s y timeout 60 s configurables; sesión pasiva sin renovación; correlación asíncrona explícita; métricas de baja cardinalidad; `EventSource` con credenciales, lifecycle por activo e invalidación exacta de TanStack Query; OpenAPI 2.1 compatible.
-- No implementado: polling Agent, retries automáticos, tareas/respuestas, spool, cuarentena, borrado/purga, daemon/servicio, revocación, rotación, Discovery, PyInstaller, infraestructura Production u otros eventos SSE. No cambian migraciones, workflows, JSON Schema o `automation-collector`.
+- Último bloque: `OLA2-STA-001a`, completado, integrado y verificado en `backend` y `frontend` el 2026-10-18. Añade exclusivamente estado operativo Agent derivado y su presentación humana separada.
+- Implementado: `UNKNOWN|ONLINE|OFFLINE` calculado con `Clock` y umbral configurable de cinco minutos desde snapshots aceptados; `lastSeenAt`/`lastSnapshotAt` independientes; respuesta Agent y OpenAPI 2.2 compatible; gauges agregados; parsing frontend estricto, caché por usuario y UI UTC separada del estado administrativo.
+- No implementado: polling Agent, heartbeat nuevo, retries automáticos, tareas/respuestas, spool, cuarentena, borrado/purga, alertas individuales, daemon/servicio, revocación, rotación, Discovery, PyInstaller, infraestructura Production u otros eventos SSE. No cambian migraciones, workflows, JSON Schema o `automation-collector`.
 - Estado remoto histórico verificado el 2026-10-07: existe la organización `J-AXON-PLATFORM` con los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos `backend`, `frontend` y `automation-collector`; `backend` fue publicado inicialmente mediante `TEC-GIT-001C`.
 - Estado remoto de contenedores verificado el 2026-10-08: `BACKEND#5` fue integrado en `develop` con squash `90c550714b861beb7d6388cf571744efcda4af8d`; los runs `37879426717` de PR y `37879749721` post-merge quedaron verdes. `FRONTEND#2` fue integrado con squash `94d8ce2e8dd3309b7683f09041785c000f6fe21d`; los runs `37879426584` de PR y `37880065517` post-merge quedaron verdes. No se publicaron imágenes ni artefactos.
 - Estado remoto Python verificado el 2026-10-08: `AUTOMATION-COLLECTOR` es privado; `main` apunta a `a1079d8d5bac0d0436daae844e0b1ba9e42a9d12`; `Python CI` fue integrado en `develop` mediante el Pull Request `#1` y squash `a040c5fba34fae22903088b82191e8355deaab26`; los runs `37852626079` de PR y `37852683236` post-merge quedaron verdes. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues.
@@ -18,15 +18,15 @@ Mantener este archivo corto: orienta a una IA sin sustituir el Registro de Acuer
 - Autorización general para implementar/modificar GitHub/desplegar: **NO EXISTE**.
 - Sprint actual: ninguno iniciado; cualquier incremento posterior requiere delimitación y autorización propias.
 - Backlog: inicial aprobado; no publicado en GitHub.
-- Primera vertical: login, activo, pre-registro, activación, conexión SFTP, envío puntual, procesamiento Collector, aviso SSE, refetch REST y visualización técnica están implementados. REST continúa como fuente oficial.
+- Primera vertical: login, activo, pre-registro, activación, conexión SFTP, envío puntual, procesamiento Collector, aviso SSE, refetch REST, visualización técnica y estado operativo Agent derivado están implementados. REST continúa como fuente oficial.
 - Dominios refinados: Identity, Discovery, Support, Inventory, Collector tasks, AI/RAG, Automation, Audit/Reporting.
 - Contratos internos: commands/queries in-process; eventos durables por Transactional Outbox PostgreSQL `at-least-once`; SSE best-effort y REST fuente de verdad.
-- CI backend: conserva los gates existentes; 63 pruebas cubren contrato, post-commit/rollback, aislamiento, límites, sesión pasiva y la baseline previa sin cambiar el workflow. OpenAPI 2.1 es el contrato actual; OpenAPI 1.0/1.1/2.0 y JSON Schema Agent 1.0 permanecen inmutables.
+- CI backend: conserva los gates existentes; las pruebas cubren derivación temporal, evidencia aceptada/no aceptada, seguridad, contrato, métricas y la baseline previa sin cambiar el workflow. OpenAPI 2.2 es el contrato actual; OpenAPI 1.0/1.1/2.0/2.1 y JSON Schema Agent 1.0 permanecen inmutables.
 - CI frontend: PR hacia `develop/main`, push a `develop` y ejecución manual; Node.js 24.21.0; `npm ci`, lint, typecheck, Vitest/RTL, build, auditorías, build standalone, smoke no-root/read-only y scan Trivy bloqueante HIGH/CRITICAL. La auditoría completa conserva la excepción cerrada solo para `GHSA-vfj7-8cjw-p6xm` en `braces@3.0.3` de desarrollo.
 - CI Python: conserva sync/lock, Ruff, pytest, bundle, build, auditoría y entrypoints; el pytest existente cubre snapshot puntual, validación previa a red, transferencia/cleanup y salida segura sin cambiar el workflow.
 - Riesgos frontend abiertos: ESLint 9.39.5 está EOL y debe migrarse cuando la cadena oficial soporte ESLint 10; Dependabot confirma como única alerta inicial `GHSA-vfj7-8cjw-p6xm` / `CVE-2026-93687` en `braces@3.0.3`, y la excepción debe retirarse cuando exista corrección oficial o desaparezca la cadena.
 - IDs técnicos: UUIDv4; externos como strings opacos.
-- Próxima acción técnica: delimitar un nuevo incremento pequeño sin asumir autorización para polling Agent, tareas/respuestas, spool, otros eventos SSE, cuarentena, purga o estado Agent derivado.
+- Próxima acción técnica: delimitar un nuevo incremento pequeño sin asumir autorización para polling Agent, tareas/respuestas, spool, otros eventos SSE, cuarentena o purga.
 - Evidencia remota verificada: `AUTOMATION-COLLECTOR#6`, squash `5bec06539b7fa3014e8231cde84b960bf4f74a50`, tuvo runs verdes `38935923442` y `38935999273`; `BACKEND#18`, squash `12c877b9f890e48e47bc338dcee024b155b92e09`, tuvo runs verdes `38936213131` y `38941377804`.
 - Próxima acción remota pendiente: cualquier cambio GitHub adicional fuera de los bloques consumidos debe analizarse, delimitarse y autorizarse de forma independiente.
 - Continuidad: LUIS autorizó que, después de verificar cada tarea, el coordinador determine el siguiente incremento pequeño y prepare un alcance concreto. Esto no autoriza de forma ilimitada toda OLA 0 ni permite ejecutar el siguiente incremento sin su delimitación y autorización aplicable.
@@ -44,9 +44,9 @@ Antes de proponer una acción o implementación:
 
 ## Regla de continuidad
 
-- No reabrir AC-JAXON-001..065 salvo contradicción documental real o instrucción expresa.
+- No reabrir AC-JAXON-001..066 salvo contradicción documental real o instrucción expresa.
 - `DESIGN_READY` != `IMPLEMENTATION_READY` != `PRODUCTION_READY`.
-- `IMPLEMENTATION_READY` se evalúa por alcance concreto; los incrementos hasta `OLA2-SSE-001a` consumen únicamente sus cortes expresos y no autorizan el resto de OLA 2.
+- `IMPLEMENTATION_READY` se evalúa por alcance concreto; los incrementos hasta `OLA2-STA-001a` consumen únicamente sus cortes expresos y no autorizan el resto de OLA 2.
 - Decidido/documentado != implementado != verificado.
 - Los `POR_DECIDIR` restantes son deliberados y están ligados a Production, organización, evidencia o scope futuro; no rellenarlos artificialmente.
 - No asumir autorización de código, Git, GitHub, despliegues o infraestructura Production a partir de la aprobación de los Lotes 49--54 ni de la finalización de los incrementos backend/frontend ya verificados.

@@ -50,9 +50,15 @@ OpenAPI 1.0 y 1.1 permanecen byte a byte inmutables; `oasdiff` mantiene el gate 
 
 El contrato no promete replay ni estado oficial dentro del stream: el cliente vuelve a consultar `GET /assets/{assetId}/technical-state`. `oasdiff` bloquea incompatibilidad 2.0 -> 2.1 y los checksums fijados protegen byte a byte OpenAPI 1.0/1.1/2.0. JSON Schema Agent 1.0 no cambia.
 
+## Contrato compatible 2.2 -- OLA2-STA-001a
+
+`doc/contracts/openapi/2.2/openapi.yaml` conserva las diez operaciones 2.1 y amplía `AgentResponse` con `operationalStatus`, `lastSeenAt` y `lastSnapshotAt`. El estado administrativo `PENDING|ACTIVE` permanece separado; el operativo se deriva como `UNKNOWN|ONLINE|OFFLINE` de snapshots aceptados y los timestamps opcionales se expresan en UTC. `OFFLINE` indica únicamente que se superó el umbral de contacto.
+
+`oasdiff` bloquea incompatibilidad 2.1 -> 2.2. Checksums fijados protegen OpenAPI 1.0/1.1/2.0/2.1 y el manifest conserva JSON Schema Agent 1.0. No se crea otro endpoint, canal HTTP Agent, heartbeat o evento SSE.
+
 ## Pendiente de diseño detallado
 
-Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 2.1. SFTP/JSON Schema permanece separado para el ejecutable Agent; SSE solo notifica al navegador y no crea un canal HTTP Agent ni autoriza snapshots HTTP.
+Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 2.2. SFTP/JSON Schema permanece separado para el ejecutable Agent; SSE solo notifica al navegador y no crea un canal HTTP Agent ni autoriza snapshots HTTP.
 
 ---
 > **Clasificación:** CONDICIONAL  

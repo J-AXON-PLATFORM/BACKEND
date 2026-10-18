@@ -51,6 +51,8 @@ No se añaden labels con identidades de usuario, activo, tarea, mensaje o correl
 
 `OLA2-SSE-001a` añade `jaxon.collector.sse.connections.active`, `jaxon.collector.sse.events.sent`, `jaxon.collector.sse.failures` y `jaxon.collector.sse.limit.rejections`. No usan labels con IDs y permiten observar conexiones actuales, entregas, fallos de envío y rechazos por los límites global/per-user.
 
+`OLA2-STA-001a` añade gauges `jaxon.collector.agents.administrative` con estados cerrados `pending|active` y `jaxon.collector.agents.operational` con `unknown|online|offline`. Se calculan al scrape desde datos propios de Collector, sin scheduler, estado derivado persistido ni labels de Agent/activo. Un Agent individual `OFFLINE` continúa sin equivaler a una alerta crítica.
+
 `/actuator/prometheus` es una interfaz operacional, no una interfaz de usuario. Local publica el puerto completo solo en loopback; en otros entornos su acceso debe restringirse en la red o reverse proxy de la instalación, todavía `POR_DECIDIR`, sin asumir que esta baseline incorpora autenticación de aplicación.
 
 ## SLO
