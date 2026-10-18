@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Estado operativo derivado del Agent -- OLA2-STA-001a, 2026-10-18
+
+Backend amplía la consulta humana del Agent con `UNKNOWN|ONLINE|OFFLINE`, derivado en UTC con `Clock` y umbral configurable de cinco minutos. `lastSeenAt` usa el máximo `received_at` y `lastSnapshotAt` el máximo `captured_at` de snapshots aceptados; resultados inválidos, `.part`, rechazos, conflictos y duplicados no aportan contacto. El estado administrativo permanece separado y no se crea migración, persistencia derivada o scheduler.
+
+Frontend valida estrictamente el DTO, segmenta TanStack Query por usuario y muestra ambos estados y sus timestamps UTC con degradación segura. OpenAPI 2.2 es compatible con 2.1 y conserva byte a byte OpenAPI 1.0/1.1/2.0/2.1 y Agent 1.0. Los gauges agregados no incluyen IDs. Las pruebas cubren límites temporales, evidencia independiente, seguridad, contrato, métricas y el E2E determinista `UNKNOWN -> ONLINE -> OFFLINE`, incluido un rechazo que no renueva contacto.
+
+No cambian dependencias, workflows, `automation-collector`, SSE, polling, tareas, retries, spool o infraestructura Production. `PRODUCTION_READY = NO`.
+
+---
+
 ## Aviso SSE selectivo de estado técnico -- OLA2-SSE-001a, 2026-10-17
 
 Backend añade `GET /api/v1/assets/{assetId}/technical-state/events` para sesión `IT_OPERATOR`, con validación previa del activo, RFC 9457 para errores, `SseEmitter` best-effort sin replay y aislamiento por activo/usuario. El único evento `ASSET_TECHNICAL_STATE_UPDATED` se publica mediante listener `AFTER_COMMIT` solo para el primer snapshot aceptado; duplicados, conflictos, rechazos y reprocesados son silenciosos. El payload mínimo no contiene observaciones técnicas y REST permanece como fuente oficial.

@@ -12,6 +12,8 @@ Playwright pertenece conceptualmente al sistema completo aunque el harness pueda
 Primera vertical: 1) login `IT_OPERATOR`; 2) crear activo; 3) pre-registrar/enrolar Agent controlado; 4) Agent genera snapshot; 5) upload `.part` + rename SFTP; 6) Collector valida JSON/version/schema/identidad/deduplicación; 7) PostgreSQL persiste; 8) SSE avisa; 9) frontend consulta REST y muestra datos técnicos. Cruza frontend, identity, inventory, collector, PostgreSQL, SFTPGo, Agent Python, JSON Schema y SSE.
 
 `OLA2-SSE-001a` hace ejecutables los pasos 8 y 9: Playwright mantiene abierto `EventSource`, el Agent real envía el snapshot, Collector confirma la persistencia y el navegador muestra el nuevo `snapshotId` mediante refetch REST sin pulsar actualización manual. Las pruebas backend adicionales cubren post-commit, silencio para duplicado/conflicto/rechazo, aislamiento por activo, `401/403/404/429`, límites global/per-user y sesión pasiva sin renovación.
+
+`OLA2-STA-001a` amplía el mismo recorrido con tiempo determinista: un Agent `ACTIVE` comienza `UNKNOWN`, pasa a `ONLINE` tras aceptar el snapshot y a `OFFLINE` al situar `received_at` más allá de cinco minutos, sin esperar tiempo real. Un archivo final rechazado no modifica `lastSeenAt`; el estado administrativo permanece `ACTIVE` durante toda la secuencia.
 <!-- JAXON-CKP003:END -->
 
 

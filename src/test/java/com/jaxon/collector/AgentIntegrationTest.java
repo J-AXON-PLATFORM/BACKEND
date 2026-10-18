@@ -78,6 +78,9 @@ class AgentIntegrationTest {
         assertThat(created.body())
                 .contains("\"assetId\":\"" + assetId + "\"")
                 .contains("\"status\":\"PENDING\"")
+                .contains("\"operationalStatus\":\"UNKNOWN\"")
+                .contains("\"lastSeenAt\":null")
+                .contains("\"lastSnapshotAt\":null")
                 .contains("\"publicKeyRegistered\":false")
                 .contains("\"publicKeyFingerprint\":null")
                 .contains("\"version\":0");
@@ -135,6 +138,8 @@ class AgentIntegrationTest {
         assertThat(invalid.statusCode()).isEqualTo(422);
         assertThat(invalid.body()).contains("\"pointer\":\"/assetId\"");
         assertThat(getAgent(session.cookie(), "not-a-uuid").statusCode()).isEqualTo(404);
+        assertThat(getAgent(session.cookie(), UUID.randomUUID().toString()).statusCode()).isEqualTo(404);
+        assertThat(getAgent(null, UUID.randomUUID().toString()).statusCode()).isEqualTo(401);
         assertThat(postAgent(null, seedAsset().toString(), UUID.randomUUID()).statusCode())
                 .isEqualTo(401);
 
@@ -289,6 +294,9 @@ class AgentIntegrationTest {
                 .isEqualTo(1);
         assertThat(getAgent(session.cookie(), agentId.toString()).body())
                 .contains("\"status\":\"ACTIVE\"")
+                .contains("\"operationalStatus\":\"UNKNOWN\"")
+                .contains("\"lastSeenAt\":null")
+                .contains("\"lastSnapshotAt\":null")
                 .contains("\"version\":1");
 
         assertThat(activate(session, agentId).statusCode()).isEqualTo(200);
