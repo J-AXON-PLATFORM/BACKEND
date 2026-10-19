@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA2-TSK-001a` integrado en Agent/frontend y pendiente en backend, 2026-10-18
-> **Estado documental:** baseline v1 `DESIGN_READY`; vertical `COLLECT_SNAPSHOT` verificada localmente; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA2-TSK-001a` completado, integrado y verificado, 2026-10-18
+> **Estado documental:** baseline v1 `DESIGN_READY`; vertical `COLLECT_SNAPSHOT` integrada y verificada; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-10-18.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: login humano, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE y `OLA2-STA-001a` están integrados. `OLA2-TSK-001a` añade la primera tarea explícita `COLLECT_SNAPSHOT`, con Agent/frontend ya integrados y backend pendiente. Otros tipos, retries burst, spool general, otros eventos SSE, Discovery y Production siguen fuera del corte.
+- Estado funcional: login humano, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a` y la primera tarea explícita `COLLECT_SNAPSHOT` están integrados. Otros tipos, retries burst, spool general, otros eventos SSE, Discovery y Production siguen fuera del corte.
 
 ## 1. Identidad
 
@@ -613,4 +613,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada, ocho incrementos funcionales acotados integrados y `OLA2-TSK-001a` integrado en Agent/frontend y pendiente en backend. El nuevo corte implementa solo `COLLECT_SNAPSHOT` mediante OpenAPI 2.3 compatible y Task/Result Agent 1.0; no implementa otros tipos, retries burst, spool general, nuevos SSE, cuarentena o borrado. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y nueve incrementos funcionales acotados integrados, incluido `OLA2-TSK-001a`. El nuevo corte implementa solo `COLLECT_SNAPSHOT` mediante OpenAPI 2.3 compatible y Task/Result Agent 1.0; no implementa otros tipos, retries burst, spool general, nuevos SSE, cuarentena o borrado. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.

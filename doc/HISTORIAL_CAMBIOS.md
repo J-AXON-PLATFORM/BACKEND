@@ -11,7 +11,7 @@ El Agent añade runner foreground `run [--once]`, polling 60 s ±15 s, jitter in
 
 La verificación local incluye 75 pruebas backend, 85 Python, 26 frontend, OpenAPI 2.2 -> 2.3, imagen SFTPGo reproducible y limpia, Compose aislado y un E2E Chromium real que completa `UI -> Task -> Agent -> Snapshot/Result -> Collector -> REST -> UI`. No se implementan otros tipos, `TASK_STARTED`, retries burst, spool general, periodicidad, daemon/servicio, nuevos SSE, Discovery o Production. `PRODUCTION_READY = NO`.
 
-La integración parcial autorizada quedó verde: `AUTOMATION-COLLECTOR#7`, squash `cb324b498b7e0f13324c7485a167c2999cac9683`, con runs `39192254745` y `39192308664`; `FRONTEND#11`, squash `a173c0816a104851561635831235c08d4bf8f4b7`, con runs `39192380140` y `39192566258`. Backend continúa pendiente y este estado no equivale al cierre remoto del incremento.
+La integración autorizada quedó completa y verde: `AUTOMATION-COLLECTOR#7`, squash `cb324b498b7e0f13324c7485a167c2999cac9683`, con runs `39192254745` y `39192308664`; `FRONTEND#11`, squash `a173c0816a104851561635831235c08d4bf8f4b7`, con runs `39192380140` y `39192566258`; `BACKEND#23`, squash `478d5cae56c73a28c88783e123b8e635d6c1ff12`, con runs `39192945194` y `39194236599`.
 
 ---
 
