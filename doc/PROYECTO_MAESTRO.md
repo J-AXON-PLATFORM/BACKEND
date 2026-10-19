@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA2-TSK-001a` completado, integrado y verificado, 2026-10-18
-> **Estado documental:** baseline v1 `DESIGN_READY`; vertical `COLLECT_SNAPSHOT` integrada y verificada; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA2-RSL-001a` completado, integrado y verificado, 2026-10-19
+> **Estado documental:** baseline v1 `DESIGN_READY`; entrega resiliente acotada de Results integrada y verificada; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-18.
+- Fecha de última revisión: 2026-10-19.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: login humano, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a` y la primera tarea explícita `COLLECT_SNAPSHOT` están integrados. Otros tipos, retries burst, spool general, otros eventos SSE, Discovery y Production siguen fuera del corte.
+- Estado funcional: login humano, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a`, la primera tarea explícita `COLLECT_SNAPSHOT` y el retry acotado de su entrega Result están integrados. Otros tipos, spool general, retries de polling/snapshots/capabilities, otros eventos SSE, Discovery y Production siguen fuera del corte.
 
 ## 1. Identidad
 
@@ -371,12 +371,12 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 - Estado supply-chain OLA 0: `develop` es la default branch de los tres repositorios y `main` conserva su rol de producción. Dependency Graph, Dependabot alerts y security updates agrupados están habilitados; `.github/dependabot.yml` bloquea version updates ordinarios. Los jobs existentes ejecutan Gitleaks 8.30.1 sobre historial completo, fijado por SHA-256, bloqueante y con redacción total.
 - CI de PR no usa secretos productivos; cancelar CI obsoleto del mismo PR cuando sea seguro.
 - Backend CI: compile, unit, verificación modular, PostgreSQL/Flyway, contratos y SFTP cuando aplique.
-- Estado backend: `Backend CI` ejecuta `clean verify`, incluidas pruebas OpenAPI 1.0/1.1, JSON Schema/fixtures/manifest, PostgreSQL/Flyway y modularidad, y conserva Compose, Testcontainers, builds, smoke y scans. El backup/restore lógico incluye Agent, identidad técnica y outboxes. `oasdiff` 1.33.0 se descarga por versión exacta y SHA-256 para validar ambos documentos y bloquear breaking changes desde 1.0. SFTP continúa pendiente; no hay secretos, publicación o despliegue.
+- Estado backend: `Backend CI` ejecuta `clean verify`, incluidas pruebas OpenAPI 1.0--2.3, JSON Schema/fixtures/manifest, PostgreSQL/Flyway, SFTPGo y modularidad, y conserva Compose, Testcontainers, builds, smoke y scans. El backup/restore lógico incluye Agent, identidad técnica y outboxes. `oasdiff` 1.33.0 se descarga por versión exacta y SHA-256 para bloquear breaking changes entre versiones consecutivas. No hay secretos, publicación o despliegue.
 - Los rulesets y protecciones automáticas del repositorio privado no están aplicados por la limitación del plan actual. PR y checks verdes se exigen operativamente, pero GitHub no bloquea técnicamente una fusión incorrecta. `main` y `develop` pueden quedar temporalmente en commits distintos.
 - Frontend CI: `npm ci`, lint, typecheck, Vitest/RTL y `next build`.
 - Estado frontend: `Frontend CI` ejecuta esos gates y auditorías de producción/completa en PR hacia `develop/main`, push a `develop` y manualmente. La auditoría de producción está limpia; la completa acepta solo `GHSA-vfj7-8cjw-p6xm` en `braces@3.0.3` de desarrollo mediante verificador cerrado, pendiente de corrección upstream.
 - Python CI: `uv sync --locked`, Ruff, pytest, contratos/SFTP y packaging cuando aplique.
-- Estado Python: `Python CI` ejecuta sincronización estricta, lock, Ruff, pytest, build, auditoría, verificación local del bundle y ambos entrypoints. `cryptography` 50.0.2 genera la identidad Ed25519 local; `jsonschema` 4.26.0 y `referencing` 0.37.0 validan contratos Agent offline. SFTP, Paramiko y PyInstaller permanecen pendientes.
+- Estado Python: `Python CI` ejecuta sincronización estricta, lock, Ruff, pytest, build, auditoría, verificación local del bundle y ambos entrypoints. `cryptography` 50.0.2 genera la identidad Ed25519 local; `jsonschema` 4.26.0 y `referencing` 0.37.0 validan contratos Agent offline; Paramiko 5.0.0 implementa SFTP con host key fijada. PyInstaller permanece pendiente.
 - Dockerfiles backend/frontend multi-stage; runtime no-root.
 - Una imagen por componente/version; tags SemVer + Git SHA y promoción por digest inmutable. `latest` no es identidad de deployment.
 - Local usa Compose principalmente para infraestructura y permite ejecución nativa de backend/frontend; Development integra imágenes de CI; Test es efímero; QA estable con datos sintéticos; Production consume artefactos publicados/promovidos y no compila código fuente.
@@ -424,6 +424,7 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 - Poll de tareas 60 s ± 15 s jitter; startup jitter 0--60 s.
 - Snapshot periódico cada 6 h con ventana escalonada de 60 min; `COLLECT_SNAPSHOT` permite actualización bajo demanda.
 - Retry por ráfaga: máximo 5 intentos consecutivos, exponential backoff + full jitter, base 5 s, cap 5 min.
+- Estado ejecutable acotado: `OLA2-RSL-001a` aplica esa política únicamente a la entrega de un Result terminal durable; el primer intento es inmediato, solo se reintentan fallos explícitamente transitorios y el agotamiento conserva el Result para un episodio posterior tras reinicio manual.
 - Timeouts SFTP iniciales: connect 10 s, auth 10 s, operación 60 s; configurables por flujo.
 - Agent con spool durable local; límite inicial 7 días o 100 MB. Prioridad: responses > snapshots bajo demanda > periódicos. Bajo presión, suspender/compactar periódicos antes de perder respuestas.
 - Ledger local de `taskId` procesados: 30 días; reaparición del mismo `taskId` no reejecuta la operación y puede republicar respuesta previa.
@@ -536,14 +537,14 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 ## 20.1 Readiness v1 -- Lote 54
 
 - Estados conceptuales separados: `DESIGN_READY`, `IMPLEMENTATION_READY`, `PRODUCTION_READY`; alcanzar uno no implica el siguiente.
-- CKP-JAXON-005 deja J-AXON en `DESIGN_READY`, con implementación nueva no iniciada ni autorizada.
+- CKP-JAXON-005 dejó J-AXON en `DESIGN_READY`; la implementación comenzó después mediante incrementos expresamente autorizados y verificados, sin autorización general para el resto.
 - Baseline v1 controlada: nuevas capacidades materiales requieren nueva decisión; no usar “ya que estamos implementando” para ampliar scope.
 - No quedan bloqueos arquitectónicos críticos conocidos antes de implementación tras esta consolidación.
 - Antes de Production deben resolverse por instalación: hardware, medio físico `DocumentStorage`, reverse proxy, PKI/certificados, secret storage, DNS, recursos, storage de backups, owner operativo y ventana real.
 - `EVIDENCE_DRIVEN`: tuning DB/JVM/pools, thresholds de circuit breaker/bulkhead/rate limiting, particionamiento/cache/replicas y capacidad certificada. Medir antes de complejizar.
 - Provider/model IA y SLA comercial permanecen abiertos sin bloquear el core.
 - Riesgos continúan `ABIERTO` hasta evidencia de implementación/prueba; capacidad ~1000 Agents solo puede declararse verificada tras benchmark representativo.
-- DoR/DoD y olas 0--7 permanecen vigentes. La primera vertical E2E debe alcanzarse temprano cuando exista autorización de implementación.
+- DoR/DoD y olas 0--7 permanecen vigentes. La primera vertical E2E ya fue alcanzada por incrementos acotados; las capacidades restantes requieren su propia delimitación y autorización.
 - Aprobar diseño/documentación no autoriza repositorios, ramas, Issues, Projects, workflows, código ni despliegues. La autorización debe ser expresa y con alcance.
 
 ## 21. Reglas para IA
@@ -613,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada y nueve incrementos funcionales acotados integrados, incluido `OLA2-TSK-001a`. El nuevo corte implementa solo `COLLECT_SNAPSHOT` mediante OpenAPI 2.3 compatible y Task/Result Agent 1.0; no implementa otros tipos, retries burst, spool general, nuevos SSE, cuarentena o borrado. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y diez incrementos funcionales acotados integrados, incluido `OLA2-RSL-001a`. El último corte implementa solo el retry de entrega del Result terminal de `COLLECT_SNAPSHOT`, sin cambiar OpenAPI 2.3 o Agent 1.0; no implementa otros tipos, spool general, retries de polling/snapshots/capabilities, nuevos SSE, cuarentena o borrado. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.

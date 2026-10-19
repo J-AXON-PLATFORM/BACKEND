@@ -3,6 +3,18 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Resiliencia acotada de entrega de Results Agent -- OLA2-RSL-001a, 2026-10-19
+
+El Agent reintenta únicamente la entrega SFTP de un Result terminal ya persistido: máximo cinco intentos totales por episodio, primero inmediato y demoras posteriores con exponential backoff, full jitter, base 5 segundos y cap 300 segundos. La clasificación es cerrada: timeout, EOF y errores de red explícitos son transitorios; autenticación, host key, apertura de canal, permisos, conflictos y errores desconocidos fallan permanentemente sin retry y con mensajes seguros.
+
+El ledger continúa como única fuente durable. Todos los intentos y un reinicio manual reutilizan byte a byte el mismo Result y sus `messageId`, `resultId` y `taskId`, sin reejecutar `COLLECT_SNAPSHOT`. La entrega conserva publicación atómica `.part -> .json`, acepta idempotentemente un final idéntico, rechaza un final conflictivo y solo elimina su parcial propio, incluidos parciales obsoletos recuperados tras reinicio.
+
+La verificación local concluyó con 98 pruebas, Ruff, lockfile, contratos, build, auditoría y entrypoints verdes. La integración quedó completa mediante `AUTOMATION-COLLECTOR#8`, squash `bc508336af7c2082a2a36e20c1dd180d4507c169`, con runs verdes `39254574671` de PR y `39254685186` post-merge. No cambian contratos, dependencias, migraciones, SFTPGo, Compose, workflows, backend funcional o frontend.
+
+No se implementan spool general, retries de polling/snapshots/capabilities, periodicidad, daemon/servicio/PyInstaller, otros tipos de tarea, `TASK_STARTED`, nuevos SSE, cuarentena/purga, revocación/rotación, Discovery o infraestructura Production. `PRODUCTION_READY = NO`.
+
+---
+
 ## Primera vertical controlada de tareas Agent -- OLA2-TSK-001a, 2026-10-18
 
 Implementación local verificada en los tres repositorios. Backend añade migración y lifecycle Collector para `COLLECT_SNAPSHOT`, creación/consulta `IT_OPERATOR`, publicación durable `/tasks/{taskId}.json.part -> .json`, reconciliación read-only de `/responses/{messageId}.json`, deduplicación, conflictos, expiración, métricas y OpenAPI 2.3 compatible. SFTPGo separa `tasks`, `snapshots` y `responses`; el permiso de descarga en `responses` se limita al buzón aislado del propio Agent y permite verificar un retry idempotente byte a byte.
