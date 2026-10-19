@@ -92,7 +92,8 @@ class DatabaseBootstrapIntegrationTest {
                         "20261011010000",
                         "20261012000000",
                         "20261016000000",
-                        "20261018000000");
+                        "20261018000000",
+                        "20261019000000");
         assertThat(modularSchemas).containsExactlyInAnyOrderElementsOf(EXPECTED_SCHEMAS);
         assertThat(modularTables).containsExactly(
                 "collector.accepted_snapshots",
@@ -111,7 +112,9 @@ class DatabaseBootstrapIntegrationTest {
                 "identity.technical_identities",
                 "inventory.asset_types",
                 "inventory.assets",
-                "inventory.outbox_events");
+                "inventory.outbox_events",
+                "support.outbox_events",
+                "support.tickets");
         assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM identity.human_users", Integer.class))
                 .isZero();
         assertThat(publicTables).containsExactly("flyway_schema_history");
