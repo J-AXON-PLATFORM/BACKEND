@@ -142,6 +142,8 @@
                 <targetPath>contracts/agent/1.0</targetPath>
                 <includes>
                     <include>common.schema.json</include>
+                    <include>task.schema.json</include>
+                    <include>result.schema.json</include>
                     <include>snapshot.schema.json</include>
                 </includes>
             </resource>

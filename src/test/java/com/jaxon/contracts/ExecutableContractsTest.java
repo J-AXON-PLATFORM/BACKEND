@@ -41,6 +41,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V20_ROOT = Path.of("doc/contracts/openapi/2.0");
     private static final Path OPENAPI_V21_ROOT = Path.of("doc/contracts/openapi/2.1");
     private static final Path OPENAPI_V22_ROOT = Path.of("doc/contracts/openapi/2.2");
+    private static final Path OPENAPI_V23_ROOT = Path.of("doc/contracts/openapi/2.3");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -356,6 +357,60 @@ class ExecutableContractsTest {
     }
 
     @Test
+    void openApi23Preserves22AndAddsOnlyAgentTaskOperations() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V23_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("2.3");
+        assertThat(api.getPaths().keySet())
+                .containsExactlyInAnyOrder(
+                        "/auth/login",
+                        "/auth/me",
+                        "/assets",
+                        "/assets/{assetId}",
+                        "/assets/{assetId}/technical-state",
+                        "/assets/{assetId}/technical-state/events",
+                        "/agents",
+                        "/agents/{agentId}",
+                        "/agents/{agentId}/ssh-key",
+                        "/agents/{agentId}/activate",
+                        "/agents/{agentId}/tasks",
+                        "/agents/{agentId}/tasks/{taskId}");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .containsExactlyInAnyOrder("createAgentTask", "getAgentTask");
+
+        JsonNode schemas = Yaml31.mapper()
+                .readTree(OPENAPI_V23_ROOT.resolve("openapi.yaml").toFile())
+                .path("components")
+                .path("schemas");
+        assertThat(schemas.path("AgentTaskCreateRequest").path("additionalProperties").asBoolean())
+                .isFalse();
+        assertThat(schemas.path("AgentTaskCreateRequest")
+                        .path("properties")
+                        .path("taskType")
+                        .path("const")
+                        .asText())
+                .isEqualTo("COLLECT_SNAPSHOT");
+        assertThat(textValues(schemas.path("AgentTaskResponse").path("required")))
+                .containsExactlyInAnyOrder(
+                        "taskId",
+                        "agentId",
+                        "taskType",
+                        "status",
+                        "createdAt",
+                        "expiresAt",
+                        "dispatchedAt",
+                        "completedAt",
+                        "error");
+    }
+
+    @Test
     void previousOpenApiContractsRemainByteIdentical() throws IOException {
         assertThat(sha256(Files.readAllBytes(OPENAPI_V10_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("bf3b1df5f28fb2e1c34f55b645312e7df896aa8a50fa8fbbec4b7e72d2068236");
@@ -363,6 +418,10 @@ class ExecutableContractsTest {
                 .isEqualTo("96dfa1d01c63339089685a2e6c3011e050d24727dad71863df244a631b3c1d3b");
         assertThat(sha256(Files.readAllBytes(OPENAPI_V20_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("832037d2e554ca680b89776430d8a01a12a945215ba5cac0335c849e349732fe");
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V21_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("9abd5f0b4f9200f30ae71b2edae1eb7fa32ef8a238a27d62325fc464176cc326");
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V22_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("24ffc076b43dc61b8779c9b367e1189b0904544fcbec85bb8d3ca72bd91f7e05");
     }
 
     @Test
@@ -385,7 +444,7 @@ class ExecutableContractsTest {
 
     @Test
     void runtimeSnapshotSchemasAreByteIdenticalToCanonicalSources() throws IOException {
-        for (String file : List.of("common.schema.json", "snapshot.schema.json")) {
+        for (String file : AGENT_SCHEMAS) {
             try (var packaged = getClass().getResourceAsStream("/contracts/agent/1.0/" + file)) {
                 assertThat(packaged).as("packaged runtime schema %s", file).isNotNull();
                 assertThat(packaged.readAllBytes()).isEqualTo(Files.readAllBytes(AGENT_ROOT.resolve(file)));

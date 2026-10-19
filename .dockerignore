@@ -12,6 +12,8 @@ doc/contracts/agent/*
 !doc/contracts/agent/1.0/
 doc/contracts/agent/1.0/*
 !doc/contracts/agent/1.0/common.schema.json
+!doc/contracts/agent/1.0/task.schema.json
+!doc/contracts/agent/1.0/result.schema.json
 !doc/contracts/agent/1.0/snapshot.schema.json
 logs
 target

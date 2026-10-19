@@ -36,7 +36,7 @@ services:
       dockerfile: docker/sftpgo/Dockerfile
     environment:
       SFTPGO_DATA_PROVIDER__CREATE_DEFAULT_ADMIN: "true"
-      SFTPGO_COMMON__UMASK: "0027"
+      SFTPGO_COMMON__UMASK: "0007"
       SFTPGO_DEFAULT_ADMIN_PASSWORD: ${JAXON_SFTPGO_ADMIN_PASSWORD:?Set JAXON_SFTPGO_ADMIN_PASSWORD in .env}
       SFTPGO_DEFAULT_ADMIN_USERNAME: ${JAXON_SFTPGO_ADMIN_USERNAME:?Set JAXON_SFTPGO_ADMIN_USERNAME in .env}
       SFTPGO_SFTPD__ENABLED_SSH_COMMANDS: ""
@@ -59,6 +59,7 @@ services:
     volumes:
       - jaxon-sftpgo-data:/var/lib/sftpgo
       - jaxon-sftpgo-mailboxes:/srv/sftpgo/data
+      - jaxon-sftpgo-tasks:/srv/sftpgo/tasks
     networks:
       - jaxon-local
 
@@ -79,6 +80,10 @@ services:
       JAXON_DB_URL: jdbc:postgresql://database:5432/${JAXON_DB_NAME:?Set JAXON_DB_NAME in .env}
       JAXON_DB_USERNAME: ${JAXON_DB_USERNAME:?Set JAXON_DB_USERNAME in .env}
       JAXON_COLLECTOR_MAILBOX_ROOT: /srv/sftpgo/data
+      JAXON_COLLECTOR_TASK_PUBLICATION_ROOT: /srv/sftpgo/tasks
+      JAXON_COLLECTOR_TASK_RECONCILIATION_INTERVAL: ${JAXON_COLLECTOR_TASK_RECONCILIATION_INTERVAL:-5m}
+      JAXON_COLLECTOR_RESULT_BATCH_SIZE: ${JAXON_COLLECTOR_RESULT_BATCH_SIZE:-100}
+      JAXON_COLLECTOR_RESULT_STABILITY_AGE: ${JAXON_COLLECTOR_RESULT_STABILITY_AGE:-2s}
       JAXON_COLLECTOR_RECONCILIATION_INTERVAL: ${JAXON_COLLECTOR_RECONCILIATION_INTERVAL:-5m}
       JAXON_COLLECTOR_SNAPSHOT_BATCH_SIZE: ${JAXON_COLLECTOR_SNAPSHOT_BATCH_SIZE:-100}
       JAXON_COLLECTOR_SNAPSHOT_STABILITY_AGE: ${JAXON_COLLECTOR_SNAPSHOT_STABILITY_AGE:-2s}
@@ -112,6 +117,7 @@ services:
       - "65532"
     volumes:
       - jaxon-sftpgo-mailboxes:/srv/sftpgo/data:ro
+      - jaxon-sftpgo-tasks:/srv/sftpgo/tasks:rw
     tmpfs:
       - /tmp:rw,nosuid,nodev,noexec,size=64m
     networks:
@@ -125,6 +131,9 @@ volumes:
     labels:
       com.jaxon.resource-owner: ${JAXON_RESOURCE_OWNER:-local-persistent}
   jaxon-sftpgo-mailboxes:
+    labels:
+      com.jaxon.resource-owner: ${JAXON_RESOURCE_OWNER:-local-persistent}
+  jaxon-sftpgo-tasks:
     labels:
       com.jaxon.resource-owner: ${JAXON_RESOURCE_OWNER:-local-persistent}
 

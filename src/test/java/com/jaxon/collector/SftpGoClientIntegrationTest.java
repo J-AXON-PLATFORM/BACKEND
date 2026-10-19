@@ -164,6 +164,9 @@ class SftpGoClientIntegrationTest {
         String messageId = UUID.randomUUID().toString();
         String temporary = "/snapshots/" + messageId + ".json.part";
         String complete = "/snapshots/" + messageId + ".json";
+        String resultMessageId = UUID.randomUUID().toString();
+        String responseTemporary = "/responses/" + resultMessageId + ".json.part";
+        String responseComplete = "/responses/" + resultMessageId + ".json";
         try {
             Files.writeString(knownHosts, "[" + host + "]:" + port + " " + hostPublicKey + "\n");
             writePrivateKey(firstKey, firstPrivate);
@@ -183,7 +186,34 @@ class SftpGoClientIntegrationTest {
                                     port,
                                     firstKey,
                                     knownHosts,
-                                    "put " + snapshot + " /responses/x.json")
+                                    "put " + snapshot + " " + responseTemporary)
+                            .exitCode())
+                    .isZero();
+            assertThat(sftp(
+                                    first,
+                                    host,
+                                    port,
+                                    firstKey,
+                                    knownHosts,
+                                    "put " + snapshot + " " + responseTemporary)
+                            .exitCode())
+                    .isNotZero();
+            assertThat(sftp(
+                                    first,
+                                    host,
+                                    port,
+                                    firstKey,
+                                    knownHosts,
+                                    "rename " + responseTemporary + " " + responseComplete)
+                            .exitCode())
+                    .isZero();
+            assertThat(sftp(
+                                    first,
+                                    host,
+                                    port,
+                                    firstKey,
+                                    knownHosts,
+                                    "put " + snapshot + " " + responseComplete)
                             .exitCode())
                     .isNotZero();
             assertThat(sftp(
@@ -245,6 +275,17 @@ class SftpGoClientIntegrationTest {
                     .isZero();
             assertThat(sftp(first, host, port, firstKey, knownHosts, "ls " + cleanup).exitCode())
                     .isNotZero();
+            String responseCleanup = "/responses/" + UUID.randomUUID() + ".json.part";
+            assertThat(sftp(
+                                    first,
+                                    host,
+                                    port,
+                                    firstKey,
+                                    knownHosts,
+                                    "put " + snapshot + " " + responseCleanup,
+                                    "rm " + responseCleanup)
+                            .exitCode())
+                    .isZero();
         } finally {
             Files.deleteIfExists(knownHosts);
             Files.deleteIfExists(firstKey);
@@ -349,13 +390,18 @@ class SftpGoClientIntegrationTest {
                         "list", "upload", "rename_files", "create_dirs", "delete_files");
         assertThat(user.path("permissions").path("/responses"))
                 .extracting(JsonNode::asText)
-                .containsExactlyInAnyOrder("list", "upload", "overwrite", "rename_files");
+                .containsExactlyInAnyOrder(
+                        "list", "download", "upload", "rename_files", "delete_files");
         JsonNode folders = user.path("virtual_folders");
-        assertThat(folders).hasSize(1);
-        assertThat(folders.get(0).path("name").asText()).isEqualTo(username + "-snapshots");
-        assertThat(folders.get(0).path("mapped_path").asText())
-                .isEqualTo("/srv/sftpgo/data/" + username + "-snapshots");
-        assertThat(folders.get(0).path("virtual_path").asText()).isEqualTo("/snapshots");
+        assertThat(folders).hasSize(3);
+        assertThat(folders)
+                .extracting(folder -> folder.path("virtual_path").asText())
+                .containsExactlyInAnyOrder("/tasks", "/snapshots", "/responses");
+        assertThat(folders)
+                .filteredOn(folder -> "/tasks".equals(folder.path("virtual_path").asText()))
+                .singleElement()
+                .satisfies(folder -> assertThat(folder.path("mapped_path").asText())
+                        .isEqualTo("/srv/sftpgo/tasks/" + username + "-tasks"));
     }
 
     private static void createLegacyUser(

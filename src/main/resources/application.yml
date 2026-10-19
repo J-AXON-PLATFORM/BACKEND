@@ -42,6 +42,13 @@ jaxon:
       reconciliation-interval: ${JAXON_COLLECTOR_RECONCILIATION_INTERVAL:5m}
       stability-age: ${JAXON_COLLECTOR_SNAPSHOT_STABILITY_AGE:2s}
       batch-size: ${JAXON_COLLECTOR_SNAPSHOT_BATCH_SIZE:100}
+    tasks:
+      publication-root: ${JAXON_COLLECTOR_TASK_PUBLICATION_ROOT:}
+      reconciliation-interval: ${JAXON_COLLECTOR_TASK_RECONCILIATION_INTERVAL:5m}
+    task-results:
+      mailbox-root: ${JAXON_COLLECTOR_MAILBOX_ROOT:}
+      stability-age: ${JAXON_COLLECTOR_RESULT_STABILITY_AGE:2s}
+      batch-size: ${JAXON_COLLECTOR_RESULT_BATCH_SIZE:100}
     technical-state-events:
       global-connection-limit: ${JAXON_COLLECTOR_SSE_GLOBAL_CONNECTION_LIMIT:100}
       user-connection-limit: ${JAXON_COLLECTOR_SSE_USER_CONNECTION_LIMIT:3}

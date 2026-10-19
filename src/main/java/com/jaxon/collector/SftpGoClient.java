@@ -25,16 +25,21 @@ import tools.jackson.databind.ObjectMapper;
 class SftpGoClient implements SftpGoProvisioner {
 
     private static final long MAX_UPLOAD_FILE_SIZE = 5L * 1024 * 1024;
-    private static final Map<String, List<String>> LEGACY_PERMISSIONS = Map.of(
+    private static final Map<String, List<String>> ORIGINAL_PERMISSIONS = Map.of(
             "/", List.of("list"),
             "/tasks", List.of("list", "download"),
             "/snapshots", List.of("list", "upload", "overwrite", "rename_files"),
+            "/responses", List.of("list", "upload", "overwrite", "rename_files"));
+    private static final Map<String, List<String>> SNAPSHOT_PROFILE_PERMISSIONS = Map.of(
+            "/", List.of("list"),
+            "/tasks", List.of("list", "download"),
+            "/snapshots", List.of("list", "upload", "rename_files", "create_dirs", "delete_files"),
             "/responses", List.of("list", "upload", "overwrite", "rename_files"));
     private static final Map<String, List<String>> PERMISSIONS = Map.of(
             "/", List.of("list"),
             "/tasks", List.of("list", "download"),
             "/snapshots", List.of("list", "upload", "rename_files", "create_dirs", "delete_files"),
-            "/responses", List.of("list", "upload", "overwrite", "rename_files"));
+            "/responses", List.of("list", "download", "upload", "rename_files", "delete_files"));
     private static final List<String> DENIED_PROTOCOLS = List.of("FTP", "DAV", "HTTP");
     private static final List<String> DENIED_LOGIN_METHODS = List.of(
             "password",
@@ -96,14 +101,11 @@ class SftpGoClient implements SftpGoProvisioner {
             verifyHostKey(token);
             JsonNode current = getUser(token, username);
             if (current == null) {
-                ensureSnapshotFolder(token, username, false);
+                ensureFoldersExist(token, username);
                 createUser(token, username, publicKey);
-            } else if (matchesLegacy(current, username, publicKey)) {
-                ensureSnapshotFolder(token, username, false);
-                current = getUser(token, username);
-                if (current == null || !matchesLegacy(current, username, publicKey)) {
-                    throw new SftpProvisioningConflictException();
-                }
+            } else if (matchesOriginal(current, username, publicKey)
+                    || matchesSnapshotProfile(current, username, publicKey)) {
+                ensureFoldersExist(token, username);
                 updateUser(token, username, publicKey);
             } else if (!matches(current, username, publicKey)) {
                 throw new SftpProvisioningConflictException();
@@ -112,7 +114,7 @@ class SftpGoClient implements SftpGoProvisioner {
             if (current == null || !matches(current, username, publicKey)) {
                 throw new SftpProvisioningConflictException();
             }
-            ensureSnapshotFolder(token, username, true);
+            ensureFoldersAttached(token, username);
             return new AgentActivationResponse(publicHost, publicPort, username, publicHostKey);
         } catch (SftpProvisioningConflictException | SftpHostKeyMismatchException exception) {
             throw exception;
@@ -203,24 +205,43 @@ class SftpGoClient implements SftpGoProvisioner {
                         "denied_protocols", DENIED_PROTOCOLS,
                         "denied_login_methods", DENIED_LOGIN_METHODS,
                         "max_upload_file_size", MAX_UPLOAD_FILE_SIZE),
-                "virtual_folders", List.of(Map.of(
-                        "name", snapshotFolderName(username),
-                        "mapped_path", snapshotMappedPath(username),
-                        "virtual_path", "/snapshots",
-                        "quota_size", 0,
-                        "quota_files", 0,
-                        "filesystem", Map.of("provider", 0))),
+                "virtual_folders", List.of(
+                        virtualFolder(username, "tasks"),
+                        virtualFolder(username, "snapshots"),
+                        virtualFolder(username, "responses")),
                 "filesystem", Map.of("provider", 0));
     }
 
-    private void ensureSnapshotFolder(String token, String username, boolean attached) throws Exception {
-        String name = snapshotFolderName(username);
+    private static Map<String, Object> virtualFolder(String username, String kind) {
+        return Map.of(
+                "name", folderName(username, kind),
+                "mapped_path", mappedPath(username, kind),
+                "virtual_path", "/" + kind,
+                "quota_size", 0,
+                "quota_files", 0,
+                "filesystem", Map.of("provider", 0));
+    }
+
+    private void ensureFoldersExist(String token, String username) throws Exception {
+        for (String kind : List.of("tasks", "snapshots", "responses")) {
+            ensureFolder(token, username, kind, null);
+        }
+    }
+
+    private void ensureFoldersAttached(String token, String username) throws Exception {
+        for (String kind : List.of("tasks", "snapshots", "responses")) {
+            ensureFolder(token, username, kind, true);
+        }
+    }
+
+    private void ensureFolder(String token, String username, String kind, Boolean attached) throws Exception {
+        String name = folderName(username, kind);
         JsonNode folder = getFolder(token, name);
         if (folder == null) {
-            createFolder(token, name, snapshotMappedPath(username));
+            createFolder(token, name, mappedPath(username, kind));
             folder = getFolder(token, name);
         }
-        if (folder == null || !matchesFolder(folder, username, attached)) {
+        if (folder == null || !matchesFolder(folder, username, kind, attached)) {
             throw new SftpProvisioningConflictException();
         }
     }
@@ -260,7 +281,7 @@ class SftpGoClient implements SftpGoProvisioner {
                 || !hasDefaultIdentityMetadata(user)
                 || !homeDirectory(username).equals(user.path("home_dir").asText())
                 || !hasDefaultFilesystem(user.path("filesystem"))
-                || !matchesVirtualFolder(user.path("virtual_folders"), username)
+                || !matchesVirtualFolders(user.path("virtual_folders"), username)
                 || user.path("groups").size() != 0
                 || !hasDefaultAccountLimits(user)) {
             return false;
@@ -275,7 +296,7 @@ class SftpGoClient implements SftpGoProvisioner {
                 && hasDefaultFilters(user.path("filters"), MAX_UPLOAD_FILE_SIZE);
     }
 
-    private static boolean matchesLegacy(JsonNode user, String username, String publicKey) {
+    private static boolean matchesOriginal(JsonNode user, String username, String publicKey) {
         if (!username.equals(user.path("username").asText())
                 || user.path("status").asInt() != 1
                 || user.path("has_password").asBoolean()
@@ -289,34 +310,64 @@ class SftpGoClient implements SftpGoProvisioner {
                 || !publicKey.equals(user.path("public_keys").get(0).asText())) {
             return false;
         }
-        return objectMapperValue(user.path("permissions")).equals(LEGACY_PERMISSIONS)
+        return objectMapperValue(user.path("permissions")).equals(ORIGINAL_PERMISSIONS)
                 && sameValues(user.path("filters").path("denied_protocols"), DENIED_PROTOCOLS)
                 && sameValues(user.path("filters").path("denied_login_methods"), DENIED_LOGIN_METHODS)
                 && hasDefaultFilters(user.path("filters"), 0);
     }
 
-    private static boolean matchesVirtualFolder(JsonNode folders, String username) {
-        if (folders.size() != 1) {
+    private static boolean matchesSnapshotProfile(JsonNode user, String username, String publicKey) {
+        if (!username.equals(user.path("username").asText())
+                || user.path("status").asInt() != 1
+                || user.path("has_password").asBoolean()
+                || !hasDefaultIdentityMetadata(user)
+                || !homeDirectory(username).equals(user.path("home_dir").asText())
+                || !hasDefaultFilesystem(user.path("filesystem"))
+                || !matchesOneVirtualFolder(user.path("virtual_folders"), username, "snapshots")
+                || user.path("groups").size() != 0
+                || !hasDefaultAccountLimits(user)
+                || user.path("public_keys").size() != 1
+                || !publicKey.equals(user.path("public_keys").get(0).asText())) {
             return false;
         }
-        JsonNode folder = folders.get(0);
-        return snapshotFolderName(username).equals(folder.path("name").asText())
-                && snapshotMappedPath(username).equals(folder.path("mapped_path").asText())
-                && "/snapshots".equals(folder.path("virtual_path").asText())
-                && folder.path("quota_size").asLong() == 0
-                && folder.path("quota_files").asLong() == 0
-                && folder.path("description").asText().isBlank()
-                && hasDefaultFilesystem(folder.path("filesystem"));
+        return objectMapperValue(user.path("permissions")).equals(SNAPSHOT_PROFILE_PERMISSIONS)
+                && sameValues(user.path("filters").path("denied_protocols"), DENIED_PROTOCOLS)
+                && sameValues(user.path("filters").path("denied_login_methods"), DENIED_LOGIN_METHODS)
+                && hasDefaultFilters(user.path("filters"), MAX_UPLOAD_FILE_SIZE);
     }
 
-    private static boolean matchesFolder(JsonNode folder, String username, boolean attached) {
-        List<String> expectedUsers = attached ? List.of(username) : List.of();
-        return snapshotFolderName(username).equals(folder.path("name").asText())
-                && snapshotMappedPath(username).equals(folder.path("mapped_path").asText())
-                && folder.path("description").asText().isBlank()
-                && hasDefaultFilesystem(folder.path("filesystem"))
-                && sameValues(folder.path("users"), expectedUsers)
-                && folder.path("groups").size() == 0;
+    private static boolean matchesVirtualFolders(JsonNode folders, String username) {
+        return folders.size() == 3
+                && matchesOneVirtualFolder(folders, username, "tasks")
+                && matchesOneVirtualFolder(folders, username, "snapshots")
+                && matchesOneVirtualFolder(folders, username, "responses");
+    }
+
+    private static boolean matchesOneVirtualFolder(JsonNode folders, String username, String kind) {
+        for (JsonNode folder : folders) {
+            if (folderName(username, kind).equals(folder.path("name").asText())
+                    && mappedPath(username, kind).equals(folder.path("mapped_path").asText())
+                    && ("/" + kind).equals(folder.path("virtual_path").asText())
+                    && folder.path("quota_size").asLong() == 0
+                    && folder.path("quota_files").asLong() == 0
+                    && folder.path("description").asText().isBlank()
+                    && hasDefaultFilesystem(folder.path("filesystem"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchesFolder(JsonNode folder, String username, String kind, Boolean attached) {
+        if (!folderName(username, kind).equals(folder.path("name").asText())
+                || !mappedPath(username, kind).equals(folder.path("mapped_path").asText())
+                || !folder.path("description").asText().isBlank()
+                || !hasDefaultFilesystem(folder.path("filesystem"))
+                || folder.path("groups").size() != 0) {
+            return false;
+        }
+        return attached == null
+                || sameValues(folder.path("users"), attached ? List.of(username) : List.of());
     }
 
     private static Map<String, List<String>> objectMapperValue(JsonNode node) {
@@ -420,12 +471,13 @@ class SftpGoClient implements SftpGoProvisioner {
         return "/srv/sftpgo/data/" + username;
     }
 
-    private static String snapshotFolderName(String username) {
-        return username + "-snapshots";
+    private static String folderName(String username, String kind) {
+        return username + "-" + kind;
     }
 
-    private static String snapshotMappedPath(String username) {
-        return "/srv/sftpgo/data/" + snapshotFolderName(username);
+    private static String mappedPath(String username, String kind) {
+        String root = "tasks".equals(kind) ? "/srv/sftpgo/tasks/" : "/srv/sftpgo/data/";
+        return root + folderName(username, kind);
     }
 
     private static boolean empty(JsonNode parent, String field) {

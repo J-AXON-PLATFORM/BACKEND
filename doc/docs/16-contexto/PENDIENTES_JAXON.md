@@ -6,7 +6,7 @@
 
 ## Punto de reanudación
 
-No reabrir AC-JAXON-001..066 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
+No reabrir AC-JAXON-001..067 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
 
 La baseline técnica de OLA 0 fue completada y verificada. `OLA1-IAM-001a` incorpora la primera funcionalidad: tablas exclusivamente en `identity`, login, `/auth/me`, sesión opaca, bootstrap, límites de intentos, outbox productor, UI mínima y Playwright real. El bloque fue completado, integrado y verificado el 2026-10-11.
 
@@ -23,6 +23,8 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 `OLA2-SSE-001a` está completado, integrado y verificado. Añade el aviso selectivo `ASSET_TECHNICAL_STATE_UPDATED` posterior al commit, stream autenticado por activo, límites/heartbeat/timeout, correlación asíncrona y métricas, más invalidación exacta y refetch REST en frontend. Añade OpenAPI 2.1 compatible y mantiene inmutables 1.0/1.1/2.0 y Agent 1.0. No añade replay, broker, polling Agent, tareas/respuestas, spool, otros eventos SSE, migraciones, cambios en `automation-collector` o Production.
 
 `OLA2-STA-001a` está completado, integrado y verificado. Añade `UNKNOWN|ONLINE|OFFLINE` derivado al consultar un Agent, evidencia `lastSeenAt`/`lastSnapshotAt` solo desde snapshots aceptados, umbral configurable de cinco minutos, gauges agregados y UI estricta segmentada por usuario. Añade OpenAPI 2.2 compatible y mantiene inmutables 1.0/1.1/2.0/2.1 y Agent 1.0. No añade migración, scheduler, polling, heartbeat, evento SSE, cambios en `automation-collector` o Production.
+
+`OLA2-TSK-001a` está implementado y verificado localmente en los tres repositorios. `AUTOMATION-COLLECTOR#7` y `FRONTEND#11` están integrados con CI de PR/post-merge verde; backend sigue pendiente de publicación e integración. El corte añade solo la vertical explícita `COLLECT_SNAPSHOT`: ejecución de los contratos Task/Result Agent 1.0 existentes, migración y lifecycle Collector, `/tasks` y `/responses` SFTP aislados, runner foreground con ledger/reinicio, REST/UI manual y OpenAPI 2.3 compatible. No añade otros tipos, retries burst, spool general, periodicidad, daemon, nuevo SSE, Discovery o Production.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -75,7 +77,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - Estado remoto de health/contenedores verificado el 2026-10-08: `BACKEND#5`, squash `90c550714b861beb7d6388cf571744efcda4af8d`, tuvo runs verdes `37879426717` y `37879749721`; `FRONTEND#2`, squash `94d8ce2e8dd3309b7683f09041785c000f6fe21d`, tuvo runs verdes `37879426584` y `37880065517`. Backend valida health/probes, fixture PostgreSQL/pgvector, build/smoke y scans; frontend valida standalone, runtime sin gestores JavaScript, smoke y scan. No se publicaron imágenes, Packages ni artefactos.
 - Estado Compose Local verificado el 2026-10-09: `compose.yaml`, `.env.example` y `scripts/verify-compose.sh` implementan PostgreSQL/pgvector predeterminado y backend opcional, puertos loopback, volumen/red dedicados, configuración ficticia y smoke aislado. `Backend CI` conserva sus gates y añade validación/smoke Compose sin publicación ni despliegue.
 - Riesgo temporal frontend: la producción npm está limpia, pero la auditoría completa acepta solo `GHSA-vfj7-8cjw-p6xm` / `CVE-2026-93687` en `braces@3.0.3`, transitiva de desarrollo sin parche oficial al 2026-10-08. Cerrar al publicar corrección oficial, desaparecer la cadena o sustituir la herramienta mediante decisión aprobada. ESLint 9.39.5 está EOL y debe migrarse cuando la cadena oficial sea compatible con ESLint 10.
-- OpenAPI 2.2 es el contrato web actual y mantiene compatibilidad con 2.1. OpenAPI 1.0, 1.1, 2.0 y 2.1 permanecen inmutables; JSON Schema Agent 1.0, copia vendorizada y manifest tampoco cambian. Polling Agent, tareas/respuestas, spool, otros eventos SSE, purga y PyInstaller siguen pendientes.
+- OpenAPI 2.3 es el contrato web local actual y mantiene compatibilidad con 2.2. OpenAPI 1.0, 1.1, 2.0, 2.1 y 2.2 permanecen inmutables. El bundle Agent 1.0, su copia vendorizada y manifest tampoco cambian; backend incorpora sus schemas Task/Result existentes al empaquetado runtime. Otros tipos de tarea, retries burst, spool general, otros eventos SSE, purga y PyInstaller siguen pendientes.
 - La observabilidad base backend produce logs JSON con correlación, métricas Prometheus y trazas W3C/OpenTelemetry opcionales. Continúan pendientes la infraestructura centralizada, dashboards, alertas, validación operativa de SLI/SLO y una estrategia que pueda aproximar la aspiración de conservar trazas de error sin prometerla mediante head sampling.
 - La reconciliación Collector genera un `correlationId` UUIDv4 explícito por candidato, lo instala de forma acotada en MDC y lo transporta al aviso SSE posterior al commit; no reutiliza contexto servlet ni asume propagación implícita entre hilos.
 - La baseline de `TEC-OPS-005a`/`TEC-OPS-006a` crea dumps custom y manifests verificables, restaura únicamente sobre un destino vacío y separado, y prueba escenarios positivos/negativos en recursos efímeros. Backup/DR Production continúa pendiente.
@@ -83,7 +85,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
 - Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
-- Próxima acción técnica: delimitar un nuevo incremento pequeño sin asumir autorización para polling Agent, tareas/respuestas, spool, otros eventos SSE, cuarentena o purga.
+- Próxima acción técnica: completar la integración y verificación remota backend de `OLA2-TSK-001a`; después, delimitar por separado cualquier incremento nuevo.
 - El objetivo siguiente es alcanzar temprano la primera vertical E2E mediante incrementos autorizados, no implementar “todo J-AXON de una vez”.
 
 ## Reglas de continuidad

@@ -3,6 +3,18 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Primera vertical controlada de tareas Agent -- OLA2-TSK-001a, 2026-10-18
+
+Implementación local verificada en los tres repositorios. Backend añade migración y lifecycle Collector para `COLLECT_SNAPSHOT`, creación/consulta `IT_OPERATOR`, publicación durable `/tasks/{taskId}.json.part -> .json`, reconciliación read-only de `/responses/{messageId}.json`, deduplicación, conflictos, expiración, métricas y OpenAPI 2.3 compatible. SFTPGo separa `tasks`, `snapshots` y `responses`; el permiso de descarga en `responses` se limita al buzón aislado del propio Agent y permite verificar un retry idempotente byte a byte.
+
+El Agent añade runner foreground `run [--once]`, polling 60 s ±15 s, jitter inicial acotado, lock único y ledger POSIX privado. La capability `COLLECT_SNAPSHOT` conserva el upload atómico existente y retiene un Result determinista hasta su entrega atómica, con recuperación sin reejecución. Frontend permite solicitud explícita y actualización manual, sin polling de navegador ni SSE nuevo.
+
+La verificación local incluye 75 pruebas backend, 85 Python, 26 frontend, OpenAPI 2.2 -> 2.3, imagen SFTPGo reproducible y limpia, Compose aislado y un E2E Chromium real que completa `UI -> Task -> Agent -> Snapshot/Result -> Collector -> REST -> UI`. No se implementan otros tipos, `TASK_STARTED`, retries burst, spool general, periodicidad, daemon/servicio, nuevos SSE, Discovery o Production. `PRODUCTION_READY = NO`.
+
+La integración parcial autorizada quedó verde: `AUTOMATION-COLLECTOR#7`, squash `cb324b498b7e0f13324c7485a167c2999cac9683`, con runs `39192254745` y `39192308664`; `FRONTEND#11`, squash `a173c0816a104851561635831235c08d4bf8f4b7`, con runs `39192380140` y `39192566258`. Backend continúa pendiente y este estado no equivale al cierre remoto del incremento.
+
+---
+
 ## Estado operativo derivado del Agent -- OLA2-STA-001a, 2026-10-18
 
 Backend amplía la consulta humana del Agent con `UNKNOWN|ONLINE|OFFLINE`, derivado en UTC con `Clock` y umbral configurable de cinco minutos. `lastSeenAt` usa el máximo `received_at` y `lastSnapshotAt` el máximo `captured_at` de snapshots aceptados; resultados inválidos, `.part`, rechazos, conflictos y duplicados no aportan contacto. El estado administrativo permanece separado y no se crea migración, persistencia derivada o scheduler.
