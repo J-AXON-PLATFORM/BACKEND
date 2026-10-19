@@ -24,7 +24,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 
 `OLA2-STA-001a` está completado, integrado y verificado. Añade `UNKNOWN|ONLINE|OFFLINE` derivado al consultar un Agent, evidencia `lastSeenAt`/`lastSnapshotAt` solo desde snapshots aceptados, umbral configurable de cinco minutos, gauges agregados y UI estricta segmentada por usuario. Añade OpenAPI 2.2 compatible y mantiene inmutables 1.0/1.1/2.0/2.1 y Agent 1.0. No añade migración, scheduler, polling, heartbeat, evento SSE, cambios en `automation-collector` o Production.
 
-`OLA2-TSK-001a` está implementado y verificado localmente en los tres repositorios. `AUTOMATION-COLLECTOR#7` y `FRONTEND#11` están integrados con CI de PR/post-merge verde; backend sigue pendiente de publicación e integración. El corte añade solo la vertical explícita `COLLECT_SNAPSHOT`: ejecución de los contratos Task/Result Agent 1.0 existentes, migración y lifecycle Collector, `/tasks` y `/responses` SFTP aislados, runner foreground con ledger/reinicio, REST/UI manual y OpenAPI 2.3 compatible. No añade otros tipos, retries burst, spool general, periodicidad, daemon, nuevo SSE, Discovery o Production.
+`OLA2-TSK-001a` está completado, integrado y verificado en los tres repositorios. `AUTOMATION-COLLECTOR#7`, `FRONTEND#11` y `BACKEND#23` tienen CI de PR/post-merge verde. El corte añade solo la vertical explícita `COLLECT_SNAPSHOT`: ejecución de los contratos Task/Result Agent 1.0 existentes, migración y lifecycle Collector, `/tasks` y `/responses` SFTP aislados, runner foreground con ledger/reinicio, REST/UI manual y OpenAPI 2.3 compatible. No añade otros tipos, retries burst, spool general, periodicidad, daemon, nuevo SSE, Discovery o Production.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -85,7 +85,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
 - Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
-- Próxima acción técnica: completar la integración y verificación remota backend de `OLA2-TSK-001a`; después, delimitar por separado cualquier incremento nuevo.
+- Próxima acción técnica: delimitar y autorizar por separado cualquier incremento nuevo.
 - El objetivo siguiente es alcanzar temprano la primera vertical E2E mediante incrementos autorizados, no implementar “todo J-AXON de una vez”.
 
 ## Reglas de continuidad

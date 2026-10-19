@@ -46,7 +46,7 @@ Si la respuesta es no, no cargarlo.
 
 ## Instancia J-AXON -- ruta inmediata CKP-JAXON-005
 
-Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..067 aprobados; OLA 0 cerrada, ocho incrementos funcionales acotados integrados y `OLA2-TSK-001a` integrado en Agent/frontend y pendiente en backend; `PRODUCTION_READY = NO`.
+Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..067 aprobados; OLA 0 cerrada y nueve incrementos funcionales acotados integrados, incluido `OLA2-TSK-001a`; `PRODUCTION_READY = NO`.
 
 Estado remoto histórico verificado el 2026-10-07: la organización oficial nueva `J-AXON-PLATFORM` contiene los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos canónicos `backend`, `frontend` y `automation-collector`; `backend` fue inicializado y publicado mediante `TEC-GIT-001C`.
 
@@ -56,7 +56,7 @@ Estado frontend verificado el 2026-10-08: `FRONTEND` fue publicado con `main` y 
 
 Estado Python verificado el 2026-10-08: `AUTOMATION-COLLECTOR` fue publicado con `main` y `develop`; contiene una fundación Python 3.14.8/uv 0.12.24 con Agent y Discovery Executor separados, sin SFTP o discovery funcional. `Python CI` fue integrado en `develop` mediante el Pull Request `#1` y squash `a040c5fba34fae22903088b82191e8355deaab26`; los runs de PR `37852626079` y post-merge `37852683236` quedaron verdes, incluida la auditoría sin vulnerabilidades conocidas. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues.
 
-Los bloques técnicos de OLA 0 fueron completados. Identity, Inventory, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE y `OLA2-STA-001a` están integrados. `OLA2-TSK-001a` añade la primera vertical de tarea `COLLECT_SNAPSHOT`, OpenAPI 2.3 y Task/Result Agent 1.0; Agent/frontend están integrados y backend permanece pendiente. Otros tipos, retries burst, spool general, otros eventos SSE, cuarentena y purga siguen fuera de alcance. Para cualquier siguiente incremento, cargar obligatoriamente las cinco fuentes de continuidad y luego:
+Los bloques técnicos de OLA 0 fueron completados. Identity, Inventory, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a` y `OLA2-TSK-001a` están integrados. El último corte añade la primera vertical de tarea `COLLECT_SNAPSHOT`, OpenAPI 2.3 y Task/Result Agent 1.0. Otros tipos, retries burst, spool general, otros eventos SSE, cuarentena y purga siguen fuera de alcance. Para cualquier siguiente incremento, cargar obligatoriamente las cinco fuentes de continuidad y luego:
 
 - `docs/12-agil/GESTION_BACKLOG.md`, `docs/12-agil/GUIAS_TAREAS.md` y `docs/12-agil/FLUJO_KANBAN.md`;
 - los documentos específicos de plataforma, arquitectura, contratos, datos, seguridad y pruebas capaces de delimitar el incremento;
