@@ -1,0 +1,187 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "2.4"
+  description: >-
+    Minor compatible que conserva OpenAPI 2.3 y añade la creación mínima y
+    consulta por UUID de tickets propios para IT_OPERATOR.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Assets
+  - name: Agents
+  - name: Support
+paths:
+  /auth/login:
+    $ref: "../2.3/openapi.yaml#/paths/~1auth~1login"
+  /auth/me:
+    $ref: "../2.3/openapi.yaml#/paths/~1auth~1me"
+  /assets:
+    $ref: "../2.3/openapi.yaml#/paths/~1assets"
+  /assets/{assetId}:
+    $ref: "../2.3/openapi.yaml#/paths/~1assets~1%7BassetId%7D"
+  /assets/{assetId}/technical-state:
+    $ref: "../2.3/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state"
+  /assets/{assetId}/technical-state/events:
+    $ref: "../2.3/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events"
+  /agents:
+    $ref: "../2.3/openapi.yaml#/paths/~1agents"
+  /agents/{agentId}:
+    $ref: "../2.3/openapi.yaml#/paths/~1agents~1%7BagentId%7D"
+  /agents/{agentId}/ssh-key:
+    $ref: "../2.3/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key"
+  /agents/{agentId}/activate:
+    $ref: "../2.3/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate"
+  /agents/{agentId}/tasks:
+    $ref: "../2.3/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks"
+  /agents/{agentId}/tasks/{taskId}:
+    $ref: "../2.3/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D"
+  /tickets:
+    post:
+      tags: [Support]
+      operationId: createTicket
+      summary: Crea un ticket propio con estado OPEN y prioridad NORMAL
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketCreateRequest"
+      responses:
+        "201":
+          description: Ticket persistido con evento durable TICKET_CREATED
+          headers:
+            Location:
+              description: URI de consulta del ticket creado.
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/{ticketId}:
+    get:
+      tags: [Support]
+      operationId: getOwnTicket
+      summary: Consulta por UUID un ticket cuyo requester es la sesión actual
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+      responses:
+        "200":
+          description: Ficha persistida del ticket propio
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+components:
+  securitySchemes:
+    SessionCookie:
+      $ref: "../2.3/openapi.yaml#/components/securitySchemes/SessionCookie"
+  parameters:
+    CsrfToken:
+      $ref: "../2.3/openapi.yaml#/components/parameters/CsrfToken"
+    TicketId:
+      name: ticketId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/UuidV4"
+  schemas:
+    UuidV4:
+      $ref: "../2.3/openapi.yaml#/components/schemas/UuidV4"
+    UtcDateTime:
+      $ref: "../2.3/openapi.yaml#/components/schemas/UtcDateTime"
+    TicketCreateRequest:
+      type: object
+      required: [type, summary, description]
+      properties:
+        type:
+          type: string
+          enum: [INCIDENT, SERVICE_REQUEST, QUESTION, OTHER]
+        summary:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: "\\S"
+        description:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: "\\S"
+        assetId:
+          oneOf:
+            - $ref: "#/components/schemas/UuidV4"
+            - type: "null"
+      additionalProperties: false
+    TicketResponse:
+      type: object
+      required:
+        - ticketId
+        - type
+        - summary
+        - description
+        - status
+        - priority
+        - source
+        - requesterUserId
+        - createdByUserId
+        - assigneeUserId
+        - assetId
+        - createdAt
+        - updatedAt
+        - version
+      properties:
+        ticketId: { $ref: "#/components/schemas/UuidV4" }
+        type:
+          type: string
+          enum: [INCIDENT, SERVICE_REQUEST, QUESTION, OTHER]
+        summary: { type: string, minLength: 1, maxLength: 256 }
+        description: { type: string, minLength: 1, maxLength: 10000 }
+        status:
+          type: string
+          const: OPEN
+        priority:
+          type: string
+          const: NORMAL
+        source:
+          type: string
+          const: WEB
+        requesterUserId: { $ref: "#/components/schemas/UuidV4" }
+        createdByUserId: { $ref: "#/components/schemas/UuidV4" }
+        assigneeUserId:
+          type: "null"
+        assetId:
+          oneOf:
+            - $ref: "#/components/schemas/UuidV4"
+            - type: "null"
+        createdAt: { $ref: "#/components/schemas/UtcDateTime" }
+        updatedAt: { $ref: "#/components/schemas/UtcDateTime" }
+        version:
+          type: integer
+          minimum: 0
+          const: 0
+      additionalProperties: false
+  responses:
+    BadRequest: { $ref: "../2.3/openapi.yaml#/components/responses/BadRequest" }
+    AuthenticationRequired: { $ref: "../2.3/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../2.3/openapi.yaml#/components/responses/Forbidden" }
+    NotFound: { $ref: "../2.3/openapi.yaml#/components/responses/NotFound" }
+    ValidationFailed: { $ref: "../2.3/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../2.3/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../2.3/openapi.yaml#/components/responses/ServiceUnavailable" }
+security:
+  - SessionCookie: []

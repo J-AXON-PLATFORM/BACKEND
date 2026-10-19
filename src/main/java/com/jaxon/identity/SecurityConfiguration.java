@@ -68,6 +68,8 @@ class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/v1/agents/*/activate").hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/agents/*/tasks").hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/agents/*/tasks/*").hasRole("IT_OPERATOR")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/tickets").hasRole("IT_OPERATOR")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tickets/*").hasRole("IT_OPERATOR")
                         .anyRequest().denyAll())
                 .addFilterBefore(sessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

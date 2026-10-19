@@ -42,6 +42,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V21_ROOT = Path.of("doc/contracts/openapi/2.1");
     private static final Path OPENAPI_V22_ROOT = Path.of("doc/contracts/openapi/2.2");
     private static final Path OPENAPI_V23_ROOT = Path.of("doc/contracts/openapi/2.3");
+    private static final Path OPENAPI_V24_ROOT = Path.of("doc/contracts/openapi/2.4");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -411,6 +412,53 @@ class ExecutableContractsTest {
     }
 
     @Test
+    void openApi24Preserves23AndAddsOnlyMinimumTicketOperations() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V24_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("2.4");
+        assertThat(api.getPaths().keySet())
+                .containsExactlyInAnyOrder(
+                        "/auth/login",
+                        "/auth/me",
+                        "/assets",
+                        "/assets/{assetId}",
+                        "/assets/{assetId}/technical-state",
+                        "/assets/{assetId}/technical-state/events",
+                        "/agents",
+                        "/agents/{agentId}",
+                        "/agents/{agentId}/ssh-key",
+                        "/agents/{agentId}/activate",
+                        "/agents/{agentId}/tasks",
+                        "/agents/{agentId}/tasks/{taskId}",
+                        "/tickets",
+                        "/tickets/{ticketId}");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .containsExactlyInAnyOrder("createTicket", "getOwnTicket");
+
+        JsonNode schemas = Yaml31.mapper()
+                .readTree(OPENAPI_V24_ROOT.resolve("openapi.yaml").toFile())
+                .path("components")
+                .path("schemas");
+        assertThat(schemas.path("TicketCreateRequest").path("additionalProperties").asBoolean())
+                .isFalse();
+        assertThat(textValues(schemas.path("TicketCreateRequest").path("required")))
+                .containsExactlyInAnyOrder("type", "summary", "description");
+        assertThat(textValues(schemas.path("TicketResponse").path("required")))
+                .contains("requesterUserId", "createdByUserId", "assigneeUserId", "assetId");
+        assertThat(schemas.path("TicketResponse").path("properties").path("status").path("const").asText())
+                .isEqualTo("OPEN");
+        assertThat(schemas.path("TicketResponse").path("properties").path("priority").path("const").asText())
+                .isEqualTo("NORMAL");
+    }
+
+    @Test
     void previousOpenApiContractsRemainByteIdentical() throws IOException {
         assertThat(sha256(Files.readAllBytes(OPENAPI_V10_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("bf3b1df5f28fb2e1c34f55b645312e7df896aa8a50fa8fbbec4b7e72d2068236");
@@ -422,6 +470,8 @@ class ExecutableContractsTest {
                 .isEqualTo("9abd5f0b4f9200f30ae71b2edae1eb7fa32ef8a238a27d62325fc464176cc326");
         assertThat(sha256(Files.readAllBytes(OPENAPI_V22_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("24ffc076b43dc61b8779c9b367e1189b0904544fcbec85bb8d3ca72bd91f7e05");
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V23_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("ad03306e05b8bd28d4933a3d6b37e72088e5f490a79e2180f5ae4de9fe9a8b36");
     }
 
     @Test
