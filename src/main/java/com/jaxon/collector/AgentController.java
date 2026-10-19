@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,9 +33,11 @@ class AgentController {
     private static final Pattern UUID_V4 = Pattern.compile(UUID_V4_PATTERN);
 
     private final AgentService agentService;
+    private final AgentTaskService taskService;
 
-    AgentController(AgentService agentService) {
+    AgentController(AgentService agentService, AgentTaskService taskService) {
         this.agentService = agentService;
+        this.taskService = taskService;
     }
 
     @PostMapping
@@ -77,6 +80,33 @@ class AgentController {
         }
         return ResponseEntity.ok(agentService.activate(
                 UUID.fromString(agentId), actorId(authentication), correlationId()));
+    }
+
+    @PostMapping("/{agentId}/tasks")
+    ResponseEntity<?> createTask(
+            @PathVariable String agentId,
+            @Valid @RequestBody AgentTaskCreateRequest request,
+            Authentication authentication,
+            HttpServletRequest servletRequest) {
+        if (!isCanonicalUuidV4(agentId)) {
+            return notFound(servletRequest);
+        }
+        AgentTaskResponse created = taskService.create(
+                UUID.fromString(agentId), request, actorId(authentication), correlationId());
+        return ResponseEntity.created(URI.create(
+                        "/api/v1/agents/" + agentId + "/tasks/" + created.taskId()))
+                .body(created);
+    }
+
+    @GetMapping("/{agentId}/tasks/{taskId}")
+    ResponseEntity<?> findTask(
+            @PathVariable String agentId, @PathVariable String taskId, HttpServletRequest request) {
+        if (!isCanonicalUuidV4(agentId) || !isCanonicalUuidV4(taskId)) {
+            return taskNotFound(request);
+        }
+        return taskService.find(UUID.fromString(agentId), UUID.fromString(taskId))
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> taskNotFound(request));
     }
 
     @ExceptionHandler({AssetNotFoundException.class})
@@ -150,6 +180,36 @@ class AgentController {
                 "No se pudo confirmar el aprovisionamiento SFTP de forma segura.", code);
     }
 
+    @ExceptionHandler(AgentNotActiveException.class)
+    ResponseEntity<AgentProblem> agentNotActive(RuntimeException exception, HttpServletRequest request) {
+        return problem(request, HttpStatus.CONFLICT, "Agent no disponible",
+                "El Agent debe estar ACTIVE para recibir tareas.", "AGENT_NOT_ACTIVE");
+    }
+
+    @ExceptionHandler(AgentTaskConflictException.class)
+    ResponseEntity<AgentProblem> taskConflict(RuntimeException exception, HttpServletRequest request) {
+        return problem(request, HttpStatus.CONFLICT, "Tarea en curso",
+                "El Agent ya tiene una tarea COLLECT_SNAPSHOT no terminal.", "AGENT_TASK_CONFLICT");
+    }
+
+    @ExceptionHandler({AgentTaskTypeNotAllowedException.class, HttpMessageNotReadableException.class})
+    ResponseEntity<AgentProblem> taskTypeNotAllowed(RuntimeException exception, HttpServletRequest request) {
+        return problem(request, HttpStatus.UNPROCESSABLE_CONTENT, "Tarea no válida",
+                "Solo se admite COLLECT_SNAPSHOT con un request cerrado.", "VALIDATION_FAILED");
+    }
+
+    @ExceptionHandler(TaskPublicationConflictException.class)
+    ResponseEntity<AgentProblem> taskPublicationConflict(RuntimeException exception, HttpServletRequest request) {
+        return problem(request, HttpStatus.CONFLICT, "Conflicto de publicación",
+                "El buzón contiene evidencia incompatible para la tarea.", "TASK_PUBLICATION_CONFLICT");
+    }
+
+    @ExceptionHandler(TaskPublicationUnavailableException.class)
+    ResponseEntity<AgentProblem> taskPublicationUnavailable(RuntimeException exception, HttpServletRequest request) {
+        return problem(request, HttpStatus.SERVICE_UNAVAILABLE, "Publicación no disponible",
+                "La tarea quedó pendiente y será reconciliada de forma segura.", "TASK_PUBLICATION_UNAVAILABLE");
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<AgentProblem> validation(
             MethodArgumentNotValidException exception, HttpServletRequest request) {
@@ -181,6 +241,27 @@ class AgentController {
                 "Agent no encontrado",
                 "No existe un Agent con el identificador indicado.",
                 "AGENT_NOT_FOUND");
+    }
+
+    private static ResponseEntity<AgentProblem> taskNotFound(HttpServletRequest request) {
+        return problem(
+                request,
+                HttpStatus.NOT_FOUND,
+                "Tarea no encontrada",
+                "No existe una tarea para el Agent y los identificadores indicados.",
+                "AGENT_TASK_NOT_FOUND");
+    }
+
+    private static boolean isCanonicalUuidV4(String value) {
+        if (!UUID_V4.matcher(value).matches()) {
+            return false;
+        }
+        try {
+            UUID parsed = UUID.fromString(value);
+            return parsed.version() == 4 && parsed.variant() == 2 && parsed.toString().equals(value);
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
     }
 
     private static ResponseEntity<AgentProblem> problem(

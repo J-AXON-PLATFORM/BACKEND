@@ -1,0 +1,177 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "2.3"
+  description: >-
+    Minor compatible que conserva OpenAPI 2.2 y añade la creación y consulta
+    explícita de tareas COLLECT_SNAPSHOT para un Agent activo.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Assets
+  - name: Agents
+paths:
+  /auth/login:
+    $ref: "../2.2/openapi.yaml#/paths/~1auth~1login"
+  /auth/me:
+    $ref: "../2.2/openapi.yaml#/paths/~1auth~1me"
+  /assets:
+    $ref: "../2.2/openapi.yaml#/paths/~1assets"
+  /assets/{assetId}:
+    $ref: "../2.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D"
+  /assets/{assetId}/technical-state:
+    $ref: "../2.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state"
+  /assets/{assetId}/technical-state/events:
+    $ref: "../2.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events"
+  /agents:
+    $ref: "../2.2/openapi.yaml#/paths/~1agents"
+  /agents/{agentId}:
+    $ref: "../2.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D"
+  /agents/{agentId}/ssh-key:
+    $ref: "../2.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key"
+  /agents/{agentId}/activate:
+    $ref: "../2.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate"
+  /agents/{agentId}/tasks:
+    post:
+      tags: [Agents]
+      operationId: createAgentTask
+      summary: Crea y publica una tarea COLLECT_SNAPSHOT para un Agent activo
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentTaskCreateRequest"
+      responses:
+        "201":
+          description: Tarea persistida y publicada
+          headers:
+            Location:
+              description: URI de consulta de la tarea creada.
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentTaskResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /agents/{agentId}/tasks/{taskId}:
+    get:
+      tags: [Agents]
+      operationId: getAgentTask
+      summary: Consulta una tarea concreta del Agent
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+        - $ref: "#/components/parameters/TaskId"
+      responses:
+        "200":
+          description: Estado persistido de la tarea
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentTaskResponse"
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+components:
+  securitySchemes:
+    SessionCookie:
+      $ref: "../2.2/openapi.yaml#/components/securitySchemes/SessionCookie"
+  parameters:
+    AgentId:
+      $ref: "../2.2/openapi.yaml#/components/parameters/AgentId"
+    CsrfToken:
+      $ref: "../2.2/openapi.yaml#/components/parameters/CsrfToken"
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/UuidV4"
+  schemas:
+    UuidV4:
+      $ref: "../2.2/openapi.yaml#/components/schemas/UuidV4"
+    UtcDateTime:
+      $ref: "../2.2/openapi.yaml#/components/schemas/UtcDateTime"
+    AgentTaskCreateRequest:
+      type: object
+      required: [taskType]
+      properties:
+        taskType:
+          type: string
+          const: COLLECT_SNAPSHOT
+      additionalProperties: false
+    AgentTaskError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          pattern: "^[A-Z][A-Z0-9_]{0,63}$"
+        message:
+          type: string
+          minLength: 1
+          maxLength: 256
+      additionalProperties: false
+    AgentTaskResponse:
+      type: object
+      required:
+        - taskId
+        - agentId
+        - taskType
+        - status
+        - createdAt
+        - expiresAt
+        - dispatchedAt
+        - completedAt
+        - error
+      properties:
+        taskId: { $ref: "#/components/schemas/UuidV4" }
+        agentId: { $ref: "#/components/schemas/UuidV4" }
+        taskType:
+          type: string
+          const: COLLECT_SNAPSHOT
+        status:
+          type: string
+          enum: [PENDING, DISPATCHED, RUNNING, SUCCEEDED, FAILED, REJECTED, EXPIRED]
+        createdAt: { $ref: "#/components/schemas/UtcDateTime" }
+        expiresAt:
+          allOf:
+            - $ref: "#/components/schemas/UtcDateTime"
+          description: Vencimiento fijado exactamente quince minutos después de createdAt.
+        dispatchedAt:
+          oneOf:
+            - $ref: "#/components/schemas/UtcDateTime"
+            - type: "null"
+        completedAt:
+          oneOf:
+            - $ref: "#/components/schemas/UtcDateTime"
+            - type: "null"
+        error:
+          oneOf:
+            - $ref: "#/components/schemas/AgentTaskError"
+            - type: "null"
+      additionalProperties: false
+  responses:
+    BadRequest: { $ref: "../2.2/openapi.yaml#/components/responses/BadRequest" }
+    AuthenticationRequired: { $ref: "../2.2/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../2.2/openapi.yaml#/components/responses/Forbidden" }
+    NotFound: { $ref: "../2.2/openapi.yaml#/components/responses/NotFound" }
+    Conflict: { $ref: "../2.2/openapi.yaml#/components/responses/Conflict" }
+    ValidationFailed: { $ref: "../2.2/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../2.2/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../2.2/openapi.yaml#/components/responses/ServiceUnavailable" }
+security:
+  - SessionCookie: []

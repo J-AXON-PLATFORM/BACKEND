@@ -53,6 +53,7 @@ ARG SOURCE_DATE_EPOCH=1789758760
 RUN mkdir -p \
         /out/etc/sftpgo \
         /out/srv/sftpgo/data \
+        /out/srv/sftpgo/tasks \
         /out/srv/sftpgo/backups \
         /out/usr/local/bin \
         /out/usr/share/sftpgo \
@@ -63,6 +64,7 @@ RUN mkdir -p \
         -trimpath \
         -ldflags "-s -w -buildid= -X github.com/drakkan/sftpgo/v2/internal/version.commit=${SFTPGO_COMMIT} -X github.com/drakkan/sftpgo/v2/internal/version.date=${SFTPGO_BUILD_DATE}" \
         -o /out/usr/local/bin/sftpgo . \
+    && chmod 0770 /out/srv/sftpgo/tasks \
     && sed 's|"users_base_dir": "",|"users_base_dir": "/srv/sftpgo/data",|' sftpgo.json \
         | sed 's|"backups"|"/srv/sftpgo/backups"|' \
         | sed 's|"sqlite"|"bolt"|' \

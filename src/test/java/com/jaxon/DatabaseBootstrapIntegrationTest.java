@@ -91,13 +91,17 @@ class DatabaseBootstrapIntegrationTest {
                         "20261011000000",
                         "20261011010000",
                         "20261012000000",
-                        "20261016000000");
+                        "20261016000000",
+                        "20261018000000");
         assertThat(modularSchemas).containsExactlyInAnyOrderElementsOf(EXPECTED_SCHEMAS);
         assertThat(modularTables).containsExactly(
                 "collector.accepted_snapshots",
+                "collector.accepted_task_results",
+                "collector.agent_tasks",
                 "collector.agents",
                 "collector.outbox_events",
                 "collector.snapshot_ingestions",
+                "collector.task_result_ingestions",
                 "identity.human_sessions",
                 "identity.human_user_roles",
                 "identity.human_users",
