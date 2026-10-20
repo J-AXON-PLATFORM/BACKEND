@@ -129,9 +129,9 @@ class TicketService {
                 "SELECT count(*) FROM support.tickets WHERE requester_user_id = ?",
                 Long.class,
                 requesterUserId);
-        List<TicketResponse> items = jdbc.query(
+        List<TicketListItemResponse> items = jdbc.query(
                 """
-                SELECT id, type, summary, description, status, priority, source,
+                SELECT id, type, summary, status, priority, source,
                        requester_user_id, created_by_user_id, assignee_user_id, asset_id,
                        created_at, updated_at, version
                 FROM support.tickets
@@ -139,7 +139,20 @@ class TicketService {
                 ORDER BY created_at DESC, id DESC
                 LIMIT ? OFFSET ?
                 """,
-                (resultSet, row) -> ticket(resultSet),
+                (resultSet, row) -> new TicketListItemResponse(
+                        resultSet.getObject("id", UUID.class),
+                        resultSet.getString("type"),
+                        resultSet.getString("summary"),
+                        resultSet.getString("status"),
+                        resultSet.getString("priority"),
+                        resultSet.getString("source"),
+                        resultSet.getObject("requester_user_id", UUID.class),
+                        resultSet.getObject("created_by_user_id", UUID.class),
+                        resultSet.getObject("assignee_user_id", UUID.class),
+                        resultSet.getObject("asset_id", UUID.class),
+                        resultSet.getTimestamp("created_at").toInstant(),
+                        resultSet.getTimestamp("updated_at").toInstant(),
+                        resultSet.getLong("version")),
                 requesterUserId,
                 size,
                 (long) page * size);
@@ -233,24 +246,6 @@ class TicketService {
                 Boolean.class,
                 ticketId,
                 requesterUserId));
-    }
-
-    private static TicketResponse ticket(java.sql.ResultSet resultSet) throws java.sql.SQLException {
-        return new TicketResponse(
-                resultSet.getObject("id", UUID.class),
-                resultSet.getString("type"),
-                resultSet.getString("summary"),
-                resultSet.getString("description"),
-                resultSet.getString("status"),
-                resultSet.getString("priority"),
-                resultSet.getString("source"),
-                resultSet.getObject("requester_user_id", UUID.class),
-                resultSet.getObject("created_by_user_id", UUID.class),
-                resultSet.getObject("assignee_user_id", UUID.class),
-                resultSet.getObject("asset_id", UUID.class),
-                resultSet.getTimestamp("created_at").toInstant(),
-                resultSet.getTimestamp("updated_at").toInstant(),
-                resultSet.getLong("version"));
     }
 
     private static int totalPages(long totalElements, int size) {

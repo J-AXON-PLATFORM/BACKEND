@@ -252,14 +252,18 @@ class SupportIntegrationTest {
         assertThat(firstPage.statusCode()).isEqualTo(200);
         assertThat(firstPage.body())
                 .contains("\"page\":0", "\"size\":1", "\"totalElements\":2", "\"totalPages\":2")
-                .doesNotContain(hidden.toString());
+                .doesNotContain(hidden.toString(), "\"description\"", "The reception printer is offline.",
+                        "Second description.");
         assertThat(secondPage.body())
                 .contains("\"page\":1", "\"size\":1", "\"totalElements\":2", "\"totalPages\":2")
-                .doesNotContain(hidden.toString());
+                .doesNotContain(hidden.toString(), "\"description\"", "The reception printer is offline.",
+                        "Second description.");
         UUID expectedFirst = first.toString().compareTo(second.toString()) > 0 ? first : second;
         UUID expectedSecond = first.toString().compareTo(second.toString()) > 0 ? second : first;
         assertThat(firstPage.body()).contains(expectedFirst.toString()).doesNotContain(expectedSecond.toString());
         assertThat(secondPage.body()).contains(expectedSecond.toString()).doesNotContain(expectedFirst.toString());
+        assertThat(getTicket(session.cookie(), first.toString()).body())
+                .contains("\"description\":\"The reception printer is offline.\"");
     }
 
     @Test
