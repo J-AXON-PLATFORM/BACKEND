@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Alta y consulta mínima de tickets propios -- OLA3-SUP-001a, 2026-10-19
+
+Backend añade `POST /api/v1/tickets` y `GET /api/v1/tickets/{ticketId}` para `IT_OPERATOR`, con CSRF en el alta y consulta limitada al requester autenticado. La migración `V20261019000000__support_minimum_tickets.sql` crea exclusivamente `support.tickets` y `support.outbox_events`; los tickets nacen `OPEN`, `NORMAL`, `WEB`, sin assignee y con `version=0`. El activo opcional se valida mediante `AssetLookup` de Inventory, sin FK ni acceso directo cross-schema. `TICKET_CREATED` se captura atómicamente y su payload allowlisted omite resumen y descripción.
+
+Frontend incorpora formulario, consulta por UUID y ficha, conserva CSRF solo en memoria, segmenta la caché TanStack Query por usuario y valida estrictamente tanto el DTO como su ownership. OpenAPI 2.4 conserva 2.3 y añade solo las dos operaciones de tickets; las versiones anteriores y Agent 1.0 permanecen inmutables. La verificación local concluye con 80 pruebas backend, 31 frontend, builds, auditorías, compatibilidad OpenAPI 2.3 -> 2.4 y un E2E Chromium real `login -> activo -> ticket asociado -> PostgreSQL -> REST -> UI` verdes.
+
+La integración quedó completa mediante `FRONTEND#12`, squash `aa1995484e1ce7b45eae2ad4bbccf7847a9547e5`, con runs verdes `39309591894` y `39309969666`, y `BACKEND#26`, squash `10883a944377cc97a8ec2fec34a5d13574f76a40`, con runs verdes `39341186082` y `39343168032`. No cambian workflows ni `automation-collector`; no se implementan listado, lifecycle, asignación, comentarios, adjuntos, SSE, IA, Automation, consumidor outbox o infraestructura Production. `PRODUCTION_READY = NO`.
+
+---
+
 ## Resiliencia acotada de entrega de Results Agent -- OLA2-RSL-001a, 2026-10-19
 
 El Agent reintenta únicamente la entrega SFTP de un Result terminal ya persistido: máximo cinco intentos totales por episodio, primero inmediato y demoras posteriores con exponential backoff, full jitter, base 5 segundos y cap 300 segundos. La clasificación es cerrada: timeout, EOF y errores de red explícitos son transitorios; autenticación, host key, apertura de canal, permisos, conflictos y errores desconocidos fallan permanentemente sin retry y con mensajes seguros.
