@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Corrección del listado resumido de tickets -- OLA3-SUP-002b, 2026-10-20
+
+La revisión de `OLA3-SUP-002a` confirmó que `GET /api/v1/tickets` reutilizaba por error la respuesta completa y exponía `description`. `OLA3-SUP-002b` corrige el defecto sin reescribir su historia: backend devuelve un DTO resumido cerrado, la consulta SQL deja de seleccionar `description` y `GET /api/v1/tickets/{ticketId}` conserva el detalle completo. No se crean migraciones ni se modifican datos, ownership, roles, paginación, orden, comentarios u outbox.
+
+Frontend separa `TicketListItem` de `Ticket`, rechaza de forma cerrada `description` y cualquier campo inesperado en el listado, y obtiene la descripción únicamente mediante la consulta individual. OpenAPI 3.0 documenta el cambio breaking sobre el mismo servidor `/api/v1`; OpenAPI 2.5 queda byte a byte inmutable con SHA-256 `bbf7bf28316ab6b81553f2aabdc2c3529c482e1d72c5a56f82b9411cf1090335`. La verificación local concluyó con 86 pruebas backend, 36 frontend, lint, typecheck, builds, auditorías, validación OpenAPI y un E2E Chromium multirepo real.
+
+La integración técnica quedó completa mediante `FRONTEND#14`, squash `e4f27bc765ee1446ba0b915c6c94618072b8f820`, con runs verdes `39508796592` y `39509165232`, y `BACKEND#30`, squash `fb0a726725796d7b367567458023fce030d2f305`, con runs verdes `39509548841` y `39511809204`. No cambian workflows, dependencias, migraciones ni `automation-collector`; `PRODUCTION_READY = NO`.
+
+---
+
 ## Listado propio y conversación pública de tickets -- OLA3-SUP-002a, 2026-10-20
 
 Backend añade listado paginado de tickets propios y alta/consulta paginada de comentarios `PUBLIC` para `IT_OPERATOR`, con ownership aplicado en SQL, `404` indistinguible para ticket ajeno o inexistente y órdenes estables. La migración `V20261020000000__support_ticket_conversation.sql` crea `support.ticket_comments` con FK interna a Support y amplía de forma segura el outbox. `TICKET_COMMENT_ADDED` se captura atómicamente y su payload contiene solo `commentId` y `visibility`.

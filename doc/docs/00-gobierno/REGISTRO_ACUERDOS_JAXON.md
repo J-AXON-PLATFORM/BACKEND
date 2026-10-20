@@ -344,6 +344,14 @@ Support persiste los comentarios exclusivamente en `support.ticket_comments`, co
 
 Frontend mantiene CSRF solo en memoria, segmenta las cachés TanStack Query por usuario, ticket y página, valida estrictamente envelopes, ownership y autor, y no usa retry u optimistic update en mutations. El corte exige pruebas de contrato, PostgreSQL/Flyway real, autorización, CSRF, ownership, paginación/orden, atomicidad y payload mínimo, parsers frontend y E2E Chromium real con comprobación directa de comentario/outbox. Autoriza un Pull Request técnico por `frontend` y `backend`, integración squash en ese orden, verificación post-merge y después un único Pull Request documental en `backend`. No modifica workflows ni `automation-collector` y no autoriza búsqueda/listado global, notas `INTERNAL`, asignación, cambio de prioridad o estado, adjuntos, edición/borrado, resolución/cierre/reapertura, SSE, IA, Automation, consumidores outbox, auditoría materializada, infraestructura Production, artefactos publicados o despliegues.
 
+## AC-JAXON-071 -- Corrección del listado resumido de tickets
+
+La revisión posterior de `OLA3-SUP-002a` confirma un defecto histórico: `GET /api/v1/tickets` reutiliza `TicketResponse` y transmite `description`, aunque el listado debía ser resumido. `OLA3-SUP-002b` autoriza exclusivamente corregirlo en `backend` y `frontend`: el listado devuelve un DTO cerrado con todos los campos vigentes salvo `description`, y su SQL no selecciona esa columna; `GET /api/v1/tickets/{ticketId}` conserva la respuesta completa. No cambian ownership, rol, errores, paginación, orden, comentarios, outbox, datos o migraciones.
+
+Frontend separa `TicketListItem` de `Ticket`, rechaza cerradamente `description` o cualquier campo inesperado en el listado y consulta el detalle individual antes de mostrar la descripción. Las cachés continúan segmentadas por usuario, página y ticket; CSRF, retries, optimistic updates y conversación pública no cambian. OpenAPI 2.5 permanece byte a byte inmutable y OpenAPI 3.0 documenta el breaking change sin cambiar `/api/v1`; Agent 1.0 y el resto de contratos históricos permanecen inmutables.
+
+El corte exige pruebas de ausencia de propiedad y texto sensible en listado, detalle completo del mismo ticket, ownership/paginación/orden, schema cerrado, parser frontend fail-closed, fetch individual y E2E Chromium multirepo. Autoriza un Pull Request técnico por `frontend` y `backend`, integración squash en ese orden, verificación post-merge y después un único Pull Request documental en `backend`. No modifica workflows, dependencias ni `automation-collector` y no autoriza lifecycle, notas internas, búsqueda global, otros cambios funcionales, infraestructura Production, artefactos publicados o despliegues.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)
