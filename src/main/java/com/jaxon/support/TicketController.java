@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -56,6 +57,60 @@ class TicketController {
                 .orElseGet(() -> ticketNotFound(request));
     }
 
+    @GetMapping
+    ResponseEntity<?> findPage(
+            @RequestParam(defaultValue = "0") String page,
+            @RequestParam(defaultValue = "20") String size,
+            Authentication authentication,
+            HttpServletRequest request) {
+        PageRequest requestedPage = page(page, size, 50);
+        if (requestedPage == null) {
+            return invalidPage(request, 50);
+        }
+        return ResponseEntity.ok(ticketService.findOwnPage(
+                actorId(authentication), requestedPage.page(), requestedPage.size()));
+    }
+
+    @PostMapping("/{ticketId}/comments")
+    ResponseEntity<?> addComment(
+            @PathVariable String ticketId,
+            @Valid @RequestBody TicketCommentCreateRequest comment,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        UUID parsedTicketId = UUID.fromString(ticketId);
+        UUID correlationId = UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY));
+        return ticketService.addOwnComment(
+                        parsedTicketId, actorId(authentication), comment.body(), correlationId)
+                .<ResponseEntity<?>>map(created -> ResponseEntity.status(HttpStatus.CREATED).body(created))
+                .orElseGet(() -> ticketNotFound(request));
+    }
+
+    @GetMapping("/{ticketId}/comments")
+    ResponseEntity<?> findComments(
+            @PathVariable String ticketId,
+            @RequestParam(defaultValue = "0") String page,
+            @RequestParam(defaultValue = "50") String size,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        PageRequest requestedPage = page(page, size, 100);
+        if (requestedPage == null) {
+            return invalidPage(request, 100);
+        }
+        return ticketService.findOwnComments(
+                        UUID.fromString(ticketId),
+                        actorId(authentication),
+                        requestedPage.page(),
+                        requestedPage.size())
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ticketNotFound(request));
+    }
+
     @ExceptionHandler(AssociatedAssetNotFoundException.class)
     ResponseEntity<SupportProblem> associatedAssetNotFound(
             AssociatedAssetNotFoundException exception, HttpServletRequest request) {
@@ -84,8 +139,43 @@ class TicketController {
                 errors);
     }
 
+    @ExceptionHandler(InvalidCommentException.class)
+    ResponseEntity<SupportProblem> invalidComment(
+            InvalidCommentException exception, HttpServletRequest request) {
+        return problem(
+                request,
+                HttpStatus.UNPROCESSABLE_CONTENT,
+                "Validación fallida",
+                "Revisa los campos indicados.",
+                "VALIDATION_FAILED",
+                List.of(new FieldError("/body", "INVALID_FIELD", "El valor no es válido.")));
+    }
+
     private static UUID actorId(Authentication authentication) {
         return (UUID) authentication.getDetails();
+    }
+
+    private static PageRequest page(String page, String size, int maximumSize) {
+        try {
+            int parsedPage = Integer.parseInt(page);
+            int parsedSize = Integer.parseInt(size);
+            if (parsedPage < 0 || parsedSize < 1 || parsedSize > maximumSize) {
+                return null;
+            }
+            return new PageRequest(parsedPage, parsedSize);
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
+    private static ResponseEntity<SupportProblem> invalidPage(HttpServletRequest request, int maximumSize) {
+        return problem(
+                request,
+                HttpStatus.UNPROCESSABLE_CONTENT,
+                "Paginación no válida",
+                "page debe ser mayor o igual que cero y size debe estar entre 1 y " + maximumSize + ".",
+                "VALIDATION_FAILED",
+                List.of());
     }
 
     private static ResponseEntity<SupportProblem> ticketNotFound(HttpServletRequest request) {
@@ -132,4 +222,6 @@ class TicketController {
             List<FieldError> errors) {}
 
     record FieldError(String pointer, String code, String message) {}
+
+    private record PageRequest(int page, int size) {}
 }

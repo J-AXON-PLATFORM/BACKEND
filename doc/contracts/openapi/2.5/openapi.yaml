@@ -1,0 +1,231 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "2.5"
+  description: >-
+    Minor compatible que conserva OpenAPI 2.4 y añade listado paginado de
+    tickets propios y conversación pública append-only para IT_OPERATOR.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Assets
+  - name: Agents
+  - name: Support
+paths:
+  /auth/login:
+    $ref: "../2.4/openapi.yaml#/paths/~1auth~1login"
+  /auth/me:
+    $ref: "../2.4/openapi.yaml#/paths/~1auth~1me"
+  /assets:
+    $ref: "../2.4/openapi.yaml#/paths/~1assets"
+  /assets/{assetId}:
+    $ref: "../2.4/openapi.yaml#/paths/~1assets~1%7BassetId%7D"
+  /assets/{assetId}/technical-state:
+    $ref: "../2.4/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state"
+  /assets/{assetId}/technical-state/events:
+    $ref: "../2.4/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events"
+  /agents:
+    $ref: "../2.4/openapi.yaml#/paths/~1agents"
+  /agents/{agentId}:
+    $ref: "../2.4/openapi.yaml#/paths/~1agents~1%7BagentId%7D"
+  /agents/{agentId}/ssh-key:
+    $ref: "../2.4/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key"
+  /agents/{agentId}/activate:
+    $ref: "../2.4/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate"
+  /agents/{agentId}/tasks:
+    $ref: "../2.4/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks"
+  /agents/{agentId}/tasks/{taskId}:
+    $ref: "../2.4/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D"
+  /tickets:
+    post:
+      tags: [Support]
+      operationId: createTicket
+      summary: Crea un ticket propio con estado OPEN y prioridad NORMAL
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../2.4/openapi.yaml#/components/schemas/TicketCreateRequest"
+      responses:
+        "201":
+          description: Ticket persistido con evento durable TICKET_CREATED
+          headers:
+            Location:
+              description: URI de consulta del ticket creado.
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+    get:
+      tags: [Support]
+      operationId: listOwnTickets
+      summary: Lista únicamente los tickets de la sesión actual
+      parameters:
+        - $ref: "#/components/parameters/TicketPage"
+        - $ref: "#/components/parameters/TicketPageSize"
+      responses:
+        "200":
+          description: Página de tickets propios ordenada por creación descendente e ID descendente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketPage"
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/{ticketId}:
+    $ref: "../2.4/openapi.yaml#/paths/~1tickets~1%7BticketId%7D"
+  /tickets/{ticketId}/comments:
+    parameters:
+      - $ref: "#/components/parameters/TicketId"
+    get:
+      tags: [Support]
+      operationId: listOwnTicketComments
+      summary: Lista la conversación pública de un ticket propio
+      parameters:
+        - $ref: "#/components/parameters/CommentPage"
+        - $ref: "#/components/parameters/CommentPageSize"
+      responses:
+        "200":
+          description: Página de comentarios públicos ordenada por creación ascendente e ID ascendente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketCommentPage"
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+    post:
+      tags: [Support]
+      operationId: addOwnTicketComment
+      summary: Añade un comentario público append-only a un ticket propio
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketCommentCreateRequest"
+      responses:
+        "201":
+          description: Comentario y evento TICKET_COMMENT_ADDED persistidos atómicamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketCommentResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+components:
+  securitySchemes:
+    SessionCookie:
+      $ref: "../2.4/openapi.yaml#/components/securitySchemes/SessionCookie"
+  parameters:
+    CsrfToken:
+      $ref: "../2.4/openapi.yaml#/components/parameters/CsrfToken"
+    TicketId:
+      $ref: "../2.4/openapi.yaml#/components/parameters/TicketId"
+    TicketPage:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 0, default: 0 }
+    TicketPageSize:
+      name: size
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+    CommentPage:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 0, default: 0 }
+    CommentPageSize:
+      name: size
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+  schemas:
+    UuidV4:
+      $ref: "../2.4/openapi.yaml#/components/schemas/UuidV4"
+    UtcDateTime:
+      $ref: "../2.4/openapi.yaml#/components/schemas/UtcDateTime"
+    TicketResponse:
+      $ref: "../2.4/openapi.yaml#/components/schemas/TicketResponse"
+    TicketPage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TicketResponse" }
+        page: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 50 }
+        totalElements: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+      additionalProperties: false
+    TicketCommentCreateRequest:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: "\\S"
+      additionalProperties: false
+    TicketCommentResponse:
+      type: object
+      required: [commentId, ticketId, visibility, authorUserId, body, createdAt]
+      properties:
+        commentId: { $ref: "#/components/schemas/UuidV4" }
+        ticketId: { $ref: "#/components/schemas/UuidV4" }
+        visibility: { type: string, const: PUBLIC }
+        authorUserId: { $ref: "#/components/schemas/UuidV4" }
+        body: { type: string, minLength: 1, maxLength: 10000 }
+        createdAt: { $ref: "#/components/schemas/UtcDateTime" }
+      additionalProperties: false
+    TicketCommentPage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TicketCommentResponse" }
+        page: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 100 }
+        totalElements: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+      additionalProperties: false
+  responses:
+    BadRequest: { $ref: "../2.4/openapi.yaml#/components/responses/BadRequest" }
+    AuthenticationRequired: { $ref: "../2.4/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../2.4/openapi.yaml#/components/responses/Forbidden" }
+    NotFound: { $ref: "../2.4/openapi.yaml#/components/responses/NotFound" }
+    ValidationFailed: { $ref: "../2.4/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../2.4/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../2.4/openapi.yaml#/components/responses/ServiceUnavailable" }
+security:
+  - SessionCookie: []

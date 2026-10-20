@@ -173,16 +173,32 @@ class SupportIntegrationTest {
     @Test
     void requiresAuthenticationCsrfAndTheExplicitItOperatorRole() throws Exception {
         assertThat(getTicket(null, UUID.randomUUID().toString()).statusCode()).isEqualTo(401);
+        assertThat(getTickets(null, "0", "20").statusCode()).isEqualTo(401);
+        assertThat(getComments(null, UUID.randomUUID().toString(), "0", "50").statusCode()).isEqualTo(401);
         Session session = login();
         HttpResponse<String> missingCsrf = postTicket(
                 new Session(session.cookie(), null), VALID_TICKET, UUID.randomUUID());
         assertThat(missingCsrf.statusCode()).isEqualTo(403);
         assertThat(missingCsrf.body()).contains("\"code\":\"CSRF_INVALID\"");
+        UUID ticketId = UUID.fromString(extract(postTicket(session, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        HttpResponse<String> commentMissingCsrf = postComment(
+                new Session(session.cookie(), null),
+                ticketId.toString(),
+                "{\"body\":\"Denied\"}",
+                UUID.randomUUID());
+        assertThat(commentMissingCsrf.statusCode()).isEqualTo(403);
+        assertThat(commentMissingCsrf.body()).contains("\"code\":\"CSRF_INVALID\"");
 
         jdbc.update("DELETE FROM identity.human_user_roles WHERE role_code = 'IT_OPERATOR'");
         try {
             assertThat(getTicket(session.cookie(), UUID.randomUUID().toString()).statusCode()).isEqualTo(403);
             assertThat(postTicket(session, VALID_TICKET, UUID.randomUUID()).statusCode()).isEqualTo(403);
+            assertThat(getTickets(session.cookie(), "0", "20").statusCode()).isEqualTo(403);
+            assertThat(getComments(session.cookie(), UUID.randomUUID().toString(), "0", "50").statusCode())
+                    .isEqualTo(403);
+            assertThat(postComment(session, UUID.randomUUID().toString(), "{\"body\":\"Denied\"}", UUID.randomUUID())
+                            .statusCode())
+                    .isEqualTo(403);
         } finally {
             jdbc.update(
                     """
@@ -191,6 +207,176 @@ class SupportIntegrationTest {
                     WHERE normalized_username = 'support.operator'
                     ON CONFLICT DO NOTHING
                     """);
+        }
+    }
+
+    @Test
+    void listsOnlyOwnedTicketsWithStablePagination() throws Exception {
+        Session session = login();
+        UUID first = UUID.fromString(extract(postTicket(session, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        UUID second = UUID.fromString(extract(
+                postTicket(
+                                session,
+                                """
+                                {"type":"QUESTION","summary":"Second ticket","description":"Second description."}
+                                """,
+                                UUID.randomUUID())
+                        .body(),
+                "ticketId"));
+        UUID hidden = UUID.fromString(extract(
+                postTicket(
+                                session,
+                                """
+                                {"type":"OTHER","summary":"Hidden ticket","description":"Another requester."}
+                                """,
+                                UUID.randomUUID())
+                        .body(),
+                "ticketId"));
+        jdbc.update("UPDATE support.tickets SET requester_user_id = ? WHERE id = ?", UUID.randomUUID(), hidden);
+        UUID requesterId = jdbc.queryForObject(
+                "SELECT requester_user_id FROM support.tickets WHERE id = ?", UUID.class, first);
+        jdbc.update(
+                "UPDATE support.tickets SET requester_user_id = ? WHERE requester_user_id = ? AND id NOT IN (?, ?)",
+                UUID.randomUUID(),
+                requesterId,
+                first,
+                second);
+        jdbc.update(
+                "UPDATE support.tickets SET created_at = '2026-10-20T10:00:00Z', updated_at = '2026-10-20T10:00:00Z' WHERE id IN (?, ?)",
+                first,
+                second);
+
+        HttpResponse<String> firstPage = getTickets(session.cookie(), "0", "1");
+        HttpResponse<String> secondPage = getTickets(session.cookie(), "1", "1");
+
+        assertThat(firstPage.statusCode()).isEqualTo(200);
+        assertThat(firstPage.body())
+                .contains("\"page\":0", "\"size\":1", "\"totalElements\":2", "\"totalPages\":2")
+                .doesNotContain(hidden.toString());
+        assertThat(secondPage.body())
+                .contains("\"page\":1", "\"size\":1", "\"totalElements\":2", "\"totalPages\":2")
+                .doesNotContain(hidden.toString());
+        UUID expectedFirst = first.toString().compareTo(second.toString()) > 0 ? first : second;
+        UUID expectedSecond = first.toString().compareTo(second.toString()) > 0 ? second : first;
+        assertThat(firstPage.body()).contains(expectedFirst.toString()).doesNotContain(expectedSecond.toString());
+        assertThat(secondPage.body()).contains(expectedSecond.toString()).doesNotContain(expectedFirst.toString());
+    }
+
+    @Test
+    void appendsAndPagesPublicCommentsWithAContentFreeDurableEvent() throws Exception {
+        Session session = login();
+        UUID ticketId = UUID.fromString(extract(postTicket(session, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        UUID correlationId = UUID.randomUUID();
+
+        HttpResponse<String> created = postComment(
+                session, ticketId.toString(), "{\"body\":\"  Public update  \"}", correlationId);
+
+        assertThat(created.statusCode()).isEqualTo(201);
+        UUID commentId = UUID.fromString(extract(created.body(), "commentId"));
+        assertThat(created.body())
+                .contains("\"ticketId\":\"" + ticketId + "\"")
+                .contains("\"visibility\":\"PUBLIC\"")
+                .contains("\"body\":\"Public update\"");
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT ticket_id, visibility, author_user_id, body
+                        FROM support.ticket_comments WHERE id = ?
+                        """,
+                        commentId))
+                .containsEntry("ticket_id", ticketId)
+                .containsEntry("visibility", "PUBLIC")
+                .containsEntry("body", "Public update");
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT event_type, resource_type, resource_id, correlation_id, payload
+                        FROM support.outbox_events WHERE event_type = 'TICKET_COMMENT_ADDED' AND resource_id = ?
+                        """,
+                        ticketId))
+                .containsEntry("event_type", "TICKET_COMMENT_ADDED")
+                .containsEntry("resource_type", "TICKET")
+                .containsEntry("resource_id", ticketId)
+                .containsEntry("correlation_id", correlationId);
+        String payload = jdbc.queryForObject(
+                """
+                SELECT payload::text FROM support.outbox_events
+                WHERE event_type = 'TICKET_COMMENT_ADDED' AND resource_id = ?
+                """,
+                String.class,
+                ticketId);
+        assertThat(payload)
+                .contains(commentId.toString(), "\"visibility\": \"PUBLIC\"")
+                .doesNotContain("Public update", "Printer unavailable", "reception printer");
+
+        HttpResponse<String> comments = getComments(session.cookie(), ticketId.toString(), "0", "1");
+        assertThat(comments.statusCode()).isEqualTo(200);
+        assertThat(comments.body())
+                .contains(commentId.toString(), "\"totalElements\":1", "\"totalPages\":1");
+    }
+
+    @Test
+    void concealsForeignTicketsAndValidatesCommentAndPageBoundaries() throws Exception {
+        Session session = login();
+        UUID ticketId = UUID.fromString(extract(postTicket(session, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        jdbc.update("UPDATE support.tickets SET requester_user_id = ? WHERE id = ?", UUID.randomUUID(), ticketId);
+
+        assertThat(getComments(session.cookie(), ticketId.toString(), "0", "50").body())
+                .contains("\"code\":\"TICKET_NOT_FOUND\"");
+        assertThat(postComment(
+                                session, ticketId.toString(), "{\"body\":\"Cannot append\"}", UUID.randomUUID())
+                        .body())
+                .contains("\"code\":\"TICKET_NOT_FOUND\"");
+        assertThat(getComments(session.cookie(), UUID.randomUUID().toString(), "0", "50").body())
+                .contains("\"code\":\"TICKET_NOT_FOUND\"");
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM support.ticket_comments WHERE ticket_id = ?", Integer.class, ticketId))
+                .isZero();
+
+        assertThat(getTickets(session.cookie(), "-1", "20").body())
+                .contains("\"code\":\"VALIDATION_FAILED\"");
+        assertThat(getTickets(session.cookie(), "0", "51").statusCode()).isEqualTo(422);
+        assertThat(getComments(session.cookie(), UUID.randomUUID().toString(), "0", "101").statusCode())
+                .isEqualTo(422);
+
+        UUID ownTicket = UUID.fromString(extract(postTicket(session, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        assertThat(postComment(session, ownTicket.toString(), "{\"body\":\"   \"}", UUID.randomUUID()).body())
+                .contains("\"pointer\":\"/body\"");
+        String tooLong = "x".repeat(10_001);
+        assertThat(postComment(
+                                session,
+                                ownTicket.toString(),
+                                "{\"body\":\"" + tooLong + "\"}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(422);
+        String padded = " ".repeat(10_000) + "x";
+        assertThat(postComment(
+                                session,
+                                ownTicket.toString(),
+                                "{\"body\":\"" + padded + "\"}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(422);
+    }
+
+    @Test
+    void rollsBackTheCommentWhenItsOutboxEventCannotBePersisted() throws Exception {
+        Session session = login();
+        UUID ticketId = UUID.fromString(extract(postTicket(session, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        jdbc.execute(
+                """
+                ALTER TABLE support.outbox_events
+                ADD CONSTRAINT support_test_reject_comment_event
+                CHECK (event_type <> 'TICKET_COMMENT_ADDED') NOT VALID
+                """);
+        try {
+            HttpResponse<String> response = postComment(
+                    session, ticketId.toString(), "{\"body\":\"Must roll back\"}", UUID.randomUUID());
+            assertThat(response.statusCode()).isEqualTo(503);
+            assertThat(jdbc.queryForObject(
+                            "SELECT count(*) FROM support.ticket_comments WHERE ticket_id = ?", Integer.class, ticketId))
+                    .isZero();
+        } finally {
+            jdbc.execute("ALTER TABLE support.outbox_events DROP CONSTRAINT support_test_reject_comment_event");
         }
     }
 
@@ -223,6 +409,41 @@ class SupportIntegrationTest {
 
     private HttpResponse<String> getTicket(String cookie, String ticketId) throws Exception {
         HttpRequest.Builder request = HttpRequest.newBuilder().uri(uri("/api/v1/tickets/" + ticketId)).GET();
+        if (cookie != null) {
+            request.header("Cookie", cookie);
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> getTickets(String cookie, String page, String size) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets?page=" + page + "&size=" + size))
+                .GET();
+        if (cookie != null) {
+            request.header("Cookie", cookie);
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> postComment(Session session, String ticketId, String body, UUID correlationId)
+            throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets/" + ticketId + "/comments"))
+                .header("Cookie", session.cookie())
+                .header("Content-Type", "application/json")
+                .header("X-Correlation-ID", correlationId.toString())
+                .POST(HttpRequest.BodyPublishers.ofString(body));
+        if (session.csrfToken() != null) {
+            request.header("X-CSRF-Token", session.csrfToken());
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> getComments(String cookie, String ticketId, String page, String size)
+            throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets/" + ticketId + "/comments?page=" + page + "&size=" + size))
+                .GET();
         if (cookie != null) {
             request.header("Cookie", cookie);
         }

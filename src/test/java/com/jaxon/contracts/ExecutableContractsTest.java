@@ -43,6 +43,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V22_ROOT = Path.of("doc/contracts/openapi/2.2");
     private static final Path OPENAPI_V23_ROOT = Path.of("doc/contracts/openapi/2.3");
     private static final Path OPENAPI_V24_ROOT = Path.of("doc/contracts/openapi/2.4");
+    private static final Path OPENAPI_V25_ROOT = Path.of("doc/contracts/openapi/2.5");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -459,6 +460,52 @@ class ExecutableContractsTest {
     }
 
     @Test
+    void openApi25Preserves24AndAddsOnlyOwnTicketListAndConversationOperations() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V25_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("2.5");
+        assertThat(api.getPaths().keySet())
+                .containsExactlyInAnyOrder(
+                        "/auth/login",
+                        "/auth/me",
+                        "/assets",
+                        "/assets/{assetId}",
+                        "/assets/{assetId}/technical-state",
+                        "/assets/{assetId}/technical-state/events",
+                        "/agents",
+                        "/agents/{agentId}",
+                        "/agents/{agentId}/ssh-key",
+                        "/agents/{agentId}/activate",
+                        "/agents/{agentId}/tasks",
+                        "/agents/{agentId}/tasks/{taskId}",
+                        "/tickets",
+                        "/tickets/{ticketId}",
+                        "/tickets/{ticketId}/comments");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .containsExactlyInAnyOrder(
+                        "createTicket", "listOwnTickets", "listOwnTicketComments", "addOwnTicketComment");
+
+        JsonNode schemas = Yaml31.mapper()
+                .readTree(OPENAPI_V25_ROOT.resolve("openapi.yaml").toFile())
+                .path("components")
+                .path("schemas");
+        assertThat(schemas.path("TicketPage").path("additionalProperties").asBoolean()).isFalse();
+        assertThat(schemas.path("TicketCommentCreateRequest").path("additionalProperties").asBoolean())
+                .isFalse();
+        assertThat(schemas.path("TicketCommentResponse").path("properties").path("visibility").path("const").asText())
+                .isEqualTo("PUBLIC");
+        assertThat(textValues(schemas.path("TicketCommentPage").path("required")))
+                .containsExactlyInAnyOrder("items", "page", "size", "totalElements", "totalPages");
+    }
+
+    @Test
     void previousOpenApiContractsRemainByteIdentical() throws IOException {
         assertThat(sha256(Files.readAllBytes(OPENAPI_V10_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("bf3b1df5f28fb2e1c34f55b645312e7df896aa8a50fa8fbbec4b7e72d2068236");
@@ -472,6 +519,8 @@ class ExecutableContractsTest {
                 .isEqualTo("24ffc076b43dc61b8779c9b367e1189b0904544fcbec85bb8d3ca72bd91f7e05");
         assertThat(sha256(Files.readAllBytes(OPENAPI_V23_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("ad03306e05b8bd28d4933a3d6b37e72088e5f490a79e2180f5ae4de9fe9a8b36");
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V24_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("ef6a21e8a53a03cb7888b8cd49dfc65def31fd3d28ebcb8d6a1771c0490edbd6");
     }
 
     @Test
