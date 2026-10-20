@@ -3,7 +3,7 @@ package com.jaxon.support;
 import java.util.List;
 
 record TicketPage(
-        List<TicketResponse> items,
+        List<TicketListItemResponse> items,
         int page,
         int size,
         long totalElements,

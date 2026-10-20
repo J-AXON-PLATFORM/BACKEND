@@ -14,6 +14,7 @@ readonly SPEC_V22="doc/contracts/openapi/2.2/openapi.yaml"
 readonly SPEC_V23="doc/contracts/openapi/2.3/openapi.yaml"
 readonly SPEC_V24="doc/contracts/openapi/2.4/openapi.yaml"
 readonly SPEC_V25="doc/contracts/openapi/2.5/openapi.yaml"
+readonly SPEC_V30="doc/contracts/openapi/3.0/openapi.yaml"
 readonly SPEC_V10_SHA256="bf3b1df5f28fb2e1c34f55b645312e7df896aa8a50fa8fbbec4b7e72d2068236"
 readonly SPEC_V11_SHA256="96dfa1d01c63339089685a2e6c3011e050d24727dad71863df244a631b3c1d3b"
 readonly SPEC_V20_SHA256="832037d2e554ca680b89776430d8a01a12a945215ba5cac0335c849e349732fe"
@@ -21,6 +22,7 @@ readonly SPEC_V21_SHA256="9abd5f0b4f9200f30ae71b2edae1eb7fa32ef8a238a27d62325fc4
 readonly SPEC_V22_SHA256="24ffc076b43dc61b8779c9b367e1189b0904544fcbec85bb8d3ca72bd91f7e05"
 readonly SPEC_V23_SHA256="ad03306e05b8bd28d4933a3d6b37e72088e5f490a79e2180f5ae4de9fe9a8b36"
 readonly SPEC_V24_SHA256="ef6a21e8a53a03cb7888b8cd49dfc65def31fd3d28ebcb8d6a1771c0490edbd6"
+readonly SPEC_V25_SHA256="bbf7bf28316ab6b81553f2aabdc2c3529c482e1d72c5a56f82b9411cf1090335"
 
 work_dir="$(mktemp -d)"
 trap 'rm -rf "${work_dir}"' EXIT
@@ -39,6 +41,7 @@ printf '%s  %s\n' "${SPEC_V21_SHA256}" "${SPEC_V21}" | sha256sum --check --stric
 printf '%s  %s\n' "${SPEC_V22_SHA256}" "${SPEC_V22}" | sha256sum --check --strict
 printf '%s  %s\n' "${SPEC_V23_SHA256}" "${SPEC_V23}" | sha256sum --check --strict
 printf '%s  %s\n' "${SPEC_V24_SHA256}" "${SPEC_V24}" | sha256sum --check --strict
+printf '%s  %s\n' "${SPEC_V25_SHA256}" "${SPEC_V25}" | sha256sum --check --strict
 "${work_dir}/oasdiff" validate "${SPEC_V10}"
 "${work_dir}/oasdiff" validate "${SPEC_V11}"
 "${work_dir}/oasdiff" validate "${SPEC_V20}"
@@ -47,6 +50,7 @@ printf '%s  %s\n' "${SPEC_V24_SHA256}" "${SPEC_V24}" | sha256sum --check --stric
 "${work_dir}/oasdiff" validate "${SPEC_V23}"
 "${work_dir}/oasdiff" validate "${SPEC_V24}"
 "${work_dir}/oasdiff" validate "${SPEC_V25}"
+"${work_dir}/oasdiff" validate "${SPEC_V30}"
 "${work_dir}/oasdiff" breaking "${SPEC_V10}" "${SPEC_V11}"
 "${work_dir}/oasdiff" breaking "${SPEC_V20}" "${SPEC_V21}"
 "${work_dir}/oasdiff" breaking "${SPEC_V21}" "${SPEC_V22}"

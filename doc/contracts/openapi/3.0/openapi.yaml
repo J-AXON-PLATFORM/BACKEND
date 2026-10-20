@@ -1,0 +1,186 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "3.0"
+  description: >-
+    Major que conserva las operaciones de OpenAPI 2.5 y corrige el listado de
+    tickets para devolver elementos resumidos sin description.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Assets
+  - name: Agents
+  - name: Support
+paths:
+  /auth/login:
+    $ref: "../2.5/openapi.yaml#/paths/~1auth~1login"
+  /auth/me:
+    $ref: "../2.5/openapi.yaml#/paths/~1auth~1me"
+  /assets:
+    $ref: "../2.5/openapi.yaml#/paths/~1assets"
+  /assets/{assetId}:
+    $ref: "../2.5/openapi.yaml#/paths/~1assets~1%7BassetId%7D"
+  /assets/{assetId}/technical-state:
+    $ref: "../2.5/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state"
+  /assets/{assetId}/technical-state/events:
+    $ref: "../2.5/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events"
+  /agents:
+    $ref: "../2.5/openapi.yaml#/paths/~1agents"
+  /agents/{agentId}:
+    $ref: "../2.5/openapi.yaml#/paths/~1agents~1%7BagentId%7D"
+  /agents/{agentId}/ssh-key:
+    $ref: "../2.5/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key"
+  /agents/{agentId}/activate:
+    $ref: "../2.5/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate"
+  /agents/{agentId}/tasks:
+    $ref: "../2.5/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks"
+  /agents/{agentId}/tasks/{taskId}:
+    $ref: "../2.5/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D"
+  /tickets:
+    post:
+      tags: [Support]
+      operationId: createTicket
+      summary: Crea un ticket propio con estado OPEN y prioridad NORMAL
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../2.5/openapi.yaml#/paths/~1tickets/post/requestBody/content/application~1json/schema"
+      responses:
+        "201":
+          description: Ticket persistido con evento durable TICKET_CREATED
+          headers:
+            Location:
+              description: URI de consulta del ticket creado.
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+    get:
+      tags: [Support]
+      operationId: listOwnTickets
+      summary: Lista únicamente resúmenes de los tickets de la sesión actual
+      parameters:
+        - $ref: "#/components/parameters/TicketPage"
+        - $ref: "#/components/parameters/TicketPageSize"
+      responses:
+        "200":
+          description: Página de resúmenes propios ordenada por creación descendente e ID descendente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketPage"
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/{ticketId}:
+    $ref: "../2.5/openapi.yaml#/paths/~1tickets~1%7BticketId%7D"
+  /tickets/{ticketId}/comments:
+    $ref: "../2.5/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1comments"
+components:
+  securitySchemes:
+    SessionCookie:
+      $ref: "../2.5/openapi.yaml#/components/securitySchemes/SessionCookie"
+  parameters:
+    CsrfToken:
+      $ref: "../2.5/openapi.yaml#/components/parameters/CsrfToken"
+    TicketPage:
+      $ref: "../2.5/openapi.yaml#/components/parameters/TicketPage"
+    TicketPageSize:
+      $ref: "../2.5/openapi.yaml#/components/parameters/TicketPageSize"
+  schemas:
+    UuidV4:
+      $ref: "../2.5/openapi.yaml#/components/schemas/UuidV4"
+    UtcDateTime:
+      $ref: "../2.5/openapi.yaml#/components/schemas/UtcDateTime"
+    TicketResponse:
+      $ref: "../2.5/openapi.yaml#/components/schemas/TicketResponse"
+    TicketListItem:
+      type: object
+      required:
+        - ticketId
+        - type
+        - summary
+        - status
+        - priority
+        - source
+        - requesterUserId
+        - createdByUserId
+        - assigneeUserId
+        - assetId
+        - createdAt
+        - updatedAt
+        - version
+      properties:
+        ticketId: { $ref: "#/components/schemas/UuidV4" }
+        type:
+          type: string
+          enum: [INCIDENT, SERVICE_REQUEST, QUESTION, OTHER]
+        summary: { type: string, minLength: 1, maxLength: 256 }
+        status:
+          type: string
+          const: OPEN
+        priority:
+          type: string
+          const: NORMAL
+        source:
+          type: string
+          const: WEB
+        requesterUserId: { $ref: "#/components/schemas/UuidV4" }
+        createdByUserId: { $ref: "#/components/schemas/UuidV4" }
+        assigneeUserId:
+          type: "null"
+        assetId:
+          oneOf:
+            - $ref: "#/components/schemas/UuidV4"
+            - type: "null"
+        createdAt: { $ref: "#/components/schemas/UtcDateTime" }
+        updatedAt: { $ref: "#/components/schemas/UtcDateTime" }
+        version:
+          type: integer
+          minimum: 0
+          const: 0
+      additionalProperties: false
+    TicketPage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TicketListItem" }
+        page: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 50 }
+        totalElements: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+      additionalProperties: false
+  responses:
+    BadRequest:
+      $ref: "../2.5/openapi.yaml#/components/responses/BadRequest"
+    AuthenticationRequired:
+      $ref: "../2.5/openapi.yaml#/components/responses/AuthenticationRequired"
+    Forbidden:
+      $ref: "../2.5/openapi.yaml#/components/responses/Forbidden"
+    NotFound:
+      $ref: "../2.5/openapi.yaml#/components/responses/NotFound"
+    ValidationFailed:
+      $ref: "../2.5/openapi.yaml#/components/responses/ValidationFailed"
+    InternalError:
+      $ref: "../2.5/openapi.yaml#/components/responses/InternalError"
+    ServiceUnavailable:
+      $ref: "../2.5/openapi.yaml#/components/responses/ServiceUnavailable"
+security:
+  - SessionCookie: []
