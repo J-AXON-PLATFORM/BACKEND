@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Listado propio y conversación pública de tickets -- OLA3-SUP-002a, 2026-10-20
+
+Backend añade listado paginado de tickets propios y alta/consulta paginada de comentarios `PUBLIC` para `IT_OPERATOR`, con ownership aplicado en SQL, `404` indistinguible para ticket ajeno o inexistente y órdenes estables. La migración `V20261020000000__support_ticket_conversation.sql` crea `support.ticket_comments` con FK interna a Support y amplía de forma segura el outbox. `TICKET_COMMENT_ADDED` se captura atómicamente y su payload contiene solo `commentId` y `visibility`.
+
+Frontend incorpora lista, selección y paginación de tickets y conversación, CSRF solo en memoria, caches segmentadas por usuario/ticket/página y parsers estrictos. OpenAPI 2.5 conserva 2.4 y añade solo las tres operaciones del corte. La verificación local concluyó con 85 pruebas backend, 34 frontend, lint, typecheck, builds, compatibilidad OpenAPI y un E2E Chromium real con comprobación PostgreSQL de comentario/outbox.
+
+La integración quedó completa mediante `FRONTEND#13`, squash `82ac1bead85a0b660cbbc51ffbd9981bf96c1f31`, con runs verdes `39472237415` y `39472574612`, y `BACKEND#28`, squash `f641e4abcdedc9f332072759489fadd61d91af1d`, con runs verdes `39472965325` y `39475825907`. No cambian workflows ni `automation-collector`; no se implementan búsqueda/listado global, notas internas, lifecycle, asignación, adjuntos, SSE, IA, Automation, consumidor outbox o infraestructura Production. `PRODUCTION_READY = NO`.
+
+---
+
 ## Alta y consulta mínima de tickets propios -- OLA3-SUP-001a, 2026-10-19
 
 Backend añade `POST /api/v1/tickets` y `GET /api/v1/tickets/{ticketId}` para `IT_OPERATOR`, con CSRF en el alta y consulta limitada al requester autenticado. La migración `V20261019000000__support_minimum_tickets.sql` crea exclusivamente `support.tickets` y `support.outbox_events`; los tickets nacen `OPEN`, `NORMAL`, `WEB`, sin assignee y con `version=0`. El activo opcional se valida mediante `AssetLookup` de Inventory, sin FK ni acceso directo cross-schema. `TICKET_CREATED` se captura atómicamente y su payload allowlisted omite resumen y descripción.
