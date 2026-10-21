@@ -121,6 +121,49 @@ class TicketController {
                 .orElseGet(() -> ticketNotFound(request));
     }
 
+    @GetMapping("/technician-queue/{ticketId}/conversation")
+    ResponseEntity<?> findConversationForTechnician(
+            @PathVariable String ticketId,
+            @RequestParam(defaultValue = "0") String page,
+            @RequestParam(defaultValue = "50") String size,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        PageRequest requestedPage = page(page, size, 100);
+        if (requestedPage == null) {
+            return invalidPage(request, 100);
+        }
+        return ticketService.findConversationForTechnician(
+                        UUID.fromString(ticketId),
+                        actorId(authentication),
+                        requestedPage.page(),
+                        requestedPage.size())
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ticketNotFound(request));
+    }
+
+    @PostMapping("/technician-queue/{ticketId}/conversation")
+    ResponseEntity<?> addTechnicianComment(
+            @PathVariable String ticketId,
+            @Valid @RequestBody TechnicianTicketCommentCreateRequest comment,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        UUID correlationId = UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY));
+        return ticketService.addTechnicianComment(
+                        UUID.fromString(ticketId),
+                        actorId(authentication),
+                        comment.visibility(),
+                        comment.body(),
+                        correlationId)
+                .<ResponseEntity<?>>map(created -> ResponseEntity.status(HttpStatus.CREATED).body(created))
+                .orElseGet(() -> ticketNotFound(request));
+    }
+
     @PostMapping("/{ticketId}/claim")
     ResponseEntity<?> claim(
             @PathVariable String ticketId,

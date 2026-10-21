@@ -216,6 +216,31 @@ class TicketService {
         return Optional.of(findPublicComments(ticketId, page, size));
     }
 
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    Optional<TicketCommentPage> findConversationForTechnician(
+            UUID ticketId, UUID technicianUserId, int page, int size) {
+        if (!isAssignedToTechnician(ticketId, technicianUserId)) {
+            return Optional.empty();
+        }
+        long totalElements = jdbc.queryForObject(
+                "SELECT count(*) FROM support.ticket_comments WHERE ticket_id = ?",
+                Long.class,
+                ticketId);
+        List<TicketCommentResponse> items = jdbc.query(
+                """
+                SELECT id, ticket_id, visibility, author_user_id, body, created_at
+                FROM support.ticket_comments
+                WHERE ticket_id = ?
+                ORDER BY created_at ASC, id ASC
+                LIMIT ? OFFSET ?
+                """,
+                (resultSet, row) -> ticketCommentResponse(resultSet),
+                ticketId,
+                size,
+                (long) page * size);
+        return Optional.of(new TicketCommentPage(items, page, size, totalElements, totalPages(totalElements, size)));
+    }
+
     @Transactional
     TicketResponse claim(
             UUID ticketId,
@@ -360,6 +385,75 @@ class TicketService {
                 commentId, ticketId, "PUBLIC", requesterUserId, body, now));
     }
 
+    @Transactional
+    Optional<TicketCommentResponse> addTechnicianComment(
+            UUID ticketId,
+            UUID technicianUserId,
+            String visibility,
+            String requestedBody,
+            UUID correlationId) {
+        Optional<ConversationTicket> ticket = jdbc.query(
+                """
+                SELECT status, assignee_user_id, version
+                FROM support.tickets
+                WHERE id = ?
+                FOR UPDATE
+                """,
+                resultSet -> resultSet.next()
+                        ? Optional.of(new ConversationTicket(
+                                resultSet.getString("status"),
+                                resultSet.getObject("assignee_user_id", UUID.class),
+                                resultSet.getLong("version")))
+                        : Optional.empty(),
+                ticketId);
+        if (ticket.isEmpty()
+                || ticket.get().status().equals("CLOSED")
+                || !technicianUserId.equals(ticket.get().assigneeUserId())) {
+            return Optional.empty();
+        }
+        String body = requestedBody.trim();
+        if (body.isEmpty() || body.length() > 10_000) {
+            throw new InvalidCommentException();
+        }
+        UUID commentId = UUID.randomUUID();
+        Instant now = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
+        jdbc.update(
+                """
+                INSERT INTO support.ticket_comments
+                    (id, ticket_id, visibility, author_user_id, body, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                commentId,
+                ticketId,
+                visibility,
+                technicianUserId,
+                body,
+                Timestamp.from(now));
+        jdbc.update(
+                """
+                INSERT INTO support.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, 'TICKET_COMMENT_ADDED', '1.0', ?, 'SUPPORT',
+                        'HUMAN_USER', ?, 'TICKET', ?, ?,
+                        'SUCCESS', ?, jsonb_build_object(
+                            'commentId', ?::text,
+                            'visibility', ?::text), ?)
+                """,
+                UUID.randomUUID(),
+                Timestamp.from(now),
+                technicianUserId,
+                ticketId,
+                ticket.get().version(),
+                correlationId,
+                commentId,
+                visibility,
+                Timestamp.from(now));
+        return Optional.of(new TicketCommentResponse(
+                commentId, ticketId, visibility, technicianUserId, body, now));
+    }
+
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     Optional<TicketCommentPage> findOwnComments(
             UUID ticketId, UUID requesterUserId, int page, int size) {
@@ -382,13 +476,7 @@ class TicketService {
                 ORDER BY created_at ASC, id ASC
                 LIMIT ? OFFSET ?
                 """,
-                (resultSet, row) -> new TicketCommentResponse(
-                        resultSet.getObject("id", UUID.class),
-                        resultSet.getObject("ticket_id", UUID.class),
-                        resultSet.getString("visibility"),
-                        resultSet.getObject("author_user_id", UUID.class),
-                        resultSet.getString("body"),
-                        resultSet.getTimestamp("created_at").toInstant()),
+                (resultSet, row) -> ticketCommentResponse(resultSet),
                 ticketId,
                 size,
                 (long) page * size);
@@ -416,6 +504,32 @@ class TicketService {
                 Boolean.class,
                 ticketId,
                 technicianUserId));
+    }
+
+    private boolean isAssignedToTechnician(UUID ticketId, UUID technicianUserId) {
+        return Boolean.TRUE.equals(jdbc.queryForObject(
+                """
+                SELECT EXISTS (
+                    SELECT 1 FROM support.tickets
+                    WHERE id = ?
+                      AND status <> 'CLOSED'
+                      AND assignee_user_id = ?
+                )
+                """,
+                Boolean.class,
+                ticketId,
+                technicianUserId));
+    }
+
+    private static TicketCommentResponse ticketCommentResponse(java.sql.ResultSet resultSet)
+            throws java.sql.SQLException {
+        return new TicketCommentResponse(
+                resultSet.getObject("id", UUID.class),
+                resultSet.getObject("ticket_id", UUID.class),
+                resultSet.getString("visibility"),
+                resultSet.getObject("author_user_id", UUID.class),
+                resultSet.getString("body"),
+                resultSet.getTimestamp("created_at").toInstant());
     }
 
     private static TicketResponse ticketResponse(java.sql.ResultSet resultSet) throws java.sql.SQLException {
@@ -459,6 +573,8 @@ class TicketService {
     }
 
     private record ClaimResult(String outcome, TicketResponse ticket) {}
+
+    private record ConversationTicket(String status, UUID assigneeUserId, long version) {}
 }
 
 final class AssociatedAssetNotFoundException extends RuntimeException {}

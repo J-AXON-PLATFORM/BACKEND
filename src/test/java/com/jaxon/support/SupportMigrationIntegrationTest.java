@@ -25,7 +25,7 @@ class SupportMigrationIntegrationTest {
                     .asCompatibleSubstituteFor("postgres"));
 
     @Test
-    void upgradesHistoricalSupportRowsAndEnforcesTheAssignmentPayload() {
+    void upgradesHistoricalSupportRowsAndEnforcesConversationConstraints() {
         Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
                 .locations("classpath:db/migration")
@@ -94,6 +94,53 @@ class SupportMigrationIntegrationTest {
         assertThatThrownBy(() -> insertEvent(
                         jdbc, ticketId, actorId, "TICKET_ASSIGNED", "{}", now))
                 .isInstanceOf(DataIntegrityViolationException.class);
+        UUID internalCommentId = UUID.randomUUID();
+        jdbc.update(
+                """
+                INSERT INTO support.ticket_comments
+                    (id, ticket_id, visibility, author_user_id, body, created_at)
+                VALUES (?, ?, 'INTERNAL', ?, 'Preserved internal note', ?)
+                """,
+                internalCommentId,
+                ticketId,
+                actorId,
+                Timestamp.from(now));
+        insertEvent(
+                jdbc,
+                ticketId,
+                actorId,
+                "TICKET_COMMENT_ADDED",
+                "{\"commentId\":\"" + internalCommentId + "\",\"visibility\":\"INTERNAL\"}",
+                now);
+        assertThatThrownBy(() -> jdbc.update(
+                        """
+                        INSERT INTO support.ticket_comments
+                            (id, ticket_id, visibility, author_user_id, body, created_at)
+                        VALUES (?, ?, 'SECRET', ?, 'Invalid note', ?)
+                        """,
+                        UUID.randomUUID(),
+                        ticketId,
+                        actorId,
+                        Timestamp.from(now)))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertEvent(
+                        jdbc,
+                        ticketId,
+                        actorId,
+                        "TICKET_COMMENT_ADDED",
+                        "{\"commentId\":\"" + UUID.randomUUID()
+                                + "\",\"visibility\":\"INTERNAL\",\"body\":\"forbidden\"}",
+                        now))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(jdbc.queryForList(
+                        """
+                        SELECT conname FROM pg_constraint
+                        WHERE conrelid IN ('support.ticket_comments'::regclass, 'support.outbox_events'::regclass)
+                          AND conname IN ('ticket_comments_visibility_check', 'outbox_events_payload_check')
+                          AND convalidated
+                        """,
+                        String.class))
+                .containsExactlyInAnyOrder("ticket_comments_visibility_check", "outbox_events_payload_check");
     }
 
     private static void insertEvent(
