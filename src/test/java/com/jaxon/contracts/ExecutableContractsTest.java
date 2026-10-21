@@ -45,6 +45,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V24_ROOT = Path.of("doc/contracts/openapi/2.4");
     private static final Path OPENAPI_V25_ROOT = Path.of("doc/contracts/openapi/2.5");
     private static final Path OPENAPI_V30_ROOT = Path.of("doc/contracts/openapi/3.0");
+    private static final Path OPENAPI_V31_ROOT = Path.of("doc/contracts/openapi/3.1");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -547,6 +548,42 @@ class ExecutableContractsTest {
     }
 
     @Test
+    void openApi31AddsOnlyLogoutAndAdministrativeUserCreation() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V31_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(api.getOpenapi()).isEqualTo("3.1.2");
+        assertThat(api.getInfo().getVersion()).isEqualTo("3.1");
+        assertThat(api.getServers()).singleElement().extracting("url").isEqualTo("/api/v1");
+        assertThat(api.getPaths().keySet())
+                .contains("/auth/logout", "/users")
+                .containsAll(Yaml31.mapper()
+                        .readTree(OPENAPI_V30_ROOT.resolve("openapi.yaml").toFile())
+                        .path("paths")
+                        .properties()
+                        .stream()
+                        .map(Map.Entry::getKey)
+                        .toList());
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .contains("logout", "createHumanUser")
+                .doesNotHaveDuplicates();
+        JsonNode schemas = Yaml31.mapper()
+                .readTree(OPENAPI_V31_ROOT.resolve("openapi.yaml").toFile())
+                .path("components")
+                .path("schemas");
+        assertThat(schemas.path("HumanUserCreateRequest").path("additionalProperties").asBoolean()).isFalse();
+        assertThat(schemas.path("HumanUserResponse").path("additionalProperties").asBoolean()).isFalse();
+        assertThat(schemas.at("/HumanUserCreateRequest/properties/roles/minItems").asInt()).isEqualTo(1);
+        assertThat(schemas.at("/HumanUserCreateRequest/properties/roles/uniqueItems").asBoolean()).isTrue();
+    }
+
+    @Test
     void previousOpenApiContractsRemainByteIdentical() throws IOException {
         assertThat(sha256(Files.readAllBytes(OPENAPI_V10_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("bf3b1df5f28fb2e1c34f55b645312e7df896aa8a50fa8fbbec4b7e72d2068236");
@@ -564,6 +601,8 @@ class ExecutableContractsTest {
                 .isEqualTo("ef6a21e8a53a03cb7888b8cd49dfc65def31fd3d28ebcb8d6a1771c0490edbd6");
         assertThat(sha256(Files.readAllBytes(OPENAPI_V25_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("bbf7bf28316ab6b81553f2aabdc2c3529c482e1d72c5a56f82b9411cf1090335");
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V30_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("cd80013004c2304015d28102436d729d73e29fe922e8e178650b4c5f40cd0950");
     }
 
     @Test

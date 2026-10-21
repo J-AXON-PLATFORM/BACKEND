@@ -26,10 +26,16 @@ class PasswordPolicy {
 
     void validate(String password) {
         if (password == null || password.length() < 15 || password.length() > 256) {
-            throw new IllegalStateException("Bootstrap password must contain between 15 and 256 characters");
+            throw new PasswordPolicyException("Password must contain between 15 and 256 characters");
         }
         if (blocked.contains(password.toLowerCase(Locale.ROOT))) {
-            throw new IllegalStateException("Bootstrap password is present in the local blocklist");
+            throw new PasswordPolicyException("Password is present in the local blocklist");
+        }
+    }
+
+    static final class PasswordPolicyException extends RuntimeException {
+        PasswordPolicyException(String message) {
+            super(message);
         }
     }
 }

@@ -157,6 +157,35 @@ class AuthenticationService {
                 minimum(lastActivity.plus(INACTIVITY_LIMIT), current.absoluteExpiresAt())));
     }
 
+    @Transactional
+    void logout(String rawToken, UUID actorId, UUID correlationId) {
+        Instant now = Instant.now(clock);
+        Optional<UUID> sessionId = jdbc.query(
+                        "DELETE FROM identity.human_sessions WHERE token_hash = ? RETURNING id",
+                        (resultSet, row) -> resultSet.getObject("id", UUID.class),
+                        sha256(rawToken))
+                .stream()
+                .findFirst();
+        if (sessionId.isEmpty()) {
+            throw new IllegalStateException("Authenticated session disappeared before logout");
+        }
+        jdbc.update(
+                """
+                INSERT INTO identity.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, result,
+                     correlation_id, payload, next_attempt_at)
+                VALUES (?, 'HUMAN_LOGOUT_SUCCEEDED', '1.0', ?, 'IDENTITY',
+                        'HUMAN_USER', ?, 'HUMAN_SESSION', ?, 'SUCCESS', ?, '{}'::jsonb, ?)
+                """,
+                UUID.randomUUID(),
+                timestamp(now),
+                actorId,
+                sessionId.orElseThrow(),
+                correlationId,
+                timestamp(now));
+    }
+
     private Optional<UserRecord> findUser(String normalizedUsername) {
         return jdbc.query(
                         """
