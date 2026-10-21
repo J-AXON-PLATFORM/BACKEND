@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-003a` completado, integrado y verificado, 2026-10-21
-> **Estado documental:** baseline v1 `DESIGN_READY`; bandeja y autoasignación técnica de tickets integradas y verificadas; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-004a` completado, integrado y verificado, 2026-10-21
+> **Estado documental:** baseline v1 `DESIGN_READY`; conversación técnica pública/interna integrada y verificada; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-10-21.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: login y logout humanos, alta administrativa mínima de usuarios, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a`, la primera tarea explícita `COLLECT_SNAPSHOT`, el retry acotado de su entrega Result y los cortes ejecutados de Support están integrados. Support incluye alta, detalle, listado requester, conversación `PUBLIC`, bandeja técnica y claim; cambios de estado/prioridad, reasignación, notas internas, adjuntos y el resto del lifecycle siguen fuera del corte, al igual que otros tipos de tarea, spool general, retries de polling/snapshots/capabilities, otros eventos SSE, Discovery y Production.
+- Estado funcional: login y logout humanos, alta administrativa mínima de usuarios, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a`, la primera tarea explícita `COLLECT_SNAPSHOT`, el retry acotado de su entrega Result y los cortes ejecutados de Support están integrados. Support incluye alta, detalle, listado requester, conversación requester `PUBLIC`, bandeja técnica, claim y conversación `PUBLIC|INTERNAL` del técnico asignado; cambios de estado/prioridad, reasignación, adjuntos y el resto del lifecycle siguen fuera del corte, al igual que otros tipos de tarea, spool general, retries de polling/snapshots/capabilities, otros eventos SSE, Discovery y Production.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada y quince incrementos funcionales acotados integrados, incluido `OLA3-SUP-003a`. El último corte añade bandeja técnica, detalle/conversación pública de solo lectura y claim concurrente e idempotente, además de OpenAPI 4.0; no implementa comentarios técnicos, notas internas, cambios de estado o prioridad, reasignación, adjuntos ni el lifecycle completo de Support. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y dieciséis incrementos funcionales acotados integrados, incluido `OLA3-SUP-004a`. El último corte añade conversación técnica `PUBLIC|INTERNAL` para el técnico asignado, privacidad requester estrictamente pública y OpenAPI 4.1 compatible; no implementa cambios de estado o prioridad, reasignación, adjuntos ni el lifecycle completo de Support. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.

@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Conversación técnica pública e interna -- OLA3-SUP-004a, 2026-10-21
+
+Backend añade `GET|POST /api/v1/tickets/technician-queue/{ticketId}/conversation` para que solo el `SUPPORT_TECHNICIAN` actualmente asignado a un ticket no cerrado lea y añada comentarios `PUBLIC|INTERNAL`. La migración `V20261022000000__support_technician_conversation.sql` amplía de forma validada los constraints de visibilidad y payload; cada alta y su `TICKET_COMMENT_ADDED` se confirman en una transacción, con payload limitado a `commentId` y `visibility`. Las rutas requester y la lectura técnica pre-claim continúan filtrando exclusivamente `PUBLIC`.
+
+Frontend añade selección explícita sin default, presentación accesible de visibilidad, parsers separados y fail-closed, cachés por usuario/ticket/colección/página y mutación sin retry ni optimistic update. OpenAPI 4.1 conserva 4.0 byte a byte. La verificación local concluyó con 99 pruebas backend, 50 frontend, lint, typecheck, builds, auditorías, OpenAPI, imágenes y scans limpios, Compose, backup/restore y E2E Chromium multirepo con comprobación PostgreSQL de privacidad, autores, visibilidades y outbox.
+
+La integración técnica quedó completa mediante `FRONTEND#17`, squash `32db50cce9933d69b0b6ad7c12e871c491c99243`, con runs verdes `39681656581` y `39682015289`, y `BACKEND#36`, squash `ecc497f1b7ab097730efeb80f12aa16aaaea0717`, con run definitivo verde `39682421438` y post-merge `39688305298`. El primer intento backend falló por una aserción temporal preexistente del contador SSE de Collector y la reejecución sin cambios quedó verde. No cambian dependencias, workflows ni `automation-collector`; no se implementan cambios de estado/prioridad, reasignación, resolución/cierre/reapertura, adjuntos, búsqueda global, SSE de Support, IA, Automation, consumidores outbox o infraestructura Production. `PRODUCTION_READY = NO`.
+
+---
+
 ## Bandeja técnica y autoasignación concurrente -- OLA3-SUP-003a, 2026-10-21
 
 Backend añade rutas explícitas para que `SUPPORT_TECHNICIAN` consulte una bandeja paginada de tickets no cerrados sin asignar o propios, abra su detalle y lea la conversación `PUBLIC`. `POST /api/v1/tickets/{ticketId}/claim` aplica CSRF y concurrencia optimista con `expectedVersion`, asigna una sola vez y conserva idempotencia para la repetición del mismo técnico. La migración `V20261021000000__support_technician_claim.sql` añade el índice parcial de bandeja y amplía de forma segura el outbox; `TICKET_ASSIGNED` se captura atómicamente con payload mínimo `assigneeUserId`.
