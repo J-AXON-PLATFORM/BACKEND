@@ -54,7 +54,10 @@ class AuthenticationIntegrationTest {
 
     @Test
     void bootstrapsOneActiveUserWithExplicitRolesAndArgon2id() {
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM identity.human_users", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM identity.human_users WHERE normalized_username = 'bootstrap.admin'",
+                        Integer.class))
+                .isEqualTo(1);
         assertThat(jdbc.queryForObject(
                         "SELECT password_hash FROM identity.human_users WHERE normalized_username = 'bootstrap.admin'",
                         String.class))
@@ -261,6 +264,159 @@ class AuthenticationIntegrationTest {
         assertThat(unsupported.body()).contains("\"code\":\"MALFORMED_REQUEST\"");
     }
 
+    @Test
+    void createsAnActiveHumanUserWithExplicitRolesAndAllowsSupportOnlyAuthentication() throws Exception {
+        SessionCredentials administrator = session(login("Bootstrap.Admin", PASSWORD));
+        String suffix = UUID.randomUUID().toString();
+        String username = "Support." + suffix;
+        HttpResponse<String> created = postUser(
+                administrator.cookie(),
+                administrator.csrfToken(),
+                "{\"username\":\"  " + username + "  \","
+                        + "\"password\":\"Support-only passphrase 42!\","
+                        + "\"roles\":[\"SUPPORT_TECHNICIAN\",\"AUDITOR\"]}");
+
+        assertThat(created.statusCode()).isEqualTo(201);
+        assertThat(created.headers().firstValue("location")).hasValueSatisfying(
+                value -> assertThat(value).startsWith("/api/v1/users/"));
+        assertThat(created.body())
+                .contains("\"username\":\"" + username + "\"")
+                .contains("\"status\":\"ACTIVE\"")
+                .contains("\"roles\":[\"AUDITOR\",\"SUPPORT_TECHNICIAN\"]")
+                .doesNotContain("password", "passwordHash");
+        UUID userId = UUID.fromString(created.headers().firstValue("location").orElseThrow()
+                .substring("/api/v1/users/".length()));
+        assertThat(jdbc.queryForObject(
+                        "SELECT normalized_username FROM identity.human_users WHERE id = ?",
+                        String.class,
+                        userId))
+                .isEqualTo(username.toLowerCase());
+        assertThat(jdbc.queryForObject(
+                        "SELECT password_hash FROM identity.human_users WHERE id = ?",
+                        String.class,
+                        userId))
+                .startsWith("$argon2id$");
+        assertThat(jdbc.queryForList(
+                        "SELECT role_code FROM identity.human_user_roles WHERE user_id = ? ORDER BY role_code",
+                        String.class,
+                        userId))
+                .containsExactly("AUDITOR", "SUPPORT_TECHNICIAN");
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM identity.outbox_events
+                        WHERE event_type = 'HUMAN_USER_CREATED'
+                          AND actor_id = ? AND resource_id = ?
+                          AND payload = '{"status":"ACTIVE"}'::jsonb
+                        """,
+                        Integer.class,
+                        administrator.userId(),
+                        userId))
+                .isEqualTo(1);
+
+        HttpResponse<String> supportLogin = login(username.toUpperCase(), "Support-only passphrase 42!");
+        assertThat(supportLogin.statusCode()).isEqualTo(200);
+        assertThat(supportLogin.body())
+                .contains("\"roles\":[\"AUDITOR\",\"SUPPORT_TECHNICIAN\"]")
+                .doesNotContain("IT_OPERATOR", "SYSTEM_ADMIN");
+        SessionCredentials support = session(supportLogin);
+        assertThat(postUser(
+                                support.cookie(),
+                                support.csrfToken(),
+                                "{\"username\":\"denied-user\",\"password\":\"Valid passphrase 42!\","
+                                        + "\"roles\":[\"END_USER\"]}")
+                        .statusCode())
+                .isEqualTo(403);
+    }
+
+    @Test
+    void rejectsInvalidAndDuplicateHumanUsersWithoutPartialPersistence() throws Exception {
+        SessionCredentials administrator = session(login("Bootstrap.Admin", PASSWORD));
+        String suffix = UUID.randomUUID().toString();
+        String username = "duplicate." + suffix;
+        String valid = "{\"username\":\"" + username + "\",\"password\":\"Valid passphrase 42!\","
+                + "\"roles\":[\"END_USER\"]}";
+        assertThat(postUser(administrator.cookie(), administrator.csrfToken(), valid).statusCode()).isEqualTo(201);
+        int usersAfterCreation = jdbc.queryForObject("SELECT count(*) FROM identity.human_users", Integer.class);
+        int eventsAfterCreation = jdbc.queryForObject(
+                "SELECT count(*) FROM identity.outbox_events WHERE event_type = 'HUMAN_USER_CREATED'",
+                Integer.class);
+
+        assertThat(postUser(
+                                administrator.cookie(),
+                                administrator.csrfToken(),
+                                "{\"username\":\"  " + username.toUpperCase() + "  \","
+                                        + "\"password\":\"Valid passphrase 42!\",\"roles\":[\"END_USER\"]}")
+                        .statusCode())
+                .isEqualTo(409);
+        assertThat(postUser(
+                                administrator.cookie(),
+                                administrator.csrfToken(),
+                                "{\"username\":\"weak-" + suffix + "\",\"password\":\"short\","
+                                        + "\"roles\":[\"END_USER\"]}")
+                        .statusCode())
+                .isEqualTo(422);
+        assertThat(postUser(
+                                administrator.cookie(),
+                                administrator.csrfToken(),
+                                "{\"username\":\"blocked-" + suffix + "\",\"password\":\"123456789012345\","
+                                        + "\"roles\":[\"END_USER\"]}")
+                        .statusCode())
+                .isEqualTo(422);
+        assertThat(postUser(
+                                administrator.cookie(),
+                                administrator.csrfToken(),
+                                "{\"username\":\"role-" + suffix + "\",\"password\":\"Valid passphrase 42!\","
+                                        + "\"roles\":[\"END_USER\",\"END_USER\"]}")
+                        .statusCode())
+                .isEqualTo(422);
+        assertThat(postUser(
+                                administrator.cookie(),
+                                administrator.csrfToken(),
+                                "{\"username\":\"unknown-" + suffix + "\",\"password\":\"Valid passphrase 42!\","
+                                        + "\"roles\":[\"SUPERUSER\"]}")
+                        .statusCode())
+                .isEqualTo(422);
+        assertThat(postUser(
+                                administrator.cookie(),
+                                administrator.csrfToken(),
+                                valid.substring(0, valid.length() - 1) + ",\"extra\":true}")
+                        .statusCode())
+                .isEqualTo(400);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM identity.human_users", Integer.class))
+                .isEqualTo(usersAfterCreation);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM identity.outbox_events WHERE event_type = 'HUMAN_USER_CREATED'",
+                        Integer.class))
+                .isEqualTo(eventsAfterCreation);
+    }
+
+    @Test
+    void logsOutOnlyThePresentedSessionAfterCsrfValidation() throws Exception {
+        SessionCredentials first = session(login("Bootstrap.Admin", PASSWORD));
+        SessionCredentials second = session(login("Bootstrap.Admin", PASSWORD));
+
+        HttpResponse<String> missingCsrf = postLogout(first.cookie(), null);
+        assertThat(missingCsrf.statusCode()).isEqualTo(403);
+        assertThat(getMe(first.cookie()).statusCode()).isEqualTo(200);
+
+        HttpResponse<String> logout = postLogout(first.cookie(), first.csrfToken());
+        assertThat(logout.statusCode()).isEqualTo(204);
+        assertThat(logout.body()).isEmpty();
+        assertExpiredSessionCookie(logout);
+        assertThat(getMe(first.cookie()).statusCode()).isEqualTo(401);
+        assertThat(getMe(second.cookie()).statusCode()).isEqualTo(200);
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM identity.outbox_events
+                        WHERE event_type = 'HUMAN_LOGOUT_SUCCEEDED'
+                          AND actor_id = ? AND resource_type = 'HUMAN_SESSION'
+                          AND payload = '{}'::jsonb
+                        """,
+                        Integer.class,
+                        first.userId()))
+                .isEqualTo(1);
+    }
+
     private void assertGenericAuthenticationFailure(HttpResponse<String> response) {
         assertThat(response.statusCode()).isEqualTo(401);
         assertThat(response.body())
@@ -318,6 +474,40 @@ class AuthenticationIntegrationTest {
         return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
     }
 
+    private HttpResponse<String> postUser(String cookie, String csrfToken, String body) throws Exception {
+        return httpClient.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://127.0.0.1:" + port + "/api/v1/users"))
+                        .header("Cookie", cookie)
+                        .header("X-CSRF-Token", csrfToken)
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> postLogout(String cookie, String csrfToken) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(URI.create("http://127.0.0.1:" + port + "/api/v1/auth/logout"))
+                .header("Cookie", cookie)
+                .POST(HttpRequest.BodyPublishers.noBody());
+        if (csrfToken != null) {
+            request.header("X-CSRF-Token", csrfToken);
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private static SessionCredentials session(HttpResponse<String> login) {
+        assertThat(login.statusCode()).isEqualTo(200);
+        String setCookie = login.headers().firstValue("set-cookie").orElseThrow();
+        String cookie = setCookie.substring(0, setCookie.indexOf(';'));
+        var csrfMatcher = Pattern.compile("\\\"csrfToken\\\":\\\"([^\\\"]+)\\\"").matcher(login.body());
+        var userMatcher = Pattern.compile("\\\"userId\\\":\\\"([^\\\"]+)\\\"").matcher(login.body());
+        assertThat(csrfMatcher.find()).isTrue();
+        assertThat(userMatcher.find()).isTrue();
+        return new SessionCredentials(cookie, csrfMatcher.group(1), UUID.fromString(userMatcher.group(1)));
+    }
+
     private HttpResponse<String> postAsset(String cookie, String csrfToken) throws Exception {
         HttpRequest.Builder request = HttpRequest.newBuilder()
                 .uri(URI.create("http://127.0.0.1:" + port + "/api/v1/assets"))
@@ -340,4 +530,6 @@ class AuthenticationIntegrationTest {
                         .build(),
                 HttpResponse.BodyHandlers.ofString());
     }
+
+    private record SessionCredentials(String cookie, String csrfToken, UUID userId) {}
 }

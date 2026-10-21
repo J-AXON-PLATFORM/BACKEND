@@ -1,0 +1,152 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "3.1"
+  description: >-
+    Minor compatible que conserva OpenAPI 3.0 y añade logout de la sesión actual
+    y creación administrativa de usuarios humanos con roles explícitos.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Identity
+  - name: Assets
+  - name: Agents
+  - name: Support
+paths:
+  /auth/login:
+    $ref: "../3.0/openapi.yaml#/paths/~1auth~1login"
+  /auth/me:
+    $ref: "../3.0/openapi.yaml#/paths/~1auth~1me"
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      operationId: logout
+      summary: Cierra únicamente la sesión humana presentada
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      responses:
+        "204":
+          description: Sesión eliminada y cookie expirada
+          headers:
+            Set-Cookie:
+              description: Cookie de sesión expirada con los atributos de seguridad vigentes.
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /users:
+    post:
+      tags: [Identity]
+      operationId: createHumanUser
+      summary: Crea un usuario humano activo con roles explícitos
+      description: Requiere el rol SYSTEM_ADMIN y no concede roles implícitos.
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HumanUserCreateRequest" }
+      responses:
+        "201":
+          description: Usuario persistido con evento durable HUMAN_USER_CREATED
+          headers:
+            Location:
+              description: URI estable del usuario creado; su consulta no forma parte de este incremento.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HumanUserResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /assets:
+    $ref: "../3.0/openapi.yaml#/paths/~1assets"
+  /assets/{assetId}:
+    $ref: "../3.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D"
+  /assets/{assetId}/technical-state:
+    $ref: "../3.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state"
+  /assets/{assetId}/technical-state/events:
+    $ref: "../3.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events"
+  /agents:
+    $ref: "../3.0/openapi.yaml#/paths/~1agents"
+  /agents/{agentId}:
+    $ref: "../3.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D"
+  /agents/{agentId}/ssh-key:
+    $ref: "../3.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key"
+  /agents/{agentId}/activate:
+    $ref: "../3.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate"
+  /agents/{agentId}/tasks:
+    $ref: "../3.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks"
+  /agents/{agentId}/tasks/{taskId}:
+    $ref: "../3.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D"
+  /tickets:
+    $ref: "../3.0/openapi.yaml#/paths/~1tickets"
+  /tickets/{ticketId}:
+    $ref: "../3.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D"
+  /tickets/{ticketId}/comments:
+    $ref: "../3.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1comments"
+components:
+  securitySchemes:
+    SessionCookie:
+      $ref: "../3.0/openapi.yaml#/components/securitySchemes/SessionCookie"
+  parameters:
+    CsrfToken:
+      $ref: "../3.0/openapi.yaml#/components/parameters/CsrfToken"
+  schemas:
+    HumanRole:
+      type: string
+      enum: [SYSTEM_ADMIN, IT_OPERATOR, SUPPORT_TECHNICIAN, END_USER, AUDITOR]
+    HumanUserCreateRequest:
+      type: object
+      required: [username, password, roles]
+      properties:
+        username: { type: string, minLength: 1, maxLength: 128 }
+        password: { type: string, minLength: 15, maxLength: 256, writeOnly: true }
+        roles:
+          type: array
+          minItems: 1
+          maxItems: 5
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/HumanRole" }
+      additionalProperties: false
+    HumanUserResponse:
+      type: object
+      required: [userId, username, status, roles, createdAt]
+      properties:
+        userId: { $ref: "../3.0/openapi.yaml#/components/schemas/UuidV4" }
+        username: { type: string, minLength: 1, maxLength: 128 }
+        status:
+          type: string
+          const: ACTIVE
+        roles:
+          type: array
+          minItems: 1
+          maxItems: 5
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/HumanRole" }
+        createdAt: { $ref: "../3.0/openapi.yaml#/components/schemas/UtcDateTime" }
+      additionalProperties: false
+  responses:
+    BadRequest:
+      $ref: "../3.0/openapi.yaml#/components/responses/BadRequest"
+    AuthenticationRequired:
+      $ref: "../3.0/openapi.yaml#/components/responses/AuthenticationRequired"
+    Forbidden:
+      $ref: "../3.0/openapi.yaml#/components/responses/Forbidden"
+    Conflict:
+      $ref: "../1.1/openapi.yaml#/components/responses/Conflict"
+    ValidationFailed:
+      $ref: "../3.0/openapi.yaml#/components/responses/ValidationFailed"
+    InternalError:
+      $ref: "../3.0/openapi.yaml#/components/responses/InternalError"
+    ServiceUnavailable:
+      $ref: "../3.0/openapi.yaml#/components/responses/ServiceUnavailable"
+security:
+  - SessionCookie: []

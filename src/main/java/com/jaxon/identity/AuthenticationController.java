@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -62,6 +63,22 @@ class AuthenticationController {
     @GetMapping("/me")
     SessionResponse currentSession(@AuthenticationPrincipal SessionPrincipal principal) {
         return SessionResponse.from(principal);
+    }
+
+    @PostMapping("/logout")
+    ResponseEntity<Void> logout(
+            @AuthenticationPrincipal SessionPrincipal principal,
+            Authentication authentication) {
+        UUID correlationId = UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY));
+        authenticationService.logout((String) authentication.getCredentials(), principal.userId(), correlationId);
+        ResponseCookie cookie = ResponseCookie.from(SessionAuthenticationFilter.COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(0)
+                .build();
+        return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, cookie.toString()).build();
     }
 
     private static ResponseEntity<ApiProblem> problem(

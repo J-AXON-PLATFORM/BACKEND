@@ -74,6 +74,30 @@ class ApiExceptionHandler {
                 "SERVICE_UNAVAILABLE"));
     }
 
+    @ExceptionHandler(HumanUserService.UsernameConflictException.class)
+    ResponseEntity<ApiProblem> usernameConflict(
+            HumanUserService.UsernameConflictException exception, HttpServletRequest request) {
+        return response(ApiProblem.of(
+                request,
+                HttpStatus.CONFLICT.value(),
+                "Usuario existente",
+                "Ya existe un usuario con ese nombre.",
+                "USERNAME_CONFLICT"));
+    }
+
+    @ExceptionHandler({
+        HumanUserService.UserValidationException.class,
+        PasswordPolicy.PasswordPolicyException.class
+    })
+    ResponseEntity<ApiProblem> userValidation(RuntimeException exception, HttpServletRequest request) {
+        return response(ApiProblem.of(
+                request,
+                HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                "Datos de usuario no válidos",
+                "Revisa el usuario, la contraseña y los roles.",
+                "USER_VALIDATION_FAILED"));
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiProblem> unexpected(Exception exception, HttpServletRequest request) {
         LOGGER.error("API request failed safely", exception);
