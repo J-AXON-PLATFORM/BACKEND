@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-002b` completado, integrado y verificado, 2026-10-20
-> **Estado documental:** baseline v1 `DESIGN_READY`; listado propio corregido a resumen sin descripción y conversación pública de tickets integrados y verificados; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA1-IAM-002a` completado, integrado y verificado, 2026-10-21
+> **Estado documental:** baseline v1 `DESIGN_READY`; logout y alta administrativa de usuarios humanos integrados y verificados; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-20.
+- Fecha de última revisión: 2026-10-21.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: login humano, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a`, la primera tarea explícita `COLLECT_SNAPSHOT`, el retry acotado de su entrega Result y los cortes ejecutados de Support están integrados. Support permite alta, detalle, listado propio resumido sin descripción y conversación `PUBLIC`; el lifecycle restante, otros tipos de tarea, spool general, retries de polling/snapshots/capabilities, otros eventos SSE, Discovery y Production siguen fuera del corte.
+- Estado funcional: login y logout humanos, alta administrativa mínima de usuarios, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a`, la primera tarea explícita `COLLECT_SNAPSHOT`, el retry acotado de su entrega Result y los cortes ejecutados de Support están integrados. Identity no implementa todavía edición, deshabilitación, reset de contraseña, revocación global de sesiones, MFA o SSO; el lifecycle restante de Support, otros tipos de tarea, spool general, retries de polling/snapshots/capabilities, otros eventos SSE, Discovery y Production siguen fuera del corte.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada y trece incrementos funcionales acotados integrados, incluido `OLA3-SUP-002b`. El último corte corrige el listado paginado de tickets propios para devolver resúmenes sin `description`, conserva el detalle individual completo y publica OpenAPI 3.0 por el cambio breaking; no implementa búsqueda/listado global, notas internas, lifecycle, asignación, adjuntos, SSE, IA, Automation o consumidores outbox de Support. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y catorce incrementos funcionales acotados integrados, incluido `OLA1-IAM-002a`. El último corte añade logout de la sesión actual y alta administrativa mínima de usuarios humanos con roles explícitos, además de OpenAPI 3.1 compatible; no implementa edición, deshabilitación, reset de contraseña, revocación global de sesiones, MFA, SSO o gestión de permisos. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.

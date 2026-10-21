@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Logout y alta administrativa de usuarios humanos -- OLA1-IAM-002a, 2026-10-21
+
+Identity añade `POST /api/v1/auth/logout` para invalidar exclusivamente la sesión presentada y `POST /api/v1/users` para que `SYSTEM_ADMIN` cree usuarios humanos `ACTIVE` con roles v1 explícitos. Ambas mutaciones exigen CSRF; el alta normaliza el username, aplica la política Argon2id/contraseña vigente, rechaza roles desconocidos o duplicados y captura atómicamente `HUMAN_USER_CREATED`. El logout captura `HUMAN_LOGOUT_SUCCEEDED`, elimina solo la sesión actual y expira la cookie tras el commit.
+
+Frontend añade logout sin retry y limpia el estado sensible solo después de `204`; también incorpora una UI administrativa visible únicamente para `SYSTEM_ADMIN`, con selección explícita de roles y validación runtime cerrada. OpenAPI 3.1 conserva 3.0 y añade solo estas dos operaciones. La migración `V20261020010000__identity_logout_and_human_user_creation.sql` amplía únicamente tablas propias de Identity. La verificación local concluyó con 91 pruebas backend, 43 frontend, lint, typecheck, builds, auditorías, validación OpenAPI, Compose y un E2E Chromium multirepo real.
+
+La integración técnica quedó completa mediante `FRONTEND#15`, squash `1347f7f4006dbcbef0eff5d9c03b50ec410f2e76`, con runs verdes `39537607523` y `39537884458`, y `BACKEND#32`, squash `b8c9f354c82a7bc849e112512e7ea2746752ba7f`, con runs verdes `39539823211` y `39541562446`. El primer run backend `39538137754` detectó `GO-2026-6809` en el builder Go 1.26.9 de la fixture SFTPGo; la excepción autorizada actualizó únicamente su digest oficial a Go 1.26.10, sin cambiar SFTPGo 2.7.6, dependencias, runtime o workflows. No se implementan gestión posterior, edición, deshabilitación, reset de contraseña, revocación global de sesiones, MFA, SSO ni infraestructura Production; `PRODUCTION_READY = NO`.
+
+---
+
 ## Corrección del listado resumido de tickets -- OLA3-SUP-002b, 2026-10-20
 
 La revisión de `OLA3-SUP-002a` confirmó que `GET /api/v1/tickets` reutilizaba por error la respuesta completa y exponía `description`. `OLA3-SUP-002b` corrige el defecto sin reescribir su historia: backend devuelve un DTO resumido cerrado, la consulta SQL deja de seleccionar `description` y `GET /api/v1/tickets/{ticketId}` conserva el detalle completo. No se crean migraciones ni se modifican datos, ownership, roles, paginación, orden, comentarios u outbox.
