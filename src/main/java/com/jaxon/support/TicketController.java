@@ -71,6 +71,73 @@ class TicketController {
                 actorId(authentication), requestedPage.page(), requestedPage.size()));
     }
 
+    @GetMapping("/technician-queue")
+    ResponseEntity<?> findTechnicianQueue(
+            @RequestParam(defaultValue = "0") String page,
+            @RequestParam(defaultValue = "20") String size,
+            Authentication authentication,
+            HttpServletRequest request) {
+        PageRequest requestedPage = page(page, size, 50);
+        if (requestedPage == null) {
+            return invalidPage(request, 50);
+        }
+        return ResponseEntity.ok(ticketService.findTechnicianQueue(
+                actorId(authentication), requestedPage.page(), requestedPage.size()));
+    }
+
+    @GetMapping("/technician-queue/{ticketId}")
+    ResponseEntity<?> findForTechnician(
+            @PathVariable String ticketId,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        return ticketService.findForTechnician(UUID.fromString(ticketId), actorId(authentication))
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ticketNotFound(request));
+    }
+
+    @GetMapping("/technician-queue/{ticketId}/comments")
+    ResponseEntity<?> findCommentsForTechnician(
+            @PathVariable String ticketId,
+            @RequestParam(defaultValue = "0") String page,
+            @RequestParam(defaultValue = "50") String size,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        PageRequest requestedPage = page(page, size, 100);
+        if (requestedPage == null) {
+            return invalidPage(request, 100);
+        }
+        return ticketService.findCommentsForTechnician(
+                        UUID.fromString(ticketId),
+                        actorId(authentication),
+                        requestedPage.page(),
+                        requestedPage.size())
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ticketNotFound(request));
+    }
+
+    @PostMapping("/{ticketId}/claim")
+    ResponseEntity<?> claim(
+            @PathVariable String ticketId,
+            @Valid @RequestBody TicketClaimRequest claim,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        UUID correlationId = UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY));
+        return ResponseEntity.ok(ticketService.claim(
+                UUID.fromString(ticketId),
+                actorId(authentication),
+                claim.expectedVersion(),
+                correlationId));
+    }
+
     @PostMapping("/{ticketId}/comments")
     ResponseEntity<?> addComment(
             @PathVariable String ticketId,
@@ -109,6 +176,24 @@ class TicketController {
                         requestedPage.size())
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() -> ticketNotFound(request));
+    }
+
+    @ExceptionHandler(TicketNotFoundException.class)
+    ResponseEntity<SupportProblem> ticketNotFound(
+            TicketNotFoundException exception, HttpServletRequest request) {
+        return ticketNotFound(request);
+    }
+
+    @ExceptionHandler(TicketClaimConflictException.class)
+    ResponseEntity<SupportProblem> ticketClaimConflict(
+            TicketClaimConflictException exception, HttpServletRequest request) {
+        return problem(
+                request,
+                HttpStatus.CONFLICT,
+                "Conflicto al asignar ticket",
+                "El ticket cambió de versión o ya no está disponible para asignación.",
+                "TICKET_CLAIM_CONFLICT",
+                List.of());
     }
 
     @ExceptionHandler(AssociatedAssetNotFoundException.class)

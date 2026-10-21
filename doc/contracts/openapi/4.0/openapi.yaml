@@ -1,0 +1,346 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "4.0"
+  description: >-
+    Major que conserva las operaciones anteriores, generaliza la representación
+    de tickets asignables y añade bandeja técnica y autoasignación concurrente.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Identity
+  - name: Assets
+  - name: Agents
+  - name: Support
+paths:
+  /auth/login:
+    $ref: "../3.1/openapi.yaml#/paths/~1auth~1login"
+  /auth/me:
+    $ref: "../3.1/openapi.yaml#/paths/~1auth~1me"
+  /auth/logout:
+    $ref: "../3.1/openapi.yaml#/paths/~1auth~1logout"
+  /users:
+    $ref: "../3.1/openapi.yaml#/paths/~1users"
+  /assets:
+    $ref: "../3.1/openapi.yaml#/paths/~1assets"
+  /assets/{assetId}:
+    $ref: "../3.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D"
+  /assets/{assetId}/technical-state:
+    $ref: "../3.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state"
+  /assets/{assetId}/technical-state/events:
+    $ref: "../3.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events"
+  /agents:
+    $ref: "../3.1/openapi.yaml#/paths/~1agents"
+  /agents/{agentId}:
+    $ref: "../3.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D"
+  /agents/{agentId}/ssh-key:
+    $ref: "../3.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key"
+  /agents/{agentId}/activate:
+    $ref: "../3.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate"
+  /agents/{agentId}/tasks:
+    $ref: "../3.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks"
+  /agents/{agentId}/tasks/{taskId}:
+    $ref: "../3.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D"
+  /tickets:
+    post:
+      tags: [Support]
+      operationId: createTicket
+      summary: Crea un ticket propio con estado OPEN y prioridad NORMAL
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "../2.4/openapi.yaml#/components/schemas/TicketCreateRequest" }
+      responses:
+        "201":
+          description: Ticket persistido con evento durable TICKET_CREATED
+          headers:
+            Location:
+              description: URI de consulta del ticket creado.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+    get:
+      tags: [Support]
+      operationId: listOwnTickets
+      summary: Lista únicamente los tickets cuyo requester es la sesión IT_OPERATOR actual
+      parameters:
+        - $ref: "#/components/parameters/TicketPage"
+        - $ref: "#/components/parameters/TicketPageSize"
+      responses:
+        "200":
+          description: Página de resúmenes propios ordenada por creación descendente e ID descendente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketPage" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/technician-queue:
+    get:
+      tags: [Support]
+      operationId: listTechnicianTicketQueue
+      summary: Lista tickets no cerrados sin asignar o asignados al técnico actual
+      parameters:
+        - $ref: "#/components/parameters/TicketPage"
+        - $ref: "#/components/parameters/TicketPageSize"
+      responses:
+        "200":
+          description: Página de resúmenes ordenada por creación descendente e ID descendente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketPage" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/technician-queue/{ticketId}:
+    get:
+      tags: [Support]
+      operationId: getTechnicianQueueTicket
+      summary: Consulta un ticket no cerrado sin asignar o asignado al técnico actual
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+      responses:
+        "200":
+          description: Ficha completa disponible para el técnico autenticado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketResponse" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/technician-queue/{ticketId}/comments:
+    get:
+      tags: [Support]
+      operationId: listTechnicianQueueTicketComments
+      summary: Lista la conversación PUBLIC disponible para el técnico actual
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+        - $ref: "#/components/parameters/CommentPage"
+        - $ref: "#/components/parameters/CommentPageSize"
+      responses:
+        "200":
+          description: Página PUBLIC ordenada por creación ascendente e ID ascendente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketCommentPage" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/{ticketId}:
+    get:
+      tags: [Support]
+      operationId: getOwnTicket
+      summary: Consulta por UUID un ticket cuyo requester es la sesión IT_OPERATOR actual
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+      responses:
+        "200":
+          description: Ficha completa del ticket propio
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketResponse" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/{ticketId}/comments:
+    parameters:
+      - $ref: "#/components/parameters/TicketId"
+    get:
+      tags: [Support]
+      operationId: listOwnTicketComments
+      summary: Lista la conversación PUBLIC de un ticket propio de la sesión IT_OPERATOR
+      parameters:
+        - $ref: "#/components/parameters/CommentPage"
+        - $ref: "#/components/parameters/CommentPageSize"
+      responses:
+        "200":
+          description: Página PUBLIC ordenada por creación ascendente e ID ascendente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketCommentPage" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+    post:
+      tags: [Support]
+      operationId: addOwnTicketComment
+      summary: Añade como IT_OPERATOR un comentario PUBLIC a un ticket propio
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketCommentCreateRequest" }
+      responses:
+        "201":
+          description: Comentario y evento TICKET_COMMENT_ADDED persistidos atómicamente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketCommentResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/{ticketId}/claim:
+    post:
+      tags: [Support]
+      operationId: claimTicket
+      summary: Autoasigna atómicamente un ticket al técnico autenticado
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketClaimRequest" }
+      responses:
+        "200":
+          description: Ticket asignado o repetición idempotente del mismo técnico y versión actual
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+components:
+  securitySchemes:
+    SessionCookie:
+      $ref: "../3.1/openapi.yaml#/components/securitySchemes/SessionCookie"
+  parameters:
+    CsrfToken:
+      $ref: "../3.1/openapi.yaml#/components/parameters/CsrfToken"
+    TicketId:
+      $ref: "../2.5/openapi.yaml#/components/parameters/TicketId"
+    TicketPage:
+      $ref: "../2.5/openapi.yaml#/components/parameters/TicketPage"
+    TicketPageSize:
+      $ref: "../2.5/openapi.yaml#/components/parameters/TicketPageSize"
+    CommentPage:
+      $ref: "../2.5/openapi.yaml#/components/parameters/CommentPage"
+    CommentPageSize:
+      $ref: "../2.5/openapi.yaml#/components/parameters/CommentPageSize"
+  schemas:
+    UuidV4:
+      $ref: "../3.0/openapi.yaml#/components/schemas/UuidV4"
+    UtcDateTime:
+      $ref: "../3.0/openapi.yaml#/components/schemas/UtcDateTime"
+    TicketResponse:
+      type: object
+      required: [ticketId, type, summary, description, status, priority, source, requesterUserId, createdByUserId, assigneeUserId, assetId, createdAt, updatedAt, version]
+      properties:
+        ticketId: { $ref: "#/components/schemas/UuidV4" }
+        type: { type: string, enum: [INCIDENT, SERVICE_REQUEST, QUESTION, OTHER] }
+        summary: { type: string, minLength: 1, maxLength: 256 }
+        description: { type: string, minLength: 1, maxLength: 10000 }
+        status: { type: string, enum: [OPEN, IN_PROGRESS, WAITING_FOR_REQUESTER, RESOLVED, CLOSED] }
+        priority: { type: string, enum: [LOW, NORMAL, HIGH, URGENT] }
+        source: { type: string, const: WEB }
+        requesterUserId: { $ref: "#/components/schemas/UuidV4" }
+        createdByUserId: { $ref: "#/components/schemas/UuidV4" }
+        assigneeUserId:
+          oneOf:
+            - $ref: "#/components/schemas/UuidV4"
+            - type: "null"
+        assetId:
+          oneOf:
+            - $ref: "#/components/schemas/UuidV4"
+            - type: "null"
+        createdAt: { $ref: "#/components/schemas/UtcDateTime" }
+        updatedAt: { $ref: "#/components/schemas/UtcDateTime" }
+        version: { type: integer, minimum: 0 }
+      additionalProperties: false
+    TicketListItem:
+      type: object
+      required: [ticketId, type, summary, status, priority, source, requesterUserId, createdByUserId, assigneeUserId, assetId, createdAt, updatedAt, version]
+      properties:
+        ticketId: { $ref: "#/components/schemas/UuidV4" }
+        type: { type: string, enum: [INCIDENT, SERVICE_REQUEST, QUESTION, OTHER] }
+        summary: { type: string, minLength: 1, maxLength: 256 }
+        status: { type: string, enum: [OPEN, IN_PROGRESS, WAITING_FOR_REQUESTER, RESOLVED, CLOSED] }
+        priority: { type: string, enum: [LOW, NORMAL, HIGH, URGENT] }
+        source: { type: string, const: WEB }
+        requesterUserId: { $ref: "#/components/schemas/UuidV4" }
+        createdByUserId: { $ref: "#/components/schemas/UuidV4" }
+        assigneeUserId:
+          oneOf:
+            - $ref: "#/components/schemas/UuidV4"
+            - type: "null"
+        assetId:
+          oneOf:
+            - $ref: "#/components/schemas/UuidV4"
+            - type: "null"
+        createdAt: { $ref: "#/components/schemas/UtcDateTime" }
+        updatedAt: { $ref: "#/components/schemas/UtcDateTime" }
+        version: { type: integer, minimum: 0 }
+      additionalProperties: false
+    TicketPage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TicketListItem" }
+        page: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 50 }
+        totalElements: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+      additionalProperties: false
+    TicketCommentCreateRequest:
+      $ref: "../2.5/openapi.yaml#/components/schemas/TicketCommentCreateRequest"
+    TicketCommentResponse:
+      $ref: "../2.5/openapi.yaml#/components/schemas/TicketCommentResponse"
+    TicketCommentPage:
+      $ref: "../2.5/openapi.yaml#/components/schemas/TicketCommentPage"
+    TicketClaimRequest:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, minimum: 0 }
+      additionalProperties: false
+  responses:
+    BadRequest: { $ref: "../3.1/openapi.yaml#/components/responses/BadRequest" }
+    AuthenticationRequired: { $ref: "../3.1/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../3.1/openapi.yaml#/components/responses/Forbidden" }
+    NotFound: { $ref: "../3.0/openapi.yaml#/components/responses/NotFound" }
+    Conflict: { $ref: "../3.1/openapi.yaml#/components/responses/Conflict" }
+    ValidationFailed: { $ref: "../3.1/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../3.1/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../3.1/openapi.yaml#/components/responses/ServiceUnavailable" }
+security:
+  - SessionCookie: []

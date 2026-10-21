@@ -12,9 +12,10 @@ Esta carpeta es la fuente canónica de los contratos externos de J-AXON.
 - `openapi/2.5/openapi.yaml`: minor compatible que añade listado propio y conversación pública de tickets.
 - `openapi/3.0/openapi.yaml`: major que corrige los elementos del listado propio de tickets a resúmenes sin `description`.
 - `openapi/3.1/openapi.yaml`: minor compatible que añade logout de la sesión actual y alta administrativa de usuarios humanos.
+- `openapi/4.0/openapi.yaml`: major que generaliza tickets asignables y añade bandeja y autoasignación técnica.
 - `agent/1.0/`: contratos JSON Schema Draft 2020-12 para snapshot, Task y Result Agent.
 
-Los contratos usan versión `MAJOR.MINOR`, independiente de la versión del software. Un cambio incompatible requiere un nuevo major. Un minor nuevo debe aceptar las instancias válidas del minor anterior y coexistir con él durante la transición. OpenAPI 3.1 es el contrato actual y conserva compatibilidad con 3.0; 2.5 permanece como histórico inmutable y no se exige compatibilidad minor entre ambos majors.
+Los contratos usan versión `MAJOR.MINOR`, independiente de la versión del software. Un cambio incompatible requiere un nuevo major. Un minor nuevo debe aceptar las instancias válidas del minor anterior y coexistir con él durante la transición. OpenAPI 4.0 es el contrato actual; 3.1 permanece como histórico inmutable y no se exige compatibilidad minor entre ambos majors.
 
 Los identificadores bajo `https://schemas.j-axon.invalid/` no son endpoints. Los validadores deben resolverlos únicamente contra recursos locales. `backend` conserva la fuente canónica; las copias en consumidores se sincronizan y verifican mediante el manifest SHA-256.
 
@@ -33,5 +34,7 @@ OpenAPI 2.4 permanece inmutable. OpenAPI 2.5 añade únicamente `GET /tickets`, 
 OpenAPI 2.5 permanece byte a byte inmutable. OpenAPI 3.0 conserva las operaciones y el servidor `/api/v1`, pero `TicketPage.items` usa el schema cerrado `TicketListItem` sin `description`; `GET /tickets/{ticketId}` conserva `TicketResponse` completo.
 
 OpenAPI 3.0 permanece inmutable. OpenAPI 3.1 añade únicamente `POST /auth/logout` para invalidar la sesión humana presentada y `POST /users` para alta administrativa por `SYSTEM_ADMIN`; no añade gestión posterior de usuarios ni revocación global de sesiones.
+
+OpenAPI 3.1 permanece byte a byte inmutable. OpenAPI 4.0 generaliza la respuesta de ticket para asignación/versionado y añade la bandeja, su detalle/conversación `PUBLIC` de solo lectura y `POST /tickets/{ticketId}/claim` para `SUPPORT_TECHNICIAN`; los endpoints requester permanecen exclusivos de `IT_OPERATOR`. No añade comentarios técnicos, cambios de estado, reasignación, notas internas ni búsqueda global.
 
 Agent 1.0, incluidos `task.schema.json`, `result.schema.json`, manifest y copia vendorizada, permanece byte a byte inmutable. Backend empaqueta los cuatro schemas existentes para validación runtime.
