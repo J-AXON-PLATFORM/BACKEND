@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Bandeja técnica y autoasignación concurrente -- OLA3-SUP-003a, 2026-10-21
+
+Backend añade rutas explícitas para que `SUPPORT_TECHNICIAN` consulte una bandeja paginada de tickets no cerrados sin asignar o propios, abra su detalle y lea la conversación `PUBLIC`. `POST /api/v1/tickets/{ticketId}/claim` aplica CSRF y concurrencia optimista con `expectedVersion`, asigna una sola vez y conserva idempotencia para la repetición del mismo técnico. La migración `V20261021000000__support_technician_claim.sql` añade el índice parcial de bandeja y amplía de forma segura el outbox; `TICKET_ASSIGNED` se captura atómicamente con payload mínimo `assigneeUserId`.
+
+Frontend incorpora una bandeja responsive exclusiva de `SUPPORT_TECHNICIAN`, paginación en URL, cachés segmentadas por usuario, parsers fail-closed, detalle/conversación pública de solo lectura y claim sin retry ni optimistic update. OpenAPI 4.0 documenta el cambio breaking necesario para tickets asignables y mantiene OpenAPI 3.1 byte a byte inmutable. La verificación local concluyó con 95 pruebas backend, 47 frontend, lint, typecheck, builds, auditorías, validación OpenAPI y un E2E Chromium multirepo real con comprobación PostgreSQL de asignación, versión y evento.
+
+La integración técnica quedó completa mediante `FRONTEND#16`, squash `d39fcbdd38ebdddf04d3a143909e43cc6fb72fdc`, con runs verdes `39589547411` y `39589902859`, y `BACKEND#34`, squash `4fd0137edec6247e2c208cd93b180d5009925527`, con runs verdes `39590317308` y `39593017095`. No cambian dependencias, workflows ni `automation-collector`; no se implementan comentarios técnicos, notas internas, cambios de estado/prioridad, reasignación, resolución/cierre/reapertura, adjuntos, búsqueda global, SSE, IA, Automation, consumidores outbox o infraestructura Production. `PRODUCTION_READY = NO`.
+
+---
+
 ## Logout y alta administrativa de usuarios humanos -- OLA1-IAM-002a, 2026-10-21
 
 Identity añade `POST /api/v1/auth/logout` para invalidar exclusivamente la sesión presentada y `POST /api/v1/users` para que `SYSTEM_ADMIN` cree usuarios humanos `ACTIVE` con roles v1 explícitos. Ambas mutaciones exigen CSRF; el alta normaliza el username, aplica la política Argon2id/contraseña vigente, rechaza roles desconocidos o duplicados y captura atómicamente `HUMAN_USER_CREATED`. El logout captura `HUMAN_LOGOUT_SUCCEEDED`, elimina solo la sesión actual y expira la cookie tras el commit.
