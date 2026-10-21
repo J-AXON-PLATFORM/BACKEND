@@ -6,7 +6,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,7 @@ class SupportIntegrationTest {
 
     private static final String USERNAME = "Support.Operator";
     private static final String PASSWORD = "Support test passphrase 42!";
+    private static final String TECHNICIAN_PASSWORD = "Technician test passphrase 42!";
     private static final String VALID_TICKET = """
             {"type":"INCIDENT","summary":"Printer unavailable","description":"The reception printer is offline."}
             """;
@@ -384,18 +387,173 @@ class SupportIntegrationTest {
         }
     }
 
+    @Test
+    void exposesTheTechnicianQueueAndClaimsExactlyOnceUnderConcurrency() throws Exception {
+        Session operator = login();
+        String firstUsername = "Technician.One." + UUID.randomUUID();
+        String secondUsername = "Technician.Two." + UUID.randomUUID();
+        Session firstTechnician = createAndLoginTechnician(operator, firstUsername);
+        Session secondTechnician = createAndLoginTechnician(operator, secondUsername);
+        UUID firstTechnicianId = userId(firstUsername);
+        UUID secondTechnicianId = userId(secondUsername);
+        jdbc.update("UPDATE support.tickets SET status = 'CLOSED'");
+        UUID ticketId = UUID.fromString(extract(
+                postTicket(operator, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        postComment(operator, ticketId.toString(), "{\"body\":\"Requester update\"}", UUID.randomUUID());
+
+        HttpResponse<String> queue = getTechnicianQueue(firstTechnician.cookie(), "0", "20");
+        assertThat(queue.statusCode()).isEqualTo(200);
+        assertThat(queue.body())
+                .contains(ticketId.toString(), "\"totalElements\":1", "\"version\":0")
+                .doesNotContain("\"description\"", "reception printer");
+        assertThat(getTechnicianTicket(firstTechnician.cookie(), ticketId.toString()).body())
+                .contains("\"description\":\"The reception printer is offline.\"");
+        assertThat(getTechnicianComments(firstTechnician.cookie(), ticketId.toString(), "0", "50").body())
+                .contains("Requester update", "\"visibility\":\"PUBLIC\"");
+
+        UUID firstCorrelation = UUID.randomUUID();
+        UUID secondCorrelation = UUID.randomUUID();
+        CompletableFuture<HttpResponse<String>> firstClaim = claimAsync(
+                firstTechnician, ticketId, 0, firstCorrelation);
+        CompletableFuture<HttpResponse<String>> secondClaim = claimAsync(
+                secondTechnician, ticketId, 0, secondCorrelation);
+        List<HttpResponse<String>> responses = List.of(firstClaim.join(), secondClaim.join());
+        assertThat(responses).extracting(HttpResponse::statusCode).containsExactlyInAnyOrder(200, 409);
+
+        HttpResponse<String> winner = responses.stream()
+                .filter(response -> response.statusCode() == 200)
+                .findFirst()
+                .orElseThrow();
+        UUID winnerId = UUID.fromString(extract(winner.body(), "assigneeUserId"));
+        Session winnerSession = winnerId.equals(firstTechnicianId) ? firstTechnician : secondTechnician;
+        Session loserSession = winnerId.equals(firstTechnicianId) ? secondTechnician : firstTechnician;
+        UUID loserId = winnerId.equals(firstTechnicianId) ? secondTechnicianId : firstTechnicianId;
+        assertThat(winner.body()).contains("\"version\":1", "\"status\":\"OPEN\"");
+        assertThat(jdbc.queryForMap(
+                        "SELECT assignee_user_id, version, status FROM support.tickets WHERE id = ?", ticketId))
+                .containsEntry("assignee_user_id", winnerId)
+                .containsEntry("version", 1L)
+                .containsEntry("status", "OPEN");
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM support.outbox_events WHERE resource_id = ? AND event_type = 'TICKET_ASSIGNED'",
+                        Integer.class,
+                        ticketId))
+                .isOne();
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT actor_id, resource_version, correlation_id, payload
+                        FROM support.outbox_events
+                        WHERE resource_id = ? AND event_type = 'TICKET_ASSIGNED'
+                        """,
+                        ticketId))
+                .containsEntry("actor_id", winnerId)
+                .containsEntry("resource_version", 1L)
+                .containsEntry(
+                        "correlation_id",
+                        winnerId.equals(firstTechnicianId) ? firstCorrelation : secondCorrelation);
+        String payload = jdbc.queryForObject(
+                """
+                SELECT payload::text FROM support.outbox_events
+                WHERE resource_id = ? AND event_type = 'TICKET_ASSIGNED'
+                """,
+                String.class,
+                ticketId);
+        assertThat(payload)
+                .contains("\"assigneeUserId\": \"" + winnerId + "\"")
+                .doesNotContain("summary", "description", "comment");
+
+        HttpResponse<String> idempotent = claim(winnerSession, ticketId, 1, UUID.randomUUID());
+        assertThat(idempotent.statusCode()).isEqualTo(200);
+        assertThat(idempotent.body()).isEqualTo(winner.body());
+        assertThat(claim(winnerSession, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(409);
+        assertThat(claim(loserSession, ticketId, 1, UUID.randomUUID()).statusCode()).isEqualTo(409);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM support.outbox_events WHERE resource_id = ? AND event_type = 'TICKET_ASSIGNED'",
+                        Integer.class,
+                        ticketId))
+                .isOne();
+        assertThat(getTechnicianQueue(winnerSession.cookie(), "0", "20").body())
+                .contains(ticketId.toString(), winnerId.toString());
+        assertThat(getTechnicianQueue(loserSession.cookie(), "0", "20").body())
+                .doesNotContain(ticketId.toString(), loserId.toString());
+        assertThat(getTechnicianTicket(loserSession.cookie(), ticketId.toString()).statusCode()).isEqualTo(404);
+    }
+
+    @Test
+    void protectsClaimAndRollsItBackWhenTheOutboxWriteFails() throws Exception {
+        Session operator = login();
+        String username = "Technician.Rollback." + UUID.randomUUID();
+        Session technician = createAndLoginTechnician(operator, username);
+        UUID ticketId = UUID.fromString(extract(
+                postTicket(operator, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+
+        assertThat(getTechnicianQueue(null, "0", "20").statusCode()).isEqualTo(401);
+        assertThat(getTechnicianQueue(operator.cookie(), "0", "20").statusCode()).isEqualTo(403);
+        assertThat(claim(operator, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(403);
+        assertThat(claim(new Session(technician.cookie(), null), ticketId, 0, UUID.randomUUID()).body())
+                .contains("\"code\":\"CSRF_INVALID\"");
+        assertThat(claimRaw(technician, ticketId.toString(), "{}", UUID.randomUUID()).statusCode()).isEqualTo(422);
+        assertThat(claimRaw(technician, ticketId.toString(), "{\"expectedVersion\":-1}", UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(422);
+        assertThat(claim(technician, UUID.randomUUID(), 0, UUID.randomUUID()).statusCode()).isEqualTo(404);
+
+        jdbc.execute(
+                """
+                ALTER TABLE support.outbox_events
+                ADD CONSTRAINT support_test_reject_assignment_event
+                CHECK (event_type <> 'TICKET_ASSIGNED') NOT VALID
+                """);
+        try {
+            assertThat(claim(technician, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(503);
+            assertThat(jdbc.queryForMap(
+                            "SELECT assignee_user_id, version FROM support.tickets WHERE id = ?", ticketId))
+                    .containsEntry("assignee_user_id", null)
+                    .containsEntry("version", 0L);
+        } finally {
+            jdbc.execute("ALTER TABLE support.outbox_events DROP CONSTRAINT support_test_reject_assignment_event");
+        }
+    }
+
     private Session login() throws Exception {
+        return login(USERNAME, PASSWORD);
+    }
+
+    private Session login(String username, String password) throws Exception {
         HttpResponse<String> response = httpClient.send(
                 HttpRequest.newBuilder()
                         .uri(uri("/api/v1/auth/login"))
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(
-                                "{\"username\":\"" + USERNAME + "\",\"password\":\"" + PASSWORD + "\"}"))
+                                "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}"))
                         .build(),
                 HttpResponse.BodyHandlers.ofString());
         assertThat(response.statusCode()).isEqualTo(200);
         String setCookie = response.headers().firstValue("set-cookie").orElseThrow();
         return new Session(setCookie.substring(0, setCookie.indexOf(';')), extract(response.body(), "csrfToken"));
+    }
+
+    private Session createAndLoginTechnician(Session administrator, String username) throws Exception {
+        HttpResponse<String> created = httpClient.send(
+                HttpRequest.newBuilder()
+                        .uri(uri("/api/v1/users"))
+                        .header("Cookie", administrator.cookie())
+                        .header("Content-Type", "application/json")
+                        .header("X-CSRF-Token", administrator.csrfToken())
+                        .POST(HttpRequest.BodyPublishers.ofString("""
+                                {"username":"%s","password":"%s","roles":["SUPPORT_TECHNICIAN"]}
+                                """.formatted(username, TECHNICIAN_PASSWORD)))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertThat(created.statusCode()).isEqualTo(201);
+        return login(username, TECHNICIAN_PASSWORD);
+    }
+
+    private UUID userId(String username) {
+        return jdbc.queryForObject(
+                "SELECT id FROM identity.human_users WHERE normalized_username = ?",
+                UUID.class,
+                username.toLowerCase());
     }
 
     private HttpResponse<String> postTicket(Session session, String body, UUID correlationId) throws Exception {
@@ -427,6 +585,76 @@ class SupportIntegrationTest {
             request.header("Cookie", cookie);
         }
         return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> getTechnicianQueue(String cookie, String page, String size) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets/technician-queue?page=" + page + "&size=" + size))
+                .GET();
+        if (cookie != null) {
+            request.header("Cookie", cookie);
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> getTechnicianTicket(String cookie, String ticketId) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets/technician-queue/" + ticketId))
+                .GET();
+        if (cookie != null) {
+            request.header("Cookie", cookie);
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> getTechnicianComments(String cookie, String ticketId, String page, String size)
+            throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets/technician-queue/" + ticketId + "/comments?page=" + page + "&size=" + size))
+                .GET();
+        if (cookie != null) {
+            request.header("Cookie", cookie);
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> claim(Session session, UUID ticketId, long expectedVersion, UUID correlationId)
+            throws Exception {
+        return claimRaw(
+                session,
+                ticketId.toString(),
+                "{\"expectedVersion\":" + expectedVersion + "}",
+                correlationId);
+    }
+
+    private CompletableFuture<HttpResponse<String>> claimAsync(
+            Session session, UUID ticketId, long expectedVersion, UUID correlationId) {
+        return httpClient.sendAsync(
+                claimRequest(
+                        session,
+                        ticketId.toString(),
+                        "{\"expectedVersion\":" + expectedVersion + "}",
+                        correlationId),
+                HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> claimRaw(Session session, String ticketId, String body, UUID correlationId)
+            throws Exception {
+        return httpClient.send(
+                claimRequest(session, ticketId, body, correlationId), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpRequest claimRequest(Session session, String ticketId, String body, UUID correlationId) {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets/" + ticketId + "/claim"))
+                .header("Cookie", session.cookie())
+                .header("Content-Type", "application/json")
+                .header("X-Correlation-ID", correlationId.toString())
+                .POST(HttpRequest.BodyPublishers.ofString(body));
+        if (session.csrfToken() != null) {
+            request.header("X-CSRF-Token", session.csrfToken());
+        }
+        return request.build();
     }
 
     private HttpResponse<String> postComment(Session session, String ticketId, String body, UUID correlationId)

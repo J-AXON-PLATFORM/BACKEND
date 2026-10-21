@@ -159,6 +159,158 @@ class TicketService {
         return new TicketPage(items, page, size, totalElements, totalPages(totalElements, size));
     }
 
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    TicketPage findTechnicianQueue(UUID technicianUserId, int page, int size) {
+        long totalElements = jdbc.queryForObject(
+                """
+                SELECT count(*)
+                FROM support.tickets
+                WHERE status <> 'CLOSED'
+                  AND (assignee_user_id IS NULL OR assignee_user_id = ?)
+                """,
+                Long.class,
+                technicianUserId);
+        List<TicketListItemResponse> items = jdbc.query(
+                """
+                SELECT id, type, summary, status, priority, source,
+                       requester_user_id, created_by_user_id, assignee_user_id, asset_id,
+                       created_at, updated_at, version
+                FROM support.tickets
+                WHERE status <> 'CLOSED'
+                  AND (assignee_user_id IS NULL OR assignee_user_id = ?)
+                ORDER BY created_at DESC, id DESC
+                LIMIT ? OFFSET ?
+                """,
+                (resultSet, row) -> ticketListItem(resultSet),
+                technicianUserId,
+                size,
+                (long) page * size);
+        return new TicketPage(items, page, size, totalElements, totalPages(totalElements, size));
+    }
+
+    @Transactional(readOnly = true)
+    Optional<TicketResponse> findForTechnician(UUID ticketId, UUID technicianUserId) {
+        return jdbc.query(
+                        """
+                        SELECT id, type, summary, description, status, priority, source,
+                               requester_user_id, created_by_user_id, assignee_user_id, asset_id,
+                               created_at, updated_at, version
+                        FROM support.tickets
+                        WHERE id = ?
+                          AND status <> 'CLOSED'
+                          AND (assignee_user_id IS NULL OR assignee_user_id = ?)
+                        """,
+                        (resultSet, row) -> ticketResponse(resultSet),
+                        ticketId,
+                        technicianUserId)
+                .stream()
+                .findFirst();
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    Optional<TicketCommentPage> findCommentsForTechnician(
+            UUID ticketId, UUID technicianUserId, int page, int size) {
+        if (!isAvailableToTechnician(ticketId, technicianUserId)) {
+            return Optional.empty();
+        }
+        return Optional.of(findPublicComments(ticketId, page, size));
+    }
+
+    @Transactional
+    TicketResponse claim(
+            UUID ticketId,
+            UUID technicianUserId,
+            long expectedVersion,
+            UUID correlationId) {
+        Instant now = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
+        Optional<ClaimResult> result = jdbc.query(
+                """
+                WITH current_ticket AS (
+                    SELECT id, type, summary, description, status, priority, source,
+                           requester_user_id, created_by_user_id, assignee_user_id, asset_id,
+                           created_at, updated_at, version
+                    FROM support.tickets
+                    WHERE id = ?
+                    FOR UPDATE
+                ), updated_ticket AS (
+                    UPDATE support.tickets ticket
+                    SET assignee_user_id = ?, updated_at = ?, version = ticket.version + 1
+                    FROM current_ticket current
+                    WHERE ticket.id = current.id
+                      AND current.status <> 'CLOSED'
+                      AND current.version = ?
+                      AND current.assignee_user_id IS NULL
+                    RETURNING ticket.id, ticket.type, ticket.summary, ticket.description,
+                              ticket.status, ticket.priority, ticket.source,
+                              ticket.requester_user_id, ticket.created_by_user_id,
+                              ticket.assignee_user_id, ticket.asset_id,
+                              ticket.created_at, ticket.updated_at, ticket.version
+                )
+                SELECT CASE
+                           WHEN updated.id IS NOT NULL THEN 'CLAIMED'
+                           WHEN current.version <> ? THEN 'VERSION_CONFLICT'
+                           WHEN current.status = 'CLOSED' THEN 'ASSIGNMENT_CONFLICT'
+                           WHEN current.assignee_user_id = ? THEN 'UNCHANGED'
+                           ELSE 'ASSIGNMENT_CONFLICT'
+                       END AS outcome,
+                       COALESCE(updated.id, current.id) AS id,
+                       COALESCE(updated.type, current.type) AS type,
+                       COALESCE(updated.summary, current.summary) AS summary,
+                       COALESCE(updated.description, current.description) AS description,
+                       COALESCE(updated.status, current.status) AS status,
+                       COALESCE(updated.priority, current.priority) AS priority,
+                       COALESCE(updated.source, current.source) AS source,
+                       COALESCE(updated.requester_user_id, current.requester_user_id) AS requester_user_id,
+                       COALESCE(updated.created_by_user_id, current.created_by_user_id) AS created_by_user_id,
+                       COALESCE(updated.assignee_user_id, current.assignee_user_id) AS assignee_user_id,
+                       COALESCE(updated.asset_id, current.asset_id) AS asset_id,
+                       COALESCE(updated.created_at, current.created_at) AS created_at,
+                       COALESCE(updated.updated_at, current.updated_at) AS updated_at,
+                       COALESCE(updated.version, current.version) AS version
+                FROM current_ticket current
+                LEFT JOIN updated_ticket updated ON updated.id = current.id
+                """,
+                resultSet -> {
+                    if (!resultSet.next()) {
+                        return Optional.empty();
+                    }
+                    return Optional.of(new ClaimResult(
+                            resultSet.getString("outcome"), ticketResponse(resultSet)));
+                },
+                ticketId,
+                technicianUserId,
+                Timestamp.from(now),
+                expectedVersion,
+                expectedVersion,
+                technicianUserId);
+        ClaimResult claim = result.orElseThrow(TicketNotFoundException::new);
+        if (claim.outcome().equals("VERSION_CONFLICT")
+                || claim.outcome().equals("ASSIGNMENT_CONFLICT")) {
+            throw new TicketClaimConflictException();
+        }
+        if (claim.outcome().equals("CLAIMED")) {
+            jdbc.update(
+                    """
+                    INSERT INTO support.outbox_events
+                        (event_id, event_type, event_version, occurred_at, producer_module,
+                         actor_type, actor_id, resource_type, resource_id, resource_version,
+                         result, correlation_id, payload, next_attempt_at)
+                    VALUES (?, 'TICKET_ASSIGNED', '1.0', ?, 'SUPPORT',
+                            'HUMAN_USER', ?, 'TICKET', ?, ?,
+                            'SUCCESS', ?, jsonb_build_object('assigneeUserId', ?::text), ?)
+                    """,
+                    UUID.randomUUID(),
+                    Timestamp.from(now),
+                    technicianUserId,
+                    ticketId,
+                    claim.ticket().version(),
+                    correlationId,
+                    technicianUserId,
+                    Timestamp.from(now));
+        }
+        return claim.ticket();
+    }
+
     @Transactional
     Optional<TicketCommentResponse> addOwnComment(
             UUID ticketId,
@@ -214,6 +366,10 @@ class TicketService {
         if (!owns(ticketId, requesterUserId)) {
             return Optional.empty();
         }
+        return Optional.of(findPublicComments(ticketId, page, size));
+    }
+
+    private TicketCommentPage findPublicComments(UUID ticketId, int page, int size) {
         long totalElements = jdbc.queryForObject(
                 "SELECT count(*) FROM support.ticket_comments WHERE ticket_id = ? AND visibility = 'PUBLIC'",
                 Long.class,
@@ -236,8 +392,7 @@ class TicketService {
                 ticketId,
                 size,
                 (long) page * size);
-        return Optional.of(new TicketCommentPage(
-                items, page, size, totalElements, totalPages(totalElements, size)));
+        return new TicketCommentPage(items, page, size, totalElements, totalPages(totalElements, size));
     }
 
     private boolean owns(UUID ticketId, UUID requesterUserId) {
@@ -248,11 +403,68 @@ class TicketService {
                 requesterUserId));
     }
 
+    private boolean isAvailableToTechnician(UUID ticketId, UUID technicianUserId) {
+        return Boolean.TRUE.equals(jdbc.queryForObject(
+                """
+                SELECT EXISTS (
+                    SELECT 1 FROM support.tickets
+                    WHERE id = ?
+                      AND status <> 'CLOSED'
+                      AND (assignee_user_id IS NULL OR assignee_user_id = ?)
+                )
+                """,
+                Boolean.class,
+                ticketId,
+                technicianUserId));
+    }
+
+    private static TicketResponse ticketResponse(java.sql.ResultSet resultSet) throws java.sql.SQLException {
+        return new TicketResponse(
+                resultSet.getObject("id", UUID.class),
+                resultSet.getString("type"),
+                resultSet.getString("summary"),
+                resultSet.getString("description"),
+                resultSet.getString("status"),
+                resultSet.getString("priority"),
+                resultSet.getString("source"),
+                resultSet.getObject("requester_user_id", UUID.class),
+                resultSet.getObject("created_by_user_id", UUID.class),
+                resultSet.getObject("assignee_user_id", UUID.class),
+                resultSet.getObject("asset_id", UUID.class),
+                resultSet.getTimestamp("created_at").toInstant(),
+                resultSet.getTimestamp("updated_at").toInstant(),
+                resultSet.getLong("version"));
+    }
+
+    private static TicketListItemResponse ticketListItem(java.sql.ResultSet resultSet)
+            throws java.sql.SQLException {
+        return new TicketListItemResponse(
+                resultSet.getObject("id", UUID.class),
+                resultSet.getString("type"),
+                resultSet.getString("summary"),
+                resultSet.getString("status"),
+                resultSet.getString("priority"),
+                resultSet.getString("source"),
+                resultSet.getObject("requester_user_id", UUID.class),
+                resultSet.getObject("created_by_user_id", UUID.class),
+                resultSet.getObject("assignee_user_id", UUID.class),
+                resultSet.getObject("asset_id", UUID.class),
+                resultSet.getTimestamp("created_at").toInstant(),
+                resultSet.getTimestamp("updated_at").toInstant(),
+                resultSet.getLong("version"));
+    }
+
     private static int totalPages(long totalElements, int size) {
         return Math.toIntExact((totalElements + size - 1) / size);
     }
+
+    private record ClaimResult(String outcome, TicketResponse ticket) {}
 }
 
 final class AssociatedAssetNotFoundException extends RuntimeException {}
 
 final class InvalidCommentException extends RuntimeException {}
+
+final class TicketNotFoundException extends RuntimeException {}
+
+final class TicketClaimConflictException extends RuntimeException {}
