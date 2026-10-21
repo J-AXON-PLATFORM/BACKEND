@@ -515,6 +515,228 @@ class SupportIntegrationTest {
         }
     }
 
+    @Test
+    void assignedTechnicianAppendsAndReadsPublicAndInternalConversationWithoutRequesterLeakage()
+            throws Exception {
+        Session operator = login();
+        String username = "Technician.Conversation." + UUID.randomUUID();
+        Session technician = createAndLoginTechnician(operator, username);
+        UUID technicianId = userId(username);
+        UUID ticketId = UUID.fromString(extract(
+                postTicket(operator, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        postComment(operator, ticketId.toString(), "{\"body\":\"Requester public\"}", UUID.randomUUID());
+        assertThat(claim(technician, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(200);
+
+        UUID internalCorrelation = UUID.randomUUID();
+        HttpResponse<String> internal = postTechnicianComment(
+                technician,
+                ticketId.toString(),
+                "{\"visibility\":\"INTERNAL\",\"body\":\"  Internal diagnosis  \"}",
+                internalCorrelation);
+        HttpResponse<String> publicComment = postTechnicianComment(
+                technician,
+                ticketId.toString(),
+                "{\"visibility\":\"PUBLIC\",\"body\":\"Technical public update\"}",
+                UUID.randomUUID());
+
+        assertThat(internal.statusCode()).isEqualTo(201);
+        assertThat(publicComment.statusCode()).isEqualTo(201);
+        UUID internalId = UUID.fromString(extract(internal.body(), "commentId"));
+        assertThat(internal.body())
+                .contains("\"ticketId\":\"" + ticketId + "\"")
+                .contains("\"authorUserId\":\"" + technicianId + "\"")
+                .contains("\"visibility\":\"INTERNAL\"")
+                .contains("\"body\":\"Internal diagnosis\"");
+
+        HttpResponse<String> conversation = getTechnicianConversation(
+                technician.cookie(), ticketId.toString(), "0", "50");
+        assertThat(conversation.statusCode()).isEqualTo(200);
+        assertThat(conversation.body())
+                .contains("Requester public", "Internal diagnosis", "Technical public update")
+                .contains("\"visibility\":\"PUBLIC\"", "\"visibility\":\"INTERNAL\"")
+                .contains("\"totalElements\":3", "\"totalPages\":1");
+        assertThat(conversation.body().indexOf("Requester public"))
+                .isLessThan(conversation.body().indexOf("Internal diagnosis"));
+        assertThat(conversation.body().indexOf("Internal diagnosis"))
+                .isLessThan(conversation.body().indexOf("Technical public update"));
+
+        HttpResponse<String> requesterConversation = getComments(
+                operator.cookie(), ticketId.toString(), "0", "50");
+        assertThat(requesterConversation.body())
+                .contains("Requester public", "Technical public update")
+                .doesNotContain(internalId.toString(), "Internal diagnosis", "INTERNAL");
+        assertThat(getTechnicianComments(technician.cookie(), ticketId.toString(), "0", "50").body())
+                .contains("Requester public", "Technical public update")
+                .doesNotContain(internalId.toString(), "Internal diagnosis", "INTERNAL");
+        assertThat(getTickets(operator.cookie(), "0", "20").body())
+                .doesNotContain("Internal diagnosis");
+        assertThat(getTicket(operator.cookie(), ticketId.toString()).body())
+                .doesNotContain("Internal diagnosis");
+        assertThat(getTechnicianTicket(technician.cookie(), ticketId.toString()).body())
+                .doesNotContain("Internal diagnosis");
+
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT ticket_id, visibility, author_user_id, body
+                        FROM support.ticket_comments WHERE id = ?
+                        """,
+                        internalId))
+                .containsEntry("ticket_id", ticketId)
+                .containsEntry("visibility", "INTERNAL")
+                .containsEntry("author_user_id", technicianId)
+                .containsEntry("body", "Internal diagnosis");
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT event_version, producer_module, actor_type, actor_id,
+                               resource_type, resource_id, resource_version, correlation_id
+                        FROM support.outbox_events
+                        WHERE event_type = 'TICKET_COMMENT_ADDED'
+                          AND payload->>'commentId' = ?
+                        """,
+                        internalId.toString()))
+                .containsEntry("event_version", "1.0")
+                .containsEntry("producer_module", "SUPPORT")
+                .containsEntry("actor_type", "HUMAN_USER")
+                .containsEntry("actor_id", technicianId)
+                .containsEntry("resource_type", "TICKET")
+                .containsEntry("resource_id", ticketId)
+                .containsEntry("resource_version", 1L)
+                .containsEntry("correlation_id", internalCorrelation);
+        String payload = jdbc.queryForObject(
+                """
+                SELECT payload::text FROM support.outbox_events
+                WHERE event_type = 'TICKET_COMMENT_ADDED' AND payload->>'commentId' = ?
+                """,
+                String.class,
+                internalId.toString());
+        assertThat(payload)
+                .contains(internalId.toString(), "\"visibility\": \"INTERNAL\"")
+                .doesNotContain("body", "Internal diagnosis", "summary", "description", "username", "email");
+        assertThat(jdbc.queryForMap(
+                        "SELECT status, priority, assignee_user_id, version FROM support.tickets WHERE id = ?",
+                        ticketId))
+                .containsEntry("status", "OPEN")
+                .containsEntry("priority", "NORMAL")
+                .containsEntry("assignee_user_id", technicianId)
+                .containsEntry("version", 1L);
+    }
+
+    @Test
+    void technicianConversationRequiresRoleCsrfCurrentAssignmentOpenTicketAndValidClosedInput()
+            throws Exception {
+        Session operator = login();
+        String firstUsername = "Technician.Boundary.One." + UUID.randomUUID();
+        String secondUsername = "Technician.Boundary.Two." + UUID.randomUUID();
+        Session first = createAndLoginTechnician(operator, firstUsername);
+        Session second = createAndLoginTechnician(operator, secondUsername);
+        UUID ticketId = UUID.fromString(extract(
+                postTicket(operator, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+
+        assertThat(getTechnicianConversation(null, ticketId.toString(), "0", "50").statusCode()).isEqualTo(401);
+        assertThat(getTechnicianConversation(operator.cookie(), ticketId.toString(), "0", "50").statusCode())
+                .isEqualTo(403);
+        assertThat(postTechnicianComment(
+                                operator,
+                                ticketId.toString(),
+                                "{\"visibility\":\"PUBLIC\",\"body\":\"Denied\"}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(403);
+        assertThat(postTechnicianComment(
+                                new Session(first.cookie(), null),
+                                ticketId.toString(),
+                                "{\"visibility\":\"PUBLIC\",\"body\":\"Denied\"}",
+                                UUID.randomUUID())
+                        .body())
+                .contains("\"code\":\"CSRF_INVALID\"");
+
+        assertUniformNotFound(getTechnicianConversation(first.cookie(), ticketId.toString(), "0", "50"));
+        assertUniformNotFound(postTechnicianComment(
+                first,
+                ticketId.toString(),
+                "{\"visibility\":\"PUBLIC\",\"body\":\"Before claim\"}",
+                UUID.randomUUID()));
+        assertThat(claim(first, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(200);
+        assertUniformNotFound(getTechnicianConversation(second.cookie(), ticketId.toString(), "0", "50"));
+        assertUniformNotFound(postTechnicianComment(
+                second,
+                ticketId.toString(),
+                "{\"visibility\":\"INTERNAL\",\"body\":\"Other technician\"}",
+                UUID.randomUUID()));
+        assertUniformNotFound(getTechnicianConversation(first.cookie(), UUID.randomUUID().toString(), "0", "50"));
+        assertUniformNotFound(getTechnicianConversation(first.cookie(), "not-a-uuid", "0", "50"));
+
+        assertThat(postTechnicianComment(first, ticketId.toString(), "{\"body\":\"Missing\"}", UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(422);
+        assertThat(postTechnicianComment(
+                                first,
+                                ticketId.toString(),
+                                "{\"visibility\":\"SECRET\",\"body\":\"Unknown\"}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(422);
+        assertThat(postTechnicianComment(
+                                first,
+                                ticketId.toString(),
+                                "{\"visibility\":\"INTERNAL\",\"body\":\"   \"}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(422);
+        assertThat(postTechnicianComment(
+                                first,
+                                ticketId.toString(),
+                                "{\"visibility\":\"PUBLIC\",\"body\":\"Valid\",\"extra\":true}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(400);
+        assertThat(getTechnicianConversation(first.cookie(), ticketId.toString(), "-1", "50").statusCode())
+                .isEqualTo(422);
+        assertThat(getTechnicianConversation(first.cookie(), ticketId.toString(), "0", "101").statusCode())
+                .isEqualTo(422);
+
+        jdbc.update("UPDATE support.tickets SET status = 'CLOSED' WHERE id = ?", ticketId);
+        assertUniformNotFound(getTechnicianConversation(first.cookie(), ticketId.toString(), "0", "50"));
+        assertUniformNotFound(postTechnicianComment(
+                first,
+                ticketId.toString(),
+                "{\"visibility\":\"PUBLIC\",\"body\":\"Closed\"}",
+                UUID.randomUUID()));
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM support.ticket_comments WHERE ticket_id = ?", Integer.class, ticketId))
+                .isZero();
+    }
+
+    @Test
+    void rollsBackTechnicianCommentWhenItsOutboxEventFails() throws Exception {
+        Session operator = login();
+        String username = "Technician.Comment.Rollback." + UUID.randomUUID();
+        Session technician = createAndLoginTechnician(operator, username);
+        UUID ticketId = UUID.fromString(extract(
+                postTicket(operator, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        assertThat(claim(technician, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(200);
+        jdbc.execute(
+                """
+                ALTER TABLE support.outbox_events
+                ADD CONSTRAINT support_test_reject_technician_comment
+                CHECK (event_type <> 'TICKET_COMMENT_ADDED') NOT VALID
+                """);
+        try {
+            assertThat(postTechnicianComment(
+                                    technician,
+                                    ticketId.toString(),
+                                    "{\"visibility\":\"INTERNAL\",\"body\":\"Must roll back\"}",
+                                    UUID.randomUUID())
+                            .statusCode())
+                    .isEqualTo(503);
+            assertThat(jdbc.queryForObject(
+                            "SELECT count(*) FROM support.ticket_comments WHERE ticket_id = ?", Integer.class, ticketId))
+                    .isZero();
+        } finally {
+            jdbc.execute("ALTER TABLE support.outbox_events DROP CONSTRAINT support_test_reject_technician_comment");
+        }
+    }
+
     private Session login() throws Exception {
         return login(USERNAME, PASSWORD);
     }
@@ -618,6 +840,32 @@ class SupportIntegrationTest {
         return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
     }
 
+    private HttpResponse<String> getTechnicianConversation(String cookie, String ticketId, String page, String size)
+            throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets/technician-queue/" + ticketId
+                        + "/conversation?page=" + page + "&size=" + size))
+                .GET();
+        if (cookie != null) {
+            request.header("Cookie", cookie);
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> postTechnicianComment(
+            Session session, String ticketId, String body, UUID correlationId) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets/technician-queue/" + ticketId + "/conversation"))
+                .header("Cookie", session.cookie())
+                .header("Content-Type", "application/json")
+                .header("X-Correlation-ID", correlationId.toString())
+                .POST(HttpRequest.BodyPublishers.ofString(body));
+        if (session.csrfToken() != null) {
+            request.header("X-CSRF-Token", session.csrfToken());
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
     private HttpResponse<String> claim(Session session, UUID ticketId, long expectedVersion, UUID correlationId)
             throws Exception {
         return claimRaw(
@@ -690,6 +938,11 @@ class SupportIntegrationTest {
         var matcher = Pattern.compile("\\\"" + property + "\\\":\\\"([^\\\"]+)\\\"").matcher(body);
         assertThat(matcher.find()).isTrue();
         return matcher.group(1);
+    }
+
+    private static void assertUniformNotFound(HttpResponse<String> response) {
+        assertThat(response.statusCode()).isEqualTo(404);
+        assertThat(response.body()).contains("\"code\":\"TICKET_NOT_FOUND\"");
     }
 
     private record Session(String cookie, String csrfToken) {}
