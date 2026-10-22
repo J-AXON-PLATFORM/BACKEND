@@ -34,8 +34,11 @@ removes an ephemeral `docker-container` builder from the pinned BuildKit image
 because GitHub runners' default `docker` driver cannot export a local cache.
 CI provides that exact-key cache through `SFTPGO_BUILD_CACHE_DIR`; restored
 caches are verified before use and remain read-only. Cache misses export a
-complete replacement atomically. The cache is an availability optimization
-inside GitHub Actions' trust boundary, not an authenticity mechanism. Upstream tests,
+minimal cache containing the layers reachable from the verified target and
+replace it atomically. The ephemeral builder's internal cache is pruned before
+the export is hashed and the runtime is loaded from that external cache. The
+cache is an availability optimization inside GitHub Actions' trust boundary,
+not an authenticity mechanism. Upstream tests,
 `govulncheck`, runtime image loading, Trivy, and SBOM generation still run on
 every build.
 

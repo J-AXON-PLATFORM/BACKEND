@@ -43,7 +43,7 @@ prepare_cache_export() {
   if [[ "${export_cache}" != "true" || "${cache_read_only}" == "true" ]]; then
     return
   fi
-  cache_to=(--cache-to "type=local,dest=${next_cache_dir},mode=max")
+  cache_to=(--cache-to "type=local,dest=${next_cache_dir},mode=min")
 }
 
 commit_cache_export() {
@@ -72,6 +72,9 @@ build_target() {
     "${cache_to[@]}" \
     "$@" \
     "${repository_root}"
+  if [[ "${export_cache}" == "true" && -n "${builder_name}" ]]; then
+    docker buildx prune --builder "${builder_name}" --all --force >/dev/null
+  fi
   commit_cache_export
 }
 

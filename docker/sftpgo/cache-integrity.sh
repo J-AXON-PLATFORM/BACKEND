@@ -11,17 +11,40 @@ if [[ "${cache_dir}" != /* || "${cache_dir}" == "/" || ! -d "${cache_dir}" ]]; t
 fi
 
 validate_cache_layout() {
-  test -f "${cache_dir}/index.json"
-  test -f "${cache_dir}/oci-layout"
-  test -d "${cache_dir}/blobs/sha256"
-  test -z "$(find "${cache_dir}" -type l -print -quit)"
-  test -z "$(find "${cache_dir}" ! -type d ! -type f -print -quit)"
-  test -z "$(find "${cache_dir}" -type f \
+  local unexpected_entry
+
+  if [[ ! -f "${cache_dir}/index.json" ]]; then
+    printf 'SFTPGo build cache is missing index.json.\n' >&2
+    return 1
+  fi
+  if [[ ! -f "${cache_dir}/oci-layout" ]]; then
+    printf 'SFTPGo build cache is missing oci-layout.\n' >&2
+    return 1
+  fi
+  if [[ ! -d "${cache_dir}/blobs/sha256" ]]; then
+    printf 'SFTPGo build cache is missing blobs/sha256.\n' >&2
+    return 1
+  fi
+  unexpected_entry="$(find "${cache_dir}" -type l -print -quit)"
+  if [[ -n "${unexpected_entry}" ]]; then
+    printf 'SFTPGo build cache contains a symlink: %s\n' "${unexpected_entry}" >&2
+    return 1
+  fi
+  unexpected_entry="$(find "${cache_dir}" ! -type d ! -type f -print -quit)"
+  if [[ -n "${unexpected_entry}" ]]; then
+    printf 'SFTPGo build cache contains a special entry: %s\n' "${unexpected_entry}" >&2
+    return 1
+  fi
+  unexpected_entry="$(find "${cache_dir}" -type f \
     ! -path "${cache_dir}/index.json" \
     ! -path "${cache_dir}/oci-layout" \
     ! -path "${cache_dir}/blobs/sha256/*" \
     ! -path "${cache_dir}/${manifest_name}" \
     -print -quit)"
+  if [[ -n "${unexpected_entry}" ]]; then
+    printf 'SFTPGo build cache contains an unexpected file: %s\n' "${unexpected_entry}" >&2
+    return 1
+  fi
 }
 
 generate_manifest() {
@@ -48,7 +71,10 @@ verify_manifest() {
   local status=0
 
   validate_cache_layout
-  test -f "${cache_dir}/${manifest_name}"
+  if [[ ! -f "${cache_dir}/${manifest_name}" ]]; then
+    printf 'SFTPGo build cache is missing %s.\n' "${manifest_name}" >&2
+    return 1
+  fi
   calculated_manifest="$(mktemp)"
   generate_manifest > "${calculated_manifest}"
   cmp --silent "${cache_dir}/${manifest_name}" "${calculated_manifest}" || status=1
