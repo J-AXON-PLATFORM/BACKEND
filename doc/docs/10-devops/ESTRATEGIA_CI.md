@@ -72,7 +72,7 @@ La verificación local cubrió determinismo e invalidación por cada entrada, pl
 
 El primer run de PR `39865316279` falló en 60 segundos porque confirmó que el driver `docker` del runner no soporta `cache-to type=local`; no se relanzó. La corrección incorpora el builder efímero fijado descrito arriba y debe validarse mediante un nuevo run asociado al nuevo commit.
 
-El segundo run `39866621799` ejecutó pruebas upstream y `govulncheck` y completó la exportación `mode=max`, pero salió antes del build runtime al confirmar la caché, tras 18 min 31 s; tampoco se relanzó. La corrección limita la exportación a `mode=min`, libera el estado interno del builder antes de confirmar la copia externa y añade diagnósticos explícitos de layout.
+El segundo run `39866621799` ejecutó pruebas upstream y `govulncheck` y completó la exportación `mode=max`, pero salió antes del build runtime al confirmar la caché, tras 18 min 31 s; tampoco se relanzó. La corrección limita la exportación a `mode=min`, libera el estado interno del builder antes de confirmar la copia externa y añade diagnósticos explícitos de layout. El tercer run `39872945593` completó de nuevo pruebas upstream, `govulncheck` y la exportación, pero el inventario rechazó el archivo transitorio superior `cache.lock` que BuildKit dejó en el directorio exportado; tampoco se relanzó. La corrección elimina exclusivamente ese lock después de terminar con el builder y antes de inventariar, sin admitir otros archivos adicionales.
 
 ## Estado implementado en frontend -- TEC-QLT-001a y TEC-QLT-003a
 

@@ -51,6 +51,7 @@ commit_cache_export() {
     return
   fi
 
+  rm -f -- "${cache_dir}.next/cache.lock"
   "${repository_root}/docker/sftpgo/cache-integrity.sh" write "${cache_dir}.next"
   rm -rf -- "${cache_dir}"
   mv -- "${cache_dir}.next" "${cache_dir}"
