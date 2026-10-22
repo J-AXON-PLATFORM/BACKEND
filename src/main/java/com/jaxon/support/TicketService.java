@@ -342,7 +342,19 @@ class TicketService {
             UUID requesterUserId,
             String requestedBody,
             UUID correlationId) {
-        if (!owns(ticketId, requesterUserId)) {
+        Optional<Long> ticketVersion = jdbc.query(
+                """
+                SELECT version
+                FROM support.tickets
+                WHERE id = ? AND requester_user_id = ?
+                FOR UPDATE
+                """,
+                resultSet -> resultSet.next()
+                        ? Optional.of(resultSet.getLong("version"))
+                        : Optional.empty(),
+                ticketId,
+                requesterUserId);
+        if (ticketVersion.isEmpty()) {
             return Optional.empty();
         }
         String body = requestedBody.trim();
@@ -369,7 +381,7 @@ class TicketService {
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
                 VALUES (?, 'TICKET_COMMENT_ADDED', '1.0', ?, 'SUPPORT',
-                        'HUMAN_USER', ?, 'TICKET', ?, 0,
+                        'HUMAN_USER', ?, 'TICKET', ?, ?,
                         'SUCCESS', ?, jsonb_build_object(
                             'commentId', ?::text,
                             'visibility', 'PUBLIC'), ?)
@@ -378,6 +390,7 @@ class TicketService {
                 Timestamp.from(now),
                 requesterUserId,
                 ticketId,
+                ticketVersion.get(),
                 correlationId,
                 commentId,
                 Timestamp.from(now));
