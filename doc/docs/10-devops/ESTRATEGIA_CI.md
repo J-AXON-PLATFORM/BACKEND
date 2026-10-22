@@ -41,6 +41,26 @@ La ampliación histórica de contenedores se integró mediante `BACKEND#5`, squa
 
 `TEC-OPS-005a` y `TEC-OPS-006a` amplían el mismo job después de construir las imágenes locales. El harness usa red, contenedores, tmpfs y directorio temporal propios, no accede al volumen Local persistente, no recibe secretos reales y elimina sus recursos mediante ownership explícito. Los dumps no se cargan como artifacts ni se conservan tras el run. Se prueban alteraciones de backup/manifest, formato o permisos inválidos, sobrescritura, destino no vacío y rollback ante fallo de `pg_restore`. Este gate no valida DR, cifrado, retención, RPO o RTO Production.
 
+## Caracterización backend -- TEC-QLT-005a
+
+La medición del 2026-10-22 usa timestamps públicos por paso de cuatro ejecuciones verdes de `OLA3-SUP-004a`: PR técnico `39682421438` intento 2, post-merge técnico `39688305298`, PR documental `39691270114` y post-merge documental `39693528410`. Sus jobs duraron respectivamente 1213, 1244, 1179 y 1032 segundos. El intento 1 fallido de `39682421438` consumió otros 988 segundos antes de detectar la aserción SSE en `Verify backend`; se conserva como evidencia del coste de fallo tardío, no se mezcla con los rangos verdes.
+
+| Grupo o paso | Rango en runs verdes | Lectura |
+|---|---:|---|
+| Build/verificación SFTPGo | 697--899 s | 68--73 % del job; coste dominante |
+| Liberación de caché de build SFTPGo | 15--18 s | cleanup necesario después del gate |
+| `Verify backend` Maven/Testcontainers | 71--90 s | aproximadamente 7 %; incluye la suite funcional |
+| Build fixture PostgreSQL + scan Trivy | 46--63 s | imagen reproducible y scan bloqueante |
+| Build backend + smoke + scan Trivy | 110--133 s | imagen productiva local, ejecución endurecida y scan |
+| Validación/smoke Compose | 22--26 s | reutiliza imágenes locales y recursos aislados |
+| Backup/restore lógico | 16--24 s | harness positivo/negativo aislado |
+| OpenAPI compatibility | 2 s | gate contractual estable |
+| Gitleaks | 1--2 s | historial completo con redacción |
+
+El PR técnico y su push post-merge repitieron el job completo y sumaron 2457 segundos; el PR exclusivamente documental y su push post-merge repitieron los mismos gates y sumaron 2211 segundos. Esta duplicación es deliberada bajo el workflow actual y permite verificar exactamente cada commit integrado, pero hace que cambios documentales paguen el mismo coste de SFTPGo, imágenes, Trivy, Compose y backup/restore.
+
+La única oportunidad priorizada para análisis futuro es una caché reproducible del build SFTPGo, ligada de forma cerrada a commit, checksums, builder y fuentes. El riesgo es reutilizar una imagen o capas obsoletas y omitir pruebas upstream, `govulncheck`, SBOM o Trivy; cualquier propuesta deberá demostrar invalidación correcta y conservar build/verificación/scans como gates efectivos. `TEC-QLT-005a` no modifica `.github/workflows/backend-ci.yml`, no elimina pasos ni autoriza esa optimización.
+
 ## Estado implementado en frontend -- TEC-QLT-001a y TEC-QLT-003a
 
 El workflow `.github/workflows/frontend-ci.yml`, denominado `Frontend CI`, implementa la línea base ejecutable actual del frontend:

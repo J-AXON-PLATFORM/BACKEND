@@ -376,6 +376,14 @@ Support persiste exclusivamente en `support.ticket_comments` y captura atómicam
 
 El corte exige pruebas de contrato, PostgreSQL/Flyway real desde instalación limpia y upgrade histórico, autorización contextual, CSRF, orden/paginación, privacidad requester, atomicidad/rollback, payload mínimo, parsers fail-closed, cachés y E2E Chromium multirepo con comprobación SQL de comentarios y outbox. Autoriza un Pull Request técnico por `frontend` y `backend`, integración squash en ese orden, verificación post-merge y después un único Pull Request documental en `backend`. No modifica workflows, dependencias ni `automation-collector` y no autoriza cambios de estado o prioridad, reasignación, resolución/cierre/reapertura, adjuntos, búsqueda global, SSE, IA, Automation, consumidores outbox, auditoría materializada, infraestructura Production, artefactos publicados o despliegues.
 
+## AC-JAXON-075 -- Corrección de versión outbox Support y estabilización de prueba SSE
+
+El bloque agrupado `OLA3-SUP-004b` + `TEC-QLT-005a` autoriza exclusivamente en `backend` corregir dos hallazgos acotados posteriores a `OLA3-SUP-004a`. El comentario requester debe bloquear y leer en su misma transacción el ticket propio, conservar el `404` indistinguible y publicar `TICKET_COMMENT_ADDED.resource_version` con la versión vigente observada; no cambia estado, prioridad, assignee o versión del ticket ni amplía el payload mínimo. El hallazgo SSE corresponde a una carrera de observación de la prueba entre la recepción del evento y el incremento asíncrono de `jaxon.collector.sse.events.sent`; se autoriza sustituir la aserción inmediata por una espera observable, corta y acotada, sin cambiar lógica productiva SSE.
+
+La verificación exige casos Support antes y después de claim, privacidad y payload mínimo, rollback, orden concurrente claim/comentario, prueba SSE aislada, veinte repeticiones consecutivas, pruebas que comparten contexto/registry y un único `clean verify` completo. `TEC-QLT-005a` autoriza además medir las duraciones por paso de los runs backend de `OLA3-SUP-004a` y documentar oportunidades futuras; no autoriza modificar el workflow. Se autoriza la rama técnica exacta `fix/ola3-sup-004b-tec-qlt-005a`, un Pull Request técnico backend con squash y verificación post-merge, y después una rama y un único Pull Request documental backend con el mismo cierre controlado.
+
+No cambia OpenAPI, migraciones, dependencias, lockfiles, workflows, frontend, `automation-collector`, infraestructura Production, artefactos publicados o despliegues. La posible optimización reproducible del build SFTPGo queda como trabajo futuro que deberá conservar build, verificación y scans y requerirá delimitación y autorización propias. La autorización queda consumida al completar ambos Pull Requests y sus verificaciones post-merge.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)
