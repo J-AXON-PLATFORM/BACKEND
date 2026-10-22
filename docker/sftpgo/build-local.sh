@@ -7,9 +7,18 @@ readonly image="jaxon-sftpgo:2.7.6-local"
 readonly cache_dir="${SFTPGO_BUILD_CACHE_DIR:-}"
 readonly cache_read_only="${SFTPGO_BUILD_CACHE_READ_ONLY:-false}"
 readonly platform="${SFTPGO_BUILD_PLATFORM:-linux/$(docker version --format '{{.Server.Arch}}')}"
+readonly buildkit_image="docker.io/moby/buildkit:buildx-stable-1@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea"
 
 cache_from=()
 cache_to=()
+builder_args=()
+builder_name=""
+
+cleanup_builder() {
+  if [[ -n "${builder_name}" ]]; then
+    docker buildx rm --force "${builder_name}" >/dev/null 2>&1 || true
+  fi
+}
 
 prepare_cache_export() {
   local export_cache="$1"
@@ -54,6 +63,7 @@ build_target() {
 
   prepare_cache_export "${export_cache}"
   docker buildx build \
+    "${builder_args[@]}" \
     --file "${dockerfile}" \
     --platform "${platform}" \
     --progress plain \
@@ -68,6 +78,16 @@ build_target() {
 if [[ "${cache_read_only}" != "true" && "${cache_read_only}" != "false" ]]; then
   printf 'SFTPGO_BUILD_CACHE_READ_ONLY must be true or false.\n' >&2
   exit 1
+fi
+
+if [[ -n "${cache_dir}" ]]; then
+  builder_name="jaxon-sftpgo-cache-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-0}-$$"
+  trap cleanup_builder EXIT
+  docker buildx create \
+    --name "${builder_name}" \
+    --driver docker-container \
+    --driver-opt "image=${buildkit_image}" >/dev/null
+  builder_args=(--builder "${builder_name}")
 fi
 
 if [[ -n "${cache_dir}" && -e "${cache_dir}" ]] \

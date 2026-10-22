@@ -16,6 +16,7 @@ Supply-chain pins:
 - source SHA-256: `310a475de6eeb1d3e43a4df0ada0091a042487afb2a749e18c5c2d8c9aedd80f`;
 - signer fingerprint: `A7B5CC667C573A1DCD115ECB935D2952DEC4EECF`;
 - Go builder: `golang:1.26.10-bookworm@sha256:5c3f3f28a273c9b61698b2d34f18375929790ab1f1d3835d032d21e2b31eae0c`;
+- cache builder: `moby/buildkit:buildx-stable-1@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea`;
 - runtime: `gcr.io/distroless/static-debian13:nonroot@sha256:e2e927ec666bae08560abb3c55d0659eceabb657f56b6782ab500a9fc7f555e3`.
 
 `v2.7.6` is a lightweight tag. It has no independent tag-object signature; it
@@ -28,11 +29,13 @@ Run:
 ./docker/sftpgo/build-local.sh
 ```
 
-The script requires Docker Buildx. CI provides an exact-key local BuildKit
-cache through `SFTPGO_BUILD_CACHE_DIR`; restored caches are verified before
-use and remain read-only. Cache misses export a complete replacement
-atomically. The cache is an availability optimization inside GitHub Actions'
-trust boundary, not an authenticity mechanism. Upstream tests,
+The script requires Docker Buildx. When caching is enabled, it creates and
+removes an ephemeral `docker-container` builder from the pinned BuildKit image
+because GitHub runners' default `docker` driver cannot export a local cache.
+CI provides that exact-key cache through `SFTPGO_BUILD_CACHE_DIR`; restored
+caches are verified before use and remain read-only. Cache misses export a
+complete replacement atomically. The cache is an availability optimization
+inside GitHub Actions' trust boundary, not an authenticity mechanism. Upstream tests,
 `govulncheck`, runtime image loading, Trivy, and SBOM generation still run on
 every build.
 
