@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Corrección de versión outbox Support y estabilización SSE -- OLA3-SUP-004b + TEC-QLT-005a, 2026-10-22
+
+Backend corrige el alta requester de comentarios para bloquear el ticket propio, leer su versión vigente y usarla como `TICKET_COMMENT_ADDED.resource_version` dentro de la misma transacción. Se conservan el `404` sin enumeración, el payload mínimo, la privacidad requester y el ticket sin mutación. Las pruebas cubren versión inicial y posterior a claim, visibilidad requester/técnico, rollback y un orden concurrente reproducible de claim seguido por comentario.
+
+El fallo intermitente previo de Collector se atribuyó a la aserción inmediata del contador después de recibir el evento SSE: el envío y el incremento de métrica ocurren secuencialmente en el executor asíncrono, pero el cliente podía despertar entre ambos. La prueba ahora espera de forma observable hasta un segundo, con polling corto, sin `Thread.sleep`, retry CI ni cambio productivo. Pasó aislada, 20/20 repeticiones consecutivas, el grupo de contexto/registry 11/11 y el único `clean verify` completo 101/101.
+
+La integración técnica quedó completa mediante `BACKEND#38`, squash `f46ba60ba6f5f276e630309958656e07369f2c31`, con runs verdes `39716165236` de PR y `39718160097` post-merge. No cambian contratos, migraciones, dependencias, workflows, `frontend`, `automation-collector` o infraestructura Production. La medición `TEC-QLT-005a` identifica el build/verificación SFTPGo como coste dominante y deja cualquier optimización para un alcance futuro que preserve todos sus gates. `PRODUCTION_READY = NO`.
+
+---
+
 ## Conversación técnica pública e interna -- OLA3-SUP-004a, 2026-10-21
 
 Backend añade `GET|POST /api/v1/tickets/technician-queue/{ticketId}/conversation` para que solo el `SUPPORT_TECHNICIAN` actualmente asignado a un ticket no cerrado lea y añada comentarios `PUBLIC|INTERNAL`. La migración `V20261022000000__support_technician_conversation.sql` amplía de forma validada los constraints de visibilidad y payload; cada alta y su `TICKET_COMMENT_ADDED` se confirman en una transacción, con payload limitado a `commentId` y `visibility`. Las rutas requester y la lectura técnica pre-claim continúan filtrando exclusivamente `PUBLIC`.

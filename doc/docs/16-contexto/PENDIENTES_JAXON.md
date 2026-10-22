@@ -6,7 +6,7 @@
 
 ## Punto de reanudación
 
-No reabrir AC-JAXON-001..074 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
+No reabrir AC-JAXON-001..075 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
 
 La baseline técnica de OLA 0 fue completada y verificada. `OLA1-IAM-001a` incorpora la primera funcionalidad: tablas exclusivamente en `identity`, login, `/auth/me`, sesión opaca, bootstrap, límites de intentos, outbox productor, UI mínima y Playwright real. El bloque fue completado, integrado y verificado el 2026-10-11.
 
@@ -39,6 +39,8 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 `OLA3-SUP-003a` está completado, integrado y verificado en `frontend` y `backend`. `FRONTEND#16`, squash `d39fcbdd38ebdddf04d3a143909e43cc6fb72fdc`, tuvo CI verde `39589547411` de PR y `39589902859` post-merge; `BACKEND#34`, squash `4fd0137edec6247e2c208cd93b180d5009925527`, tuvo CI verde `39590317308` de PR y `39593017095` post-merge. Añade bandeja paginada para `SUPPORT_TECHNICIAN`, detalle y conversación `PUBLIC` de solo lectura, claim concurrente/idempotente con `expectedVersion`, outbox `TICKET_ASSIGNED`, UI estricta y OpenAPI 4.0. No añade comentarios técnicos, notas internas, cambios de estado/prioridad, reasignación, resolución/cierre/reapertura, adjuntos, búsqueda global, SSE, IA, Automation, consumidor outbox, cambios en `automation-collector` o Production.
 
 `OLA3-SUP-004a` está completado, integrado y verificado en `frontend` y `backend`. `FRONTEND#17`, squash `32db50cce9933d69b0b6ad7c12e871c491c99243`, tuvo CI verde `39681656581` de PR y `39682015289` post-merge; `BACKEND#36`, squash `ecc497f1b7ab097730efeb80f12aa16aaaea0717`, tuvo CI definitiva verde `39682421438` de PR y `39688305298` post-merge. Añade conversación combinada `PUBLIC|INTERNAL` solo para el técnico actualmente asignado, mantiene requester y lectura pre-claim exclusivamente `PUBLIC`, persiste `TICKET_COMMENT_ADDED` con payload mínimo, incorpora migración segura, UI estricta y OpenAPI 4.1 compatible. No añade cambios de estado/prioridad, reasignación, resolución/cierre/reapertura, adjuntos, búsqueda global, SSE, IA, Automation, consumidor outbox, cambios en `automation-collector` o Production.
+
+`OLA3-SUP-004b` + `TEC-QLT-005a` está completado, integrado y verificado exclusivamente en `backend`. `BACKEND#38`, squash `f46ba60ba6f5f276e630309958656e07369f2c31`, tuvo CI verde `39716165236` de PR y `39718160097` post-merge. Corrige `TICKET_COMMENT_ADDED.resource_version` requester mediante lectura bloqueante de la versión vigente sin mutar el ticket, y estabiliza solo la prueba SSE con una espera observable acotada; 20/20 repeticiones SSE y 101/101 pruebas de `clean verify` quedaron verdes. No cambia contratos, migraciones, payloads, dependencias, workflows, lógica productiva SSE, `frontend`, `automation-collector` o Production. La optimización reproducible del build SFTPGo queda pendiente de un alcance futuro propio.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
