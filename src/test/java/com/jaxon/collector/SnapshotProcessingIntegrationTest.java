@@ -25,6 +25,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
@@ -378,7 +379,7 @@ class SnapshotProcessingIntegrationTest {
                 .contains("\"assetId\":\"" + assetId + "\"")
                 .contains("\"correlationId\":")
                 .doesNotContain("sse-host", snapshotId.toString(), agentId.toString());
-        assertThat(sseCounter("jaxon.collector.sse.events.sent")).isEqualTo(sentBefore + 1);
+        awaitSseCounter("jaxon.collector.sse.events.sent", sentBefore + 1);
 
         String sha256 = jdbc.queryForObject(
                 "SELECT content_sha256 FROM collector.accepted_snapshots WHERE message_id = ?",
@@ -606,6 +607,19 @@ class SnapshotProcessingIntegrationTest {
 
     private double sseCounter(String name) {
         return meterRegistry.get(name).counter().count();
+    }
+
+    private void awaitSseCounter(String name, double expected) {
+        long deadline = System.nanoTime() + Duration.ofSeconds(1).toNanos();
+        double observed;
+        do {
+            observed = sseCounter(name);
+            if (observed == expected) {
+                return;
+            }
+            LockSupport.parkNanos(Duration.ofMillis(1).toNanos());
+        } while (System.nanoTime() < deadline);
+        assertThat(observed).isEqualTo(expected);
     }
 
     private double agentStatusGauge(String name, String status) {

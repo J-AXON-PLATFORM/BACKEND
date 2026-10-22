@@ -6,9 +6,12 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.sql.Connection;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -295,13 +298,14 @@ class SupportIntegrationTest {
                 .containsEntry("body", "Public update");
         assertThat(jdbc.queryForMap(
                         """
-                        SELECT event_type, resource_type, resource_id, correlation_id, payload
+                        SELECT event_type, resource_type, resource_id, resource_version, correlation_id, payload
                         FROM support.outbox_events WHERE event_type = 'TICKET_COMMENT_ADDED' AND resource_id = ?
                         """,
                         ticketId))
                 .containsEntry("event_type", "TICKET_COMMENT_ADDED")
                 .containsEntry("resource_type", "TICKET")
                 .containsEntry("resource_id", ticketId)
+                .containsEntry("resource_version", 0L)
                 .containsEntry("correlation_id", correlationId);
         String payload = jdbc.queryForObject(
                 """
@@ -318,6 +322,54 @@ class SupportIntegrationTest {
         assertThat(comments.statusCode()).isEqualTo(200);
         assertThat(comments.body())
                 .contains(commentId.toString(), "\"totalElements\":1", "\"totalPages\":1");
+    }
+
+    @Test
+    void requesterCommentAfterClaimUsesTheCurrentTicketVersionWithoutChangingIt() throws Exception {
+        Session requester = login();
+        String username = "Technician.Requester.Comment." + UUID.randomUUID();
+        Session technician = createAndLoginTechnician(requester, username);
+        UUID ticketId = UUID.fromString(extract(
+                postTicket(requester, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        assertThat(claim(technician, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(200);
+
+        HttpResponse<String> created = postComment(
+                requester,
+                ticketId.toString(),
+                "{\"body\":\"Requester update after claim\"}",
+                UUID.randomUUID());
+
+        assertThat(created.statusCode()).isEqualTo(201);
+        UUID commentId = UUID.fromString(extract(created.body(), "commentId"));
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT resource_version, payload
+                        FROM support.outbox_events
+                        WHERE event_type = 'TICKET_COMMENT_ADDED'
+                          AND payload->>'commentId' = ?
+                        """,
+                        commentId.toString()))
+                .containsEntry("resource_version", 1L);
+        String payload = jdbc.queryForObject(
+                """
+                SELECT payload::text
+                FROM support.outbox_events
+                WHERE event_type = 'TICKET_COMMENT_ADDED'
+                  AND payload->>'commentId' = ?
+                """,
+                String.class,
+                commentId.toString());
+        assertThat(payload)
+                .contains(commentId.toString(), "\"visibility\": \"PUBLIC\"")
+                .doesNotContain("body", "Requester update after claim", "summary", "description");
+        assertThat(getComments(requester.cookie(), ticketId.toString(), "0", "50").body())
+                .contains(commentId.toString(), "Requester update after claim");
+        assertThat(getTechnicianConversation(technician.cookie(), ticketId.toString(), "0", "50").body())
+                .contains(commentId.toString(), "Requester update after claim", "\"visibility\":\"PUBLIC\"");
+        assertThat(jdbc.queryForMap(
+                        "SELECT assignee_user_id, version FROM support.tickets WHERE id = ?", ticketId))
+                .containsEntry("assignee_user_id", userId(username))
+                .containsEntry("version", 1L);
     }
 
     @Test
@@ -369,6 +421,9 @@ class SupportIntegrationTest {
     void rollsBackTheCommentWhenItsOutboxEventCannotBePersisted() throws Exception {
         Session session = login();
         UUID ticketId = UUID.fromString(extract(postTicket(session, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        String username = "Technician.Requester.Rollback." + UUID.randomUUID();
+        Session technician = createAndLoginTechnician(session, username);
+        assertThat(claim(technician, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(200);
         jdbc.execute(
                 """
                 ALTER TABLE support.outbox_events
@@ -382,9 +437,74 @@ class SupportIntegrationTest {
             assertThat(jdbc.queryForObject(
                             "SELECT count(*) FROM support.ticket_comments WHERE ticket_id = ?", Integer.class, ticketId))
                     .isZero();
+            assertThat(jdbc.queryForObject(
+                            "SELECT version FROM support.tickets WHERE id = ?", Long.class, ticketId))
+                    .isEqualTo(1L);
         } finally {
             jdbc.execute("ALTER TABLE support.outbox_events DROP CONSTRAINT support_test_reject_comment_event");
         }
+    }
+
+    @Test
+    void concurrentClaimAndRequesterCommentKeepResourceVersionConsistentWithTheLockOrder() throws Exception {
+        Session requester = login();
+        String username = "Technician.Concurrent.Comment." + UUID.randomUUID();
+        Session technician = createAndLoginTechnician(requester, username);
+        UUID ticketId = UUID.fromString(extract(
+                postTicket(requester, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        UUID commentCorrelation = UUID.randomUUID();
+
+        CompletableFuture<HttpResponse<String>> claim;
+        CompletableFuture<HttpResponse<String>> comment;
+        try (Connection blocker = jdbc.getDataSource().getConnection()) {
+            blocker.setAutoCommit(false);
+            try (var statement = blocker.prepareStatement(
+                            "SELECT version FROM support.tickets WHERE id = ? FOR UPDATE")) {
+                statement.setObject(1, ticketId);
+                try (var result = statement.executeQuery()) {
+                    assertThat(result.next()).isTrue();
+                }
+            }
+            claim = claimAsync(technician, ticketId, 0, UUID.randomUUID());
+            awaitBlockedTransactions(1);
+            comment = postCommentAsync(
+                    requester,
+                    ticketId,
+                    "{\"body\":\"Concurrent requester update\"}",
+                    commentCorrelation);
+            awaitBlockedTransactions(2);
+            blocker.commit();
+        }
+        HttpResponse<String> claimResponse = claim.join();
+        HttpResponse<String> commentResponse = comment.join();
+
+        assertThat(claimResponse.statusCode()).isEqualTo(200);
+        assertThat(commentResponse.statusCode()).isEqualTo(201);
+        UUID commentId = UUID.fromString(extract(commentResponse.body(), "commentId"));
+        long commentResourceVersion = jdbc.queryForObject(
+                """
+                SELECT resource_version
+                FROM support.outbox_events
+                WHERE event_type = 'TICKET_COMMENT_ADDED'
+                  AND payload->>'commentId' = ?
+                  AND correlation_id = ?
+                """,
+                Long.class,
+                commentId.toString(),
+                commentCorrelation);
+        assertThat(commentResourceVersion).isEqualTo(1L);
+        assertThat(jdbc.queryForObject(
+                        "SELECT version FROM support.tickets WHERE id = ?", Long.class, ticketId))
+                .isEqualTo(1L);
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT resource_version
+                        FROM support.outbox_events
+                        WHERE event_type = 'TICKET_ASSIGNED' AND resource_id = ?
+                        """,
+                        Long.class,
+                        ticketId))
+                .isEqualTo(1L);
     }
 
     @Test
@@ -907,6 +1027,18 @@ class SupportIntegrationTest {
 
     private HttpResponse<String> postComment(Session session, String ticketId, String body, UUID correlationId)
             throws Exception {
+        return httpClient.send(
+                commentRequest(session, ticketId, body, correlationId), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private CompletableFuture<HttpResponse<String>> postCommentAsync(
+            Session session, UUID ticketId, String body, UUID correlationId) {
+        return httpClient.sendAsync(
+                commentRequest(session, ticketId.toString(), body, correlationId),
+                HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpRequest commentRequest(Session session, String ticketId, String body, UUID correlationId) {
         HttpRequest.Builder request = HttpRequest.newBuilder()
                 .uri(uri("/api/v1/tickets/" + ticketId + "/comments"))
                 .header("Cookie", session.cookie())
@@ -916,7 +1048,28 @@ class SupportIntegrationTest {
         if (session.csrfToken() != null) {
             request.header("X-CSRF-Token", session.csrfToken());
         }
-        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+        return request.build();
+    }
+
+    private void awaitBlockedTransactions(int expected) {
+        long deadline = System.nanoTime() + Duration.ofSeconds(5).toNanos();
+        int observed;
+        do {
+            observed = jdbc.queryForObject(
+                    """
+                    SELECT count(*)
+                    FROM pg_stat_activity
+                    WHERE datname = current_database()
+                      AND wait_event_type = 'Lock'
+                      AND state = 'active'
+                    """,
+                    Integer.class);
+            if (observed >= expected) {
+                return;
+            }
+            LockSupport.parkNanos(Duration.ofMillis(1).toNanos());
+        } while (System.nanoTime() < deadline);
+        assertThat(observed).isGreaterThanOrEqualTo(expected);
     }
 
     private HttpResponse<String> getComments(String cookie, String ticketId, String page, String size)
