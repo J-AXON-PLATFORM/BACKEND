@@ -6,7 +6,7 @@
 
 ## Punto de reanudación
 
-No reabrir AC-JAXON-001..075 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
+No reabrir AC-JAXON-001..076 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
 
 La baseline técnica de OLA 0 fue completada y verificada. `OLA1-IAM-001a` incorpora la primera funcionalidad: tablas exclusivamente en `identity`, login, `/auth/me`, sesión opaca, bootstrap, límites de intentos, outbox productor, UI mínima y Playwright real. El bloque fue completado, integrado y verificado el 2026-10-11.
 
@@ -40,7 +40,9 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 
 `OLA3-SUP-004a` está completado, integrado y verificado en `frontend` y `backend`. `FRONTEND#17`, squash `32db50cce9933d69b0b6ad7c12e871c491c99243`, tuvo CI verde `39681656581` de PR y `39682015289` post-merge; `BACKEND#36`, squash `ecc497f1b7ab097730efeb80f12aa16aaaea0717`, tuvo CI definitiva verde `39682421438` de PR y `39688305298` post-merge. Añade conversación combinada `PUBLIC|INTERNAL` solo para el técnico actualmente asignado, mantiene requester y lectura pre-claim exclusivamente `PUBLIC`, persiste `TICKET_COMMENT_ADDED` con payload mínimo, incorpora migración segura, UI estricta y OpenAPI 4.1 compatible. No añade cambios de estado/prioridad, reasignación, resolución/cierre/reapertura, adjuntos, búsqueda global, SSE, IA, Automation, consumidor outbox, cambios en `automation-collector` o Production.
 
-`OLA3-SUP-004b` + `TEC-QLT-005a` está completado, integrado y verificado exclusivamente en `backend`. `BACKEND#38`, squash `f46ba60ba6f5f276e630309958656e07369f2c31`, tuvo CI verde `39716165236` de PR y `39718160097` post-merge. Corrige `TICKET_COMMENT_ADDED.resource_version` requester mediante lectura bloqueante de la versión vigente sin mutar el ticket, y estabiliza solo la prueba SSE con una espera observable acotada; 20/20 repeticiones SSE y 101/101 pruebas de `clean verify` quedaron verdes. No cambia contratos, migraciones, payloads, dependencias, workflows, lógica productiva SSE, `frontend`, `automation-collector` o Production. La optimización reproducible del build SFTPGo queda pendiente de un alcance futuro propio.
+`OLA3-SUP-004b` + `TEC-QLT-005a` está completado, integrado y verificado exclusivamente en `backend`. `BACKEND#38`, squash `f46ba60ba6f5f276e630309958656e07369f2c31`, tuvo CI verde `39716165236` de PR y `39718160097` post-merge. Corrige `TICKET_COMMENT_ADDED.resource_version` requester mediante lectura bloqueante de la versión vigente sin mutar el ticket, y estabiliza solo la prueba SSE con una espera observable acotada; 20/20 repeticiones SSE y 101/101 pruebas de `clean verify` quedaron verdes. No cambia contratos, migraciones, payloads, dependencias, lógica productiva SSE, `frontend`, `automation-collector` o Production.
+
+`TEC-QLT-006a` está implementado y verificado localmente bajo `AC-JAXON-076`; su cierre remoto continúa pendiente. Añade exclusivamente al workflow backend una caché BuildKit exacta para etapas preparatorias del build SFTPGo Local/Test, validada por inventario SHA-256, read-only en hit y exportada atómicamente solo en miss. Conserva la ejecución de pruebas upstream, `govulncheck`, imagen runtime, Trivy, SBOM y todos los gates posteriores. Los escenarios finales miss e hit terminaron correctamente en 582,83 s y 403,54 s; una prueba previa con caché inválida provocó una reconstrucción completa en 576,97 s. No cambia producto, contratos, datos, SFTPGo 2.7.6, otros repositorios o Production.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -98,10 +100,11 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - La reconciliación Collector genera un `correlationId` UUIDv4 explícito por candidato, lo instala de forma acotada en MDC y lo transporta al aviso SSE posterior al commit; no reutiliza contexto servlet ni asume propagación implícita entre hilos.
 - La baseline de `TEC-OPS-005a`/`TEC-OPS-006a` crea dumps custom y manifests verificables, restaura únicamente sobre un destino vacío y separado, y prueba escenarios positivos/negativos en recursos efímeros. Backup/DR Production continúa pendiente.
 - La baseline supply-chain final de OLA 0 usa `develop` como default branch sin cambiar el rol productivo de `main`; habilita Dependency Graph, Dependabot alerts y security updates agrupados; deshabilita version updates ordinarios; y añade Gitleaks bloqueante con historial completo y redacción a los tres jobs existentes. No habilita auto-merge, Secret Protection, CodeQL, SBOM, firma o publicación.
+- `TEC-QLT-006a` modifica únicamente `Backend CI` y la receta SFTPGo Local/Test para introducir una caché reproducible sin eliminar gates. La rama autorizada es `ci/tec-qlt-006a-sftpgo-cache`; el único Pull Request, su squash y el run post-merge están pendientes de evidencia remota.
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
-- Siguiente paso remoto pendiente: analizar y delimitar por separado cualquier cambio GitHub adicional, solicitando antes autorización expresa de LUIS.
-- Próxima acción técnica: delimitar y autorizar por separado cualquier incremento nuevo.
+- Siguiente paso remoto pendiente: completar exclusivamente el Pull Request y la verificación post-merge autorizados para `TEC-QLT-006a`.
+- Próxima acción técnica posterior: delimitar y autorizar por separado cualquier incremento nuevo.
 - La primera vertical E2E ya fue alcanzada mediante incrementos autorizados; la continuación mantiene el mismo enfoque incremental y no implementa “todo J-AXON de una vez”.
 
 ## Reglas de continuidad

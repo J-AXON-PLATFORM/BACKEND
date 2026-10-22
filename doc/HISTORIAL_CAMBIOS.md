@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Caché reproducible del build SFTPGo -- TEC-QLT-006a, 2026-10-22
+
+Backend añade una caché OCI BuildKit exacta para reducir el coste dominante medido por `TEC-QLT-005a`. La clave cubre esquema, plataforma y todas las entradas efectivas; `actions/cache` 6.1.0 queda fijada por SHA, sin `restore-keys`. El contenido restaurado se valida contra un inventario canónico SHA-256, rechaza symlinks, archivos faltantes, adicionales o alterados y se usa read-only. Solo un miss exporta y sustituye atómicamente una caché completa; una restauración no disponible o una caché rechazada degradan a build completo, mientras un fallo de guardado afecta únicamente a la optimización futura.
+
+Las etapas preparatorias pueden reutilizarse, pero `--no-cache-filter` fuerza pruebas upstream, `govulncheck` y verificación final. La imagen runtime se carga y `verify-image.sh` vuelve a ejecutar versión, Trivy HIGH/CRITICAL y SBOM CycloneDX. La validación local cubrió clave determinista, invalidación por entrada, plataforma inválida, corrupción, manifiesto truncado, miss, hit y caché inválida. La ejecución final SFTPGo tardó 582,83 s en miss y 403,54 s en hit; una prueba previa descartó una caché inválida y reconstruyó en 576,97 s. Frente al rango histórico 697--899 s, Maven pasó 101/101 pruebas y también quedaron verdes OpenAPI, contenedores, Compose, backup/restore y Gitleaks.
+
+La implementación local está completa en la rama autorizada `ci/tec-qlt-006a-sftpgo-cache`; el único Pull Request, su squash y la verificación post-merge permanecen pendientes y no se anticipan como realizados. No cambian contratos, migraciones, dependencias Maven, lógica funcional, SFTPGo 2.7.6, `frontend`, `automation-collector` o infraestructura Production. No se publican imágenes ni artefactos. `PRODUCTION_READY = NO`.
+
+---
+
 ## Corrección de versión outbox Support y estabilización SSE -- OLA3-SUP-004b + TEC-QLT-005a, 2026-10-22
 
 Backend corrige el alta requester de comentarios para bloquear el ticket propio, leer su versión vigente y usarla como `TICKET_COMMENT_ADDED.resource_version` dentro de la misma transacción. Se conservan el `404` sin enumeración, el payload mínimo, la privacidad requester y el ticket sin mutación. Las pruebas cubren versión inicial y posterior a claim, visibilidad requester/técnico, rollback y un orden concurrente reproducible de claim seguido por comentario.

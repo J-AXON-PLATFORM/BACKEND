@@ -24,6 +24,7 @@ El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, impleme
 - job estable `Backend verification` sobre `ubuntu-24.04`, con timeout de 30 minutos;
 - Java 25 Temurin y caché Maven administrada por `setup-java`;
 - build y scan de una fixture local endurecida PostgreSQL 18.6 + pgvector 0.8.6 antes de las pruebas;
+- clave exacta, restauración validada y guardado best-effort de una caché BuildKit local para SFTPGo, sin reutilizar los gates de pruebas, vulnerabilidades o verificación runtime;
 - `./mvnw --batch-mode --no-transfer-progress clean verify` para compilación, suite automatizada, modularidad, contratos, health/probes, logs JSON, correlación HTTP, métricas, tracing e integración Testcontainers/Flyway con los ocho schemas;
 - build multi-stage del backend, smoke no-root/read-only con PostgreSQL real y scan Trivy bloqueante HIGH/CRITICAL;
 - validación declarativa de `compose.yaml` y smoke Compose aislado con PostgreSQL predeterminado y backend opcional, reutilizando las imágenes construidas por los gates anteriores;
@@ -60,6 +61,14 @@ La medición del 2026-10-22 usa timestamps públicos por paso de cuatro ejecucio
 El PR técnico y su push post-merge repitieron el job completo y sumaron 2457 segundos; el PR exclusivamente documental y su push post-merge repitieron los mismos gates y sumaron 2211 segundos. Esta duplicación es deliberada bajo el workflow actual y permite verificar exactamente cada commit integrado, pero hace que cambios documentales paguen el mismo coste de SFTPGo, imágenes, Trivy, Compose y backup/restore.
 
 La única oportunidad priorizada para análisis futuro es una caché reproducible del build SFTPGo, ligada de forma cerrada a commit, checksums, builder y fuentes. El riesgo es reutilizar una imagen o capas obsoletas y omitir pruebas upstream, `govulncheck`, SBOM o Trivy; cualquier propuesta deberá demostrar invalidación correcta y conservar build/verificación/scans como gates efectivos. `TEC-QLT-005a` no modifica `.github/workflows/backend-ci.yml`, no elimina pasos ni autoriza esa optimización.
+
+## Optimización backend -- TEC-QLT-006a
+
+`TEC-QLT-006a` materializa bajo `AC-JAXON-076` la oportunidad identificada por la caracterización anterior. `actions/cache/restore` y `actions/cache/save` 6.1.0 están fijadas al SHA `55cc8345863c7cc4c66a329aec7e433d2d1c52a9`; usan `/tmp/jaxon-sftpgo-build-cache` y una clave exacta calculada por `docker/sftpgo/cache-key.sh`, sin `restore-keys`. La clave cubre esquema, plataforma, workflow, Dockerfile, `.dockerignore` y scripts efectivos. `cache-integrity.sh` genera y compara un inventario canónico SHA-256 de la caché OCI, rechaza symlinks, archivos adicionales, faltantes o alterados y obliga a reconstrucción completa ante rechazo.
+
+Un hit válido se importa como read-only. Un miss exporta una única caché completa a un directorio temporal y la sustituye solo después del build y del manifiesto; un fallo de restore/save afecta únicamente a la optimización. `--no-cache-filter` fuerza las etapas `upstream-tests`, `vulnerability-check` y `verification`, mientras el segundo build carga la imagen runtime y `verify-image.sh` conserva versión, Trivy HIGH/CRITICAL y SBOM CycloneDX temporal. Gitleaks, PostgreSQL/pgvector, Maven, OpenAPI, contenedor backend, Compose y backup/restore no cambian. Los hashes de caché detectan corrupción accidental dentro de la frontera de confianza de GitHub Actions; no autentican contenido frente a un actor que controle esa misma frontera.
+
+La verificación local previa al Pull Request cubrió determinismo e invalidación por cada entrada, plataforma inválida, corrupción, contenido no inventariado, manifiesto truncado, cache miss, hit exacto y caché inválida descartada. La ejecución final midió 582,83 s en miss y 403,54 s en hit; una prueba anterior de rechazo y reconstrucción completa midió 576,97 s. Frente al rango histórico 697--899 s, el hit final redujo entre 293 y 495 segundos sin omitir pruebas upstream, `govulncheck`, Trivy o SBOM. La evidencia remota de PR y post-merge se incorpora al reporte de cierre después de existir; no se anticipa en este documento.
 
 ## Estado implementado en frontend -- TEC-QLT-001a y TEC-QLT-003a
 
