@@ -175,6 +175,42 @@ class SupportMigrationIntegrationTest {
                         "{\"previousPriority\":\"NORMAL\",\"newPriority\":\"HIGH\",\"extra\":true}",
                         now))
                 .isInstanceOf(DataIntegrityViolationException.class);
+        UUID lifecycleId = UUID.randomUUID();
+        jdbc.update(
+                """
+                INSERT INTO support.ticket_lifecycle_events
+                    (id, ticket_id, event_type, from_status, to_status, actor_user_id,
+                     resolution_summary, occurred_at, resource_version)
+                VALUES (?, ?, 'RESOLVED', 'IN_PROGRESS', 'RESOLVED', ?, 'Restored service', ?, 1)
+                """,
+                lifecycleId,
+                ticketId,
+                actorId,
+                Timestamp.from(now));
+        assertThatThrownBy(() -> jdbc.update(
+                        "UPDATE support.ticket_lifecycle_events SET resolution_summary = 'Changed' WHERE id = ?",
+                        lifecycleId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.update(
+                        "DELETE FROM support.ticket_lifecycle_events WHERE id = ?", lifecycleId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.update(
+                        """
+                        INSERT INTO support.ticket_lifecycle_events
+                            (id, ticket_id, event_type, from_status, to_status, actor_user_id,
+                             close_reason, occurred_at, resource_version)
+                        VALUES (?, ?, 'CLOSED', 'OPEN', 'CLOSED', ?, 'RESOLVED', ?, 2)
+                        """,
+                        UUID.randomUUID(),
+                        ticketId,
+                        actorId,
+                        Timestamp.from(now)))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM support.ticket_lifecycle_events WHERE id = ?",
+                        Integer.class,
+                        lifecycleId))
+                .isOne();
     }
 
     private static void insertEvent(

@@ -62,9 +62,15 @@ El contrato no promete replay ni estado oficial dentro del stream: el cliente vu
 
 La prioridad admite `LOW|NORMAL|HIGH|URGENT`; el ciclo operativo se limita a `OPEN -> IN_PROGRESS`, `IN_PROGRESS -> WAITING_FOR_REQUESTER` y `WAITING_FOR_REQUESTER -> IN_PROGRESS`. `oasdiff` bloquea incompatibilidad 4.1 -> 4.2 y los checksums fijados protegen byte a byte todas las versiones anteriores. No se incorporan resolución, cierre, reapertura o reasignación.
 
+## Contrato compatible 4.3 -- OLA3-SUP-006a
+
+`doc/contracts/openapi/4.3/openapi.yaml` conserva todas las operaciones 4.2 y añade únicamente `POST /tickets/{ticketId}/resolve`, `POST /tickets/{ticketId}/close`, `POST /tickets/{ticketId}/reopen`, `GET /tickets/{ticketId}/lifecycle` y `GET /tickets/technician-queue/{ticketId}/lifecycle`. Las mutaciones requieren CSRF y `expectedVersion`, devuelven el `TicketResponse` histórico sin campos nuevos y usan `409` para versión obsoleta o transición inválida.
+
+El historial público es cerrado, paginado y ordenado; puede contener resumen de resolución, motivo cerrado de cierre o motivo de reapertura según el evento. La autorización permanece contextual al requester propietario o técnico asignado. `oasdiff` bloquea incompatibilidad 4.2 -> 4.3 y el checksum fijado protege 4.2 byte a byte.
+
 ## Pendiente de diseño detallado
 
-Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 4.2. SFTP/JSON Schema permanece separado para el ejecutable Agent; SSE solo notifica al navegador y no crea un canal HTTP Agent ni autoriza snapshots HTTP.
+Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 4.3. SFTP/JSON Schema permanece separado para el ejecutable Agent; SSE solo notifica al navegador y no crea un canal HTTP Agent ni autoriza snapshots HTTP.
 
 ---
 > **Clasificación:** CONDICIONAL  

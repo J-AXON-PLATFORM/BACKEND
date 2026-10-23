@@ -119,6 +119,7 @@ class DatabaseBootstrapIntegrationTest {
                 "inventory.outbox_events",
                 "support.outbox_events",
                 "support.ticket_comments",
+                "support.ticket_lifecycle_events",
                 "support.tickets");
         assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM identity.human_users", Integer.class))
                 .isZero();

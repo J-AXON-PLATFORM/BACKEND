@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Lifecycle terminal de Support y CI escalonada -- OLA3-SUP-006a + TEC-QLT-007a, 2026-10-23
+
+Backend incorpora resolución, cierre y reapertura especializados con bloqueo, `expectedVersion`, historial `support.ticket_lifecycle_events` append-only y eventos mínimos `TICKET_RESOLVED|TICKET_CLOSED|TICKET_REOPENED`. OpenAPI 4.3 conserva 4.2 byte a byte y añade cinco operaciones. Frontend presenta timeline público, acciones contextuales sin retry/optimistic update y mantiene acceso técnico a cerrados asignados; los comentarios requester se deshabilitan en cerrado y vuelven tras reapertura.
+
+Los workflows backend/frontend incorporan clasificación `DOCS_ONLY|APPLICATION|PLATFORM_FULL`, pruebas de tabla, fallback cerrado y procedencia read-only de PR para pushes a `develop`. El nivel completo conserva todos los gates previos y ambos PR del bloque se clasifican como `PLATFORM_FULL`. La verificación local concluye con 108 pruebas backend, 56 frontend, contratos OpenAPI, clasificadores, `actionlint` 1.7.10, builds y un E2E Chromium multirepo real con comprobación SQL de resolve, close, reopen, historial, versión, assignee y privacidad outbox. El bloque está implementado y verificado localmente; PRs, integración, runs post-merge y limpieza permanecen pendientes y no se anticipan como evidencia.
+
+`OLA3-SUP-005a` quedó integrado también en backend mediante `BACKEND#42`, squash `cad9f30849d745ca88651c0bc9d8bb618f3d33f9`, con runs verdes `39955461750` de PR y `39958345344` post-merge. Sus ramas fueron eliminadas y los repositorios quedaron sincronizados antes de iniciar este bloque.
+
+---
+
 ## Triaje y ciclo operativo no terminal -- OLA3-SUP-005a, 2026-10-23
 
 Backend añade `PUT /api/v1/tickets/{ticketId}/priority` y `PUT /api/v1/tickets/{ticketId}/status` para el `SUPPORT_TECHNICIAN` actualmente asignado. Las mutaciones usan CSRF, `expectedVersion`, bloqueo transaccional y no-op sin nueva versión ni evento; una versión obsoleta o transición inválida responde `409`. La migración `V20261023000000__support_ticket_triage.sql` amplía de forma validada el outbox para `TICKET_PRIORITY_CHANGED` y `TICKET_STATUS_CHANGED`, con payloads mínimos anterior/nuevo.

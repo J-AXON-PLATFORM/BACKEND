@@ -87,6 +87,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA3-SUP-005a` ejecuta solo el tramo de técnico asignado: prioridad oficial y `OPEN -> IN_PROGRESS -> WAITING_FOR_REQUESTER -> IN_PROGRESS`, con versión optimista y outbox atómico. Resolución, cierre y reapertura continúan fuera de ese corte.
 
+`OLA3-SUP-006a` añade el tramo terminal especializado: el técnico asignado resuelve o cierra según la allowlist, y requester propietario o técnico asignado reabren un ticket terminal a `OPEN` conservando assignee. Cada transición confirma ticket, historial y outbox en una sola transacción; los actores autorizados reconsultan el timeline público y no se exponen notas internas ni textos sensibles en eventos.
+
 ### FL-INV-001 -- Inventory
 
 Alta manual o incorporación Discovery -> ficha administrativa oficial -> responsable/ubicación/tipo/estado -> historial. Un `INACTIVE` no puede conservar Agent `ACTIVE`. Snapshot/observación Collector puede revisarse y aceptarse explícitamente como `AcceptedTechnicalConfiguration` versionada; nunca promoción automática. Discovery puede crear o vincular a activo existente, sin merge automático.

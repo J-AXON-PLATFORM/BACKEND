@@ -86,6 +86,7 @@
 - **RF-SUP-011:** solicitud de Automatización se valida en Soporte antes de crear ticket.
 - **RF-SUP-012:** Soporte sigue funcionando sin IA/RAG.
 - **Corte ejecutable OLA3-SUP-005a:** materializa `RF-SUP-004` para `LOW|NORMAL|HIGH|URGENT` y el subconjunto de `RF-SUP-006` formado por `OPEN -> IN_PROGRESS`, `IN_PROGRESS -> WAITING_FOR_REQUESTER` y retorno a `IN_PROGRESS`; el lifecycle terminal permanece pendiente.
+- **Corte ejecutable OLA3-SUP-006a:** materializa el subconjunto terminal de `RF-SUP-006` para resolución, cierre y reapertura con autoridad contextual, y solo la porción de `RF-SUP-009` correspondiente al historial terminal público append-only; no implementa todo el lifecycle, reasignación, adjuntos o auditoría materializada.
 - **Refinamiento Lote 49:** estados `OPEN|IN_PROGRESS|WAITING_FOR_REQUESTER|RESOLVED|CLOSED`; resolución exige `resolutionSummary`, cierre conserva razón y reapertura vuelve a `OPEN` con motivo.
 - **Refinamiento Lote 49:** tipos `INCIDENT|SERVICE_REQUEST|QUESTION|OTHER`; prioridades `LOW|NORMAL|HIGH|URGENT`, `NORMAL` default configurable; no equivalen a severidades operativas ni SLA.
 - **Refinamiento Lote 49:** separar `requester`, `createdBy`, `assignee` y `source`; máximo un assignee actual; comentarios `PUBLIC|INTERNAL` append-only en flujo normal.
