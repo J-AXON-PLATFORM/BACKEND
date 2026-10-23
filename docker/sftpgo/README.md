@@ -7,7 +7,7 @@ Production.
 The official `v2.7.6` prebuilt images are not used because the blocking Trivy
 scan detected `CVE-2026-78667`, `CVE-2026-78669`, and `CVE-2026-97031` after
 their publication. The recipe starts from the exact signed upstream commit,
-uses Go 1.26.9, and updates only `golang.org/x/net` from `v0.59.0` to `v0.60.0`.
+uses Go 1.26.10, and updates only `golang.org/x/net` from `v0.59.0` to `v0.60.0`.
 
 Supply-chain pins:
 
@@ -15,7 +15,8 @@ Supply-chain pins:
 - commit: `62ae9ba3957e9ed52b44a4f885e805e2d7b35972`;
 - source SHA-256: `310a475de6eeb1d3e43a4df0ada0091a042487afb2a749e18c5c2d8c9aedd80f`;
 - signer fingerprint: `A7B5CC667C573A1DCD115ECB935D2952DEC4EECF`;
-- Go builder: `golang:1.26.9-bookworm@sha256:d9c68c2c51161e12fd77e4c6320687c9cd86e1af1e3ad6e6cd63ff970641453c`;
+- Go builder: `golang:1.26.10-bookworm@sha256:5c3f3f28a273c9b61698b2d34f18375929790ab1f1d3835d032d21e2b31eae0c`;
+- cache builder: `moby/buildkit:buildx-stable-1@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea`;
 - runtime: `gcr.io/distroless/static-debian13:nonroot@sha256:e2e927ec666bae08560abb3c55d0659eceabb657f56b6782ab500a9fc7f555e3`.
 
 `v2.7.6` is a lightweight tag. It has no independent tag-object signature; it
@@ -27,6 +28,20 @@ Run:
 ```bash
 ./docker/sftpgo/build-local.sh
 ```
+
+The script requires Docker Buildx. When caching is enabled, it creates and
+removes an ephemeral `docker-container` builder from the pinned BuildKit image
+because GitHub runners' default `docker` driver cannot export a local cache.
+CI provides that exact-key cache through `SFTPGO_BUILD_CACHE_DIR`; restored
+caches are verified before use and remain read-only. Cache misses export a
+minimal cache containing the layers reachable from the verified target and
+replace it atomically. The ephemeral builder's internal cache is pruned before
+the export is hashed, BuildKit's transient top-level `cache.lock` is removed,
+and the runtime is loaded from that external cache. Every other additional file
+remains invalid. The cache is an availability optimization inside GitHub
+Actions' trust boundary, not an authenticity mechanism. Upstream tests,
+`govulncheck`, runtime image loading, Trivy, and SBOM generation still run on
+every build.
 
 The build disables upstream cloud storage, MySQL, PostgreSQL, SQLite, and
 portable-mode features that are not used by this Local/Test SFTP fixture. It

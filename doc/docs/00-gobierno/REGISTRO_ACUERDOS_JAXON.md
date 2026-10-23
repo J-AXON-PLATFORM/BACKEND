@@ -384,6 +384,14 @@ La verificación exige casos Support antes y después de claim, privacidad y pay
 
 No cambia OpenAPI, migraciones, dependencias, lockfiles, workflows, frontend, `automation-collector`, infraestructura Production, artefactos publicados o despliegues. La posible optimización reproducible del build SFTPGo queda como trabajo futuro que deberá conservar build, verificación y scans y requerirá delimitación y autorización propias. La autorización queda consumida al completar ambos Pull Requests y sus verificaciones post-merge.
 
+## AC-JAXON-076 -- Caché reproducible del build SFTPGo en CI
+
+`TEC-QLT-006a` autoriza exclusivamente en `backend` optimizar el coste dominante medido por `TEC-QLT-005a` mediante una caché BuildKit local para la fixture SFTPGo Local/Test. La clave debe ser exacta, sin prefijos de restauración, incluir versión de esquema, plataforma y todas las entradas efectivas del build, y usar únicamente `actions/cache` oficial fijada por SHA. La caché restaurada se valida mediante inventario canónico y SHA-256, rechaza symlinks, contenido incompleto, adicional o corrupto, y se consume en modo read-only; solo un miss exporta de forma atómica una caché completa. Una restauración no disponible o una caché rechazada degradan a build completo y nunca omiten el gate.
+
+La optimización puede reutilizar etapas preparatorias, pero debe reejecutar en cada run las pruebas upstream, `govulncheck`, el target final de verificación, la carga de la imagen runtime, Trivy y la generación temporal de SBOM. Permanecen todos los gates posteriores de Gitleaks, PostgreSQL/pgvector, Maven/Testcontainers/Flyway, OpenAPI, contenedor backend, Compose y backup/restore. La caché opera dentro de la frontera de confianza de GitHub Actions y sus hashes detectan corrupción o incompletitud; no se presenta como firma ni como mecanismo independiente de autenticidad.
+
+Se autoriza la rama exacta `ci/tec-qlt-006a-sftpgo-cache`, un único Pull Request técnico y documental hacia `develop`, integración por squash y verificación post-merge. El corte exige pruebas de determinismo e invalidación de clave, integridad positiva y negativa, miss, hit, caché rechazada y ejecución observable de los gates no cacheables. No cambia SFTPGo 2.7.6, su commit o módulos, contratos, migraciones, lógica funcional, dependencias Maven, `frontend`, `automation-collector`, infraestructura Production, publicación de imágenes/Packages/artefactos o despliegues. La autorización queda consumida al completar el Pull Request y su verificación post-merge.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)

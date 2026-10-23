@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-004b` + `TEC-QLT-005a` completados, integrados y verificados, 2026-10-22
-> **Estado documental:** baseline v1 `DESIGN_READY`; corrección Support y estabilización de prueba SSE integradas y verificadas; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `TEC-QLT-006a` implementado y verificado localmente, cierre remoto pendiente, 2026-10-22
+> **Estado documental:** baseline v1 `DESIGN_READY`; caché reproducible del build SFTPGo validada localmente; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada y dieciséis incrementos funcionales acotados integrados, incluido `OLA3-SUP-004a`, más su corrección `OLA3-SUP-004b` y la caracterización `TEC-QLT-005a`. El último bloque corrige la versión de recurso del evento requester y estabiliza una observación asíncrona de prueba sin cambiar OpenAPI 4.1, workflow o lógica productiva SSE; no implementa cambios de estado o prioridad, reasignación, adjuntos ni el lifecycle completo de Support. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y dieciséis incrementos funcionales acotados integrados, incluido `OLA3-SUP-004a`, más su corrección `OLA3-SUP-004b`. `TEC-QLT-006a` implementa y verifica localmente una caché reproducible y fail-closed para las etapas preparatorias de SFTPGo sin omitir pruebas upstream, `govulncheck`, construcción/verificación runtime, Trivy, SBOM ni gates posteriores; su único Pull Request y run post-merge siguen pendientes. No cambia OpenAPI 4.1, funcionalidad, datos, SFTPGo 2.7.6, otros repositorios o Production. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.

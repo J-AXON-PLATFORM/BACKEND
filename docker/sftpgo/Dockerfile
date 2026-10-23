@@ -24,12 +24,23 @@ RUN GOFLAGS=-mod=mod go get golang.org/x/net@v0.60.0 \
     && test "$(go list -m -f '{{.Version}}' golang.org/x/net)" = "v0.60.0" \
     && go mod verify
 
-FROM source AS upstream-tests
+FROM source AS upstream-test-cache
 RUN useradd --create-home --uid 10001 tester \
     && chown -R tester:tester /src
 USER 10001:10001
 ENV HOME=/home/tester \
     GOPATH=/home/tester/go
+RUN CGO_ENABLED=1 sh -c 'go mod download \
+    && go build \
+        -buildvcs=false \
+        -tags nopgxregisterdefaulttypes,disable_grpc_modules \
+        -trimpath -o /tmp/sftpgo-cache-prime . \
+    && cd tests/eventsearcher \
+    && go build -buildvcs=false -trimpath -ldflags "-s -w" -o /tmp/eventsearcher-cache-prime \
+    && cd ../ipfilter \
+    && go build -buildvcs=false -trimpath -ldflags "-s -w" -o /tmp/ipfilter-cache-prime'
+
+FROM upstream-test-cache AS upstream-tests
 RUN CGO_ENABLED=1 sh -c 'go build \
         -buildvcs=false \
         -tags nopgxregisterdefaulttypes,disable_grpc_modules \
@@ -74,14 +85,17 @@ RUN mkdir -p \
     && cp -R openapi static templates /out/usr/share/sftpgo/ \
     && cp LICENSE NOTICE /out/
 
-FROM source AS vulnerability-check
-RUN GOBIN=/tmp/tools go install golang.org/x/vuln/cmd/govulncheck@v1.9.0 \
-    && /tmp/tools/govulncheck \
+FROM source AS vulnerability-tool
+RUN GOBIN=/tmp/tools go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+
+FROM vulnerability-tool AS vulnerability-check
+RUN /tmp/tools/govulncheck \
         -tags nopgxregisterdefaulttypes,disable_grpc_modules,nogcs,nos3,noazblob,nomysql,nopgsql,nosqlite,noportable \
         ./...
 
 FROM vulnerability-check AS verification
 COPY --from=upstream-tests /src/go.mod /tmp/upstream-tests-passed
+COPY --from=binary /out/usr/local/bin/sftpgo /tmp/runtime-binary-built
 
 FROM ${RUNTIME_IMAGE} AS runtime
 
