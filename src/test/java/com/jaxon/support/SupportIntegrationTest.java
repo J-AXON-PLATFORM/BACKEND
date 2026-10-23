@@ -857,6 +857,249 @@ class SupportIntegrationTest {
         }
     }
 
+    @Test
+    void assignedTechnicianChangesPriorityAndCompletesTheAuthorizedNonTerminalLifecycle() throws Exception {
+        Session operator = login();
+        String username = "Technician.Triage." + UUID.randomUUID();
+        Session technician = createAndLoginTechnician(operator, username);
+        UUID technicianId = userId(username);
+        UUID ticketId = UUID.fromString(extract(
+                postTicket(operator, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        assertThat(claim(technician, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(200);
+
+        UUID priorityCorrelation = UUID.randomUUID();
+        HttpResponse<String> priority = putTicketMutation(
+                technician,
+                ticketId,
+                "priority",
+                "{\"priority\":\"URGENT\",\"expectedVersion\":1}",
+                priorityCorrelation);
+        assertThat(priority.statusCode()).isEqualTo(200);
+        assertThat(priority.body()).contains("\"priority\":\"URGENT\"", "\"version\":2");
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT actor_id, resource_version, correlation_id, payload
+                        FROM support.outbox_events
+                        WHERE event_type = 'TICKET_PRIORITY_CHANGED' AND resource_id = ?
+                        """,
+                        ticketId))
+                .containsEntry("actor_id", technicianId)
+                .containsEntry("resource_version", 2L)
+                .containsEntry("correlation_id", priorityCorrelation);
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT payload::text FROM support.outbox_events
+                        WHERE event_type = 'TICKET_PRIORITY_CHANGED' AND resource_id = ?
+                        """,
+                        String.class,
+                        ticketId))
+                .contains("\"newPriority\": \"URGENT\"", "\"previousPriority\": \"NORMAL\"")
+                .doesNotContain("summary", "description");
+
+        assertThat(putTicketMutation(
+                                technician,
+                                ticketId,
+                                "priority",
+                                "{\"priority\":\"URGENT\",\"expectedVersion\":2}",
+                                UUID.randomUUID())
+                        .body())
+                .contains("\"version\":2");
+        assertThat(putTicketMutation(
+                                technician,
+                                ticketId,
+                                "priority",
+                                "{\"priority\":\"URGENT\",\"expectedVersion\":1}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(409);
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM support.outbox_events
+                        WHERE event_type = 'TICKET_PRIORITY_CHANGED' AND resource_id = ?
+                        """,
+                        Integer.class,
+                        ticketId))
+                .isOne();
+
+        assertStatusChange(technician, ticketId, "IN_PROGRESS", 2, 3);
+        assertStatusChange(technician, ticketId, "WAITING_FOR_REQUESTER", 3, 4);
+        assertStatusChange(technician, ticketId, "IN_PROGRESS", 4, 5);
+        assertThat(putTicketMutation(
+                                technician,
+                                ticketId,
+                                "status",
+                                "{\"status\":\"OPEN\",\"expectedVersion\":5}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(409);
+        assertThat(putTicketMutation(
+                                technician,
+                                ticketId,
+                                "status",
+                                "{\"status\":\"IN_PROGRESS\",\"expectedVersion\":5}",
+                                UUID.randomUUID())
+                        .body())
+                .contains("\"version\":5");
+        assertThat(putTicketMutation(
+                                technician,
+                                ticketId,
+                                "status",
+                                "{\"status\":\"IN_PROGRESS\",\"expectedVersion\":4}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(409);
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM support.outbox_events
+                        WHERE event_type = 'TICKET_STATUS_CHANGED' AND resource_id = ?
+                        """,
+                        Integer.class,
+                        ticketId))
+                .isEqualTo(3);
+    }
+
+    @Test
+    void ticketTriageRequiresRoleCsrfCurrentAssignmentAndAtomicOutbox() throws Exception {
+        Session operator = login();
+        String firstUsername = "Technician.Triage.Owner." + UUID.randomUUID();
+        String secondUsername = "Technician.Triage.Other." + UUID.randomUUID();
+        Session first = createAndLoginTechnician(operator, firstUsername);
+        Session second = createAndLoginTechnician(operator, secondUsername);
+        UUID ticketId = UUID.fromString(extract(
+                postTicket(operator, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        assertThat(claim(first, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(200);
+
+        assertThat(putTicketMutation(
+                                operator,
+                                ticketId,
+                                "priority",
+                                "{\"priority\":\"HIGH\",\"expectedVersion\":1}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(403);
+        assertUniformNotFound(putTicketMutation(
+                second,
+                ticketId,
+                "priority",
+                "{\"priority\":\"HIGH\",\"expectedVersion\":1}",
+                UUID.randomUUID()));
+        assertThat(putTicketMutation(
+                                new Session(first.cookie(), null),
+                                ticketId,
+                                "status",
+                                "{\"status\":\"IN_PROGRESS\",\"expectedVersion\":1}",
+                                UUID.randomUUID())
+                        .body())
+                .contains("\"code\":\"CSRF_INVALID\"");
+        assertThat(putTicketMutation(
+                                first,
+                                ticketId,
+                                "status",
+                                "{\"status\":\"RESOLVED\",\"expectedVersion\":1}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(422);
+
+        jdbc.execute(
+                """
+                ALTER TABLE support.outbox_events
+                ADD CONSTRAINT support_test_reject_priority_event
+                CHECK (event_type <> 'TICKET_PRIORITY_CHANGED') NOT VALID
+                """);
+        try {
+            assertThat(putTicketMutation(
+                                    first,
+                                    ticketId,
+                                    "priority",
+                                    "{\"priority\":\"HIGH\",\"expectedVersion\":1}",
+                                    UUID.randomUUID())
+                            .statusCode())
+                    .isEqualTo(503);
+            assertThat(jdbc.queryForMap(
+                            "SELECT priority, status, version FROM support.tickets WHERE id = ?", ticketId))
+                    .containsEntry("priority", "NORMAL")
+                    .containsEntry("status", "OPEN")
+                    .containsEntry("version", 1L);
+        } finally {
+            jdbc.execute("ALTER TABLE support.outbox_events DROP CONSTRAINT support_test_reject_priority_event");
+        }
+
+        jdbc.execute(
+                """
+                ALTER TABLE support.outbox_events
+                ADD CONSTRAINT support_test_reject_status_event
+                CHECK (event_type <> 'TICKET_STATUS_CHANGED') NOT VALID
+                """);
+        try {
+            assertThat(putTicketMutation(
+                                    first,
+                                    ticketId,
+                                    "status",
+                                    "{\"status\":\"IN_PROGRESS\",\"expectedVersion\":1}",
+                                    UUID.randomUUID())
+                            .statusCode())
+                    .isEqualTo(503);
+            assertThat(jdbc.queryForMap(
+                            "SELECT priority, status, version FROM support.tickets WHERE id = ?", ticketId))
+                    .containsEntry("priority", "NORMAL")
+                    .containsEntry("status", "OPEN")
+                    .containsEntry("version", 1L);
+        } finally {
+            jdbc.execute("ALTER TABLE support.outbox_events DROP CONSTRAINT support_test_reject_status_event");
+        }
+    }
+
+    @Test
+    void concurrentTicketTriageAcceptsExactlyOneMutationForTheExpectedVersion() throws Exception {
+        Session operator = login();
+        String username = "Technician.Triage.Concurrent." + UUID.randomUUID();
+        Session technician = createAndLoginTechnician(operator, username);
+        UUID ticketId = UUID.fromString(extract(
+                postTicket(operator, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        assertThat(claim(technician, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(200);
+
+        CompletableFuture<HttpResponse<String>> first;
+        CompletableFuture<HttpResponse<String>> second;
+        try (Connection blocker = jdbc.getDataSource().getConnection()) {
+            blocker.setAutoCommit(false);
+            try (var statement = blocker.prepareStatement(
+                            "SELECT version FROM support.tickets WHERE id = ? FOR UPDATE")) {
+                statement.setObject(1, ticketId);
+                try (var result = statement.executeQuery()) {
+                    assertThat(result.next()).isTrue();
+                }
+            }
+            first = putTicketMutationAsync(
+                    technician,
+                    ticketId,
+                    "priority",
+                    "{\"priority\":\"HIGH\",\"expectedVersion\":1}",
+                    UUID.randomUUID());
+            second = putTicketMutationAsync(
+                    technician,
+                    ticketId,
+                    "priority",
+                    "{\"priority\":\"URGENT\",\"expectedVersion\":1}",
+                    UUID.randomUUID());
+            awaitBlockedTransactions(2);
+            blocker.commit();
+        }
+
+        assertThat(List.of(first.join().statusCode(), second.join().statusCode()))
+                .containsExactlyInAnyOrder(200, 409);
+        assertThat(jdbc.queryForMap("SELECT priority, version FROM support.tickets WHERE id = ?", ticketId))
+                .containsEntry("version", 2L)
+                .satisfies(row -> assertThat(row.get("priority")).isIn("HIGH", "URGENT"));
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM support.outbox_events
+                        WHERE event_type = 'TICKET_PRIORITY_CHANGED' AND resource_id = ?
+                        """,
+                        Integer.class,
+                        ticketId))
+                .isOne();
+    }
+
     private Session login() throws Exception {
         return login(USERNAME, PASSWORD);
     }
@@ -984,6 +1227,64 @@ class SupportIntegrationTest {
             request.header("X-CSRF-Token", session.csrfToken());
         }
         return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private void assertStatusChange(
+            Session technician, UUID ticketId, String status, long expectedVersion, long resultingVersion)
+            throws Exception {
+        UUID correlationId = UUID.randomUUID();
+        HttpResponse<String> response = putTicketMutation(
+                technician,
+                ticketId,
+                "status",
+                "{\"status\":\"" + status + "\",\"expectedVersion\":" + expectedVersion + "}",
+                correlationId);
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body())
+                .contains("\"status\":\"" + status + "\"")
+                .contains("\"version\":" + resultingVersion);
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT resource_version, correlation_id, payload
+                        FROM support.outbox_events
+                        WHERE event_type = 'TICKET_STATUS_CHANGED'
+                          AND resource_id = ?
+                          AND resource_version = ?
+                        """,
+                        ticketId,
+                        resultingVersion))
+                .containsEntry("resource_version", resultingVersion)
+                .containsEntry("correlation_id", correlationId)
+                .satisfies(row -> assertThat(row.get("payload").toString())
+                        .contains("\"newStatus\": \"" + status + "\"", "\"previousStatus\":"));
+    }
+
+    private HttpResponse<String> putTicketMutation(
+            Session session, UUID ticketId, String operation, String body, UUID correlationId) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets/" + ticketId + "/" + operation))
+                .header("Cookie", session.cookie())
+                .header("Content-Type", "application/json")
+                .header("X-Correlation-ID", correlationId.toString())
+                .PUT(HttpRequest.BodyPublishers.ofString(body));
+        if (session.csrfToken() != null) {
+            request.header("X-CSRF-Token", session.csrfToken());
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private CompletableFuture<HttpResponse<String>> putTicketMutationAsync(
+            Session session, UUID ticketId, String operation, String body, UUID correlationId) {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets/" + ticketId + "/" + operation))
+                .header("Cookie", session.cookie())
+                .header("Content-Type", "application/json")
+                .header("X-Correlation-ID", correlationId.toString())
+                .PUT(HttpRequest.BodyPublishers.ofString(body));
+        if (session.csrfToken() != null) {
+            request.header("X-CSRF-Token", session.csrfToken());
+        }
+        return httpClient.sendAsync(request.build(), HttpResponse.BodyHandlers.ofString());
     }
 
     private HttpResponse<String> claim(Session session, UUID ticketId, long expectedVersion, UUID correlationId)

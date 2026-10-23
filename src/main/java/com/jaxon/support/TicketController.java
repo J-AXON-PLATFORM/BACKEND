@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -181,6 +182,42 @@ class TicketController {
                 correlationId));
     }
 
+    @PutMapping("/{ticketId}/priority")
+    ResponseEntity<?> updatePriority(
+            @PathVariable String ticketId,
+            @Valid @RequestBody TicketPriorityUpdateRequest update,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        UUID correlationId = UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY));
+        return ResponseEntity.ok(ticketService.updatePriority(
+                UUID.fromString(ticketId),
+                actorId(authentication),
+                update.priority(),
+                update.expectedVersion(),
+                correlationId));
+    }
+
+    @PutMapping("/{ticketId}/status")
+    ResponseEntity<?> updateStatus(
+            @PathVariable String ticketId,
+            @Valid @RequestBody TicketStatusUpdateRequest update,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        UUID correlationId = UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY));
+        return ResponseEntity.ok(ticketService.updateStatus(
+                UUID.fromString(ticketId),
+                actorId(authentication),
+                update.status(),
+                update.expectedVersion(),
+                correlationId));
+    }
+
     @PostMapping("/{ticketId}/comments")
     ResponseEntity<?> addComment(
             @PathVariable String ticketId,
@@ -236,6 +273,18 @@ class TicketController {
                 "Conflicto al asignar ticket",
                 "El ticket cambió de versión o ya no está disponible para asignación.",
                 "TICKET_CLAIM_CONFLICT",
+                List.of());
+    }
+
+    @ExceptionHandler(TicketMutationConflictException.class)
+    ResponseEntity<SupportProblem> ticketMutationConflict(
+            TicketMutationConflictException exception, HttpServletRequest request) {
+        return problem(
+                request,
+                HttpStatus.CONFLICT,
+                "Conflicto al modificar ticket",
+                "El ticket cambió de versión o la transición solicitada no es válida.",
+                "TICKET_MUTATION_CONFLICT",
                 List.of());
     }
 
