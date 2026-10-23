@@ -46,7 +46,7 @@ Si la respuesta es no, no cargarlo.
 
 ## Instancia J-AXON -- ruta inmediata CKP-JAXON-005
 
-Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..077 aprobados; OLA 0 cerrada, incrementos integrados hasta `OLA3-SUP-004a`, corrección `OLA3-SUP-004b` y `TEC-QLT-006a` verificados; `OLA3-SUP-005a` está implementado localmente con cierre remoto pendiente; `PRODUCTION_READY = NO`.
+Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..078 aprobados; `OLA3-SUP-005a` está integrado y verificado; para `OLA3-SUP-006a` + `TEC-QLT-007a`, `FRONTEND#19` está integrado/verificado y backend permanece pendiente; `PRODUCTION_READY = NO`.
 
 Estado remoto histórico verificado el 2026-10-07: la organización oficial nueva `J-AXON-PLATFORM` contiene los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos canónicos `backend`, `frontend` y `automation-collector`; `backend` fue inicializado y publicado mediante `TEC-GIT-001C`.
 
@@ -56,7 +56,7 @@ Estado frontend verificado el 2026-10-08: `FRONTEND` fue publicado con `main` y 
 
 Estado Python verificado el 2026-10-08: `AUTOMATION-COLLECTOR` fue publicado con `main` y `develop`; contiene una fundación Python 3.14.8/uv 0.12.24 con Agent y Discovery Executor separados, sin SFTP o discovery funcional. `Python CI` fue integrado en `develop` mediante el Pull Request `#1` y squash `a040c5fba34fae22903088b82191e8355deaab26`; los runs de PR `37852626079` y post-merge `37852683236` quedaron verdes, incluida la auditoría sin vulnerabilidades conocidas. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues.
 
-Los bloques técnicos de OLA 0 fueron completados. Identity incorpora login, logout y alta administrativa mínima; Inventory y Agent/Collector hasta `OLA2-RSL-001a` están integrados. Support integra alta, detalle, listado, conversación requester, bandeja, claim y conversación técnica; `OLA3-SUP-005a` añade localmente prioridad y tres transiciones no terminales con OpenAPI 4.2. `TEC-QLT-006a` está integrado y verificado. Identity no implementa gestión posterior, revocación global, MFA o SSO, y Support no implementa resolución, cierre, reapertura, reasignación, adjuntos ni lifecycle completo. Otros tipos de tarea, spool general, retries, otros SSE, cuarentena y purga siguen fuera de alcance. Para cualquier siguiente incremento, cargar obligatoriamente las cinco fuentes de continuidad y luego:
+Los bloques técnicos de OLA 0 fueron completados. Identity incorpora login, logout y alta administrativa mínima; Inventory y Agent/Collector hasta `OLA2-RSL-001a` están integrados. Support está integrado hasta prioridad y ciclo no terminal; resolución, cierre, reapertura e historial terminal están implementados localmente con OpenAPI 4.3. La CI escalonada backend/frontend también está implementada localmente. Reasignación, adjuntos, búsqueda global y SSE de Support siguen fuera de alcance. Para cualquier siguiente incremento, cargar obligatoriamente las cinco fuentes de continuidad y luego:
 
 - `docs/12-agil/GESTION_BACKLOG.md`, `docs/12-agil/GUIAS_TAREAS.md` y `docs/12-agil/FLUJO_KANBAN.md`;
 - los documentos específicos de plataforma, arquitectura, contratos, datos, seguridad y pruebas capaces de delimitar el incremento;
@@ -64,6 +64,6 @@ Los bloques técnicos de OLA 0 fueron completados. Identity incorpora login, log
 
 LUIS autorizó un flujo de continuación incremental: después de verificar cada tarea, el coordinador determina el siguiente incremento pequeño y prepara un alcance concreto. No interpretar ese flujo, `DESIGN_READY` ni `TEC-PLT-001a` como permiso ilimitado para implementar toda OLA 0. Crear o modificar repositorios, ramas, Issues, Projects, workflows, GitHub, código, despliegues o infraestructura Production fuera de un alcance concreto requiere autorización expresa de LUIS.
 
-Para cambios backend, `Backend CI` verifica mediante `clean verify`, contratos, SFTPGo, gates de contenedor y smoke Compose los checks actualmente ejecutables en PR hacia `develop/main` y push a `develop`. El build SFTPGo usa una caché exacta, validada y read-only en hit, pero reejecuta pruebas upstream, `govulncheck`, imagen runtime, Trivy y SBOM. Los rulesets permanecen pendientes por la limitación del plan para repositorios privados; PR y checks verdes se aplican como disciplina operativa, no como bloqueo técnico de GitHub.
+Para cambios backend/frontend, los workflows clasifican `DOCS_ONLY|APPLICATION|PLATFORM_FULL` con fallback cerrado; el nivel completo conserva todos los gates históricos y es obligatorio para el bloque actual por modificar workflows. Los rulesets permanecen pendientes por la limitación del plan para repositorios privados; PR y checks verdes se aplican como disciplina operativa, no como bloqueo técnico de GitHub.
 
 Para trabajo remoto, cualquier cambio adicional en los tres repositorios debe analizarse y delimitarse en una tarea independiente, solicitando antes autorización expresa de LUIS. Las autorizaciones consumidas no cubren backlog, nuevas CI, reglas de protección, releases ni despliegue.

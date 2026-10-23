@@ -218,6 +218,106 @@ class TicketController {
                 correlationId));
     }
 
+    @PostMapping("/{ticketId}/resolve")
+    ResponseEntity<?> resolve(
+            @PathVariable String ticketId,
+            @Valid @RequestBody TicketResolveRequest resolve,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        UUID correlationId = UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY));
+        return ResponseEntity.ok(ticketService.resolve(
+                UUID.fromString(ticketId),
+                actorId(authentication),
+                resolve.resolutionSummary(),
+                resolve.expectedVersion(),
+                correlationId));
+    }
+
+    @PostMapping("/{ticketId}/close")
+    ResponseEntity<?> close(
+            @PathVariable String ticketId,
+            @Valid @RequestBody TicketCloseRequest close,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        UUID correlationId = UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY));
+        return ResponseEntity.ok(ticketService.close(
+                UUID.fromString(ticketId),
+                actorId(authentication),
+                close.closeReason(),
+                close.expectedVersion(),
+                correlationId));
+    }
+
+    @PostMapping("/{ticketId}/reopen")
+    ResponseEntity<?> reopen(
+            @PathVariable String ticketId,
+            @Valid @RequestBody TicketReopenRequest reopen,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        UUID correlationId = UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY));
+        return ResponseEntity.ok(ticketService.reopen(
+                UUID.fromString(ticketId),
+                actorId(authentication),
+                reopen.reopenReason(),
+                reopen.expectedVersion(),
+                correlationId));
+    }
+
+    @GetMapping("/{ticketId}/lifecycle")
+    ResponseEntity<?> findOwnLifecycle(
+            @PathVariable String ticketId,
+            @RequestParam(defaultValue = "0") String page,
+            @RequestParam(defaultValue = "50") String size,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        PageRequest requestedPage = page(page, size, 100);
+        if (requestedPage == null) {
+            return invalidPage(request, 100);
+        }
+        return ticketService.findOwnLifecycle(
+                        UUID.fromString(ticketId),
+                        actorId(authentication),
+                        requestedPage.page(),
+                        requestedPage.size())
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ticketNotFound(request));
+    }
+
+    @GetMapping("/technician-queue/{ticketId}/lifecycle")
+    ResponseEntity<?> findLifecycleForTechnician(
+            @PathVariable String ticketId,
+            @RequestParam(defaultValue = "0") String page,
+            @RequestParam(defaultValue = "50") String size,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(ticketId).matches()) {
+            return ticketNotFound(request);
+        }
+        PageRequest requestedPage = page(page, size, 100);
+        if (requestedPage == null) {
+            return invalidPage(request, 100);
+        }
+        return ticketService.findLifecycleForTechnician(
+                        UUID.fromString(ticketId),
+                        actorId(authentication),
+                        requestedPage.page(),
+                        requestedPage.size())
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ticketNotFound(request));
+    }
+
     @PostMapping("/{ticketId}/comments")
     ResponseEntity<?> addComment(
             @PathVariable String ticketId,

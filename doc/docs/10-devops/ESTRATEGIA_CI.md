@@ -29,7 +29,7 @@ El workflow `.github/workflows/backend-ci.yml`, denominado `Backend CI`, impleme
 - build multi-stage del backend, smoke no-root/read-only con PostgreSQL real y scan Trivy bloqueante HIGH/CRITICAL;
 - validación declarativa de `compose.yaml` y smoke Compose aislado con PostgreSQL predeterminado y backend opcional, reutilizando las imágenes construidas por los gates anteriores;
 - gate `scripts/verify-postgresql-backup-restore.sh` con dos PostgreSQL efímeros, dump lógico custom, manifest SHA-256, restore transaccional, datos sintéticos y casos negativos;
-- permisos mínimos `contents: read`, sin secretos, despliegues, publicación de artefactos ni escritura en el repositorio;
+- permisos read-only mínimos `contents: read`, `actions: read` y `pull-requests: read`, sin secretos, despliegues, publicación de artefactos ni escritura en el repositorio;
 - `actions/checkout` y `actions/setup-java` fijadas por SHA completo, con credenciales persistentes deshabilitadas;
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
 - checkout de historial completo y Gitleaks 8.30.1 bloqueante, verificado mediante SHA-256 y ejecutado con redacción total antes de compilar.
@@ -70,6 +70,14 @@ Un hit válido se importa como read-only. Un miss exporta con `mode=min` una ún
 
 La verificación local cubrió determinismo e invalidación por cada entrada, plataforma inválida, corrupción, contenido no inventariado, manifiesto truncado, cache miss, hit exacto y caché inválida descartada. Antes de la corrección remota, la caché completa `mode=max` midió 582,83 s en miss y 403,54 s en hit; una prueba anterior de rechazo y reconstrucción completa midió 576,97 s. La configuración final `mode=min` se verificó desde una caché creada por esa misma configuración y un builder nuevo: importó el hit read-only, ejecutó de nuevo pruebas upstream y `govulncheck`, reconstruyó la imagen runtime, pasó Trivy y generó el SBOM en 516,74 s. Frente al rango histórico 697--899 s, redujo entre 180 y 382 segundos sin omitir gates. La evidencia remota de PR y post-merge se incorpora al reporte de cierre después de existir; no se anticipa en este documento.
 
+## CI escalonada por riesgo -- TEC-QLT-007a
+
+Los workflows backend y frontend mantienen sus nombres y jobs de verificación estables, precedidos por un job corto `Classify CI risk`. Un script puro recibe la lista completa de rutas y produce exactamente `DOCS_ONLY`, `APPLICATION` o `PLATFORM_FULL`; pruebas de tabla ejecutadas en el propio workflow cubren rutas documentales, aplicación, plataforma, combinaciones, entrada vacía y rutas desconocidas. La precedencia es cerrada: cualquier ruta de plataforma o desconocida domina y fuerza `PLATFORM_FULL`.
+
+En Pull Requests se compara el SHA base/head del evento. En push a `develop`, el workflow consulta mediante permisos read-only el único PR fusionado asociado al commit, verifica que `merge_commit_sha` coincide y usa la colección paginada de archivos del PR; ausencia, ambigüedad o inconsistencia degradan a `PLATFORM_FULL`. `workflow_dispatch` ofrece los tres niveles pero conserva `PLATFORM_FULL` como valor obligatorio predeterminado. No existe trigger periódico.
+
+`DOCS_ONLY` ejecuta checkout completo, whitespace y Gitleaks. `APPLICATION` añade toolchain, dependencias, lint/compilación, pruebas, build y contratos; backend construye PostgreSQL/pgvector y ejecuta Maven/Testcontainers/Flyway excluyendo únicamente `SftpGoClientIntegrationTest`, etiquetada `sftpgo`. `PLATFORM_FULL` ejecuta además todos los gates históricos: scans/auditorías, caché y build/verificación SFTPGo, contenedores, Trivy, Compose y backup/restore según el repositorio. Cambios bajo `.github/**`, scripts CI, dependencias/lockfiles, Docker/Compose, supply chain, seguridad de dependencias y rutas no reconocidas siempre son completos. Los PR de `OLA3-SUP-006a` + `TEC-QLT-007a` incluyen workflows y por tanto deben clasificarse `PLATFORM_FULL`.
+
 El primer run de PR `39865316279` falló en 60 segundos porque confirmó que el driver `docker` del runner no soporta `cache-to type=local`; no se relanzó. La corrección incorpora el builder efímero fijado descrito arriba y debe validarse mediante un nuevo run asociado al nuevo commit.
 
 El segundo run `39866621799` ejecutó pruebas upstream y `govulncheck` y completó la exportación `mode=max`, pero salió antes del build runtime al confirmar la caché, tras 18 min 31 s; tampoco se relanzó. La corrección limita la exportación a `mode=min`, libera el estado interno del builder antes de confirmar la copia externa y añade diagnósticos explícitos de layout. El tercer run `39872945593` completó de nuevo pruebas upstream, `govulncheck` y la exportación, pero el inventario rechazó el archivo transitorio superior `cache.lock` que BuildKit dejó en el directorio exportado; tampoco se relanzó. La corrección elimina exclusivamente ese lock después de terminar con el builder y antes de inventariar, sin admitir otros archivos adicionales.
@@ -83,7 +91,7 @@ El workflow `.github/workflows/frontend-ci.yml`, denominado `Frontend CI`, imple
 - Node.js 24.21.0 y npm 11.19.0 desde `.nvmrc`, con caché npm ligada a `package-lock.json`;
 - pasos separados para `npm ci`, lint, typecheck, Vitest/RTL, Next.js build, auditoría de producción y auditoría completa;
 - build standalone, smoke no-root/read-only que confirma ausencia de gestores JavaScript y scan Trivy bloqueante HIGH/CRITICAL;
-- `NEXT_TELEMETRY_DISABLED=1`, permisos `contents: read`, sin secretos, artefactos, publicación o despliegue;
+- `NEXT_TELEMETRY_DISABLED=1`, permisos read-only `contents: read`, `actions: read` y `pull-requests: read`, sin secretos, artefactos, publicación o despliegue;
 - `actions/checkout@v7.0.1` y `actions/setup-node@v7.0.0` fijadas por SHA completo, con credenciales persistentes deshabilitadas;
 - concurrencia por workflow y rama o Pull Request, con cancelación de ejecuciones obsoletas.
 - checkout de historial completo y el mismo gate Gitleaks bloqueante, sin modificar las auditorías npm ni su excepción cerrada.
@@ -111,7 +119,7 @@ La activación base fue integrada mediante `AUTOMATION-COLLECTOR#1`, squash `a04
 
 ## Baseline Dependabot y detección de secretos
 
-Los tres repositorios mantienen un único workflow y un único job por CI. Sus configuraciones Dependabot cubren los ecosistemas versionados y agrupan solo security updates; `open-pull-requests-limit: 0` impide PR ordinarios de versión y la ausencia deliberada de `target-branch` permite aplicar los security updates sobre la rama predeterminada `develop`. No hay auto-merge.
+Los tres repositorios mantienen un único workflow por CI; backend y frontend incorporan un job corto de clasificación además de su job estable de verificación, mientras Python conserva un único job. Sus configuraciones Dependabot cubren los ecosistemas versionados y agrupan solo security updates; `open-pull-requests-limit: 0` impide PR ordinarios de versión y la ausencia deliberada de `target-branch` permite aplicar los security updates sobre la rama predeterminada `develop`. No hay auto-merge.
 
 Gitleaks se ejecuta dentro de cada job existente inmediatamente después del checkout. La descarga usa la release exacta 8.30.1 y SHA-256 `551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb`; cualquier hallazgo falla el job y `--redact=100` evita imprimir el valor. No existen allowlists o exclusiones. GitHub Secret Protection, CodeQL y Dependency Review Action permanecen fuera por disponibilidad del plan; no se crean workflows, artifacts o despliegues.
 

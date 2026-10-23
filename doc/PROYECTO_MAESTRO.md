@@ -3,7 +3,7 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-005a` integrado en frontend y pendiente de integración backend; `TEC-QLT-006a` cerrado remotamente, 2026-10-23
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-006a` + `TEC-QLT-007a`: frontend integrado y verificado, backend pendiente, 2026-10-23
 > **Estado documental:** baseline v1 `DESIGN_READY`; triaje Support acotado en integración controlada; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-10-23.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: login y logout humanos, alta administrativa mínima de usuarios, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a`, la primera tarea explícita `COLLECT_SNAPSHOT`, el retry acotado de su entrega Result y los cortes ejecutados de Support están integrados. Support incluye alta, detalle, listado requester, conversación requester `PUBLIC`, bandeja técnica, claim y conversación `PUBLIC|INTERNAL` del técnico asignado; el frontend de `OLA3-SUP-005a` está integrado y su backend añade localmente prioridad y tres transiciones no terminales, con integración remota pendiente. Reasignación, adjuntos y el lifecycle terminal siguen fuera del corte, al igual que otros tipos de tarea, spool general, retries de polling/snapshots/capabilities, otros eventos SSE, Discovery y Production.
+- Estado funcional: login/logout y alta administrativa mínima, Inventory y Agent/Collector hasta Result resiliente, más Support hasta prioridad/ciclo no terminal, están integrados. Resolución, cierre, reapertura e historial terminal público están implementados localmente en backend/frontend con OpenAPI 4.3; la CI escalonada por riesgo también está implementada localmente. Reasignación, adjuntos, búsqueda global y SSE de Support siguen fuera del corte, al igual que otros tipos de tarea, spool general, retries de polling/snapshots/capabilities, Discovery y Production.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada y dieciséis incrementos funcionales acotados integrados hasta `OLA3-SUP-004a`, más su corrección `OLA3-SUP-004b`. `TEC-QLT-006a` quedó integrado mediante `BACKEND#41`, squash `7c3233b5efd8242ac42222154e99070728957422`, con runs verdes `39874341640` y `39876819453`. `OLA3-SUP-005a` implementa localmente prioridad y ciclo operativo no terminal para el técnico asignado, OpenAPI 4.2, eventos atómicos y UI sin retry u optimistic update; su integración remota permanece pendiente. No autoriza resolución, cierre, reapertura, reasignación ni Production. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y `OLA3-SUP-005a` integrado mediante `FRONTEND#18` y `BACKEND#42`. `OLA3-SUP-006a` + `TEC-QLT-007a` implementan lifecycle terminal trazable, OpenAPI 4.3, UI sin retry/optimistic update y CI proporcional al riesgo; `FRONTEND#19` está integrado y verificado, mientras la integración backend permanece pendiente. No autoriza reasignación, adjuntos, búsqueda global, SSE de Support ni Production. `PRODUCTION_READY = NO`.

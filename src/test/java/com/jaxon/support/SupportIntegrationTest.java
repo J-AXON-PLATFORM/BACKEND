@@ -1100,6 +1100,201 @@ class SupportIntegrationTest {
                 .isOne();
     }
 
+    @Test
+    void resolvesClosesAndReopensWithPublicAppendOnlyLifecycleAndMinimalOutbox() throws Exception {
+        Session requester = login();
+        String username = "Technician.Lifecycle." + UUID.randomUUID();
+        Session technician = createAndLoginTechnician(requester, username);
+        UUID technicianId = userId(username);
+        HttpResponse<String> created = postTicket(requester, VALID_TICKET, UUID.randomUUID());
+        UUID ticketId = UUID.fromString(extract(created.body(), "ticketId"));
+        UUID requesterId = UUID.fromString(extract(created.body(), "requesterUserId"));
+        assertThat(claim(technician, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(200);
+        assertStatusChange(technician, ticketId, "IN_PROGRESS", 1, 2);
+
+        String resolutionSummary = "Recovered the print service and verified a successful page.";
+        UUID resolveCorrelation = UUID.randomUUID();
+        HttpResponse<String> resolved = postTicketOperation(
+                technician,
+                ticketId,
+                "resolve",
+                "{\"resolutionSummary\":\"" + resolutionSummary + "\",\"expectedVersion\":2}",
+                resolveCorrelation);
+        assertThat(resolved.statusCode()).isEqualTo(200);
+        assertThat(resolved.body()).contains("\"status\":\"RESOLVED\"", "\"version\":3");
+
+        UUID closeCorrelation = UUID.randomUUID();
+        HttpResponse<String> closed = postTicketOperation(
+                technician,
+                ticketId,
+                "close",
+                "{\"closeReason\":\"RESOLVED\",\"expectedVersion\":3}",
+                closeCorrelation);
+        assertThat(closed.statusCode()).isEqualTo(200);
+        assertThat(closed.body()).contains("\"status\":\"CLOSED\"", "\"version\":4");
+        assertUniformNotFound(postComment(
+                requester,
+                ticketId.toString(),
+                "{\"body\":\"Closed tickets reject comments\"}",
+                UUID.randomUUID()));
+        assertThat(getTechnicianTicket(technician.cookie(), ticketId.toString()).statusCode()).isEqualTo(200);
+
+        HttpResponse<String> requesterLifecycle =
+                getLifecycle(requester.cookie(), ticketId, false, "0", "50");
+        HttpResponse<String> technicianLifecycle =
+                getLifecycle(technician.cookie(), ticketId, true, "0", "50");
+        assertThat(requesterLifecycle.statusCode()).isEqualTo(200);
+        assertThat(technicianLifecycle.statusCode()).isEqualTo(200);
+        assertThat(requesterLifecycle.body())
+                .isEqualTo(technicianLifecycle.body())
+                .contains("\"eventType\":\"RESOLVED\"", "\"resolutionSummary\":\"" + resolutionSummary + "\"")
+                .contains("\"eventType\":\"CLOSED\"", "\"closeReason\":\"RESOLVED\"")
+                .contains("\"actorUserId\":\"" + technicianId + "\"")
+                .contains("\"resourceVersion\":3", "\"resourceVersion\":4")
+                .contains("\"totalElements\":2");
+
+        String reopenReason = "The printer stopped again after the requester retested it.";
+        UUID reopenCorrelation = UUID.randomUUID();
+        HttpResponse<String> reopened = postTicketOperation(
+                requester,
+                ticketId,
+                "reopen",
+                "{\"reopenReason\":\"" + reopenReason + "\",\"expectedVersion\":4}",
+                reopenCorrelation);
+        assertThat(reopened.statusCode()).isEqualTo(200);
+        assertThat(reopened.body())
+                .contains("\"status\":\"OPEN\"", "\"version\":5")
+                .contains("\"assigneeUserId\":\"" + technicianId + "\"");
+        assertThat(postComment(
+                                requester,
+                                ticketId.toString(),
+                                "{\"body\":\"Additional evidence after reopening\"}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(201);
+        assertThat(getLifecycle(requester.cookie(), ticketId, false, "0", "2").body())
+                .contains("\"totalElements\":3", "\"totalPages\":2");
+        assertThat(getLifecycle(requester.cookie(), ticketId, false, "1", "2").body())
+                .contains("\"eventType\":\"REOPENED\"", "\"reopenReason\":\"" + reopenReason + "\"")
+                .contains("\"actorUserId\":\"" + requesterId + "\"");
+
+        assertThat(jdbc.queryForList(
+                        """
+                        SELECT event_type, resource_version, correlation_id, payload::text AS payload
+                        FROM support.outbox_events
+                        WHERE resource_id = ? AND event_type IN
+                            ('TICKET_RESOLVED', 'TICKET_CLOSED', 'TICKET_REOPENED')
+                        ORDER BY resource_version
+                        """,
+                        ticketId))
+                .hasSize(3)
+                .allSatisfy(event -> assertThat(event.get("payload").toString())
+                        .doesNotContain(resolutionSummary, reopenReason, "resolutionSummary", "reopenReason"))
+                .satisfies(events -> {
+                    assertThat(events.get(0))
+                            .containsEntry("event_type", "TICKET_RESOLVED")
+                            .containsEntry("resource_version", 3L)
+                            .containsEntry("correlation_id", resolveCorrelation);
+                    assertThat(events.get(1))
+                            .containsEntry("event_type", "TICKET_CLOSED")
+                            .containsEntry("resource_version", 4L)
+                            .containsEntry("correlation_id", closeCorrelation);
+                    assertThat(events.get(2))
+                            .containsEntry("event_type", "TICKET_REOPENED")
+                            .containsEntry("resource_version", 5L)
+                            .containsEntry("correlation_id", reopenCorrelation);
+                });
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM support.ticket_lifecycle_events WHERE ticket_id = ?",
+                        Integer.class,
+                        ticketId))
+                .isEqualTo(3);
+    }
+
+    @Test
+    void terminalLifecycleRejectsInvalidAuthorityTransitionsVersionsAndRollsBackOutboxFailures() throws Exception {
+        Session requester = login();
+        Session assigned = createAndLoginTechnician(requester, "Technician.Lifecycle.Owner." + UUID.randomUUID());
+        Session other = createAndLoginTechnician(requester, "Technician.Lifecycle.Other." + UUID.randomUUID());
+        UUID ticketId = UUID.fromString(extract(
+                postTicket(requester, VALID_TICKET, UUID.randomUUID()).body(), "ticketId"));
+        assertThat(claim(assigned, ticketId, 0, UUID.randomUUID()).statusCode()).isEqualTo(200);
+
+        assertUniformNotFound(postTicketOperation(
+                other,
+                ticketId,
+                "close",
+                "{\"closeReason\":\"CANCELLED\",\"expectedVersion\":1}",
+                UUID.randomUUID()));
+        assertThat(postTicketOperation(
+                                new Session(assigned.cookie(), null),
+                                ticketId,
+                                "close",
+                                "{\"closeReason\":\"CANCELLED\",\"expectedVersion\":1}",
+                                UUID.randomUUID())
+                        .body())
+                .contains("\"code\":\"CSRF_INVALID\"");
+        assertThat(postTicketOperation(
+                                assigned,
+                                ticketId,
+                                "resolve",
+                                "{\"resolutionSummary\":\"Not in progress\",\"expectedVersion\":1}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(409);
+        assertThat(postTicketOperation(
+                                requester,
+                                ticketId,
+                                "reopen",
+                                "{\"reopenReason\":\"Not terminal\",\"expectedVersion\":1}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(409);
+        assertThat(postTicketOperation(
+                                assigned,
+                                ticketId,
+                                "close",
+                                "{\"closeReason\":\"RESOLVED\",\"expectedVersion\":1}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(409);
+        assertThat(postTicketOperation(
+                                assigned,
+                                ticketId,
+                                "close",
+                                "{\"closeReason\":\"CANCELLED\",\"expectedVersion\":0}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(409);
+
+        jdbc.execute(
+                """
+                ALTER TABLE support.outbox_events
+                ADD CONSTRAINT support_test_reject_close_event
+                CHECK (event_type <> 'TICKET_CLOSED') NOT VALID
+                """);
+        try {
+            assertThat(postTicketOperation(
+                                    assigned,
+                                    ticketId,
+                                    "close",
+                                    "{\"closeReason\":\"CANCELLED\",\"expectedVersion\":1}",
+                                    UUID.randomUUID())
+                            .statusCode())
+                    .isEqualTo(503);
+            assertThat(jdbc.queryForMap("SELECT status, version FROM support.tickets WHERE id = ?", ticketId))
+                    .containsEntry("status", "OPEN")
+                    .containsEntry("version", 1L);
+            assertThat(jdbc.queryForObject(
+                            "SELECT count(*) FROM support.ticket_lifecycle_events WHERE ticket_id = ?",
+                            Integer.class,
+                            ticketId))
+                    .isZero();
+        } finally {
+            jdbc.execute("ALTER TABLE support.outbox_events DROP CONSTRAINT support_test_reject_close_event");
+        }
+    }
+
     private Session login() throws Exception {
         return login(USERNAME, PASSWORD);
     }
@@ -1271,6 +1466,32 @@ class SupportIntegrationTest {
             request.header("X-CSRF-Token", session.csrfToken());
         }
         return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> postTicketOperation(
+            Session session, UUID ticketId, String operation, String body, UUID correlationId) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder()
+                .uri(uri("/api/v1/tickets/" + ticketId + "/" + operation))
+                .header("Cookie", session.cookie())
+                .header("Content-Type", "application/json")
+                .header("X-Correlation-ID", correlationId.toString())
+                .POST(HttpRequest.BodyPublishers.ofString(body));
+        if (session.csrfToken() != null) {
+            request.header("X-CSRF-Token", session.csrfToken());
+        }
+        return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> getLifecycle(
+            String cookie, UUID ticketId, boolean technician, String page, String size) throws Exception {
+        String prefix = technician ? "/api/v1/tickets/technician-queue/" : "/api/v1/tickets/";
+        return httpClient.send(
+                HttpRequest.newBuilder()
+                        .uri(uri(prefix + ticketId + "/lifecycle?page=" + page + "&size=" + size))
+                        .header("Cookie", cookie)
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
     }
 
     private CompletableFuture<HttpResponse<String>> putTicketMutationAsync(

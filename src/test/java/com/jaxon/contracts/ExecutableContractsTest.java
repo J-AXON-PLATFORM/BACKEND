@@ -49,6 +49,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V40_ROOT = Path.of("doc/contracts/openapi/4.0");
     private static final Path OPENAPI_V41_ROOT = Path.of("doc/contracts/openapi/4.1");
     private static final Path OPENAPI_V42_ROOT = Path.of("doc/contracts/openapi/4.2");
+    private static final Path OPENAPI_V43_ROOT = Path.of("doc/contracts/openapi/4.3");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -723,6 +724,63 @@ class ExecutableContractsTest {
     }
 
     @Test
+    void openApi43AddsOnlyTerminalLifecycleOperations() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V43_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("4.3");
+        var previousPaths = Yaml31.mapper()
+                .readTree(OPENAPI_V42_ROOT.resolve("openapi.yaml").toFile())
+                .path("paths")
+                .properties()
+                .stream()
+                .map(Map.Entry::getKey)
+                .toList();
+        assertThat(api.getPaths().keySet())
+                .contains(
+                        "/tickets/{ticketId}/resolve",
+                        "/tickets/{ticketId}/close",
+                        "/tickets/{ticketId}/reopen",
+                        "/tickets/{ticketId}/lifecycle",
+                        "/tickets/technician-queue/{ticketId}/lifecycle")
+                .containsAll(previousPaths)
+                .hasSize(previousPaths.size() + 5);
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .contains(
+                        "resolveAssignedTicket",
+                        "closeAssignedTicket",
+                        "reopenAccessibleTicket",
+                        "listOwnTicketLifecycle",
+                        "listAssignedTechnicianTicketLifecycle")
+                .doesNotHaveDuplicates();
+
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_V43_ROOT.resolve("openapi.yaml").toFile());
+        JsonNode schemas = root.path("components").path("schemas");
+        assertThat(textValues(schemas.path("TicketResolveRequest").path("required")))
+                .containsExactlyInAnyOrder("resolutionSummary", "expectedVersion");
+        assertThat(schemas.at("/TicketResolveRequest/properties/resolutionSummary/maxLength").asInt())
+                .isEqualTo(10_000);
+        assertThat(schemas.at("/TicketReopenRequest/properties/reopenReason/maxLength").asInt())
+                .isEqualTo(2_000);
+        assertThat(textValues(schemas.at("/TicketCloseRequest/properties/closeReason/enum")))
+                .containsExactly("RESOLVED", "CANCELLED", "DUPLICATE", "NOT_APPLICABLE");
+        assertThat(schemas.path("TicketResolveRequest").path("additionalProperties").asBoolean()).isFalse();
+        assertThat(schemas.path("TicketCloseRequest").path("additionalProperties").asBoolean()).isFalse();
+        assertThat(schemas.path("TicketReopenRequest").path("additionalProperties").asBoolean()).isFalse();
+        assertThat(schemas.path("TicketLifecycleEntry").path("additionalProperties").asBoolean()).isFalse();
+        assertThat(schemas.path("TicketLifecyclePage").path("additionalProperties").asBoolean()).isFalse();
+        assertThat(root.at("/paths/~1tickets~1{ticketId}~1resolve/post/responses").has("409")).isTrue();
+        assertThat(root.at("/paths/~1tickets~1{ticketId}~1close/post/responses").has("409")).isTrue();
+        assertThat(root.at("/paths/~1tickets~1{ticketId}~1reopen/post/responses").has("409")).isTrue();
+    }
+
+    @Test
     void previousOpenApiContractsRemainByteIdentical() throws IOException {
         assertThat(sha256(Files.readAllBytes(OPENAPI_V10_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("bf3b1df5f28fb2e1c34f55b645312e7df896aa8a50fa8fbbec4b7e72d2068236");
@@ -748,6 +806,8 @@ class ExecutableContractsTest {
                 .isEqualTo("41d47b69b517ee8d9384e609f7aba518e69f363c98ec8b12f92df7d0d07f44ab");
         assertThat(sha256(Files.readAllBytes(OPENAPI_V41_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("805c2fc9f8015fde0db161da39c9c58f54aae2c9789a8937f3cb324a2836a748");
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V42_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("ff4961375b266d9ca7dc217fb7993219efe166b77d2aed918f4d934607676c70");
     }
 
     @Test

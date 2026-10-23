@@ -1,0 +1,285 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "4.3"
+  description: >-
+    Minor compatible que conserva OpenAPI 4.2 y añade resolución, cierre,
+    reapertura e historial terminal público de tickets.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Identity
+  - name: Assets
+  - name: Agents
+  - name: Support
+paths:
+  /auth/login:
+    $ref: "../4.2/openapi.yaml#/paths/~1auth~1login"
+  /auth/me:
+    $ref: "../4.2/openapi.yaml#/paths/~1auth~1me"
+  /auth/logout:
+    $ref: "../4.2/openapi.yaml#/paths/~1auth~1logout"
+  /users:
+    $ref: "../4.2/openapi.yaml#/paths/~1users"
+  /assets:
+    $ref: "../4.2/openapi.yaml#/paths/~1assets"
+  /assets/{assetId}:
+    $ref: "../4.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D"
+  /assets/{assetId}/technical-state:
+    $ref: "../4.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state"
+  /assets/{assetId}/technical-state/events:
+    $ref: "../4.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events"
+  /agents:
+    $ref: "../4.2/openapi.yaml#/paths/~1agents"
+  /agents/{agentId}:
+    $ref: "../4.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D"
+  /agents/{agentId}/ssh-key:
+    $ref: "../4.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key"
+  /agents/{agentId}/activate:
+    $ref: "../4.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate"
+  /agents/{agentId}/tasks:
+    $ref: "../4.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks"
+  /agents/{agentId}/tasks/{taskId}:
+    $ref: "../4.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D"
+  /tickets:
+    $ref: "../4.2/openapi.yaml#/paths/~1tickets"
+  /tickets/technician-queue:
+    $ref: "../4.2/openapi.yaml#/paths/~1tickets~1technician-queue"
+  /tickets/technician-queue/{ticketId}:
+    $ref: "../4.2/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D"
+  /tickets/technician-queue/{ticketId}/comments:
+    $ref: "../4.2/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1comments"
+  /tickets/technician-queue/{ticketId}/conversation:
+    $ref: "../4.2/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1conversation"
+  /tickets/technician-queue/{ticketId}/lifecycle:
+    get:
+      tags: [Support]
+      operationId: listAssignedTechnicianTicketLifecycle
+      summary: Lista el historial terminal público del ticket asignado al técnico
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/LifecyclePageSize"
+      responses:
+        "200":
+          description: Historial terminal ordenado por fecha e identificador ascendentes
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketLifecyclePage" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/{ticketId}:
+    $ref: "../4.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D"
+  /tickets/{ticketId}/comments:
+    $ref: "../4.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1comments"
+  /tickets/{ticketId}/claim:
+    $ref: "../4.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1claim"
+  /tickets/{ticketId}/priority:
+    $ref: "../4.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1priority"
+  /tickets/{ticketId}/status:
+    $ref: "../4.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1status"
+  /tickets/{ticketId}/resolve:
+    post:
+      tags: [Support]
+      operationId: resolveAssignedTicket
+      summary: Resuelve el ticket actualmente asignado al técnico
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketResolveRequest" }
+      responses:
+        "200":
+          description: Ticket resuelto e historial confirmado atómicamente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/{ticketId}/close:
+    post:
+      tags: [Support]
+      operationId: closeAssignedTicket
+      summary: Cierra el ticket actualmente asignado al técnico
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketCloseRequest" }
+      responses:
+        "200":
+          description: Ticket cerrado e historial confirmado atómicamente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/{ticketId}/reopen:
+    post:
+      tags: [Support]
+      operationId: reopenAccessibleTicket
+      summary: Reabre un ticket propio o actualmente asignado
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketReopenRequest" }
+      responses:
+        "200":
+          description: Ticket reabierto e historial confirmado atómicamente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/{ticketId}/lifecycle:
+    get:
+      tags: [Support]
+      operationId: listOwnTicketLifecycle
+      summary: Lista el historial terminal público de un ticket propio
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/LifecyclePageSize"
+      responses:
+        "200":
+          description: Historial terminal ordenado por fecha e identificador ascendentes
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketLifecyclePage" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+components:
+  securitySchemes:
+    SessionCookie:
+      $ref: "../4.2/openapi.yaml#/components/securitySchemes/SessionCookie"
+  parameters:
+    CsrfToken:
+      $ref: "../4.2/openapi.yaml#/components/parameters/CsrfToken"
+    TicketId:
+      $ref: "../4.2/openapi.yaml#/components/parameters/TicketId"
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 0, default: 0 }
+    LifecyclePageSize:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+  schemas:
+    TicketResponse:
+      $ref: "../4.2/openapi.yaml#/components/schemas/TicketResponse"
+    TicketResolveRequest:
+      type: object
+      required: [resolutionSummary, expectedVersion]
+      properties:
+        resolutionSummary: { type: string, minLength: 1, maxLength: 10000 }
+        expectedVersion: { type: integer, minimum: 0 }
+      additionalProperties: false
+    TicketCloseRequest:
+      type: object
+      required: [closeReason, expectedVersion]
+      properties:
+        closeReason: { type: string, enum: [RESOLVED, CANCELLED, DUPLICATE, NOT_APPLICABLE] }
+        expectedVersion: { type: integer, minimum: 0 }
+      additionalProperties: false
+    TicketReopenRequest:
+      type: object
+      required: [reopenReason, expectedVersion]
+      properties:
+        reopenReason: { type: string, minLength: 1, maxLength: 2000 }
+        expectedVersion: { type: integer, minimum: 0 }
+      additionalProperties: false
+    TicketLifecycleEntry:
+      type: object
+      required:
+        - lifecycleEventId
+        - eventType
+        - fromStatus
+        - toStatus
+        - resolutionSummary
+        - closeReason
+        - reopenReason
+        - actorUserId
+        - occurredAt
+        - resourceVersion
+      properties:
+        lifecycleEventId: { type: string, format: uuid }
+        eventType: { type: string, enum: [RESOLVED, CLOSED, REOPENED] }
+        fromStatus: { type: string, enum: [OPEN, IN_PROGRESS, WAITING_FOR_REQUESTER, RESOLVED, CLOSED] }
+        toStatus: { type: string, enum: [OPEN, RESOLVED, CLOSED] }
+        resolutionSummary:
+          oneOf:
+            - { type: string, minLength: 1, maxLength: 10000 }
+            - { type: "null" }
+        closeReason:
+          oneOf:
+            - { type: string, enum: [RESOLVED, CANCELLED, DUPLICATE, NOT_APPLICABLE] }
+            - { type: "null" }
+        reopenReason:
+          oneOf:
+            - { type: string, minLength: 1, maxLength: 2000 }
+            - { type: "null" }
+        actorUserId: { type: string, format: uuid }
+        occurredAt: { type: string, format: date-time }
+        resourceVersion: { type: integer, minimum: 1 }
+      additionalProperties: false
+    TicketLifecyclePage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TicketLifecycleEntry" }
+        page: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 100 }
+        totalElements: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+      additionalProperties: false
+  responses:
+    BadRequest: { $ref: "../4.2/openapi.yaml#/components/responses/BadRequest" }
+    AuthenticationRequired: { $ref: "../4.2/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../4.2/openapi.yaml#/components/responses/Forbidden" }
+    NotFound: { $ref: "../4.2/openapi.yaml#/components/responses/NotFound" }
+    Conflict: { $ref: "../4.2/openapi.yaml#/components/responses/Conflict" }
+    ValidationFailed: { $ref: "../4.2/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../4.2/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../4.2/openapi.yaml#/components/responses/ServiceUnavailable" }
+security:
+  - SessionCookie: []

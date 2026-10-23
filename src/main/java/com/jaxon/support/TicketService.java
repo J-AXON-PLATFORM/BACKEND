@@ -197,8 +197,10 @@ class TicketService {
                                created_at, updated_at, version
                         FROM support.tickets
                         WHERE id = ?
-                          AND status <> 'CLOSED'
-                          AND (assignee_user_id IS NULL OR assignee_user_id = ?)
+                          AND (
+                              (status <> 'CLOSED' AND assignee_user_id IS NULL)
+                              OR assignee_user_id = ?
+                          )
                         """,
                         (resultSet, row) -> ticketResponse(resultSet),
                         ticketId,
@@ -406,6 +408,98 @@ class TicketService {
     }
 
     @Transactional
+    TicketResponse resolve(
+            UUID ticketId,
+            UUID technicianUserId,
+            String requestedSummary,
+            long expectedVersion,
+            UUID correlationId) {
+        TicketResponse ticket = findAssignedForUpdate(ticketId, technicianUserId);
+        requireVersion(ticket, expectedVersion);
+        if (!ticket.status().equals("IN_PROGRESS")
+                && !ticket.status().equals("WAITING_FOR_REQUESTER")) {
+            throw new TicketMutationConflictException();
+        }
+        return applyLifecycleTransition(
+                ticket,
+                technicianUserId,
+                "RESOLVED",
+                "RESOLVED",
+                requestedSummary.trim(),
+                null,
+                null,
+                correlationId);
+    }
+
+    @Transactional
+    TicketResponse close(
+            UUID ticketId,
+            UUID technicianUserId,
+            String closeReason,
+            long expectedVersion,
+            UUID correlationId) {
+        TicketResponse ticket = findAssignedForUpdate(ticketId, technicianUserId);
+        requireVersion(ticket, expectedVersion);
+        boolean resolvedClosure = ticket.status().equals("RESOLVED") && closeReason.equals("RESOLVED");
+        boolean directClosure = !ticket.status().equals("RESOLVED")
+                && !ticket.status().equals("CLOSED")
+                && !closeReason.equals("RESOLVED");
+        if (!resolvedClosure && !directClosure) {
+            throw new TicketMutationConflictException();
+        }
+        return applyLifecycleTransition(
+                ticket,
+                technicianUserId,
+                "CLOSED",
+                "CLOSED",
+                null,
+                closeReason,
+                null,
+                correlationId);
+    }
+
+    @Transactional
+    TicketResponse reopen(
+            UUID ticketId,
+            UUID actorId,
+            String requestedReason,
+            long expectedVersion,
+            UUID correlationId) {
+        TicketResponse ticket = findReopenableForUpdate(ticketId, actorId);
+        requireVersion(ticket, expectedVersion);
+        if (!ticket.status().equals("RESOLVED") && !ticket.status().equals("CLOSED")) {
+            throw new TicketMutationConflictException();
+        }
+        return applyLifecycleTransition(
+                ticket,
+                actorId,
+                "REOPENED",
+                "OPEN",
+                null,
+                null,
+                requestedReason.trim(),
+                correlationId);
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    Optional<TicketLifecyclePage> findOwnLifecycle(
+            UUID ticketId, UUID requesterUserId, int page, int size) {
+        if (!owns(ticketId, requesterUserId)) {
+            return Optional.empty();
+        }
+        return Optional.of(findLifecycle(ticketId, page, size));
+    }
+
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    Optional<TicketLifecyclePage> findLifecycleForTechnician(
+            UUID ticketId, UUID technicianUserId, int page, int size) {
+        if (!isAssignedToTechnicianIncludingClosed(ticketId, technicianUserId)) {
+            return Optional.empty();
+        }
+        return Optional.of(findLifecycle(ticketId, page, size));
+    }
+
+    @Transactional
     Optional<TicketCommentResponse> addOwnComment(
             UUID ticketId,
             UUID requesterUserId,
@@ -415,7 +509,7 @@ class TicketService {
                 """
                 SELECT version
                 FROM support.tickets
-                WHERE id = ? AND requester_user_id = ?
+                WHERE id = ? AND requester_user_id = ? AND status <> 'CLOSED'
                 FOR UPDATE
                 """,
                 resultSet -> resultSet.next()
@@ -565,6 +659,37 @@ class TicketService {
         return new TicketCommentPage(items, page, size, totalElements, totalPages(totalElements, size));
     }
 
+    private TicketLifecyclePage findLifecycle(UUID ticketId, int page, int size) {
+        long totalElements = jdbc.queryForObject(
+                "SELECT count(*) FROM support.ticket_lifecycle_events WHERE ticket_id = ?",
+                Long.class,
+                ticketId);
+        List<TicketLifecycleEntryResponse> items = jdbc.query(
+                """
+                SELECT id, event_type, from_status, to_status, resolution_summary,
+                       close_reason, reopen_reason, actor_user_id, occurred_at, resource_version
+                FROM support.ticket_lifecycle_events
+                WHERE ticket_id = ?
+                ORDER BY occurred_at ASC, id ASC
+                LIMIT ? OFFSET ?
+                """,
+                (resultSet, row) -> new TicketLifecycleEntryResponse(
+                        resultSet.getObject("id", UUID.class),
+                        resultSet.getString("event_type"),
+                        resultSet.getString("from_status"),
+                        resultSet.getString("to_status"),
+                        resultSet.getString("resolution_summary"),
+                        resultSet.getString("close_reason"),
+                        resultSet.getString("reopen_reason"),
+                        resultSet.getObject("actor_user_id", UUID.class),
+                        resultSet.getTimestamp("occurred_at").toInstant(),
+                        resultSet.getLong("resource_version")),
+                ticketId,
+                size,
+                (long) page * size);
+        return new TicketLifecyclePage(items, page, size, totalElements, totalPages(totalElements, size));
+    }
+
     private boolean owns(UUID ticketId, UUID requesterUserId) {
         return Boolean.TRUE.equals(jdbc.queryForObject(
                 "SELECT EXISTS (SELECT 1 FROM support.tickets WHERE id = ? AND requester_user_id = ?)",
@@ -603,6 +728,19 @@ class TicketService {
                 technicianUserId));
     }
 
+    private boolean isAssignedToTechnicianIncludingClosed(UUID ticketId, UUID technicianUserId) {
+        return Boolean.TRUE.equals(jdbc.queryForObject(
+                """
+                SELECT EXISTS (
+                    SELECT 1 FROM support.tickets
+                    WHERE id = ? AND assignee_user_id = ?
+                )
+                """,
+                Boolean.class,
+                ticketId,
+                technicianUserId));
+    }
+
     private TicketResponse findAssignedForUpdate(UUID ticketId, UUID technicianUserId) {
         return jdbc.query(
                         """
@@ -621,10 +759,35 @@ class TicketService {
                 .orElseThrow(TicketNotFoundException::new);
     }
 
+    private TicketResponse findReopenableForUpdate(UUID ticketId, UUID actorId) {
+        return jdbc.query(
+                        """
+                        SELECT id, type, summary, description, status, priority, source,
+                               requester_user_id, created_by_user_id, assignee_user_id, asset_id,
+                               created_at, updated_at, version
+                        FROM support.tickets
+                        WHERE id = ? AND (requester_user_id = ? OR assignee_user_id = ?)
+                        FOR UPDATE
+                        """,
+                        (resultSet, row) -> ticketResponse(resultSet),
+                        ticketId,
+                        actorId,
+                        actorId)
+                .stream()
+                .findFirst()
+                .orElseThrow(TicketNotFoundException::new);
+    }
+
     private static void requireCurrentOperationalTicket(TicketResponse ticket, long expectedVersion) {
         if (ticket.version() != expectedVersion
                 || ticket.status().equals("RESOLVED")
                 || ticket.status().equals("CLOSED")) {
+            throw new TicketMutationConflictException();
+        }
+    }
+
+    private static void requireVersion(TicketResponse ticket, long expectedVersion) {
+        if (ticket.version() != expectedVersion) {
             throw new TicketMutationConflictException();
         }
     }
@@ -668,6 +831,123 @@ class TicketService {
                 newKey,
                 newValue,
                 Timestamp.from(now));
+    }
+
+    private TicketResponse applyLifecycleTransition(
+            TicketResponse ticket,
+            UUID actorId,
+            String lifecycleType,
+            String newStatus,
+            String resolutionSummary,
+            String closeReason,
+            String reopenReason,
+            UUID correlationId) {
+        Instant now = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
+        long newVersion = ticket.version() + 1;
+        UUID lifecycleEventId = UUID.randomUUID();
+        jdbc.update(
+                "UPDATE support.tickets SET status = ?, updated_at = ?, version = ? WHERE id = ?",
+                newStatus,
+                Timestamp.from(now),
+                newVersion,
+                ticket.ticketId());
+        jdbc.update(
+                """
+                INSERT INTO support.ticket_lifecycle_events
+                    (id, ticket_id, event_type, from_status, to_status, actor_user_id,
+                     resolution_summary, close_reason, reopen_reason, occurred_at, resource_version)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                lifecycleEventId,
+                ticket.ticketId(),
+                lifecycleType,
+                ticket.status(),
+                newStatus,
+                actorId,
+                resolutionSummary,
+                closeReason,
+                reopenReason,
+                Timestamp.from(now),
+                newVersion);
+        insertLifecycleOutbox(
+                "TICKET_" + lifecycleType,
+                actorId,
+                ticket.ticketId(),
+                newVersion,
+                correlationId,
+                lifecycleEventId,
+                ticket.status(),
+                newStatus,
+                closeReason,
+                now);
+        return findTicket(ticket.ticketId());
+    }
+
+    private void insertLifecycleOutbox(
+            String eventType,
+            UUID actorId,
+            UUID ticketId,
+            long resourceVersion,
+            UUID correlationId,
+            UUID lifecycleEventId,
+            String fromStatus,
+            String toStatus,
+            String closeReason,
+            Instant now) {
+        String payloadExpression = closeReason == null
+                ? "jsonb_build_object('lifecycleEventId', ?::text, 'fromStatus', ?::text, 'toStatus', ?::text)"
+                : "jsonb_build_object('lifecycleEventId', ?::text, 'fromStatus', ?::text, 'toStatus', ?::text, 'closeReason', ?::text)";
+        String sql = """
+                INSERT INTO support.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, ?, '1.0', ?, 'SUPPORT', 'HUMAN_USER', ?, 'TICKET', ?, ?,
+                        'SUCCESS', ?, %s, ?)
+                """.formatted(payloadExpression);
+        if (closeReason == null) {
+            jdbc.update(
+                    sql,
+                    UUID.randomUUID(),
+                    eventType,
+                    Timestamp.from(now),
+                    actorId,
+                    ticketId,
+                    resourceVersion,
+                    correlationId,
+                    lifecycleEventId,
+                    fromStatus,
+                    toStatus,
+                    Timestamp.from(now));
+        } else {
+            jdbc.update(
+                    sql,
+                    UUID.randomUUID(),
+                    eventType,
+                    Timestamp.from(now),
+                    actorId,
+                    ticketId,
+                    resourceVersion,
+                    correlationId,
+                    lifecycleEventId,
+                    fromStatus,
+                    toStatus,
+                    closeReason,
+                    Timestamp.from(now));
+        }
+    }
+
+    private TicketResponse findTicket(UUID ticketId) {
+        return jdbc.query(
+                        """
+                        SELECT id, type, summary, description, status, priority, source,
+                               requester_user_id, created_by_user_id, assignee_user_id, asset_id,
+                               created_at, updated_at, version
+                        FROM support.tickets WHERE id = ?
+                        """,
+                        (resultSet, row) -> ticketResponse(resultSet),
+                        ticketId)
+                .getFirst();
     }
 
     private static TicketCommentResponse ticketCommentResponse(java.sql.ResultSet resultSet)

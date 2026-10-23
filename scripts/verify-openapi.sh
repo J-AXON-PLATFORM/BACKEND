@@ -19,6 +19,7 @@ readonly SPEC_V31="doc/contracts/openapi/3.1/openapi.yaml"
 readonly SPEC_V40="doc/contracts/openapi/4.0/openapi.yaml"
 readonly SPEC_V41="doc/contracts/openapi/4.1/openapi.yaml"
 readonly SPEC_V42="doc/contracts/openapi/4.2/openapi.yaml"
+readonly SPEC_V43="doc/contracts/openapi/4.3/openapi.yaml"
 readonly SPEC_V10_SHA256="bf3b1df5f28fb2e1c34f55b645312e7df896aa8a50fa8fbbec4b7e72d2068236"
 readonly SPEC_V11_SHA256="96dfa1d01c63339089685a2e6c3011e050d24727dad71863df244a631b3c1d3b"
 readonly SPEC_V20_SHA256="832037d2e554ca680b89776430d8a01a12a945215ba5cac0335c849e349732fe"
@@ -31,6 +32,7 @@ readonly SPEC_V30_SHA256="cd80013004c2304015d28102436d729d73e29fe922e8e178650b4c
 readonly SPEC_V31_SHA256="244a760407bfa5dc6c2fbd35f29a4dc1ae4c56cb43757924a2e3fd1687767c9e"
 readonly SPEC_V40_SHA256="41d47b69b517ee8d9384e609f7aba518e69f363c98ec8b12f92df7d0d07f44ab"
 readonly SPEC_V41_SHA256="805c2fc9f8015fde0db161da39c9c58f54aae2c9789a8937f3cb324a2836a748"
+readonly SPEC_V42_SHA256="ff4961375b266d9ca7dc217fb7993219efe166b77d2aed918f4d934607676c70"
 
 work_dir="$(mktemp -d)"
 trap 'rm -rf "${work_dir}"' EXIT
@@ -54,6 +56,7 @@ printf '%s  %s\n' "${SPEC_V30_SHA256}" "${SPEC_V30}" | sha256sum --check --stric
 printf '%s  %s\n' "${SPEC_V31_SHA256}" "${SPEC_V31}" | sha256sum --check --strict
 printf '%s  %s\n' "${SPEC_V40_SHA256}" "${SPEC_V40}" | sha256sum --check --strict
 printf '%s  %s\n' "${SPEC_V41_SHA256}" "${SPEC_V41}" | sha256sum --check --strict
+printf '%s  %s\n' "${SPEC_V42_SHA256}" "${SPEC_V42}" | sha256sum --check --strict
 "${work_dir}/oasdiff" validate "${SPEC_V10}"
 "${work_dir}/oasdiff" validate "${SPEC_V11}"
 "${work_dir}/oasdiff" validate "${SPEC_V20}"
@@ -67,6 +70,7 @@ printf '%s  %s\n' "${SPEC_V41_SHA256}" "${SPEC_V41}" | sha256sum --check --stric
 "${work_dir}/oasdiff" validate "${SPEC_V40}"
 "${work_dir}/oasdiff" validate "${SPEC_V41}"
 "${work_dir}/oasdiff" validate "${SPEC_V42}"
+"${work_dir}/oasdiff" validate "${SPEC_V43}"
 "${work_dir}/oasdiff" breaking "${SPEC_V10}" "${SPEC_V11}"
 "${work_dir}/oasdiff" breaking "${SPEC_V20}" "${SPEC_V21}"
 "${work_dir}/oasdiff" breaking "${SPEC_V21}" "${SPEC_V22}"
@@ -76,6 +80,7 @@ printf '%s  %s\n' "${SPEC_V41_SHA256}" "${SPEC_V41}" | sha256sum --check --stric
 "${work_dir}/oasdiff" breaking "${SPEC_V30}" "${SPEC_V31}"
 "${work_dir}/oasdiff" breaking "${SPEC_V40}" "${SPEC_V41}"
 "${work_dir}/oasdiff" breaking "${SPEC_V41}" "${SPEC_V42}"
+"${work_dir}/oasdiff" breaking "${SPEC_V42}" "${SPEC_V43}"
 
 base_ref=""
 if [[ -n "${GITHUB_BASE_REF:-}" ]] && git rev-parse --verify --quiet "origin/${GITHUB_BASE_REF}" >/dev/null; then
