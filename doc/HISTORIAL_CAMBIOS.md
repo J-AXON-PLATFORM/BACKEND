@@ -9,7 +9,9 @@ Backend añade `PUT /api/v1/tickets/{ticketId}/priority` y `PUT /api/v1/tickets/
 
 Frontend incorpora controles accesibles de prioridad y de las tres transiciones autorizadas, sin retry automático ni optimistic update, con cachés por usuario y refetch de bandeja/detalle. OpenAPI 4.2 conserva 4.1 byte a byte. La verificación local cubre 105 pruebas backend, 53 frontend, contrato, PostgreSQL/Flyway, autoridad, CSRF, no-op, versión obsoleta, transiciones, rollback, payloads, builds y E2E Chromium multirepo real; el cierre remoto permanece pendiente.
 
-No se modifican dependencias, workflows ni `automation-collector`; no se implementan resolución, cierre, reapertura, reasignación, adjuntos, búsqueda global, SSE de Support, IA, Automation, consumidores outbox, auditoría materializada o Production. `PRODUCTION_READY = NO`.
+Una excepción mínima posterior al primer run de `FRONTEND#18` actualiza Next.js y `eslint-config-next` de 16.3.8 a 16.4.2, junto con el lockfile y el verificador de la excepción `braces`, para corregir `GHSA-2464-fhr4-w9xw`, `GHSA-p3m5-59mp-jv5r` y `GHSA-673q-mjm6-r5xr`. El run original `39922328221` pasó lint, typecheck, 53 pruebas y build, pero falló el audit Production al publicarse esas advisories; no se relanza sin cambios.
+
+Fuera de esa excepción no se modifican dependencias, workflows ni `automation-collector`; no se implementan resolución, cierre, reapertura, reasignación, adjuntos, búsqueda global, SSE de Support, IA, Automation, consumidores outbox, auditoría materializada o Production. `PRODUCTION_READY = NO`.
 
 ---
 

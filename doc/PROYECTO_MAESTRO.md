@@ -189,7 +189,7 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 
 - Runtime/build: **Node.js 24 LTS + npm 11.x**.
 - Framework: **Next.js 16.3.x + React 19.x compatible + TypeScript 5.9.x**.
-- Estado ejecutable verificado: Node.js 24.21.0, npm 11.19.0, Next.js 16.3.8, React/React DOM 19.3.0, TypeScript 5.9.3 y ESLint 9.39.5 temporalmente EOL.
+- Estado ejecutable verificado: Node.js 24.21.0, npm 11.19.0, Next.js 16.4.2, React/React DOM 19.3.0, TypeScript 5.9.3 y ESLint 9.39.5 temporalmente EOL.
 - Estructura: `src/app/` para routing/layout y `src/features/` para capacidades de usuario/negocio; no copiar mecánicamente los ocho módulos backend.
 - Actualizaciones selectivas servidor->navegador mediante SSE sobre HTTPS; navegador->backend permanece REST/HTTPS.
 - `NEXT_PUBLIC_*` solo para información que puede ser pública en navegador; casi ningún secreto debe existir en frontend.

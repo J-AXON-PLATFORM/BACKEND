@@ -400,6 +400,8 @@ Cada cambio efectivo bloquea el ticket, incrementa su versión una vez y captura
 
 El corte exige pruebas de contrato, PostgreSQL/Flyway real desde instalación limpia y upgrade histórico, autorización contextual, CSRF, no-op, versión obsoleta, transiciones válidas e inválidas, atomicidad/rollback, payload mínimo, parsers frontend y E2E Chromium multirepo con comprobación SQL. Autoriza exclusivamente la rama `feature/ola3-sup-005a`, un push técnico y un Pull Request por `frontend` y `backend`, integración squash en ese orden y verificación post-merge. El Pull Request backend corrige además el cierre documental retrospectivo autorizado de `TEC-QLT-006a`. No modifica workflows, dependencias ni `automation-collector` y no autoriza resolución, cierre, reapertura, reasignación, adjuntos, búsqueda global, SSE de Support, IA, Automation, consumidores outbox, auditoría materializada, infraestructura Production, artefactos publicados o despliegues.
 
+Tras el primer run de `FRONTEND#18`, LUIS autorizó una excepción mínima porque `npm audit` incorporó durante la ejecución tres advisories de Production para Next.js 16.3.8. La excepción cubre exclusivamente actualizar Next.js y `eslint-config-next` a 16.4.2, su lockfile, el verificador cerrado de la excepción `braces`, la documentación necesaria, verificación local y un segundo push al mismo Pull Request. No autoriza otras dependencias, workflows, funcionalidad o Pull Requests.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)
