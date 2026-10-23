@@ -85,6 +85,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `requester/createdBy` crea -> Support valida activo cuando aplique -> clasifica/prioriza -> asigna 0..1 técnico -> `OPEN|IN_PROGRESS|WAITING_FOR_REQUESTER|RESOLVED|CLOSED` -> resolución/cierre -> posible reapertura a `OPEN`. Comentarios `PUBLIC|INTERNAL`; adjuntos en `DocumentStorage`; REST verdad oficial, SSE aviso. IA solo sugiere y Automation/n8n no salta las reglas de Support.
 
+`OLA3-SUP-005a` ejecuta solo el tramo de técnico asignado: prioridad oficial y `OPEN -> IN_PROGRESS -> WAITING_FOR_REQUESTER -> IN_PROGRESS`, con versión optimista y outbox atómico. Resolución, cierre y reapertura continúan fuera de ese corte.
+
 ### FL-INV-001 -- Inventory
 
 Alta manual o incorporación Discovery -> ficha administrativa oficial -> responsable/ubicación/tipo/estado -> historial. Un `INACTIVE` no puede conservar Agent `ACTIVE`. Snapshot/observación Collector puede revisarse y aceptarse explícitamente como `AcceptedTechnicalConfiguration` versionada; nunca promoción automática. Discovery puede crear o vincular a activo existente, sin merge automático.

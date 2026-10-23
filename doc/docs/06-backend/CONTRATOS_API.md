@@ -56,9 +56,15 @@ El contrato no promete replay ni estado oficial dentro del stream: el cliente vu
 
 `oasdiff` bloquea incompatibilidad 2.1 -> 2.2. Checksums fijados protegen OpenAPI 1.0/1.1/2.0/2.1 y el manifest conserva JSON Schema Agent 1.0. No se crea otro endpoint, canal HTTP Agent, heartbeat o evento SSE.
 
+## Contrato compatible 4.2 -- OLA3-SUP-005a
+
+`doc/contracts/openapi/4.2/openapi.yaml` conserva todas las operaciones 4.1 y añade solo `PUT /tickets/{ticketId}/priority` y `PUT /tickets/{ticketId}/status`. Ambas operaciones requieren `SUPPORT_TECHNICIAN` actualmente asignado, CSRF y `expectedVersion`; devuelven `409` ante versión obsoleta o transición inválida. Los no-op con versión vigente no mutan ni emiten evento.
+
+La prioridad admite `LOW|NORMAL|HIGH|URGENT`; el ciclo operativo se limita a `OPEN -> IN_PROGRESS`, `IN_PROGRESS -> WAITING_FOR_REQUESTER` y `WAITING_FOR_REQUESTER -> IN_PROGRESS`. `oasdiff` bloquea incompatibilidad 4.1 -> 4.2 y los checksums fijados protegen byte a byte todas las versiones anteriores. No se incorporan resolución, cierre, reapertura o reasignación.
+
 ## Pendiente de diseño detallado
 
-Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 2.2. SFTP/JSON Schema permanece separado para el ejecutable Agent; SSE solo notifica al navegador y no crea un canal HTTP Agent ni autoriza snapshots HTTP.
+Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 4.2. SFTP/JSON Schema permanece separado para el ejecutable Agent; SSE solo notifica al navegador y no crea un canal HTTP Agent ni autoriza snapshots HTTP.
 
 ---
 > **Clasificación:** CONDICIONAL  

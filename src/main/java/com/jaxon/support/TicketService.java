@@ -337,6 +337,75 @@ class TicketService {
     }
 
     @Transactional
+    TicketResponse updatePriority(
+            UUID ticketId,
+            UUID technicianUserId,
+            String priority,
+            long expectedVersion,
+            UUID correlationId) {
+        TicketResponse ticket = findAssignedForUpdate(ticketId, technicianUserId);
+        requireCurrentOperationalTicket(ticket, expectedVersion);
+        if (ticket.priority().equals(priority)) {
+            return ticket;
+        }
+        Instant now = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
+        jdbc.update(
+                "UPDATE support.tickets SET priority = ?, updated_at = ?, version = version + 1 WHERE id = ?",
+                priority,
+                Timestamp.from(now),
+                ticketId);
+        TicketResponse updated = findAssignedForUpdate(ticketId, technicianUserId);
+        insertMutationEvent(
+                "TICKET_PRIORITY_CHANGED",
+                technicianUserId,
+                ticketId,
+                updated.version(),
+                correlationId,
+                "previousPriority",
+                ticket.priority(),
+                "newPriority",
+                priority,
+                now);
+        return updated;
+    }
+
+    @Transactional
+    TicketResponse updateStatus(
+            UUID ticketId,
+            UUID technicianUserId,
+            String status,
+            long expectedVersion,
+            UUID correlationId) {
+        TicketResponse ticket = findAssignedForUpdate(ticketId, technicianUserId);
+        requireCurrentOperationalTicket(ticket, expectedVersion);
+        if (ticket.status().equals(status)) {
+            return ticket;
+        }
+        if (!validStatusTransition(ticket.status(), status)) {
+            throw new TicketMutationConflictException();
+        }
+        Instant now = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
+        jdbc.update(
+                "UPDATE support.tickets SET status = ?, updated_at = ?, version = version + 1 WHERE id = ?",
+                status,
+                Timestamp.from(now),
+                ticketId);
+        TicketResponse updated = findAssignedForUpdate(ticketId, technicianUserId);
+        insertMutationEvent(
+                "TICKET_STATUS_CHANGED",
+                technicianUserId,
+                ticketId,
+                updated.version(),
+                correlationId,
+                "previousStatus",
+                ticket.status(),
+                "newStatus",
+                status,
+                now);
+        return updated;
+    }
+
+    @Transactional
     Optional<TicketCommentResponse> addOwnComment(
             UUID ticketId,
             UUID requesterUserId,
@@ -534,6 +603,73 @@ class TicketService {
                 technicianUserId));
     }
 
+    private TicketResponse findAssignedForUpdate(UUID ticketId, UUID technicianUserId) {
+        return jdbc.query(
+                        """
+                        SELECT id, type, summary, description, status, priority, source,
+                               requester_user_id, created_by_user_id, assignee_user_id, asset_id,
+                               created_at, updated_at, version
+                        FROM support.tickets
+                        WHERE id = ? AND assignee_user_id = ?
+                        FOR UPDATE
+                        """,
+                        (resultSet, row) -> ticketResponse(resultSet),
+                        ticketId,
+                        technicianUserId)
+                .stream()
+                .findFirst()
+                .orElseThrow(TicketNotFoundException::new);
+    }
+
+    private static void requireCurrentOperationalTicket(TicketResponse ticket, long expectedVersion) {
+        if (ticket.version() != expectedVersion
+                || ticket.status().equals("RESOLVED")
+                || ticket.status().equals("CLOSED")) {
+            throw new TicketMutationConflictException();
+        }
+    }
+
+    private static boolean validStatusTransition(String previous, String next) {
+        return (previous.equals("OPEN") && next.equals("IN_PROGRESS"))
+                || (previous.equals("IN_PROGRESS") && next.equals("WAITING_FOR_REQUESTER"))
+                || (previous.equals("WAITING_FOR_REQUESTER") && next.equals("IN_PROGRESS"));
+    }
+
+    private void insertMutationEvent(
+            String eventType,
+            UUID actorId,
+            UUID ticketId,
+            long resourceVersion,
+            UUID correlationId,
+            String previousKey,
+            String previousValue,
+            String newKey,
+            String newValue,
+            Instant now) {
+        jdbc.update(
+                """
+                INSERT INTO support.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, ?, '1.0', ?, 'SUPPORT',
+                        'HUMAN_USER', ?, 'TICKET', ?, ?,
+                        'SUCCESS', ?, jsonb_build_object(?::text, ?::text, ?::text, ?::text), ?)
+                """,
+                UUID.randomUUID(),
+                eventType,
+                Timestamp.from(now),
+                actorId,
+                ticketId,
+                resourceVersion,
+                correlationId,
+                previousKey,
+                previousValue,
+                newKey,
+                newValue,
+                Timestamp.from(now));
+    }
+
     private static TicketCommentResponse ticketCommentResponse(java.sql.ResultSet resultSet)
             throws java.sql.SQLException {
         return new TicketCommentResponse(
@@ -597,3 +733,5 @@ final class InvalidCommentException extends RuntimeException {}
 final class TicketNotFoundException extends RuntimeException {}
 
 final class TicketClaimConflictException extends RuntimeException {}
+
+final class TicketMutationConflictException extends RuntimeException {}

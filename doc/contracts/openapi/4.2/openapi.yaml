@@ -1,0 +1,151 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "4.2"
+  description: >-
+    Minor compatible que conserva OpenAPI 4.1 y añade triaje de prioridad y
+    transiciones operativas no terminales para el técnico asignado.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Identity
+  - name: Assets
+  - name: Agents
+  - name: Support
+paths:
+  /auth/login:
+    $ref: "../4.1/openapi.yaml#/paths/~1auth~1login"
+  /auth/me:
+    $ref: "../4.1/openapi.yaml#/paths/~1auth~1me"
+  /auth/logout:
+    $ref: "../4.1/openapi.yaml#/paths/~1auth~1logout"
+  /users:
+    $ref: "../4.1/openapi.yaml#/paths/~1users"
+  /assets:
+    $ref: "../4.1/openapi.yaml#/paths/~1assets"
+  /assets/{assetId}:
+    $ref: "../4.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D"
+  /assets/{assetId}/technical-state:
+    $ref: "../4.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state"
+  /assets/{assetId}/technical-state/events:
+    $ref: "../4.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events"
+  /agents:
+    $ref: "../4.1/openapi.yaml#/paths/~1agents"
+  /agents/{agentId}:
+    $ref: "../4.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D"
+  /agents/{agentId}/ssh-key:
+    $ref: "../4.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key"
+  /agents/{agentId}/activate:
+    $ref: "../4.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate"
+  /agents/{agentId}/tasks:
+    $ref: "../4.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks"
+  /agents/{agentId}/tasks/{taskId}:
+    $ref: "../4.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D"
+  /tickets:
+    $ref: "../4.1/openapi.yaml#/paths/~1tickets"
+  /tickets/technician-queue:
+    $ref: "../4.1/openapi.yaml#/paths/~1tickets~1technician-queue"
+  /tickets/technician-queue/{ticketId}:
+    $ref: "../4.1/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D"
+  /tickets/technician-queue/{ticketId}/comments:
+    $ref: "../4.1/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1comments"
+  /tickets/technician-queue/{ticketId}/conversation:
+    $ref: "../4.1/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1conversation"
+  /tickets/{ticketId}:
+    $ref: "../4.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D"
+  /tickets/{ticketId}/comments:
+    $ref: "../4.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1comments"
+  /tickets/{ticketId}/claim:
+    $ref: "../4.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1claim"
+  /tickets/{ticketId}/priority:
+    put:
+      tags: [Support]
+      operationId: updateAssignedTicketPriority
+      summary: Cambia la prioridad oficial del ticket actualmente asignado al técnico
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketPriorityUpdateRequest" }
+      responses:
+        "200":
+          description: Ticket actualizado o no-op con versión vigente, sin evento en el no-op
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /tickets/{ticketId}/status:
+    put:
+      tags: [Support]
+      operationId: updateAssignedTicketStatus
+      summary: Ejecuta una transición operativa no terminal del ticket asignado
+      parameters:
+        - $ref: "#/components/parameters/TicketId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketStatusUpdateRequest" }
+      responses:
+        "200":
+          description: Ticket actualizado o no-op con versión vigente, sin evento en el no-op
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+components:
+  securitySchemes:
+    SessionCookie:
+      $ref: "../4.1/openapi.yaml#/components/securitySchemes/SessionCookie"
+  parameters:
+    CsrfToken:
+      $ref: "../4.1/openapi.yaml#/components/parameters/CsrfToken"
+    TicketId:
+      $ref: "../4.1/openapi.yaml#/components/parameters/TicketId"
+  schemas:
+    TicketResponse:
+      $ref: "../4.0/openapi.yaml#/components/schemas/TicketResponse"
+    TicketPriorityUpdateRequest:
+      type: object
+      required: [priority, expectedVersion]
+      properties:
+        priority: { type: string, enum: [LOW, NORMAL, HIGH, URGENT] }
+        expectedVersion: { type: integer, minimum: 0 }
+      additionalProperties: false
+    TicketStatusUpdateRequest:
+      type: object
+      required: [status, expectedVersion]
+      properties:
+        status: { type: string, enum: [OPEN, IN_PROGRESS, WAITING_FOR_REQUESTER] }
+        expectedVersion: { type: integer, minimum: 0 }
+      additionalProperties: false
+  responses:
+    BadRequest: { $ref: "../4.1/openapi.yaml#/components/responses/BadRequest" }
+    AuthenticationRequired: { $ref: "../4.1/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../4.1/openapi.yaml#/components/responses/Forbidden" }
+    NotFound: { $ref: "../4.1/openapi.yaml#/components/responses/NotFound" }
+    Conflict: { $ref: "../4.1/openapi.yaml#/components/responses/Conflict" }
+    ValidationFailed: { $ref: "../4.1/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../4.1/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../4.1/openapi.yaml#/components/responses/ServiceUnavailable" }
+security:
+  - SessionCookie: []

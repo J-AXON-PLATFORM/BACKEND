@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `TEC-QLT-006a` implementado y verificado localmente, cierre remoto pendiente, 2026-10-22
-> **Estado documental:** baseline v1 `DESIGN_READY`; caché reproducible del build SFTPGo validada localmente; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-005a` integrado en frontend y pendiente de integración backend; `TEC-QLT-006a` cerrado remotamente, 2026-10-23
+> **Estado documental:** baseline v1 `DESIGN_READY`; triaje Support acotado en integración controlada; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-22.
+- Fecha de última revisión: 2026-10-23.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: login y logout humanos, alta administrativa mínima de usuarios, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a`, la primera tarea explícita `COLLECT_SNAPSHOT`, el retry acotado de su entrega Result y los cortes ejecutados de Support están integrados. Support incluye alta, detalle, listado requester, conversación requester `PUBLIC`, bandeja técnica, claim y conversación `PUBLIC|INTERNAL` del técnico asignado; cambios de estado/prioridad, reasignación, adjuntos y el resto del lifecycle siguen fuera del corte, al igual que otros tipos de tarea, spool general, retries de polling/snapshots/capabilities, otros eventos SSE, Discovery y Production.
+- Estado funcional: login y logout humanos, alta administrativa mínima de usuarios, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a`, la primera tarea explícita `COLLECT_SNAPSHOT`, el retry acotado de su entrega Result y los cortes ejecutados de Support están integrados. Support incluye alta, detalle, listado requester, conversación requester `PUBLIC`, bandeja técnica, claim y conversación `PUBLIC|INTERNAL` del técnico asignado; el frontend de `OLA3-SUP-005a` está integrado y su backend añade localmente prioridad y tres transiciones no terminales, con integración remota pendiente. Reasignación, adjuntos y el lifecycle terminal siguen fuera del corte, al igual que otros tipos de tarea, spool general, retries de polling/snapshots/capabilities, otros eventos SSE, Discovery y Production.
 
 ## 1. Identidad
 
@@ -189,7 +189,7 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 
 - Runtime/build: **Node.js 24 LTS + npm 11.x**.
 - Framework: **Next.js 16.3.x + React 19.x compatible + TypeScript 5.9.x**.
-- Estado ejecutable verificado: Node.js 24.21.0, npm 11.19.0, Next.js 16.3.8, React/React DOM 19.3.0, TypeScript 5.9.3 y ESLint 9.39.5 temporalmente EOL.
+- Estado ejecutable verificado: Node.js 24.21.0, npm 11.19.0, Next.js 16.4.2, React/React DOM 19.3.0, TypeScript 5.9.3 y ESLint 9.39.5 temporalmente EOL.
 - Estructura: `src/app/` para routing/layout y `src/features/` para capacidades de usuario/negocio; no copiar mecánicamente los ocho módulos backend.
 - Actualizaciones selectivas servidor->navegador mediante SSE sobre HTTPS; navegador->backend permanece REST/HTTPS.
 - `NEXT_PUBLIC_*` solo para información que puede ser pública en navegador; casi ningún secreto debe existir en frontend.
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada y dieciséis incrementos funcionales acotados integrados, incluido `OLA3-SUP-004a`, más su corrección `OLA3-SUP-004b`. `TEC-QLT-006a` implementa y verifica localmente una caché reproducible y fail-closed para las etapas preparatorias de SFTPGo sin omitir pruebas upstream, `govulncheck`, construcción/verificación runtime, Trivy, SBOM ni gates posteriores; su único Pull Request y run post-merge siguen pendientes. No cambia OpenAPI 4.1, funcionalidad, datos, SFTPGo 2.7.6, otros repositorios o Production. `PRODUCTION_READY = NO`; cualquier incremento posterior requiere delimitación y autorización propias.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y dieciséis incrementos funcionales acotados integrados hasta `OLA3-SUP-004a`, más su corrección `OLA3-SUP-004b`. `TEC-QLT-006a` quedó integrado mediante `BACKEND#41`, squash `7c3233b5efd8242ac42222154e99070728957422`, con runs verdes `39874341640` y `39876819453`. `OLA3-SUP-005a` implementa localmente prioridad y ciclo operativo no terminal para el técnico asignado, OpenAPI 4.2, eventos atómicos y UI sin retry u optimistic update; su integración remota permanece pendiente. No autoriza resolución, cierre, reapertura, reasignación ni Production. `PRODUCTION_READY = NO`.

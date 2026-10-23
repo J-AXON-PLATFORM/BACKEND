@@ -29,7 +29,7 @@ class SupportMigrationIntegrationTest {
         Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
                 .locations("classpath:db/migration")
-                .target("20261020010000")
+                .target("20261022000000")
                 .load()
                 .migrate();
         JdbcTemplate jdbc = new JdbcTemplate(
@@ -64,6 +64,31 @@ class SupportMigrationIntegrationTest {
                 "TICKET_COMMENT_ADDED",
                 "{\"commentId\":\"" + commentId + "\",\"visibility\":\"PUBLIC\"}",
                 now);
+        insertEvent(
+                jdbc,
+                ticketId,
+                actorId,
+                "TICKET_ASSIGNED",
+                "{\"assigneeUserId\":\"" + actorId + "\"}",
+                now);
+        UUID internalCommentId = UUID.randomUUID();
+        jdbc.update(
+                """
+                INSERT INTO support.ticket_comments
+                    (id, ticket_id, visibility, author_user_id, body, created_at)
+                VALUES (?, ?, 'INTERNAL', ?, 'Preserved internal note', ?)
+                """,
+                internalCommentId,
+                ticketId,
+                actorId,
+                Timestamp.from(now));
+        insertEvent(
+                jdbc,
+                ticketId,
+                actorId,
+                "TICKET_COMMENT_ADDED",
+                "{\"commentId\":\"" + internalCommentId + "\",\"visibility\":\"INTERNAL\"}",
+                now);
 
         Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
@@ -73,7 +98,12 @@ class SupportMigrationIntegrationTest {
 
         assertThat(jdbc.queryForObject(
                         "SELECT count(*) FROM support.outbox_events WHERE resource_id = ?", Integer.class, ticketId))
-                .isEqualTo(2);
+                .isEqualTo(4);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM support.ticket_comments WHERE id = ? AND visibility = 'INTERNAL'",
+                        Integer.class,
+                        internalCommentId))
+                .isOne();
         assertThat(jdbc.queryForList(
                         """
                         SELECT conname FROM pg_constraint
@@ -94,24 +124,6 @@ class SupportMigrationIntegrationTest {
         assertThatThrownBy(() -> insertEvent(
                         jdbc, ticketId, actorId, "TICKET_ASSIGNED", "{}", now))
                 .isInstanceOf(DataIntegrityViolationException.class);
-        UUID internalCommentId = UUID.randomUUID();
-        jdbc.update(
-                """
-                INSERT INTO support.ticket_comments
-                    (id, ticket_id, visibility, author_user_id, body, created_at)
-                VALUES (?, ?, 'INTERNAL', ?, 'Preserved internal note', ?)
-                """,
-                internalCommentId,
-                ticketId,
-                actorId,
-                Timestamp.from(now));
-        insertEvent(
-                jdbc,
-                ticketId,
-                actorId,
-                "TICKET_COMMENT_ADDED",
-                "{\"commentId\":\"" + internalCommentId + "\",\"visibility\":\"INTERNAL\"}",
-                now);
         assertThatThrownBy(() -> jdbc.update(
                         """
                         INSERT INTO support.ticket_comments
@@ -141,6 +153,28 @@ class SupportMigrationIntegrationTest {
                         """,
                         String.class))
                 .containsExactlyInAnyOrder("ticket_comments_visibility_check", "outbox_events_payload_check");
+        insertEvent(
+                jdbc,
+                ticketId,
+                actorId,
+                "TICKET_PRIORITY_CHANGED",
+                "{\"previousPriority\":\"NORMAL\",\"newPriority\":\"HIGH\"}",
+                now);
+        insertEvent(
+                jdbc,
+                ticketId,
+                actorId,
+                "TICKET_STATUS_CHANGED",
+                "{\"previousStatus\":\"OPEN\",\"newStatus\":\"IN_PROGRESS\"}",
+                now);
+        assertThatThrownBy(() -> insertEvent(
+                        jdbc,
+                        ticketId,
+                        actorId,
+                        "TICKET_PRIORITY_CHANGED",
+                        "{\"previousPriority\":\"NORMAL\",\"newPriority\":\"HIGH\",\"extra\":true}",
+                        now))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     private static void insertEvent(
