@@ -46,7 +46,7 @@ Si la respuesta es no, no cargarlo.
 
 ## Instancia J-AXON -- ruta inmediata CKP-JAXON-005
 
-Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..078 aprobados; `OLA3-SUP-005a` está integrado y verificado; `OLA3-SUP-006a` + `TEC-QLT-007a` están implementados localmente con integración remota pendiente; `PRODUCTION_READY = NO`.
+Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..078 aprobados; `OLA3-SUP-005a` está integrado y verificado; para `OLA3-SUP-006a` + `TEC-QLT-007a`, `FRONTEND#19` está integrado/verificado y backend permanece pendiente; `PRODUCTION_READY = NO`.
 
 Estado remoto histórico verificado el 2026-10-07: la organización oficial nueva `J-AXON-PLATFORM` contiene los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos canónicos `backend`, `frontend` y `automation-collector`; `backend` fue inicializado y publicado mediante `TEC-GIT-001C`.
 

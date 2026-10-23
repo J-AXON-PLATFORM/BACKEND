@@ -3,7 +3,7 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-005a` integrado y verificado; `OLA3-SUP-006a` + `TEC-QLT-007a` implementados localmente, 2026-10-23
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-006a` + `TEC-QLT-007a`: frontend integrado y verificado, backend pendiente, 2026-10-23
 > **Estado documental:** baseline v1 `DESIGN_READY`; triaje Support acotado en integración controlada; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada y `OLA3-SUP-005a` integrado mediante `FRONTEND#18` y `BACKEND#42`. `OLA3-SUP-006a` + `TEC-QLT-007a` implementan localmente lifecycle terminal trazable, OpenAPI 4.3, UI sin retry/optimistic update y CI proporcional al riesgo; su integración remota permanece pendiente. No autoriza reasignación, adjuntos, búsqueda global, SSE de Support ni Production. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con OLA 0 cerrada y `OLA3-SUP-005a` integrado mediante `FRONTEND#18` y `BACKEND#42`. `OLA3-SUP-006a` + `TEC-QLT-007a` implementan lifecycle terminal trazable, OpenAPI 4.3, UI sin retry/optimistic update y CI proporcional al riesgo; `FRONTEND#19` está integrado y verificado, mientras la integración backend permanece pendiente. No autoriza reasignación, adjuntos, búsqueda global, SSE de Support ni Production. `PRODUCTION_READY = NO`.

@@ -46,7 +46,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 
 `OLA3-SUP-005a` está completado, integrado y verificado. `FRONTEND#18`, squash `64dee5fede9f9d7d1abf13e2f115c87b7e2f9260`, tuvo runs verdes `39924355831` y `39924662623`; `BACKEND#42`, squash `cad9f30849d745ca88651c0bc9d8bb618f3d33f9`, tuvo runs verdes `39955461750` y `39958345344`. Añade prioridad oficial y solo las tres transiciones no terminales autorizadas, concurrencia optimista/no-op, eventos mínimos, OpenAPI 4.2 y UI estricta.
 
-`OLA3-SUP-006a` + `TEC-QLT-007a` está implementado y verificado localmente en `backend` y `frontend`, pendiente de integración remota. Añade resolución, cierre, reapertura, historial terminal append-only, eventos mínimos, OpenAPI 4.3 y UI estricta; además clasifica ambos workflows en `DOCS_ONLY|APPLICATION|PLATFORM_FULL` con fallback cerrado. La clave SFTPGo vigente incorpora la ruta absoluta del checkout a través de la salida de `sha256sum`; hacerla independiente de ubicación queda pendiente de un alcance propio. No añade reasignación, adjuntos, búsqueda global, SSE de Support, IA, Automation, consumidores outbox, `automation-collector` o Production.
+`OLA3-SUP-006a` + `TEC-QLT-007a` está implementado y verificado localmente en `backend` y `frontend`; `FRONTEND#19`, squash `65c9a5ecd3b78cd4306ecc281f2f4f65a2b6f5c8`, tuvo runs verdes `40004926261` y `40005341450`, mientras backend permanece pendiente de integración. Añade resolución, cierre, reapertura, historial terminal append-only, eventos mínimos, OpenAPI 4.3 y UI estricta; además clasifica ambos workflows en `DOCS_ONLY|APPLICATION|PLATFORM_FULL` con fallback cerrado. La clave SFTPGo vigente incorpora la ruta absoluta del checkout a través de la salida de `sha256sum`; hacerla independiente de ubicación queda pendiente de un alcance propio. No añade reasignación, adjuntos, búsqueda global, SSE de Support, IA, Automation, consumidores outbox, `automation-collector` o Production.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -107,7 +107,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - `TEC-QLT-006a` cerró `BACKEND#41` y no requiere acción remota adicional. La corrección documental retrospectiva queda incluida en el alcance backend de `OLA3-SUP-005a`.
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
-- Siguiente paso remoto pendiente: integrar y verificar exclusivamente los Pull Requests frontend y backend de `OLA3-SUP-006a` + `TEC-QLT-007a`, en ese orden, y limpiar ramas.
+- Siguiente paso remoto pendiente: integrar y verificar exclusivamente el Pull Request backend de `OLA3-SUP-006a` + `TEC-QLT-007a`, y limpiar ramas.
 - Próxima acción técnica posterior: emitir el reporte final autorizado y delimitar por separado cualquier incremento nuevo.
 - La primera vertical E2E ya fue alcanzada mediante incrementos autorizados; la continuación mantiene el mismo enfoque incremental y no implementa “todo J-AXON de una vez”.
 
