@@ -44,7 +44,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 
 `TEC-QLT-006a` está completado, integrado y verificado bajo `AC-JAXON-076`. `BACKEND#41`, squash `7c3233b5efd8242ac42222154e99070728957422`, tuvo run definitivo de PR `39874341640` y post-merge `39876819453` verdes; la rama local y remota fue eliminada. Añade exclusivamente una caché BuildKit exacta para SFTPGo Local/Test y conserva pruebas upstream, `govulncheck`, runtime, Trivy, SBOM y gates posteriores. No cambia producto, contratos, datos, otros repositorios o Production.
 
-`OLA3-SUP-005a` está implementado localmente en `frontend` y `backend` bajo `AC-JAXON-077`, con integración remota pendiente. Añade prioridad oficial y solo las transiciones `OPEN -> IN_PROGRESS`, `IN_PROGRESS -> WAITING_FOR_REQUESTER` y `WAITING_FOR_REQUESTER -> IN_PROGRESS` para el técnico asignado, concurrencia optimista/no-op, eventos mínimos, OpenAPI 4.2 y UI estricta. No añade resolución, cierre, reapertura, reasignación, adjuntos, búsqueda global, SSE de Support, IA, Automation, consumidores outbox, `automation-collector` o Production.
+`OLA3-SUP-005a` está integrado y verificado en frontend mediante `FRONTEND#18`, squash `64dee5fede9f9d7d1abf13e2f115c87b7e2f9260`, runs verdes `39924355831` y `39924662623`; backend está implementado/verificado localmente y pendiente de integración. Añade prioridad oficial y solo las transiciones `OPEN -> IN_PROGRESS`, `IN_PROGRESS -> WAITING_FOR_REQUESTER` y `WAITING_FOR_REQUESTER -> IN_PROGRESS` para el técnico asignado, concurrencia optimista/no-op, eventos mínimos, OpenAPI 4.2 y UI estricta. No añade resolución, cierre, reapertura, reasignación, adjuntos, búsqueda global, SSE de Support, IA, Automation, consumidores outbox, `automation-collector` o Production.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -105,7 +105,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - `TEC-QLT-006a` cerró `BACKEND#41` y no requiere acción remota adicional. La corrección documental retrospectiva queda incluida en el alcance backend de `OLA3-SUP-005a`.
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
-- Siguiente paso remoto pendiente: completar exclusivamente los Pull Requests y verificaciones post-merge de `OLA3-SUP-005a`, primero `frontend` y después `backend`.
+- Siguiente paso remoto pendiente: completar exclusivamente el Pull Request y verificación post-merge backend de `OLA3-SUP-005a`; frontend ya quedó integrado y verificado.
 - Próxima acción técnica posterior: delimitar y autorizar por separado cualquier incremento nuevo.
 - La primera vertical E2E ya fue alcanzada mediante incrementos autorizados; la continuación mantiene el mismo enfoque incremental y no implementa “todo J-AXON de una vez”.
 

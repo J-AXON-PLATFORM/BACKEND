@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-005a` autorizado e implementado localmente; `TEC-QLT-006a` cerrado remotamente, 2026-10-23
-> **Estado documental:** baseline v1 `DESIGN_READY`; triaje Support acotado en verificación; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-005a` integrado en frontend y pendiente de integración backend; `TEC-QLT-006a` cerrado remotamente, 2026-10-23
+> **Estado documental:** baseline v1 `DESIGN_READY`; triaje Support acotado en integración controlada; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-10-23.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: login y logout humanos, alta administrativa mínima de usuarios, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a`, la primera tarea explícita `COLLECT_SNAPSHOT`, el retry acotado de su entrega Result y los cortes ejecutados de Support están integrados. Support incluye alta, detalle, listado requester, conversación requester `PUBLIC`, bandeja técnica, claim y conversación `PUBLIC|INTERNAL` del técnico asignado; `OLA3-SUP-005a` añade localmente prioridad y tres transiciones no terminales, con integración remota pendiente. Reasignación, adjuntos y el lifecycle terminal siguen fuera del corte, al igual que otros tipos de tarea, spool general, retries de polling/snapshots/capabilities, otros eventos SSE, Discovery y Production.
+- Estado funcional: login y logout humanos, alta administrativa mínima de usuarios, alta/consulta mínima de activos, pre-registro, enrolamiento SFTP, snapshot puntual, ingestión Collector, aviso SSE, `OLA2-STA-001a`, la primera tarea explícita `COLLECT_SNAPSHOT`, el retry acotado de su entrega Result y los cortes ejecutados de Support están integrados. Support incluye alta, detalle, listado requester, conversación requester `PUBLIC`, bandeja técnica, claim y conversación `PUBLIC|INTERNAL` del técnico asignado; el frontend de `OLA3-SUP-005a` está integrado y su backend añade localmente prioridad y tres transiciones no terminales, con integración remota pendiente. Reasignación, adjuntos y el lifecycle terminal siguen fuera del corte, al igual que otros tipos de tarea, spool general, retries de polling/snapshots/capabilities, otros eventos SSE, Discovery y Production.
 
 ## 1. Identidad
 
