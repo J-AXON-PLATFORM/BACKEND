@@ -41,3 +41,13 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Frontend conserva el formulario ante error, no reintenta ni anticipa estado y reconsulta recursos exactos tras éxito o `409`.
 - El clasificador CI cubre tabla de rutas, trata desconocidos y evidencia incompleta como `PLATFORM_FULL`, y estos dos PR ejecutan automáticamente ese nivel.
 - `PLATFORM_FULL` conserva todos los gates previos; `APPLICATION` omite solo SFTPGo explícito en backend y `DOCS_ONLY` conserva los controles mínimos de repositorio y secretos.
+
+## OLA4-DIS-001a + TEC-QLT-008a
+
+- `SYSTEM_ADMIN` administra scopes `ACTIVE|DISABLED`; `IT_OPERATOR` solo lista/consulta `ACTIVE` y no puede distinguir deshabilitado de inexistente.
+- Nombre y CIDR se normalizan/validan antes de persistir; se rechazan nombre case-insensitive o CIDR exacto duplicados y bits de host, pero se permiten redes solapadas.
+- Alta y cambio efectivo confirman scope y outbox mínimo en una transacción; no-op vigente no cambia versión/eventos y no-op obsoleto responde `409`.
+- OpenAPI 4.4 conserva 4.3 byte a byte; su manifest declarativo falla ante omisiones, entradas inválidas, checksums históricos incorrectos o incompatibilidad.
+- La clave SFTPGo coincide para bytes iguales en ubicaciones distintas e invalida ante cualquier entrada efectiva distinta.
+- Frontend conserva formularios en error, no reintenta/anticipa mutaciones y segmenta/refresca caché por usuario, rol y página.
+- `e2e/**` se clasifica `APPLICATION`; mecanismos CI, plataforma y rutas desconocidas continúan `PLATFORM_FULL`.

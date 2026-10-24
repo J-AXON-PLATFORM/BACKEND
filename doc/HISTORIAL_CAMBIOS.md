@@ -3,6 +3,16 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Ámbitos autorizados Discovery y calidad de contratos/caché -- OLA4-DIS-001a + TEC-QLT-008a, 2026-10-23
+
+Backend incorpora `discovery.authorized_scopes` y outbox propio, normalización cerrada de nombre/CIDR, autoridad diferenciada `SYSTEM_ADMIN|IT_OPERATOR`, concurrencia optimista y cuatro operaciones REST. OpenAPI 4.4 conserva 4.3 byte a byte; un manifest declarativo sustituye el inventario imperativo del verificador. La clave SFTPGo deja de depender de la ruta absoluta del checkout.
+
+Frontend añade administración/consulta responsive de scopes, parsers cerrados, caché por usuario/rol/página y mutaciones sin retry ni optimistic update. `e2e/**` pasa a `APPLICATION`, pero los PR del corte son `PLATFORM_FULL` por cambiar mecanismos CI. `FRONTEND#21` quedó integrado mediante squash `3624adab3bf8f418e6c1e46e5820b83fc73f7b07`, con run definitivo de PR `40050022669` y post-merge `40050263740` verdes; el run inicial `40046598732` falló por advisories nuevos y originó el refresh autorizado, solo en lockfile, de `undici`/`zod` transitivos de desarrollo. Backend y evidencia final permanecen pendientes; Discovery Executor, jobs, SFTP, escaneo, dispositivos e incorporación a Inventory no se implementan. `PRODUCTION_READY = NO`.
+
+El cierre retrospectivo autorizado registra `FRONTEND#19` (`65c9a5ecd3b78cd4306ecc281f2f4f65a2b6f5c8`, runs `40004926261`/`40005341450`) y `BACKEND#43` (`8593e02c4a9b69be5121d953a24834ba93e10dd1`, runs `40005994234`/`40008967710`), todos verdes y `PLATFORM_FULL`.
+
+---
+
 ## Lifecycle terminal de Support y CI escalonada -- OLA3-SUP-006a + TEC-QLT-007a, 2026-10-23
 
 Backend incorpora resolución, cierre y reapertura especializados con bloqueo, `expectedVersion`, historial `support.ticket_lifecycle_events` append-only y eventos mínimos `TICKET_RESOLVED|TICKET_CLOSED|TICKET_REOPENED`. OpenAPI 4.3 conserva 4.2 byte a byte y añade cinco operaciones. Frontend presenta timeline público, acciones contextuales sin retry/optimistic update y mantiene acceso técnico a cerrados asignados; los comentarios requester se deshabilitan en cerrado y vuelven tras reapertura.

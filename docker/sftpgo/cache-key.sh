@@ -23,8 +23,8 @@ fi
 digest="$({
   printf 'cache-schema=%s\nplatform=%s\n' "${cache_schema}" "${platform}"
   for input in "${inputs[@]}"; do
-    printf '%s\n' "${input}"
-    sha256sum "${repository_root}/${input}"
+    input_digest="$(sha256sum "${repository_root}/${input}" | cut -d ' ' -f 1)"
+    printf '%s  %s\n' "${input_digest}" "${input}"
   done
 } | sha256sum | cut -d ' ' -f 1)"
 

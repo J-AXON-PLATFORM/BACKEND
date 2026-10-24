@@ -50,11 +50,37 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V41_ROOT = Path.of("doc/contracts/openapi/4.1");
     private static final Path OPENAPI_V42_ROOT = Path.of("doc/contracts/openapi/4.2");
     private static final Path OPENAPI_V43_ROOT = Path.of("doc/contracts/openapi/4.3");
+    private static final Path OPENAPI_V44_ROOT = Path.of("doc/contracts/openapi/4.4");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
             "common.schema.json", "snapshot.schema.json", "task.schema.json", "result.schema.json");
     private static final ObjectMapper JSON = new ObjectMapper();
+
+    @Test
+    void openApi44Preserves43AndAddsOnlyAuthorizedScopeOperations() {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V44_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("4.4");
+        assertThat(api.getPaths().keySet()).containsAll(List.of(
+                "/discovery/scopes",
+                "/discovery/scopes/{scopeId}",
+                "/discovery/scopes/{scopeId}/status"));
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .contains(
+                        "listAuthorizedScopes",
+                        "createAuthorizedScope",
+                        "getAuthorizedScope",
+                        "updateAuthorizedScopeStatus")
+                .doesNotHaveDuplicates();
+    }
 
     @Test
     void openApiIsResolvedAndLimitedToApprovedOperations() throws IOException {

@@ -12,6 +12,8 @@ cp "${repository_root}"/docker/sftpgo/{Dockerfile,build-local.sh,cache-integrity
   "${work_dir}/docker/sftpgo/"
 
 readonly base_key="$(${work_dir}/docker/sftpgo/cache-key.sh linux/amd64)"
+readonly repository_key="$(${repository_root}/docker/sftpgo/cache-key.sh linux/amd64)"
+test "${base_key}" = "${repository_key}"
 test "${base_key}" = "$(${work_dir}/docker/sftpgo/cache-key.sh linux/amd64)"
 test "${base_key}" != "$(${work_dir}/docker/sftpgo/cache-key.sh linux/arm64)"
 

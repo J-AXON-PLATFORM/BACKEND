@@ -47,6 +47,7 @@
 - **Refinamiento Lote 48:** Discovery Executor usa identidad y buzón SFTP propios, separados del Agent; un job activo por executor, TTL inicial 1 h, `jobId` estable.
 - **Refinamiento Lote 48:** perfil `BASIC` no intrusivo con ARP cuando aplique, ICMP, DNS y probes TCP pequeños/configurables; `maxConcurrency=32` y probe timeout aproximado 2 s como defaults configurables.
 - **Refinamiento Lote 48:** resultados son observaciones; incorporación requiere revisión humana y operación pública de Inventory; el executor revalida que cada target esté dentro del scope autorizado.
+- **Corte ejecutable OLA4-DIS-001a:** materializa únicamente el mantenimiento y consulta de `AuthorizedScope` `ACTIVE|DISABLED`: administración `SYSTEM_ADMIN`, lectura `IT_OPERATOR` limitada a activos, nombre único normalizado y CIDR canónico; no implementa executors, jobs, SFTP, escaneo, dispositivos o incorporación.
 
 ## MOD-03 -- Collector
 

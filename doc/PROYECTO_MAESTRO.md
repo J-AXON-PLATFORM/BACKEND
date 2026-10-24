@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA3-SUP-006a` + `TEC-QLT-007a`: frontend integrado y verificado, backend pendiente, 2026-10-23
-> **Estado documental:** baseline v1 `DESIGN_READY`; triaje Support acotado en integración controlada; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA4-DIS-001a` + `TEC-QLT-008a`: frontend integrado, backend en integración, 2026-10-24
+> **Estado documental:** baseline v1 `DESIGN_READY`; corte Discovery acotado en integración controlada; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-10-23.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: login/logout y alta administrativa mínima, Inventory y Agent/Collector hasta Result resiliente, más Support hasta prioridad/ciclo no terminal, están integrados. Resolución, cierre, reapertura e historial terminal público están implementados localmente en backend/frontend con OpenAPI 4.3; la CI escalonada por riesgo también está implementada localmente. Reasignación, adjuntos, búsqueda global y SSE de Support siguen fuera del corte, al igual que otros tipos de tarea, spool general, retries de polling/snapshots/capabilities, Discovery y Production.
+- Estado funcional: Identity, Inventory y Agent/Collector autorizados, más Support hasta lifecycle terminal, están integrados. El primer corte Discovery para `AuthorizedScope` está implementado localmente en backend/frontend con OpenAPI 4.4; ejecución Discovery, jobs, SFTP, dispositivos e incorporación a Inventory permanecen fuera del corte, al igual que Production.
 
 ## 1. Identidad
 
@@ -374,7 +374,7 @@ Perfil documental: `ESTANDAR`. Ver `docs/00-gobierno/MATRIZ_ACTIVACION.md`.
 - Estado backend: `Backend CI` ejecuta `clean verify`, incluidas pruebas OpenAPI 1.0--2.3, JSON Schema/fixtures/manifest, PostgreSQL/Flyway, SFTPGo y modularidad, y conserva Compose, Testcontainers, builds, smoke y scans. El backup/restore lógico incluye Agent, identidad técnica y outboxes. `oasdiff` 1.33.0 se descarga por versión exacta y SHA-256 para bloquear breaking changes entre versiones consecutivas. No hay secretos, publicación o despliegue.
 - Los rulesets y protecciones automáticas del repositorio privado no están aplicados por la limitación del plan actual. PR y checks verdes se exigen operativamente, pero GitHub no bloquea técnicamente una fusión incorrecta. `main` y `develop` pueden quedar temporalmente en commits distintos.
 - Frontend CI: `npm ci`, lint, typecheck, Vitest/RTL y `next build`.
-- Estado frontend: `Frontend CI` ejecuta esos gates y auditorías de producción/completa en PR hacia `develop/main`, push a `develop` y manualmente. La auditoría de producción está limpia; la completa acepta solo `GHSA-vfj7-8cjw-p6xm` en `braces@3.0.3` de desarrollo mediante verificador cerrado, pendiente de corrección upstream.
+- Estado frontend: `Frontend CI` ejecuta esos gates y auditorías de producción/completa en PR hacia `develop/main`, push a `develop` y manualmente. Ambas auditorías están limpias tras el refresh puntual autorizado de `undici` y `zod` transitivos de desarrollo; el verificador permanece cerrado ante cualquier hallazgo no reconocido.
 - Python CI: `uv sync --locked`, Ruff, pytest, contratos/SFTP y packaging cuando aplique.
 - Estado Python: `Python CI` ejecuta sincronización estricta, lock, Ruff, pytest, build, auditoría, verificación local del bundle y ambos entrypoints. `cryptography` 50.0.2 genera la identidad Ed25519 local; `jsonschema` 4.26.0 y `referencing` 0.37.0 validan contratos Agent offline; Paramiko 5.0.0 implementa SFTP con host key fijada. PyInstaller permanece pendiente.
 - Dockerfiles backend/frontend multi-stage; runtime no-root.
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 0 cerrada y `OLA3-SUP-005a` integrado mediante `FRONTEND#18` y `BACKEND#42`. `OLA3-SUP-006a` + `TEC-QLT-007a` implementan lifecycle terminal trazable, OpenAPI 4.3, UI sin retry/optimistic update y CI proporcional al riesgo; `FRONTEND#19` está integrado y verificado, mientras la integración backend permanece pendiente. No autoriza reasignación, adjuntos, búsqueda global, SSE de Support ni Production. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con OLA 3 integrada hasta `OLA3-SUP-006a` mediante `FRONTEND#19` y `BACKEND#43`. `OLA4-DIS-001a` + `TEC-QLT-008a` implementan scopes autorizados, OpenAPI 4.4, UI estricta y correcciones reproducibles del manifest/CI/caché; frontend está integrado mediante `FRONTEND#21` y backend espera su único PR. No autorizan ejecución Discovery, jobs, SFTP Discovery, dispositivos, incorporación a Inventory ni Production. `PRODUCTION_READY = NO`.
