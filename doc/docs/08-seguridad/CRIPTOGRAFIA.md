@@ -23,6 +23,8 @@ Usar primitivas y bibliotecas mantenidas y reconocidas. No diseñar algoritmos c
 | SFTP | SSH/SFTP | canal Agent y Discovery Executor separado por identidad |
 | Backups Production | cifrado en reposo obligatorio | clave separada del backup; mecanismo/proveedor concreto según instalación |
 
+`OLA4-DIS-002a` genera Ed25519 exclusivamente en el host del Discovery Executor y almacena `executor_ed25519` con modo `0600` dentro de un directorio `0700`; backend recibe solo la representación pública OpenSSH, normaliza los bytes y calcula la huella `SHA256` canónica. La misma clave no puede pertenecer a dos identidades técnicas.
+
 ## Separación conceptual
 
 No intercambiar:

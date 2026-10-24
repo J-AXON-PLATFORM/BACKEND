@@ -1,13 +1,7 @@
 package com.jaxon.identity;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,8 +9,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 class AgentIdentityService implements AgentIdentityRegistry {
-
-    private static final String ALGORITHM = "ssh-ed25519";
 
     private final JdbcTemplate jdbc;
 
@@ -41,7 +33,12 @@ class AgentIdentityService implements AgentIdentityRegistry {
     @Override
     public KeyState registerPublicKey(
             UUID agentId, String publicKey, UUID actorId, UUID correlationId, Instant occurredAt) {
-        ParsedPublicKey parsed = parse(publicKey);
+        OpenSshEd25519PublicKey.Parsed parsed;
+        try {
+            parsed = OpenSshEd25519PublicKey.parse(publicKey);
+        } catch (OpenSshEd25519PublicKey.InvalidKeyException exception) {
+            throw new InvalidPublicKeyException();
+        }
         IdentityRow current = rowForUpdate(agentId);
         if (current.publicKey() != null) {
             if (current.publicKey().equals(parsed.normalized())) {
@@ -57,11 +54,11 @@ class AgentIdentityService implements AgentIdentityRegistry {
         Integer duplicate = jdbc.queryForObject(
                 """
                 SELECT count(*) FROM identity.technical_identities
-                WHERE public_key_fingerprint = ? AND agent_id <> ?
+                WHERE public_key_fingerprint = ? AND id <> ?
                 """,
                 Integer.class,
                 parsed.fingerprint(),
-                agentId);
+                current.identityId());
         if (duplicate != null && duplicate > 0) {
             throw new PublicKeyConflictException();
         }
@@ -136,12 +133,13 @@ class AgentIdentityService implements AgentIdentityRegistry {
     private IdentityRow rowForUpdate(UUID agentId) {
         return jdbc.query(
                         """
-                        SELECT public_key, public_key_fingerprint, updated_at, version
+                        SELECT id, public_key, public_key_fingerprint, updated_at, version
                         FROM identity.technical_identities
                         WHERE agent_id = ?
                         FOR UPDATE
                         """,
                         (resultSet, row) -> new IdentityRow(
+                                resultSet.getObject("id", UUID.class),
                                 resultSet.getString("public_key"),
                                 resultSet.getString("public_key_fingerprint"),
                                 resultSet.getTimestamp("updated_at").toInstant(),
@@ -152,55 +150,8 @@ class AgentIdentityService implements AgentIdentityRegistry {
                 .orElseThrow(IllegalStateException::new);
     }
 
-    private static ParsedPublicKey parse(String value) {
-        String[] parts = value == null ? new String[0] : value.trim().split("\\s+", 3);
-        if (parts.length < 2 || !ALGORITHM.equals(parts[0])) {
-            throw new InvalidPublicKeyException();
-        }
-        byte[] blob;
-        try {
-            blob = Base64.getDecoder().decode(parts[1]);
-        } catch (IllegalArgumentException exception) {
-            throw new InvalidPublicKeyException();
-        }
-        ByteBuffer buffer = ByteBuffer.wrap(blob);
-        byte[] algorithm = readField(buffer);
-        byte[] key = readField(buffer);
-        if (buffer.hasRemaining()
-                || !Arrays.equals(algorithm, ALGORITHM.getBytes(StandardCharsets.US_ASCII))
-                || key.length != 32) {
-            throw new InvalidPublicKeyException();
-        }
-        String canonicalBlob = Base64.getEncoder().encodeToString(blob);
-        String fingerprint = "SHA256:"
-                + Base64.getEncoder().withoutPadding().encodeToString(sha256(blob));
-        return new ParsedPublicKey(ALGORITHM + " " + canonicalBlob, fingerprint);
-    }
-
-    private static byte[] readField(ByteBuffer buffer) {
-        if (buffer.remaining() < Integer.BYTES) {
-            throw new InvalidPublicKeyException();
-        }
-        int length = buffer.getInt();
-        if (length < 0 || length > buffer.remaining()) {
-            throw new InvalidPublicKeyException();
-        }
-        byte[] value = new byte[length];
-        buffer.get(value);
-        return value;
-    }
-
-    private static byte[] sha256(byte[] value) {
-        try {
-            return MessageDigest.getInstance("SHA-256").digest(value);
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException(exception);
-        }
-    }
-
-    private record ParsedPublicKey(String normalized, String fingerprint) {}
-
-    private record IdentityRow(String publicKey, String fingerprint, Instant updatedAt, long version) {
+    private record IdentityRow(
+            UUID identityId, String publicKey, String fingerprint, Instant updatedAt, long version) {
         KeyState toState() {
             return new KeyState(publicKey != null, fingerprint, updatedAt, version);
         }

@@ -18,6 +18,7 @@ Definir dominios, ownership, almacenamiento, movimiento y ciclo de vida.
 - SHA-256 es el hash canónico de integridad de archivos relevantes.
 - Fuente RAG, chunks y embeddings comparten ciclo de vida; borrar/desautorizar una fuente debe retirar sus derivados recuperables.
 - Discovery produce observaciones temporales; incorporar a Inventory es una operación explícita y no transfiere ownership de tablas.
+- En `OLA4-DIS-002a`, Discovery posee `discovery_executors`, la asociación N:M `discovery_executor_scopes` y su outbox; Identity posee `technical_identities`, public key, huella y outbox de identidad. No existen FK cross-schema ni acceso directo de Discovery a tablas Identity: el alta coordinada usa contrato público in-process y una única transacción PostgreSQL.
 
 ## Consistencia
 

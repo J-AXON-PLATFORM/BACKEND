@@ -46,7 +46,14 @@ class IdentityMigrationIntegrationTest {
                 Timestamp.from(now));
         insertHistoricalEvent(jdbc, "HUMAN_LOGIN_SUCCEEDED", actorId, "AUTHENTICATION_ATTEMPT", "SUCCESS", "{}", now);
         insertHistoricalEvent(jdbc, "HUMAN_LOGIN_FAILED", null, "AUTHENTICATION_ATTEMPT", "DENIED", "{\"reason\":\"INVALID_CREDENTIALS\"}", now);
-        insertHistoricalEvent(jdbc, "AGENT_PUBLIC_KEY_REGISTERED", actorId, "AGENT_TECHNICAL_IDENTITY", "SUCCESS", "{}", now);
+        insertHistoricalEvent(
+                jdbc,
+                "AGENT_PUBLIC_KEY_REGISTERED",
+                actorId,
+                "AGENT_TECHNICAL_IDENTITY",
+                "SUCCESS",
+                "{\"historical\":true}",
+                now);
 
         Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())

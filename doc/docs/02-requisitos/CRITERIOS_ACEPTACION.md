@@ -51,3 +51,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - La clave SFTPGo coincide para bytes iguales en ubicaciones distintas e invalida ante cualquier entrada efectiva distinta.
 - Frontend conserva formularios en error, no reintenta/anticipa mutaciones y segmenta/refresca caché por usuario, rol y página.
 - `e2e/**` se clasifica `APPLICATION`; mecanismos CI, plataforma y rutas desconocidas continúan `PLATFORM_FULL`.
+
+## OLA4-DIS-002a
+
+- `SYSTEM_ADMIN` pre-registra, lista y consulta executors `PENDING`; cualquier otro rol queda denegado por backend y no recibe UI.
+- El alta exige nombre único normalizado y entre uno y cincuenta scopes existentes y activos; asociación, identidad y outbox Discovery se confirman en una transacción y la asociación persiste si el scope se deshabilita después.
+- Identity registra una única public key Ed25519 normalizada, idempotente para los mismos bytes y en conflicto ante sustitución o reutilización por cualquier identidad técnica; el outbox no contiene material de clave.
+- El inicializador Discovery Executor opera sin red, separa estado y keypair del Agent, usa UUIDv4, creación exclusiva no-follow, ownership efectivo, modos `0700|0600` e idempotencia cerrada.
+- OpenAPI 4.5 conserva 4.4 byte a byte y añade solo las cuatro operaciones autorizadas; frontend usa parsers cerrados, caché segmentada y estado sensible solo en memoria.
+- La prueba E2E real recorre scope activo, pre-registro, inicialización local, registro de la clave pública, persistencia/outboxes y conservación de asociación tras deshabilitar el scope.

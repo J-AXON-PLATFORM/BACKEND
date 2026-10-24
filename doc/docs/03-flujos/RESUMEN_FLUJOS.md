@@ -62,6 +62,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA4-DIS-001a` ejecuta solo el paso 1 para scopes: `SYSTEM_ADMIN` crea y cambia `ACTIVE|DISABLED` con versión optimista y outbox atómico; `IT_OPERATOR` consulta únicamente activos. No avanza a executor, job, SFTP o escaneo.
 
+`OLA4-DIS-002a` amplía únicamente el paso 1: `SYSTEM_ADMIN` pre-registra un executor `PENDING`, fija su asociación inicial a scopes activos, inicializa localmente una identidad Ed25519 separada y registra solo la public key. No activa el executor ni avanza a buzón SFTP, jobs o escaneo.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.
