@@ -27,6 +27,8 @@ Refinamientos aprobados:
 - un permiso general nunca habilita shell arbitraria, tarea Agent fuera del catálogo ni bypass del módulo propietario;
 - múltiples roles se combinan explícitamente cuando una persona necesita responsabilidades de más de un dominio.
 
+En `OLA4-DIS-001a`, `POST /discovery/scopes` y `PUT /discovery/scopes/{scopeId}/status` requieren `SYSTEM_ADMIN`; `GET` admite `SYSTEM_ADMIN|IT_OPERATOR`, pero filtra `DISABLED` para `IT_OPERATOR` con `404` indistinguible del recurso inexistente. Otros roles permanecen denegados por defecto y frontend no sustituye ese enforcement.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

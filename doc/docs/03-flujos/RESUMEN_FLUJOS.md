@@ -60,6 +60,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 9. Incorporar no instala Agent automáticamente; enrolamiento Agent sigue siendo flujo separado.
 10. Resultados no incorporados siguen retención de 30 días. SSE puede avisar cambios de job y frontend vuelve a consultar REST.
 
+`OLA4-DIS-001a` ejecuta solo el paso 1 para scopes: `SYSTEM_ADMIN` crea y cambia `ACTIVE|DISABLED` con versión optimista y outbox atómico; `IT_OPERATOR` consulta únicamente activos. No avanza a executor, job, SFTP o escaneo.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.

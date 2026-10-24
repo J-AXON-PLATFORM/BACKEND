@@ -68,9 +68,15 @@ La prioridad admite `LOW|NORMAL|HIGH|URGENT`; el ciclo operativo se limita a `OP
 
 El historial público es cerrado, paginado y ordenado; puede contener resumen de resolución, motivo cerrado de cierre o motivo de reapertura según el evento. La autorización permanece contextual al requester propietario o técnico asignado. `oasdiff` bloquea incompatibilidad 4.2 -> 4.3 y el checksum fijado protege 4.2 byte a byte.
 
+## Contrato compatible 4.4 -- OLA4-DIS-001a
+
+`doc/contracts/openapi/4.4/openapi.yaml` conserva todas las operaciones 4.3 y añade únicamente `POST|GET /discovery/scopes`, `GET /discovery/scopes/{scopeId}` y `PUT /discovery/scopes/{scopeId}/status`. Las mutaciones son exclusivas de `SYSTEM_ADMIN`, requieren CSRF y, para estado, `expectedVersion`; `IT_OPERATOR` solo obtiene scopes `ACTIVE` y recibe `404` uniforme para inexistente o deshabilitado.
+
+El manifiesto `doc/contracts/openapi/manifest.tsv` declara cada versión, checksum histórico y predecesor compatible. El verificador rechaza entradas mal formadas, duplicadas, archivos ausentes/no declarados, más de un contrato actual e incompatibilidades. OpenAPI 1.0--4.3 permanece byte a byte inmutable.
+
 ## Pendiente de diseño detallado
 
-Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 4.3. SFTP/JSON Schema permanece separado para el ejecutable Agent; SSE solo notifica al navegador y no crea un canal HTTP Agent ni autoriza snapshots HTTP.
+Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 4.4. SFTP/JSON Schema permanece separado para los ejecutables; SSE solo notifica al navegador y no crea un canal HTTP Agent/Discovery.
 
 ---
 > **Clasificación:** CONDICIONAL  
