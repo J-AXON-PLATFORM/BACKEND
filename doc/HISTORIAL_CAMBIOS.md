@@ -9,6 +9,8 @@ Backend incorpora `discovery.authorized_scopes` y outbox propio, normalización 
 
 Frontend añade administración/consulta responsive de scopes, parsers cerrados, caché por usuario/rol/página y mutaciones sin retry ni optimistic update. `e2e/**` pasa a `APPLICATION`, pero los PR del corte son `PLATFORM_FULL` por cambiar mecanismos CI. `FRONTEND#21` quedó integrado mediante squash `3624adab3bf8f418e6c1e46e5820b83fc73f7b07`, con run definitivo de PR `40050022669` y post-merge `40050263740` verdes; el run inicial `40046598732` falló por advisories nuevos y originó el refresh autorizado, solo en lockfile, de `undici`/`zod` transitivos de desarrollo. Backend y evidencia final permanecen pendientes; Discovery Executor, jobs, SFTP, escaneo, dispositivos e incorporación a Inventory no se implementan. `PRODUCTION_READY = NO`.
 
+El run inicial backend `40060796361` falló antes de los gates largos porque Trivy incorporó `CVE-2026-111497` para `brotli-libs 1.2.0-r1` de la fixture PostgreSQL. La excepción correctiva autorizada fija únicamente `brotli-libs=1.2.1-r0` en la etapa runtime Local/Test y obliga a reconstruir, escanear y repetir la verificación completa en `BACKEND#44`.
+
 El cierre retrospectivo autorizado registra `FRONTEND#19` (`65c9a5ecd3b78cd4306ecc281f2f4f65a2b6f5c8`, runs `40004926261`/`40005341450`) y `BACKEND#43` (`8593e02c4a9b69be5121d953a24834ba93e10dd1`, runs `40005994234`/`40008967710`), todos verdes y `PLATFORM_FULL`.
 
 ---

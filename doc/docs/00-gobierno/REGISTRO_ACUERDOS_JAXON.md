@@ -424,6 +424,8 @@ Se autoriza exclusivamente la rama `feature/ola4-dis-001a-tec-qlt-008a`, un Pull
 
 Durante `FRONTEND#21`, el run inicial `40046598732` falló porque el feed npm incorporó tres advisories de `undici@8.11.2` y uno de `zod@4.6.5`, ambos transitivos y exclusivamente de desarrollo; `npm audit --omit=dev` permaneció limpio. LUIS autorizó una excepción correctiva puntual para cambiar únicamente las entradas ya existentes de `package-lock.json` a `undici@8.12.2` y `zod@4.6.6`, sin dependencias directas, cambios de `package.json`, funcionalidad o workflows. El run definitivo de PR `40050022669` y el post-merge `40050263740` quedaron verdes y `FRONTEND#21` se integró mediante squash `3624adab3bf8f418e6c1e46e5820b83fc73f7b07`.
 
+Durante `BACKEND#44`, el run inicial `40060796361` falló al incorporar Trivy `CVE-2026-111497` en `brotli-libs 1.2.0-r1` de la fixture PostgreSQL Local/Test; Alpine publicó `1.2.1-r0`. LUIS autorizó una segunda excepción correctiva puntual para fijar exclusivamente `brotli-libs=1.2.1-r0` en la etapa runtime de `docker/postgres-pgvector.Dockerfile`, sin cambiar PostgreSQL, pgvector, workflows, producto o Production. La corrección debe reconstruir, escanear y reejecutar la verificación completa dentro del mismo PR.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)
