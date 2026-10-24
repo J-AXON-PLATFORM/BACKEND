@@ -3,13 +3,21 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Pre-registro e identidad local de Discovery Executor -- OLA4-DIS-002a, 2026-10-24
+
+Los tres repositorios incorporan localmente el corte autorizado: inicializador Ed25519 sin red y estado separado del Agent; pre-registro `PENDING`, asociación inicial N:M con scopes activos, ownership Discovery/Identity sin acceso cross-schema, outboxes mínimos y cuatro operaciones REST exclusivas de `SYSTEM_ADMIN`; frontend responsive con parsers cerrados, estado sensible en memoria e instrucciones que nunca solicitan private key. OpenAPI 4.5 conserva 4.4 byte a byte.
+
+La verificación dirigida y el E2E Chromium multirepo real quedaron verdes, incluida persistencia, privacidad de outboxes, idempotencia de clave y conservación de asociación tras deshabilitar el scope. Integración remota y evidencia post-merge permanecen pendientes. Activación, revocación, SFTP Discovery, jobs, escaneo, dispositivos e incorporación a Inventory no se implementan. `PRODUCTION_READY = NO`.
+
+---
+
 ## Ámbitos autorizados Discovery y calidad de contratos/caché -- OLA4-DIS-001a + TEC-QLT-008a, 2026-10-23
 
 Backend incorpora `discovery.authorized_scopes` y outbox propio, normalización cerrada de nombre/CIDR, autoridad diferenciada `SYSTEM_ADMIN|IT_OPERATOR`, concurrencia optimista y cuatro operaciones REST. OpenAPI 4.4 conserva 4.3 byte a byte; un manifest declarativo sustituye el inventario imperativo del verificador. La clave SFTPGo deja de depender de la ruta absoluta del checkout.
 
-Frontend añade administración/consulta responsive de scopes, parsers cerrados, caché por usuario/rol/página y mutaciones sin retry ni optimistic update. `e2e/**` pasa a `APPLICATION`, pero los PR del corte son `PLATFORM_FULL` por cambiar mecanismos CI. `FRONTEND#21` quedó integrado mediante squash `3624adab3bf8f418e6c1e46e5820b83fc73f7b07`, con run definitivo de PR `40050022669` y post-merge `40050263740` verdes; el run inicial `40046598732` falló por advisories nuevos y originó el refresh autorizado, solo en lockfile, de `undici`/`zod` transitivos de desarrollo. Backend y evidencia final permanecen pendientes; Discovery Executor, jobs, SFTP, escaneo, dispositivos e incorporación a Inventory no se implementan. `PRODUCTION_READY = NO`.
+Frontend añade administración/consulta responsive de scopes, parsers cerrados, caché por usuario/rol/página y mutaciones sin retry ni optimistic update. `e2e/**` pasa a `APPLICATION`, pero los PR del corte son `PLATFORM_FULL` por cambiar mecanismos CI. `FRONTEND#21` quedó integrado mediante squash `3624adab3bf8f418e6c1e46e5820b83fc73f7b07`, con runs verdes `40050022669`/`40050263740`; `BACKEND#44` quedó integrado mediante squash `72a1deab9a0fd7685fdc9da266c7cb4d68bdb5fc`, con runs verdes `40061731474`/`40063098808`. `AC-JAXON-079` está cerrado. Discovery Executor, jobs, SFTP, escaneo, dispositivos e incorporación a Inventory no formaron parte de ese corte. `PRODUCTION_READY = NO`.
 
-El run inicial backend `40060796361` falló antes de los gates largos porque Trivy incorporó `CVE-2026-111497` para `brotli-libs 1.2.0-r1` de la fixture PostgreSQL. La excepción correctiva autorizada fija únicamente `brotli-libs=1.2.1-r0` en la etapa runtime Local/Test y obliga a reconstruir, escanear y repetir la verificación completa en `BACKEND#44`.
+El run inicial backend `40060796361` falló antes de los gates largos porque Trivy incorporó `CVE-2026-111497` para `brotli-libs 1.2.0-r1` de la fixture PostgreSQL. La excepción correctiva autorizada fijó únicamente `brotli-libs=1.2.1-r0`; el run definitivo y post-merge quedaron verdes.
 
 El cierre retrospectivo autorizado registra `FRONTEND#19` (`65c9a5ecd3b78cd4306ecc281f2f4f65a2b6f5c8`, runs `40004926261`/`40005341450`) y `BACKEND#43` (`8593e02c4a9b69be5121d953a24834ba93e10dd1`, runs `40005994234`/`40008967710`), todos verdes y `PLATFORM_FULL`.
 

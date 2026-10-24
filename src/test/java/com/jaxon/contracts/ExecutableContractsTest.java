@@ -51,6 +51,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V42_ROOT = Path.of("doc/contracts/openapi/4.2");
     private static final Path OPENAPI_V43_ROOT = Path.of("doc/contracts/openapi/4.3");
     private static final Path OPENAPI_V44_ROOT = Path.of("doc/contracts/openapi/4.4");
+    private static final Path OPENAPI_V45_ROOT = Path.of("doc/contracts/openapi/4.5");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -79,6 +80,38 @@ class ExecutableContractsTest {
                         "createAuthorizedScope",
                         "getAuthorizedScope",
                         "updateAuthorizedScopeStatus")
+                .doesNotHaveDuplicates();
+    }
+
+    @Test
+    void openApi45Preserves44AndAddsOnlyDiscoveryExecutorOperations() {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V45_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        OpenAPI previous = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V44_ROOT.resolve("openapi.yaml").toString(), null, options)
+                .getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(previous).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("4.5");
+        assertThat(api.getPaths().keySet())
+                .containsAll(previous.getPaths().keySet())
+                .hasSize(previous.getPaths().size() + 3);
+        assertThat(api.getPaths().keySet()).contains(
+                "/discovery/executors",
+                "/discovery/executors/{executorId}",
+                "/discovery/executors/{executorId}/ssh-key");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .containsExactlyInAnyOrder(
+                        "listDiscoveryExecutors",
+                        "createDiscoveryExecutor",
+                        "getDiscoveryExecutor",
+                        "registerDiscoveryExecutorPublicKey")
                 .doesNotHaveDuplicates();
     }
 

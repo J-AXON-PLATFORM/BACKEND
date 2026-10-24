@@ -29,6 +29,8 @@ Refinamientos aprobados:
 
 En `OLA4-DIS-001a`, `POST /discovery/scopes` y `PUT /discovery/scopes/{scopeId}/status` requieren `SYSTEM_ADMIN`; `GET` admite `SYSTEM_ADMIN|IT_OPERATOR`, pero filtra `DISABLED` para `IT_OPERATOR` con `404` indistinguible del recurso inexistente. Otros roles permanecen denegados por defecto y frontend no sustituye ese enforcement.
 
+En `OLA4-DIS-002a`, las cuatro operaciones `/discovery/executors` requieren `SYSTEM_ADMIN`. El backend valida que todos los scopes asociados existan y estén `ACTIVE` al crear; frontend solo oculta la función como UX y no sustituye `default deny`. La identidad técnica pertenece a Identity y la asociación pertenece a Discovery, comunicados por contrato público in-process.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

@@ -3,7 +3,7 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA4-DIS-001a` + `TEC-QLT-008a`: frontend integrado, backend en integración, 2026-10-24
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA4-DIS-002a`: implementación local multirepo verificada, integración pendiente, 2026-10-24
 > **Estado documental:** baseline v1 `DESIGN_READY`; corte Discovery acotado en integración controlada; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-23.
+- Fecha de última revisión: 2026-10-24.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: Identity, Inventory y Agent/Collector autorizados, más Support hasta lifecycle terminal, están integrados. El primer corte Discovery para `AuthorizedScope` está implementado localmente en backend/frontend con OpenAPI 4.4; ejecución Discovery, jobs, SFTP, dispositivos e incorporación a Inventory permanecen fuera del corte, al igual que Production.
+- Estado funcional: Identity, Inventory y Agent/Collector autorizados, más Support hasta lifecycle terminal y `AuthorizedScope`, están integrados. El pre-registro, asociación inicial e identidad local de Discovery Executor está implementado y verificado localmente en los tres repositorios con OpenAPI 4.5; activación, ejecución Discovery, jobs, SFTP, dispositivos e incorporación a Inventory permanecen fuera del corte, al igual que Production.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 3 integrada hasta `OLA3-SUP-006a` mediante `FRONTEND#19` y `BACKEND#43`. `OLA4-DIS-001a` + `TEC-QLT-008a` implementan scopes autorizados, OpenAPI 4.4, UI estricta y correcciones reproducibles del manifest/CI/caché; frontend está integrado mediante `FRONTEND#21` y backend espera su único PR. No autorizan ejecución Discovery, jobs, SFTP Discovery, dispositivos, incorporación a Inventory ni Production. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con OLA 3 integrada hasta `OLA3-SUP-006a` y `OLA4-DIS-001a` cerrado mediante `FRONTEND#21` y `BACKEND#44`. `OLA4-DIS-002a` implementa localmente pre-registro, asociación inicial e identidad local separada de Discovery Executor, inicializador endurecido, OpenAPI 4.5 y UI estricta; sus tres PR permanecen pendientes. No autoriza activación, ejecución Discovery, jobs, SFTP Discovery, dispositivos, incorporación a Inventory ni Production. `PRODUCTION_READY = NO`.

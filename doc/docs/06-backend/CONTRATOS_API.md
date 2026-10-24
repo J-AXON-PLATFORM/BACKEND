@@ -74,9 +74,15 @@ El historial público es cerrado, paginado y ordenado; puede contener resumen de
 
 El manifiesto `doc/contracts/openapi/manifest.tsv` declara cada versión, checksum histórico y predecesor compatible. El verificador rechaza entradas mal formadas, duplicadas, archivos ausentes/no declarados, más de un contrato actual e incompatibilidades. OpenAPI 1.0--4.3 permanece byte a byte inmutable.
 
+## Contrato compatible 4.5 -- OLA4-DIS-002a
+
+`doc/contracts/openapi/4.5/openapi.yaml` conserva todas las operaciones 4.4 y añade únicamente `POST|GET /discovery/executors`, `GET /discovery/executors/{executorId}` y `PUT /discovery/executors/{executorId}/ssh-key`. Todas son exclusivas de `SYSTEM_ADMIN`; el alta exige entre uno y cincuenta scopes existentes y activos, y el registro de clave acepta solo OpenSSH Ed25519 con semántica idempotente para la misma clave normalizada.
+
+El estado y versión de negocio permanecen `PENDING` y `0`; el contrato expone únicamente si la public key está registrada y su huella SHA-256. OpenAPI 1.0--4.4 permanece byte a byte inmutable.
+
 ## Pendiente de diseño detallado
 
-Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 4.4. SFTP/JSON Schema permanece separado para los ejecutables; SSE solo notifica al navegador y no crea un canal HTTP Agent/Discovery.
+Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 4.5. SFTP/JSON Schema permanece separado para los ejecutables; SSE solo notifica al navegador y no crea un canal HTTP Agent/Discovery.
 
 ---
 > **Clasificación:** CONDICIONAL  
