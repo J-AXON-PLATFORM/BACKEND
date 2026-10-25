@@ -17,10 +17,12 @@ Esta carpeta es la fuente canónica de los contratos externos de J-AXON.
 - `openapi/4.2/openapi.yaml`: minor compatible que añade prioridad y ciclo operativo no terminal para el técnico asignado.
 - `openapi/4.3/openapi.yaml`: minor compatible que añade resolución, cierre, reapertura e historial terminal público.
 - `openapi/4.4/openapi.yaml`: minor compatible que añade administración y consulta de ámbitos autorizados Discovery.
+- `openapi/4.5/openapi.yaml`: minor compatible que añade pre-registro, consulta y registro de public key de Discovery Executor.
+- `openapi/5.0/openapi.yaml`: major que añade activación y datos públicos del canal SFTP de Discovery Executor.
 - `openapi/manifest.tsv`: inventario declarativo fail-closed de integridad y compatibilidad OpenAPI.
 - `agent/1.0/`: contratos JSON Schema Draft 2020-12 para snapshot, Task y Result Agent.
 
-Los contratos usan versión `MAJOR.MINOR`, independiente de la versión del software. Un cambio incompatible requiere un nuevo major. Un minor nuevo debe aceptar las instancias válidas del minor anterior y coexistir con él durante la transición. OpenAPI 4.5 es el contrato actual; 4.4 permanece histórico e inmutable y 4.5 conserva compatibilidad con él.
+Los contratos usan versión `MAJOR.MINOR`, independiente de la versión del software. Un cambio incompatible requiere un nuevo major. Un minor nuevo debe aceptar las instancias válidas del minor anterior y coexistir con él durante la transición. OpenAPI 5.0 es el contrato actual; 1.0--4.5 permanecen históricos e inmutables.
 
 Los identificadores bajo `https://schemas.j-axon.invalid/` no son endpoints. Los validadores deben resolverlos únicamente contra recursos locales. `backend` conserva la fuente canónica; las copias en consumidores se sincronizan y verifican mediante el manifest SHA-256.
 
@@ -49,5 +51,7 @@ OpenAPI 4.1 permanece byte a byte inmutable. OpenAPI 4.2 añade únicamente `PUT
 OpenAPI 4.2 permanece byte a byte inmutable. OpenAPI 4.3 añade únicamente resolución, cierre y reapertura especializadas, más lectura paginada del historial terminal para requester propietario y técnico asignado. Los requests de mutación son cerrados, exigen `expectedVersion` y no modifican las respuestas históricas de ticket.
 
 OpenAPI 4.4 permanece byte a byte inmutable. OpenAPI 4.5 añade únicamente pre-registro, listado, consulta y registro de public key de `DiscoveryExecutor`; no añade activación, ejecución Discovery, jobs, dispositivos, SFTP o incorporación a Inventory.
+
+OpenAPI 4.5 permanece byte a byte inmutable. OpenAPI 5.0 es breaking porque amplía el schema cerrado de `DiscoveryExecutor` desde solo `PENDING`/versión `0` a `PENDING|ACTIVE`/versión `0|1`; añade únicamente `POST /discovery/executors/{executorId}/activate` y la respuesta pública `host|port|username|hostKey|hostKeyFingerprint`. No añade jobs, resultados, polling, escaneo, dispositivos o incorporación a Inventory.
 
 Agent 1.0, incluidos `task.schema.json`, `result.schema.json`, manifest y copia vendorizada, permanece byte a byte inmutable. Backend empaqueta los cuatro schemas existentes para validación runtime.

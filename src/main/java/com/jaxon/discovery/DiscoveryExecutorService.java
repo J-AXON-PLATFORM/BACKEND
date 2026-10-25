@@ -26,16 +26,19 @@ class DiscoveryExecutorService {
     private final NamedParameterJdbcTemplate namedJdbc;
     private final Clock clock;
     private final DiscoveryExecutorIdentityRegistry identities;
+    private final DiscoverySftpGoProvisioner sftpGoProvisioner;
 
     DiscoveryExecutorService(
             JdbcTemplate jdbc,
             NamedParameterJdbcTemplate namedJdbc,
             Clock clock,
-            DiscoveryExecutorIdentityRegistry identities) {
+            DiscoveryExecutorIdentityRegistry identities,
+            DiscoverySftpGoProvisioner sftpGoProvisioner) {
         this.jdbc = jdbc;
         this.namedJdbc = namedJdbc;
         this.clock = clock;
         this.identities = identities;
+        this.sftpGoProvisioner = sftpGoProvisioner;
     }
 
     @Transactional
@@ -100,7 +103,8 @@ class DiscoveryExecutorService {
                 "SELECT count(*) FROM discovery.discovery_executors", Long.class);
         List<DiscoveryExecutorResponse> items = jdbc.query(
                         """
-                        SELECT id, name, status, created_by_user_id, created_at, updated_at, version
+                        SELECT id, name, status, sftp_username, activated_at,
+                               created_by_user_id, created_at, updated_at, version
                         FROM discovery.discovery_executors
                         ORDER BY normalized_name ASC, id ASC LIMIT ? OFFSET ?
                         """,
@@ -138,6 +142,68 @@ class DiscoveryExecutorService {
         return response(executor, key);
     }
 
+    @Transactional
+    DiscoveryExecutorActivationResponse activate(
+            UUID executorId, UUID actorId, UUID correlationId) {
+        ExecutorRow executor = rowForUpdate(executorId)
+                .orElseThrow(DiscoveryExecutorNotFoundException::new);
+        if (!"PENDING".equals(executor.status()) && !"ACTIVE".equals(executor.status())) {
+            throw new DiscoveryExecutorStateConflictException();
+        }
+        ensureAssociatedActiveScope(executorId);
+        DiscoveryExecutorIdentityRegistry.RegisteredPublicKey key;
+        try {
+            key = identities.requireRegisteredPublicKey(executorId);
+        } catch (IllegalStateException exception) {
+            throw new DiscoveryExecutorPublicKeyRequiredException();
+        }
+        DiscoveryExecutorActivationResponse connection =
+                sftpGoProvisioner.ensureProvisioned(executorId, key.publicKey());
+        String expectedUsername = "discovery-executor-" + executorId;
+        if (!expectedUsername.equals(connection.username())) {
+            throw new DiscoverySftpProvisioningConflictException();
+        }
+        if ("ACTIVE".equals(executor.status())) {
+            if (!connection.username().equals(executor.sftpUsername())) {
+                throw new DiscoverySftpProvisioningConflictException();
+            }
+            return connection;
+        }
+
+        Instant occurredAt = now();
+        long version = executor.version() + 1;
+        jdbc.update(
+                """
+                UPDATE discovery.discovery_executors
+                SET status = 'ACTIVE', sftp_username = ?, activated_at = ?, updated_at = ?, version = ?
+                WHERE id = ? AND version = ?
+                """,
+                connection.username(),
+                Timestamp.from(occurredAt),
+                Timestamp.from(occurredAt),
+                version,
+                executorId,
+                executor.version());
+        jdbc.update(
+                """
+                INSERT INTO discovery.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, 'DISCOVERY_EXECUTOR_ACTIVATED', '1.0', ?, 'DISCOVERY',
+                        'HUMAN_USER', ?, 'DISCOVERY_EXECUTOR', ?, ?,
+                        'SUCCESS', ?, '{"status":"ACTIVE"}'::jsonb, ?)
+                """,
+                UUID.randomUUID(),
+                Timestamp.from(occurredAt),
+                actorId,
+                executorId,
+                version,
+                correlationId,
+                Timestamp.from(occurredAt));
+        return connection;
+    }
+
     private void ensureActiveScopes(List<UUID> scopeIds) {
         List<ScopeState> found = namedJdbc.query(
                 """
@@ -157,6 +223,23 @@ class DiscoveryExecutorService {
         }
     }
 
+    private void ensureAssociatedActiveScope(UUID executorId) {
+        List<String> statuses = jdbc.queryForList(
+                """
+                SELECT scope.status
+                FROM discovery.discovery_executor_scopes association
+                JOIN discovery.authorized_scopes scope ON scope.id = association.scope_id
+                WHERE association.executor_id = ?
+                ORDER BY scope.id
+                FOR SHARE OF scope
+                """,
+                String.class,
+                executorId);
+        if (statuses.stream().noneMatch("ACTIVE"::equals)) {
+            throw new DiscoveryExecutorActiveScopeRequiredException();
+        }
+    }
+
     private static List<UUID> scopeIds(List<String> values) {
         try {
             List<UUID> parsed = values.stream().map(UUID::fromString).toList();
@@ -173,7 +256,8 @@ class DiscoveryExecutorService {
     private Optional<ExecutorRow> row(UUID executorId) {
         return queryRow(
                 """
-                SELECT id, name, status, created_by_user_id, created_at, updated_at, version
+                 SELECT id, name, status, sftp_username, activated_at,
+                        created_by_user_id, created_at, updated_at, version
                 FROM discovery.discovery_executors WHERE id = ?
                 """,
                 executorId);
@@ -182,7 +266,8 @@ class DiscoveryExecutorService {
     private Optional<ExecutorRow> rowForUpdate(UUID executorId) {
         return queryRow(
                 """
-                SELECT id, name, status, created_by_user_id, created_at, updated_at, version
+                 SELECT id, name, status, sftp_username, activated_at,
+                        created_by_user_id, created_at, updated_at, version
                 FROM discovery.discovery_executors WHERE id = ? FOR UPDATE
                 """,
                 executorId);
@@ -232,6 +317,10 @@ class DiscoveryExecutorService {
                 resultSet.getObject("id", UUID.class),
                 resultSet.getString("name"),
                 resultSet.getString("status"),
+                resultSet.getString("sftp_username"),
+                resultSet.getTimestamp("activated_at") == null
+                        ? null
+                        : resultSet.getTimestamp("activated_at").toInstant(),
                 resultSet.getObject("created_by_user_id", UUID.class),
                 resultSet.getTimestamp("created_at").toInstant(),
                 resultSet.getTimestamp("updated_at").toInstant(),
@@ -246,6 +335,8 @@ class DiscoveryExecutorService {
             UUID executorId,
             String name,
             String status,
+            String sftpUsername,
+            Instant activatedAt,
             UUID createdByUserId,
             Instant createdAt,
             Instant updatedAt,

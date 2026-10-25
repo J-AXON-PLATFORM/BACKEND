@@ -64,6 +64,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA4-DIS-002a` amplía únicamente el paso 1: `SYSTEM_ADMIN` pre-registra un executor `PENDING`, fija su asociación inicial a scopes activos, inicializa localmente una identidad Ed25519 separada y registra solo la public key. No activa el executor ni avanza a buzón SFTP, jobs o escaneo.
 
+`OLA4-DIS-003a` completa solo la activación administrativa del paso 1 y el canal técnico previo al paso 3: valida public key y al menos un scope asociado activo, reconcilia una cuenta SFTPGo aislada, confirma `ACTIVE` y verifica una conexión puntual con host key fijada. Se detiene antes de buzones `/jobs|/results`, publicación, polling, ejecución, resultados o escaneo.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.

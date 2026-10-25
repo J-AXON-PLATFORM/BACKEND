@@ -117,6 +117,23 @@ class DiscoveryExecutorIdentityService implements DiscoveryExecutorIdentityRegis
                 .findFirst();
     }
 
+    @Override
+    public RegisteredPublicKey requireRegisteredPublicKey(UUID executorId) {
+        return jdbc.query(
+                        """
+                        SELECT public_key, public_key_fingerprint
+                        FROM identity.technical_identities
+                        WHERE discovery_executor_id = ? AND public_key IS NOT NULL
+                        """,
+                        (resultSet, row) -> new RegisteredPublicKey(
+                                resultSet.getString("public_key"),
+                                resultSet.getString("public_key_fingerprint")),
+                        executorId)
+                .stream()
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+    }
+
     private IdentityRow rowForUpdate(UUID executorId) {
         return jdbc.query(
                         """

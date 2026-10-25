@@ -13,11 +13,15 @@ public interface DiscoveryExecutorIdentityRegistry {
 
     Optional<KeyState> find(UUID executorId);
 
+    RegisteredPublicKey requireRegisteredPublicKey(UUID executorId);
+
     record KeyState(
             boolean publicKeyRegistered,
             String publicKeyFingerprint,
             Instant updatedAt,
             long version) {}
+
+    record RegisteredPublicKey(String publicKey, String fingerprint) {}
 
     final class InvalidPublicKeyException extends RuntimeException {}
 

@@ -20,6 +20,7 @@ assert_level() {
 assert_level DOCS_ONLY doc/docs/16-contexto/TRABAJO_ACTUAL.md
 assert_level APPLICATION src/main/java/com/jaxon/support/TicketService.java
 assert_level APPLICATION doc/contracts/openapi/4.3/openapi.yaml doc/docs/04-arquitectura/API_CONTRACTS.md
+assert_level PLATFORM_FULL src/test/java/com/jaxon/discovery/DiscoverySftpGoClientIntegrationTest.java
 assert_level PLATFORM_FULL .github/workflows/backend-ci.yml
 assert_level PLATFORM_FULL pom.xml
 assert_level PLATFORM_FULL docker/sftpgo/SFTPGo.Dockerfile

@@ -1,0 +1,444 @@
+package com.jaxon.discovery;
+
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+
+@Component
+class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
+
+    private static final Map<String, List<String>> PERMISSIONS = Map.of("/", List.of("list"));
+    private static final List<String> DENIED_PROTOCOLS = List.of("FTP", "DAV", "HTTP");
+    private static final List<String> DENIED_LOGIN_METHODS = List.of(
+            "password",
+            "password-over-SSH",
+            "keyboard-interactive",
+            "publickey+password",
+            "publickey+keyboard-interactive",
+            "TLSCertificate",
+            "TLSCertificate+password");
+
+    private final ObjectMapper objectMapper;
+    private final boolean enabled;
+    private final String apiUrl;
+    private final String adminUsername;
+    private final String adminPassword;
+    private final String publicHost;
+    private final int publicPort;
+    private final String publicHostKey;
+    private final Duration requestTimeout;
+    private final HttpClient http;
+
+    DiscoverySftpGoClient(
+            ObjectMapper objectMapper,
+            @Value("${jaxon.sftp.enabled:false}") boolean enabled,
+            @Value("${jaxon.sftp.admin-api-url:}") String apiUrl,
+            @Value("${jaxon.sftp.admin-username:}") String adminUsername,
+            @Value("${jaxon.sftp.admin-password:}") String adminPassword,
+            @Value("${jaxon.sftp.public-host:}") String publicHost,
+            @Value("${jaxon.sftp.public-port:2022}") int publicPort,
+            @Value("${jaxon.sftp.public-host-key:}") String publicHostKey,
+            @Value("${jaxon.sftp.connect-timeout:5s}") Duration connectTimeout,
+            @Value("${jaxon.sftp.request-timeout:10s}") Duration requestTimeout) {
+        this.objectMapper = objectMapper;
+        this.enabled = enabled;
+        this.apiUrl = stripTrailingSlash(apiUrl);
+        this.adminUsername = adminUsername;
+        this.adminPassword = adminPassword;
+        this.publicHost = publicHost;
+        this.publicPort = publicPort;
+        this.publicHostKey = normalizeHostKey(publicHostKey);
+        this.requestTimeout = requestTimeout;
+        this.http = HttpClient.newBuilder()
+                .connectTimeout(connectTimeout)
+                .authenticator(new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(adminUsername, adminPassword.toCharArray());
+                    }
+                })
+                .build();
+    }
+
+    @Override
+    public DiscoveryExecutorActivationResponse ensureProvisioned(UUID executorId, String publicKey) {
+        requireConfiguration();
+        String username = "discovery-executor-" + executorId;
+        try {
+            String hostKeyFingerprint = fingerprint(publicHostKey);
+            String token = token();
+            verifyHostKey(token, hostKeyFingerprint);
+            JsonNode current = getUser(token, username);
+            if (current == null) {
+                createUser(token, username, publicKey);
+                current = getUser(token, username);
+            }
+            if (current == null || !matches(current, username, publicKey)) {
+                throw new DiscoverySftpProvisioningConflictException();
+            }
+            return new DiscoveryExecutorActivationResponse(
+                    publicHost, publicPort, username, publicHostKey, hostKeyFingerprint);
+        } catch (DiscoverySftpProvisioningConflictException
+                | DiscoverySftpHostKeyMismatchException exception) {
+            throw exception;
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new DiscoverySftpProvisioningUnavailableException();
+        } catch (Exception exception) {
+            throw new DiscoverySftpProvisioningUnavailableException();
+        }
+    }
+
+    private String token() throws Exception {
+        HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(apiUrl + "/token"))
+                .timeout(requestTimeout)
+                .header("Authorization", basicAuthorization())
+                .GET()
+                .build());
+        if (response.statusCode() != 200) {
+            throw new DiscoverySftpProvisioningUnavailableException();
+        }
+        String token = objectMapper.readTree(response.body()).path("access_token").asText();
+        if (token.isBlank()) {
+            throw new DiscoverySftpProvisioningUnavailableException();
+        }
+        return token;
+    }
+
+    private void verifyHostKey(String token, String expectedFingerprint) throws Exception {
+        HttpResponse<String> response = send(authorized(token, apiUrl + "/status").GET().build());
+        if (response.statusCode() != 200) {
+            throw new DiscoverySftpProvisioningUnavailableException();
+        }
+        for (JsonNode key : objectMapper.readTree(response.body()).path("ssh").path("host_keys")) {
+            if (expectedFingerprint.equals(key.path("fingerprint").asText())) {
+                return;
+            }
+        }
+        throw new DiscoverySftpHostKeyMismatchException();
+    }
+
+    private JsonNode getUser(String token, String username) throws Exception {
+        String encoded = URLEncoder.encode(username, StandardCharsets.UTF_8);
+        HttpResponse<String> response = send(authorized(token, apiUrl + "/users/" + encoded).GET().build());
+        if (response.statusCode() == 404) {
+            return null;
+        }
+        if (response.statusCode() != 200) {
+            throw new DiscoverySftpProvisioningUnavailableException();
+        }
+        return objectMapper.readTree(response.body());
+    }
+
+    private void createUser(String token, String username, String publicKey) throws Exception {
+        HttpRequest request = authorized(token, apiUrl + "/users")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(
+                        objectMapper.writeValueAsString(userBody(username, publicKey))))
+                .build();
+        int status = send(request).statusCode();
+        if (status != 201 && status != 409) {
+            throw new DiscoverySftpProvisioningUnavailableException();
+        }
+    }
+
+    private static Map<String, Object> userBody(String username, String publicKey) {
+        return Map.of(
+                "status", 1,
+                "username", username,
+                "public_keys", List.of(publicKey),
+                "home_dir", homeDirectory(username),
+                "permissions", PERMISSIONS,
+                "filters", Map.of(
+                        "denied_protocols", DENIED_PROTOCOLS,
+                        "denied_login_methods", DENIED_LOGIN_METHODS),
+                "virtual_folders", List.of(),
+                "filesystem", Map.of("provider", 0));
+    }
+
+    private static boolean matches(JsonNode user, String username, String publicKey) {
+        return user.isObject()
+                && textEquals(user, "username", username)
+                && integerEquals(user, "status", 1)
+                && optionalBooleanEquals(user, "has_password", false)
+                && sameValues(user.path("public_keys"), List.of(publicKey))
+                && textEquals(user, "home_dir", homeDirectory(username))
+                && permissions(user.path("permissions")).equals(PERMISSIONS)
+                && sameValues(user.path("filters").path("denied_protocols"), DENIED_PROTOCOLS)
+                && sameValues(
+                        user.path("filters").path("denied_login_methods"), DENIED_LOGIN_METHODS)
+                && hasDefaultFilters(user.path("filters"))
+                && emptyArray(user, "virtual_folders")
+                && emptyArray(user, "groups")
+                && hasDefaultAccountLimits(user)
+                && hasDefaultIdentityMetadata(user)
+                && hasDefaultFilesystem(user.path("filesystem"));
+    }
+
+    private static Map<String, List<String>> permissions(JsonNode node) {
+        Map<String, List<String>> result = new HashMap<>();
+        if (!node.isObject()) {
+            return result;
+        }
+        node.properties().forEach(entry -> {
+            List<String> values = stringList(entry.getValue());
+            if (values != null) {
+                result.put(entry.getKey(), values);
+            }
+        });
+        if (result.size() != node.size()) {
+            result.clear();
+        }
+        return result;
+    }
+
+    private static List<String> stringList(JsonNode node) {
+        if (!node.isArray()) {
+            return null;
+        }
+        List<String> result = new ArrayList<>();
+        for (JsonNode value : node) {
+            if (!value.isTextual()) {
+                return null;
+            }
+            result.add(value.asText());
+        }
+        return result;
+    }
+
+    private static boolean sameValues(JsonNode node, List<String> expected) {
+        List<String> actual = stringList(node);
+        return actual != null
+                && actual.size() == expected.size()
+                && Set.copyOf(actual).equals(Set.copyOf(expected));
+    }
+
+    private static boolean hasDefaultAccountLimits(JsonNode user) {
+        return zero(user, "expiration_date")
+                && zero(user, "max_sessions")
+                && zero(user, "quota_size")
+                && zero(user, "quota_files")
+                && zero(user, "upload_bandwidth")
+                && zero(user, "download_bandwidth")
+                && zero(user, "upload_data_transfer")
+                && zero(user, "download_data_transfer")
+                && zero(user, "total_data_transfer")
+                && blankText(user, "role");
+    }
+
+    private static boolean hasDefaultIdentityMetadata(JsonNode user) {
+        return zero(user, "uid")
+                && zero(user, "gid")
+                && blankText(user, "email")
+                && blankText(user, "description")
+                && blankText(user, "additional_info")
+                && emptyObject(user, "oidc_custom_fields");
+    }
+
+    private static boolean hasDefaultFilesystem(JsonNode filesystem) {
+        return filesystem.isObject()
+                && integerEquals(filesystem, "provider", 0)
+                && emptyObject(filesystem, "osconfig")
+                && hasOnlyEmptyObjects(
+                        filesystem.path("s3config"), Set.of("access_secret", "sse_customer_key"))
+                && hasOnlyEmptyObjects(filesystem.path("gcsconfig"), Set.of("credentials"))
+                && hasOnlyEmptyObjects(
+                        filesystem.path("azblobconfig"), Set.of("account_key", "sas_url"))
+                && hasOnlyEmptyObjects(filesystem.path("cryptconfig"), Set.of("passphrase"))
+                && hasOnlyEmptyObjects(
+                        filesystem.path("sftpconfig"),
+                        Set.of("password", "private_key", "key_passphrase"))
+                && hasOnlyEmptyObjects(
+                        filesystem.path("httpconfig"), Set.of("password", "api_key"));
+    }
+
+    private static boolean hasOnlyEmptyObjects(JsonNode node, Set<String> allowedFields) {
+        if (!node.isObject()) {
+            return false;
+        }
+        var fields = node.properties().iterator();
+        while (fields.hasNext()) {
+            var field = fields.next();
+            JsonNode value = field.getValue();
+            if (!allowedFields.contains(field.getKey())
+                    || !(value.isNull()
+                            || (value.isTextual() && value.asText().isEmpty())
+                            || ((value.isObject() || value.isArray()) && value.isEmpty()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean hasDefaultFilters(JsonNode filters) {
+        return filters.isObject()
+                && emptyArray(filters, "allowed_ip")
+                && emptyArray(filters, "denied_ip")
+                && emptyArray(filters, "file_patterns")
+                && emptyArray(filters, "bandwidth_limits")
+                && emptyArray(filters, "access_time")
+                && emptyArray(filters, "two_factor_protocols")
+                && emptyArray(filters, "tls_certs")
+                && emptyArray(filters, "recovery_codes")
+                && emptyArray(filters, "additional_emails")
+                && emptyArray(filters, "web_client")
+                && zero(filters, "max_upload_file_size")
+                && zero(filters, "external_auth_cache_time")
+                && zero(filters, "password_expiration")
+                && zero(filters, "password_strength")
+                && zero(filters, "default_shares_expiration")
+                && zero(filters, "max_shares_expiration")
+                && zero(filters, "ftp_security")
+                && optionalBooleanEquals(filters, "allow_api_key_auth", false)
+                && optionalBooleanEquals(filters, "is_anonymous", false)
+                && optionalBooleanEquals(filters, "require_password_change", false)
+                && optionalBooleanEquals(filters, "disable_fs_checks", false)
+                && blankText(filters, "user_type")
+                && blankText(filters, "start_directory")
+                && blankText(filters, "tls_username")
+                && booleanEquals(filters.path("hooks"), "external_auth_disabled", false)
+                && booleanEquals(filters.path("hooks"), "pre_login_disabled", false)
+                && booleanEquals(filters.path("hooks"), "check_password_disabled", false)
+                && optionalBooleanEquals(filters.path("totp_config"), "enabled", false)
+                && blankText(filters.path("totp_config"), "config_name")
+                && emptyArray(filters.path("totp_config"), "protocols")
+                && emptyObject(filters.path("totp_config"), "secret");
+    }
+
+    private HttpResponse<String> send(HttpRequest request) throws Exception {
+        return http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+    }
+
+    private HttpRequest.Builder authorized(String token, String url) {
+        return HttpRequest.newBuilder(URI.create(url))
+                .timeout(requestTimeout)
+                .header("Authorization", "Bearer " + token);
+    }
+
+    private String basicAuthorization() {
+        String value = adminUsername + ":" + adminPassword;
+        return "Basic " + Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void requireConfiguration() {
+        if (!enabled
+                || apiUrl.isBlank()
+                || adminUsername.isBlank()
+                || adminPassword.isBlank()
+                || publicHost.isBlank()
+                || publicHost.length() > 253
+                || publicHost.chars().anyMatch(character -> character < 33 || character == 127)
+                || publicPort < 1
+                || publicPort > 65535
+                || publicHostKey.isBlank()) {
+            throw new DiscoverySftpProvisioningUnavailableException();
+        }
+    }
+
+    private static String normalizeHostKey(String value) {
+        String[] parts = value == null ? new String[0] : value.trim().split("\\s+");
+        return parts.length == 2 && "ssh-ed25519".equals(parts[0])
+                ? parts[0] + " " + parts[1]
+                : "";
+    }
+
+    private static String fingerprint(String key) throws Exception {
+        String[] parts = key.split(" ");
+        byte[] blob = Base64.getDecoder().decode(parts[1]);
+        ByteBuffer buffer = ByteBuffer.wrap(blob);
+        if (buffer.remaining() < 4) {
+            throw new DiscoverySftpHostKeyMismatchException();
+        }
+        int length = buffer.getInt();
+        if (length != "ssh-ed25519".length() || buffer.remaining() < length + 4 + 32) {
+            throw new DiscoverySftpHostKeyMismatchException();
+        }
+        byte[] algorithm = new byte[length];
+        buffer.get(algorithm);
+        if (!"ssh-ed25519".equals(new String(algorithm, StandardCharsets.US_ASCII))) {
+            throw new DiscoverySftpHostKeyMismatchException();
+        }
+        return "SHA256:" + Base64.getEncoder()
+                .withoutPadding()
+                .encodeToString(MessageDigest.getInstance("SHA-256").digest(blob));
+    }
+
+    private static String homeDirectory(String username) {
+        return "/srv/sftpgo/data/" + username;
+    }
+
+    private static boolean textEquals(JsonNode parent, String field, String expected) {
+        JsonNode value = parent.get(field);
+        return value != null && value.isTextual() && expected.equals(value.asText());
+    }
+
+    private static boolean blankText(JsonNode parent, String field) {
+        JsonNode value = parent.get(field);
+        return value == null || (value.isTextual() && value.asText().isBlank());
+    }
+
+    private static boolean integerEquals(JsonNode parent, String field, long expected) {
+        JsonNode value = parent.get(field);
+        return value != null && value.isIntegralNumber() && value.asLong() == expected;
+    }
+
+    private static boolean booleanEquals(JsonNode parent, String field, boolean expected) {
+        JsonNode value = parent.get(field);
+        return value != null && value.isBoolean() && value.asBoolean() == expected;
+    }
+
+    private static boolean optionalBooleanEquals(JsonNode parent, String field, boolean expected) {
+        JsonNode value = parent.get(field);
+        return value == null || (value.isBoolean() && value.asBoolean() == expected);
+    }
+
+    private static boolean emptyArray(JsonNode parent, String field) {
+        JsonNode value = parent.get(field);
+        return value == null || (value.isArray() && value.isEmpty());
+    }
+
+    private static boolean emptyObject(JsonNode parent, String field) {
+        JsonNode value = parent.get(field);
+        return value == null || (value.isObject() && value.isEmpty());
+    }
+
+    private static boolean zero(JsonNode parent, String field) {
+        JsonNode value = parent.get(field);
+        return value == null || (value.isIntegralNumber() && value.asLong() == 0);
+    }
+
+    private static String stripTrailingSlash(String value) {
+        return value != null && value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+    }
+}
+
+final class DiscoveryExecutorPublicKeyRequiredException extends RuntimeException {}
+
+final class DiscoveryExecutorActiveScopeRequiredException extends RuntimeException {}
+
+final class DiscoveryExecutorStateConflictException extends RuntimeException {}
+
+final class DiscoverySftpProvisioningConflictException extends RuntimeException {}
+
+final class DiscoverySftpProvisioningUnavailableException extends RuntimeException {}
+
+final class DiscoverySftpHostKeyMismatchException extends RuntimeException {}

@@ -60,3 +60,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - El inicializador Discovery Executor opera sin red, separa estado y keypair del Agent, usa UUIDv4, creación exclusiva no-follow, ownership efectivo, modos `0700|0600` e idempotencia cerrada.
 - OpenAPI 4.5 conserva 4.4 byte a byte y añade solo las cuatro operaciones autorizadas; frontend usa parsers cerrados, caché segmentada y estado sensible solo en memoria.
 - La prueba E2E real recorre scope activo, pre-registro, inicialización local, registro de la clave pública, persistencia/outboxes y conservación de asociación tras deshabilitar el scope.
+
+## OLA4-DIS-003a
+
+- Solo `SYSTEM_ADMIN` activa un executor `PENDING`; se rechaza sin public key registrada o sin al menos un scope asociado todavía `ACTIVE`.
+- SFTPGo se aprovisiona/reconcilia antes del commit con username/home exclusivos, public key única, sin contraseña, grupos, virtual folders, cuotas funcionales, `/jobs` o `/results`; drift exacto devuelve `409` sin mutar PostgreSQL.
+- La primera activación persiste `ACTIVE`, versión `1`, username y timestamp, y un único `DISCOVERY_EXECUTOR_ACTIVATED` con payload `{"status":"ACTIVE"}`; repetición exacta no cambia versión/timestamp ni duplica evento.
+- OpenAPI 5.0 conserva 4.5 byte a byte como histórico y limita la respuesta a cinco datos públicos de conexión; frontend no reintenta ni anticipa, reconsulta REST y conserva esa respuesta solo en memoria.
+- El ejecutable guarda `sftp.json` privado de forma exclusiva/idempotente y verifica una sola conexión con private key exacta, host key Ed25519 fijada, `RejectPolicy`, `allow_agent=False` y `look_for_keys=False`.
+- La prueba E2E Chromium real recorre activación, repetición idempotente, configuración/verificación Python, perfil SFTPGo y persistencia/outbox; no publica ni ejecuta jobs. Evidencia local: Python 120 pruebas + Ruff, frontend 68 + lint/typecheck/build, backend 126 `clean verify` + 17 migraciones y contratos verdes.

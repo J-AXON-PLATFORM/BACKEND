@@ -80,6 +80,8 @@ En Pull Requests se compara el SHA base/head del evento. En push a `develop`, el
 
 `TEC-QLT-008a` corrige dos bordes sin alterar los niveles: frontend clasifica `e2e/**` como `APPLICATION`, mientras scripts/mecanismos CI y rutas desconocidas siguen forzando `PLATFORM_FULL`; backend calcula la clave SFTPGo con nombres relativos canónicos y hashes de contenido, por lo que checkouts distintos con bytes iguales comparten clave. Los PR del bloque modifican esos mecanismos y deben ejecutar `PLATFORM_FULL`.
 
+`OLA4-DIS-003a` conserva workflows y niveles. Frontend clasifica `APPLICATION`; backend fuerza `PLATFORM_FULL` mediante una regla exacta para `DiscoverySftpGoClientIntegrationTest`, porque `APPLICATION` excluye el grupo `sftpgo` y omitiría la prueba real nueva. La verificación local quedó verde con 122 pruebas Python y Ruff, 69 pruebas frontend más lint/typecheck/build, E2E Chromium, 127 pruebas backend `clean verify` incluidas SFTPGo real y 17 migraciones, y `verify-openapi`.
+
 El run inicial de `BACKEND#44`, `40060796361`, confirmó de forma bloqueante el nuevo `CVE-2026-111497` en `brotli-libs 1.2.0-r1` de la fixture PostgreSQL Local/Test. La corrección autorizada fija `1.2.1-r0` en la etapa runtime sin excepción de scan ni cambio de PostgreSQL/pgvector; el mismo PR debe reconstruir la fixture, pasar Trivy y repetir todos los gates `PLATFORM_FULL`.
 
 El primer run de PR `39865316279` falló en 60 segundos porque confirmó que el driver `docker` del runner no soporta `cache-to type=local`; no se relanzó. La corrección incorpora el builder efímero fijado descrito arriba y debe validarse mediante un nuevo run asociado al nuevo commit.
