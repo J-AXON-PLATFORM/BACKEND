@@ -19,6 +19,7 @@ Definir dominios, ownership, almacenamiento, movimiento y ciclo de vida.
 - Fuente RAG, chunks y embeddings comparten ciclo de vida; borrar/desautorizar una fuente debe retirar sus derivados recuperables.
 - Discovery produce observaciones temporales; incorporar a Inventory es una operación explícita y no transfiere ownership de tablas.
 - En `OLA4-DIS-002a`, Discovery posee `discovery_executors`, la asociación N:M `discovery_executor_scopes` y su outbox; Identity posee `technical_identities`, public key, huella y outbox de identidad. No existen FK cross-schema ni acceso directo de Discovery a tablas Identity: el alta coordinada usa contrato público in-process y una única transacción PostgreSQL.
+- En `OLA4-DIS-003a`, Discovery añade sobre su agregado la transición `PENDING`/versión `0` a `ACTIVE`/versión `1`, username SFTP determinista y timestamp de activación, más el evento propio `DISCOVERY_EXECUTOR_ACTIVATED`. La clave se consulta mediante el contrato público Identity; SFTPGo se reconcilia antes de la transacción PostgreSQL, de forma idempotente y estricta, pero no forma una transacción atómica cross-system.
 
 ## Consistencia
 

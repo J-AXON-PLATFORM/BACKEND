@@ -12,6 +12,10 @@ while IFS= read -r path || [[ -n "${path}" ]]; do
   [[ -z "${path}" ]] && continue
   found=true
   case "${path}" in
+    src/test/java/com/jaxon/discovery/DiscoverySftpGoClientIntegrationTest.java)
+      level="PLATFORM_FULL"
+      break
+      ;;
     .github/*|.mvn/*|mvnw|mvnw.cmd|pom.xml|Dockerfile|docker/*|compose*.yml|compose*.yaml|.env.example|scripts/*)
       level="PLATFORM_FULL"
       break

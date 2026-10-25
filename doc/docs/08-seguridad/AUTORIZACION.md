@@ -31,6 +31,8 @@ En `OLA4-DIS-001a`, `POST /discovery/scopes` y `PUT /discovery/scopes/{scopeId}/
 
 En `OLA4-DIS-002a`, las cuatro operaciones `/discovery/executors` requieren `SYSTEM_ADMIN`. El backend valida que todos los scopes asociados existan y estén `ACTIVE` al crear; frontend solo oculta la función como UX y no sustituye `default deny`. La identidad técnica pertenece a Identity y la asociación pertenece a Discovery, comunicados por contrato público in-process.
 
+En `OLA4-DIS-003a`, `POST /discovery/executors/{executorId}/activate` requiere `SYSTEM_ADMIN`; cualquier otro rol queda denegado por backend. Antes de aprovisionar se exige public key registrada mediante Identity y al menos un scope asociado todavía `ACTIVE`. La visibilidad o ausencia del botón frontend no sustituye estas comprobaciones ni `default deny`.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

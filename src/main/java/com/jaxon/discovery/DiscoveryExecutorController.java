@@ -89,6 +89,18 @@ class DiscoveryExecutorController {
                 service.registerPublicKey(parsed, request, actorId(authentication), correlationId()));
     }
 
+    @PostMapping("/{executorId}/activate")
+    ResponseEntity<?> activate(
+            @PathVariable String executorId,
+            Authentication authentication,
+            HttpServletRequest request) {
+        UUID parsed = uuidV4(executorId);
+        if (parsed == null) {
+            return notFound(request);
+        }
+        return ResponseEntity.ok(service.activate(parsed, actorId(authentication), correlationId()));
+    }
+
     @ExceptionHandler(DiscoveryExecutorNotFoundException.class)
     ResponseEntity<Problem> notFound(
             DiscoveryExecutorNotFoundException exception, HttpServletRequest request) {
@@ -152,6 +164,65 @@ class DiscoveryExecutorController {
                 "Conflicto de clave pública",
                 "La identidad ya tiene otra clave o la clave pertenece a otra identidad técnica.",
                 "DISCOVERY_EXECUTOR_PUBLIC_KEY_CONFLICT",
+                List.of());
+    }
+
+    @ExceptionHandler(DiscoveryExecutorPublicKeyRequiredException.class)
+    ResponseEntity<Problem> publicKeyRequired(
+            DiscoveryExecutorPublicKeyRequiredException exception, HttpServletRequest request) {
+        return problem(
+                request,
+                HttpStatus.CONFLICT,
+                "Clave pública requerida",
+                "El Discovery Executor debe tener una clave pública registrada.",
+                "DISCOVERY_EXECUTOR_PUBLIC_KEY_REQUIRED",
+                List.of());
+    }
+
+    @ExceptionHandler(DiscoveryExecutorActiveScopeRequiredException.class)
+    ResponseEntity<Problem> activeScopeRequired(
+            DiscoveryExecutorActiveScopeRequiredException exception, HttpServletRequest request) {
+        return problem(
+                request,
+                HttpStatus.CONFLICT,
+                "Ámbito activo requerido",
+                "El Discovery Executor debe conservar al menos un ámbito asociado activo.",
+                "DISCOVERY_EXECUTOR_ACTIVE_SCOPE_REQUIRED",
+                List.of());
+    }
+
+    @ExceptionHandler({
+        DiscoveryExecutorStateConflictException.class,
+        DiscoverySftpProvisioningConflictException.class
+    })
+    ResponseEntity<Problem> activationConflict(RuntimeException exception, HttpServletRequest request) {
+        String code = exception instanceof DiscoverySftpProvisioningConflictException
+                ? "DISCOVERY_SFTP_PROVISIONING_CONFLICT"
+                : "DISCOVERY_EXECUTOR_STATE_CONFLICT";
+        return problem(
+                request,
+                HttpStatus.CONFLICT,
+                "Conflicto de activación",
+                "El Discovery Executor o su cuenta SFTP no coincide con el estado esperado.",
+                code,
+                List.of());
+    }
+
+    @ExceptionHandler({
+        DiscoverySftpProvisioningUnavailableException.class,
+        DiscoverySftpHostKeyMismatchException.class
+    })
+    ResponseEntity<Problem> provisioningUnavailable(
+            RuntimeException exception, HttpServletRequest request) {
+        String code = exception instanceof DiscoverySftpHostKeyMismatchException
+                ? "DISCOVERY_SFTP_HOST_KEY_MISMATCH"
+                : "DISCOVERY_SFTP_PROVISIONING_UNAVAILABLE";
+        return problem(
+                request,
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "SFTP no disponible",
+                "No se pudo confirmar el aprovisionamiento SFTP de forma segura.",
+                code,
                 List.of());
     }
 

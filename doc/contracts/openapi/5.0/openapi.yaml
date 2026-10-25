@@ -1,0 +1,262 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "5.0"
+  description: >-
+    Major que conserva las operaciones de OpenAPI 4.5, amplía Discovery Executor
+    a ACTIVE y añade activación y datos públicos de su canal SFTP Local/Test.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Identity
+  - name: Assets
+  - name: Agents
+  - name: Support
+  - name: Discovery
+paths:
+  /auth/login: { $ref: "../4.5/openapi.yaml#/paths/~1auth~1login" }
+  /auth/me: { $ref: "../4.5/openapi.yaml#/paths/~1auth~1me" }
+  /auth/logout: { $ref: "../4.5/openapi.yaml#/paths/~1auth~1logout" }
+  /users: { $ref: "../4.5/openapi.yaml#/paths/~1users" }
+  /assets: { $ref: "../4.5/openapi.yaml#/paths/~1assets" }
+  /assets/{assetId}: { $ref: "../4.5/openapi.yaml#/paths/~1assets~1%7BassetId%7D" }
+  /assets/{assetId}/technical-state: { $ref: "../4.5/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state" }
+  /assets/{assetId}/technical-state/events: { $ref: "../4.5/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events" }
+  /agents: { $ref: "../4.5/openapi.yaml#/paths/~1agents" }
+  /agents/{agentId}: { $ref: "../4.5/openapi.yaml#/paths/~1agents~1%7BagentId%7D" }
+  /agents/{agentId}/ssh-key: { $ref: "../4.5/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key" }
+  /agents/{agentId}/activate: { $ref: "../4.5/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate" }
+  /agents/{agentId}/tasks: { $ref: "../4.5/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks" }
+  /agents/{agentId}/tasks/{taskId}: { $ref: "../4.5/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D" }
+  /tickets: { $ref: "../4.5/openapi.yaml#/paths/~1tickets" }
+  /tickets/technician-queue: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1technician-queue" }
+  /tickets/technician-queue/{ticketId}: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D" }
+  /tickets/technician-queue/{ticketId}/comments: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1comments" }
+  /tickets/technician-queue/{ticketId}/conversation: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1conversation" }
+  /tickets/technician-queue/{ticketId}/lifecycle: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1lifecycle" }
+  /tickets/{ticketId}: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1%7BticketId%7D" }
+  /tickets/{ticketId}/comments: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1comments" }
+  /tickets/{ticketId}/claim: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1claim" }
+  /tickets/{ticketId}/priority: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1priority" }
+  /tickets/{ticketId}/status: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1status" }
+  /tickets/{ticketId}/resolve: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1resolve" }
+  /tickets/{ticketId}/close: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1close" }
+  /tickets/{ticketId}/reopen: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1reopen" }
+  /tickets/{ticketId}/lifecycle: { $ref: "../4.5/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1lifecycle" }
+  /discovery/scopes: { $ref: "../4.5/openapi.yaml#/paths/~1discovery~1scopes" }
+  /discovery/scopes/{scopeId}: { $ref: "../4.5/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D" }
+  /discovery/scopes/{scopeId}/status: { $ref: "../4.5/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D~1status" }
+  /discovery/executors:
+    get:
+      tags: [Discovery]
+      operationId: listDiscoveryExecutors
+      summary: Lista Discovery Executors
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Página ordenada por nombre e identificador ascendentes
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryExecutorPage" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+    post:
+      tags: [Discovery]
+      operationId: createDiscoveryExecutor
+      summary: Pre-registra un Discovery Executor asociado a ámbitos activos
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiscoveryExecutorCreateRequest" }
+      responses:
+        "201":
+          description: Executor, asociaciones, identidad y evento durable creados atómicamente
+          headers:
+            Location: { schema: { type: string, format: uri-reference } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryExecutor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /discovery/executors/{executorId}:
+    get:
+      tags: [Discovery]
+      operationId: getDiscoveryExecutor
+      summary: Consulta un Discovery Executor
+      parameters:
+        - $ref: "#/components/parameters/ExecutorId"
+      responses:
+        "200":
+          description: Discovery Executor
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryExecutor" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /discovery/executors/{executorId}/ssh-key:
+    put:
+      tags: [Discovery]
+      operationId: registerDiscoveryExecutorPublicKey
+      summary: Registra o confirma la clave pública Ed25519 del Discovery Executor
+      parameters:
+        - $ref: "#/components/parameters/ExecutorId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiscoveryExecutorSshKeyRequest" }
+      responses:
+        "200":
+          description: Clave registrada o confirmación idempotente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryExecutor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /discovery/executors/{executorId}/activate:
+    post:
+      tags: [Discovery]
+      operationId: activateDiscoveryExecutor
+      summary: Activa y reconcilia el canal SFTP Local/Test del Discovery Executor
+      parameters:
+        - $ref: "#/components/parameters/ExecutorId"
+        - $ref: "#/components/parameters/CsrfToken"
+      responses:
+        "200":
+          description: Activación efectiva o confirmación idempotente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryExecutorActivationResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+components:
+  securitySchemes:
+    SessionCookie: { $ref: "../4.5/openapi.yaml#/components/securitySchemes/SessionCookie" }
+  parameters:
+    CsrfToken: { $ref: "../4.5/openapi.yaml#/components/parameters/CsrfToken" }
+    ExecutorId: { $ref: "../4.5/openapi.yaml#/components/parameters/ExecutorId" }
+    Page: { $ref: "../4.5/openapi.yaml#/components/parameters/Page" }
+    PageSize: { $ref: "../4.5/openapi.yaml#/components/parameters/PageSize" }
+  schemas:
+    DiscoveryExecutorCreateRequest: { $ref: "../4.5/openapi.yaml#/components/schemas/DiscoveryExecutorCreateRequest" }
+    DiscoveryExecutorSshKeyRequest: { $ref: "../4.5/openapi.yaml#/components/schemas/DiscoveryExecutorSshKeyRequest" }
+    DiscoveryExecutor:
+      type: object
+      oneOf:
+        - properties:
+            status: { const: PENDING }
+            version: { const: 0 }
+            publicKeyRegistered: { const: false }
+            publicKeyFingerprint: { type: "null" }
+        - properties:
+            status: { const: PENDING }
+            version: { const: 0 }
+            publicKeyRegistered: { const: true }
+            publicKeyFingerprint:
+              type: string
+              pattern: "^SHA256:[A-Za-z0-9+/]{43}$"
+        - properties:
+            status: { const: ACTIVE }
+            version: { const: 1 }
+            publicKeyRegistered: { const: true }
+            publicKeyFingerprint:
+              type: string
+              pattern: "^SHA256:[A-Za-z0-9+/]{43}$"
+      required:
+        - executorId
+        - name
+        - scopeIds
+        - status
+        - publicKeyRegistered
+        - publicKeyFingerprint
+        - createdByUserId
+        - createdAt
+        - updatedAt
+        - version
+      properties:
+        executorId: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        scopeIds:
+          type: array
+          minItems: 1
+          maxItems: 50
+          uniqueItems: true
+          items: { type: string, format: uuid }
+        status: { type: string, enum: [PENDING, ACTIVE] }
+        publicKeyRegistered: { type: boolean }
+        publicKeyFingerprint:
+          type: [string, "null"]
+          pattern: "^SHA256:[A-Za-z0-9+/]{43}$"
+        createdByUserId: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        version: { type: integer, minimum: 0, maximum: 1 }
+      additionalProperties: false
+    DiscoveryExecutorPage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/DiscoveryExecutor" }
+        page: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 50 }
+        totalElements: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+      additionalProperties: false
+    DiscoveryExecutorActivationResponse:
+      type: object
+      required: [host, port, username, hostKey, hostKeyFingerprint]
+      properties:
+        host: { type: string, minLength: 1, maxLength: 253 }
+        port: { type: integer, minimum: 1, maximum: 65535 }
+        username:
+          type: string
+          pattern: "^discovery-executor-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        hostKey:
+          type: string
+          pattern: "^ssh-ed25519 [A-Za-z0-9+/]+={0,2}$"
+        hostKeyFingerprint:
+          type: string
+          pattern: "^SHA256:[A-Za-z0-9+/]{43}$"
+      additionalProperties: false
+  responses:
+    BadRequest: { $ref: "../4.5/openapi.yaml#/components/responses/BadRequest" }
+    AuthenticationRequired: { $ref: "../4.5/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../4.5/openapi.yaml#/components/responses/Forbidden" }
+    NotFound: { $ref: "../4.5/openapi.yaml#/components/responses/NotFound" }
+    Conflict: { $ref: "../4.5/openapi.yaml#/components/responses/Conflict" }
+    ValidationFailed: { $ref: "../4.5/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../4.5/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../4.5/openapi.yaml#/components/responses/ServiceUnavailable" }
+security:
+  - SessionCookie: []

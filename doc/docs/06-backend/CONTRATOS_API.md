@@ -80,9 +80,15 @@ El manifiesto `doc/contracts/openapi/manifest.tsv` declara cada versión, checks
 
 El estado y versión de negocio permanecen `PENDING` y `0`; el contrato expone únicamente si la public key está registrada y su huella SHA-256. OpenAPI 1.0--4.4 permanece byte a byte inmutable.
 
+## Contrato breaking 5.0 -- OLA4-DIS-003a
+
+`doc/contracts/openapi/5.0/openapi.yaml` conserva las operaciones de 4.5 y añade únicamente `POST /discovery/executors/{executorId}/activate`, exclusivo de `SYSTEM_ADMIN` y protegido por CSRF. Exige public key registrada y al menos un scope asociado aún `ACTIVE`; la primera activación devuelve `ACTIVE`/versión `1`, y una repetición exacta reconcilia el perfil y devuelve los mismos datos sin nueva mutación o evento.
+
+La respuesta cerrada contiene solo `host`, `port`, username determinista, host key Ed25519 y huella SHA-256. `409` cubre precondición o drift y `503` indisponibilidad/problema seguro de aprovisionamiento. OpenAPI 5.0 es major porque 4.5 cerraba el estado a `PENDING` y la versión a `0`; OpenAPI 1.0--4.5 permanece byte a byte inmutable.
+
 ## Pendiente de diseño detallado
 
-Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 4.5. SFTP/JSON Schema permanece separado para los ejecutables; SSE solo notifica al navegador y no crea un canal HTTP Agent/Discovery.
+Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 5.0. SFTP/JSON Schema permanece separado para los ejecutables; SSE solo notifica al navegador y no crea un canal HTTP Agent/Discovery.
 
 ---
 > **Clasificación:** CONDICIONAL  

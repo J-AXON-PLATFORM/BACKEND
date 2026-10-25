@@ -25,6 +25,8 @@ Usar primitivas y bibliotecas mantenidas y reconocidas. No diseñar algoritmos c
 
 `OLA4-DIS-002a` genera Ed25519 exclusivamente en el host del Discovery Executor y almacena `executor_ed25519` con modo `0600` dentro de un directorio `0700`; backend recibe solo la representación pública OpenSSH, normaliza los bytes y calcula la huella `SHA256` canónica. La misma clave no puede pertenecer a dos identidades técnicas.
 
+`OLA4-DIS-003a` guarda únicamente datos públicos de conexión en `sftp.json` privado, creado de forma exclusiva e idempotente. La verificación usa la private key local exacta y una host key Ed25519 fijada con política de rechazo; deshabilita SSH Agent y descubrimiento de claves. Frontend/backend nunca reciben la private key y una host key distinta falla cerrado.
+
 ## Separación conceptual
 
 No intercambiar:

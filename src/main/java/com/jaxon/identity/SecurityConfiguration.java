@@ -67,7 +67,8 @@ class SecurityConfiguration {
                         .requestMatchers(
                                 "/api/v1/discovery/executors",
                                 "/api/v1/discovery/executors/*",
-                                "/api/v1/discovery/executors/*/ssh-key")
+                                "/api/v1/discovery/executors/*/ssh-key",
+                                "/api/v1/discovery/executors/*/activate")
                         .hasRole("SYSTEM_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/assets").hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/assets/*/technical-state")

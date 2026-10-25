@@ -1,6 +1,7 @@
 package com.jaxon.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -16,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -51,6 +53,9 @@ class DiscoveryExecutorIntegrationTest {
 
     @Autowired
     JdbcTemplate jdbc;
+
+    @MockitoBean
+    DiscoverySftpGoProvisioner sftpGoProvisioner;
 
     @BeforeEach
     void clearDiscoveryExecutorData() {
@@ -250,6 +255,154 @@ class DiscoveryExecutorIntegrationTest {
                 .isEqualTo(403);
         assertThat(registerKey(operator, executorId, PUBLIC_KEY, UUID.randomUUID()).statusCode())
                 .isEqualTo(403);
+        assertThat(activate(operator, executorId, UUID.randomUUID()).statusCode()).isEqualTo(403);
+    }
+
+    @Test
+    void activatesIdempotentlyAfterProvisioningAndWritesOneEvent() throws Exception {
+        Session session = login();
+        UUID scopeId = createScope(session, "Activation", "10.20.0.0/16");
+        UUID executorId = UUID.fromString(extract(
+                createExecutor(session, "Active executor", scopeId, UUID.randomUUID()).body(),
+                "executorId"));
+        assertThat(registerKey(session, executorId, PUBLIC_KEY, UUID.randomUUID()).statusCode())
+                .isEqualTo(200);
+        DiscoveryExecutorActivationResponse connection = new DiscoveryExecutorActivationResponse(
+                "sftp.example.internal",
+                2022,
+                "discovery-executor-" + executorId,
+                PUBLIC_KEY,
+                PUBLIC_KEY_FINGERPRINT);
+        when(sftpGoProvisioner.ensureProvisioned(executorId, PUBLIC_KEY)).thenReturn(connection);
+        UUID correlationId = UUID.randomUUID();
+
+        HttpResponse<String> activated = activate(session, executorId, correlationId);
+
+        assertThat(activated.statusCode()).isEqualTo(200);
+        assertThat(activated.body())
+                .contains("\"host\":\"sftp.example.internal\"")
+                .contains("\"port\":2022")
+                .contains("\"username\":\"discovery-executor-" + executorId + "\"")
+                .contains("\"hostKey\":\"ssh-ed25519 ")
+                .contains("\"hostKeyFingerprint\":\"" + PUBLIC_KEY_FINGERPRINT + "\"")
+                .doesNotContain("PRIVATE KEY");
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT status, sftp_username, activated_at, version
+                        FROM discovery.discovery_executors WHERE id = ?
+                        """,
+                        executorId))
+                .containsEntry("status", "ACTIVE")
+                .containsEntry("sftp_username", "discovery-executor-" + executorId)
+                .containsEntry("version", 1L);
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT event_type, event_version, producer_module, resource_version,
+                               correlation_id, payload::text AS payload
+                        FROM discovery.outbox_events
+                        WHERE event_type = 'DISCOVERY_EXECUTOR_ACTIVATED' AND resource_id = ?
+                        """,
+                        executorId))
+                .containsEntry("event_type", "DISCOVERY_EXECUTOR_ACTIVATED")
+                .containsEntry("event_version", "1.0")
+                .containsEntry("producer_module", "DISCOVERY")
+                .containsEntry("resource_version", 1L)
+                .containsEntry("correlation_id", correlationId)
+                .containsEntry("payload", "{\"status\": \"ACTIVE\"}");
+        String updatedAt = jdbc.queryForObject(
+                "SELECT updated_at::text FROM discovery.discovery_executors WHERE id = ?",
+                String.class,
+                executorId);
+
+        HttpResponse<String> repeated = activate(session, executorId, UUID.randomUUID());
+
+        assertThat(repeated.statusCode()).isEqualTo(200);
+        assertThat(repeated.body()).isEqualTo(activated.body());
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM discovery.outbox_events
+                        WHERE event_type = 'DISCOVERY_EXECUTOR_ACTIVATED' AND resource_id = ?
+                        """,
+                        Integer.class,
+                        executorId))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                        "SELECT updated_at::text FROM discovery.discovery_executors WHERE id = ?",
+                        String.class,
+                        executorId))
+                .isEqualTo(updatedAt);
+        assertThat(send(
+                                "GET",
+                                "/api/v1/discovery/executors/" + executorId,
+                                session,
+                                null,
+                                null)
+                        .body())
+                .contains("\"status\":\"ACTIVE\"")
+                .contains("\"version\":1");
+    }
+
+    @Test
+    void rejectsActivationWithoutKeyOrAnActiveAssociatedScope() throws Exception {
+        Session session = login();
+        UUID scopeId = createScope(session, "Preconditions", "10.30.0.0/16");
+        UUID executorId = UUID.fromString(extract(
+                createExecutor(session, "Blocked executor", scopeId, UUID.randomUUID()).body(),
+                "executorId"));
+
+        assertThat(activate(session, executorId, UUID.randomUUID()).body())
+                .contains("\"code\":\"DISCOVERY_EXECUTOR_PUBLIC_KEY_REQUIRED\"");
+        assertThat(registerKey(session, executorId, PUBLIC_KEY, UUID.randomUUID()).statusCode())
+                .isEqualTo(200);
+        send(
+                "PUT",
+                "/api/v1/discovery/scopes/" + scopeId + "/status",
+                session,
+                "{\"status\":\"DISABLED\",\"expectedVersion\":0}",
+                UUID.randomUUID());
+
+        HttpResponse<String> inactive = activate(session, executorId, UUID.randomUUID());
+
+        assertThat(inactive.statusCode()).isEqualTo(409);
+        assertThat(inactive.body())
+                .contains("\"code\":\"DISCOVERY_EXECUTOR_ACTIVE_SCOPE_REQUIRED\"");
+        assertThat(jdbc.queryForObject(
+                        "SELECT status FROM discovery.discovery_executors WHERE id = ?",
+                        String.class,
+                        executorId))
+                .isEqualTo("PENDING");
+        assertThat(activate(session, UUID.randomUUID(), UUID.randomUUID()).statusCode())
+                .isEqualTo(404);
+    }
+
+    @Test
+    void leavesTheExecutorPendingWhenSftpProvisioningIsUnavailable() throws Exception {
+        Session session = login();
+        UUID scopeId = createScope(session, "Unavailable", "10.40.0.0/16");
+        UUID executorId = UUID.fromString(extract(
+                createExecutor(session, "Unavailable executor", scopeId, UUID.randomUUID()).body(),
+                "executorId"));
+        assertThat(registerKey(session, executorId, PUBLIC_KEY, UUID.randomUUID()).statusCode())
+                .isEqualTo(200);
+        when(sftpGoProvisioner.ensureProvisioned(executorId, PUBLIC_KEY))
+                .thenThrow(new DiscoverySftpProvisioningUnavailableException());
+
+        HttpResponse<String> unavailable = activate(session, executorId, UUID.randomUUID());
+
+        assertThat(unavailable.statusCode()).isEqualTo(503);
+        assertThat(unavailable.body()).contains("\"code\":\"DISCOVERY_SFTP_PROVISIONING_UNAVAILABLE\"");
+        assertThat(jdbc.queryForMap(
+                        "SELECT status, sftp_username, activated_at, version FROM discovery.discovery_executors WHERE id = ?",
+                        executorId))
+                .containsEntry("status", "PENDING")
+                .containsEntry("version", 0L)
+                .containsEntry("sftp_username", null)
+                .containsEntry("activated_at", null);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM discovery.outbox_events WHERE resource_id = ? AND event_type = 'DISCOVERY_EXECUTOR_ACTIVATED'",
+                        Integer.class,
+                        executorId))
+                .isZero();
     }
 
     @Test
@@ -315,6 +468,19 @@ class DiscoveryExecutorIntegrationTest {
                 session,
                 "{\"publicKey\":\"" + publicKey + "\"}",
                 correlationId);
+    }
+
+    private HttpResponse<String> activate(
+            Session session, UUID executorId, UUID correlationId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(
+                        URI.create("http://localhost:" + port + "/api/v1/discovery/executors/"
+                                + executorId + "/activate"))
+                .header("Cookie", session.cookie())
+                .header("X-CSRF-Token", session.csrfToken())
+                .header("X-Correlation-ID", correlationId.toString())
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+        return http.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     private Session login() throws Exception {

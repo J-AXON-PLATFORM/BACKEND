@@ -40,6 +40,8 @@ El 2026-10-09 se verificó la baseline Compose Local:
 
 `OLA2-SNP-001a` no cambia la imagen ni Compose. Evoluciona solo el aprovisionamiento Local/Test: cada Agent recibe un virtual folder `/snapshots` determinista, aislado y mapeado fuera de su `home_dir`, con límite global de upload de 5 MiB y permisos mínimos para carga, rename, creación de directorios y limpieza de archivos parciales. El perfil anterior exacto puede actualizarse; cualquier otro drift se rechaza.
 
+`OLA4-DIS-003a` tampoco cambia imagen ni Compose. Añade solo un perfil SFTPGo Local/Test separado del Agent: username/home `discovery-executor-{executorId}`, una public key Ed25519, autenticación sin contraseña, permiso mínimo `list` sobre `/`, sin virtual folders, grupos, cuotas funcionales, `/jobs` o `/results`. La reconciliación acepta perfil exacto o creación; cualquier drift se rechaza. Production permanece fuera de alcance.
+
 Compose no incluye frontend, n8n, observabilidad, reverse proxy, TLS o topología Production.
 
 ## Propósito

@@ -14,6 +14,8 @@ Primera vertical: 1) login `IT_OPERATOR`; 2) crear activo; 3) pre-registrar/enro
 `OLA2-SSE-001a` hace ejecutables los pasos 8 y 9: Playwright mantiene abierto `EventSource`, el Agent real envía el snapshot, Collector confirma la persistencia y el navegador muestra el nuevo `snapshotId` mediante refetch REST sin pulsar actualización manual. Las pruebas backend adicionales cubren post-commit, silencio para duplicado/conflicto/rechazo, aislamiento por activo, `401/403/404/429`, límites global/per-user y sesión pasiva sin renovación.
 
 `OLA2-STA-001a` amplía el mismo recorrido con tiempo determinista: un Agent `ACTIVE` comienza `UNKNOWN`, pasa a `ONLINE` tras aceptar el snapshot y a `OFFLINE` al situar `received_at` más allá de cinco minutos, sin esperar tiempo real. Un archivo final rechazado no modifica `lastSeenAt`; el estado administrativo permanece `ACTIVE` durante toda la secuencia.
+
+`OLA4-DIS-003a` amplía el journey Discovery: crea scope, pre-registra executor, inicializa Ed25519 localmente, registra solo la public key, activa, recibe cinco datos públicos de conexión, configura `sftp.json` y verifica una conexión real contra SFTPGo. Repite la activación para comprobar idempotencia y valida perfil aislado, estado/versión/timestamp y evento mínimo en PostgreSQL antes de deshabilitar el scope. No publica, recoge ni ejecuta jobs o resultados Discovery.
 <!-- JAXON-CKP003:END -->
 
 

@@ -52,6 +52,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V43_ROOT = Path.of("doc/contracts/openapi/4.3");
     private static final Path OPENAPI_V44_ROOT = Path.of("doc/contracts/openapi/4.4");
     private static final Path OPENAPI_V45_ROOT = Path.of("doc/contracts/openapi/4.5");
+    private static final Path OPENAPI_V50_ROOT = Path.of("doc/contracts/openapi/5.0");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -113,6 +114,52 @@ class ExecutableContractsTest {
                         "getDiscoveryExecutor",
                         "registerDiscoveryExecutorPublicKey")
                 .doesNotHaveDuplicates();
+    }
+
+    @Test
+    void openApi50Preserves45AndAddsOnlyDiscoveryExecutorActivation() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V50_ROOT.resolve("openapi.yaml").toString(), null, options);
+
+        assertThat(result.getMessages()).isEmpty();
+        OpenAPI api = result.getOpenAPI();
+        OpenAPI previous = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V45_ROOT.resolve("openapi.yaml").toString(), null, options)
+                .getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(previous).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("5.0");
+        assertThat(api.getPaths().keySet())
+                .containsAll(previous.getPaths().keySet())
+                .hasSize(previous.getPaths().size() + 1);
+        assertThat(api.getPaths().keySet())
+                .contains("/discovery/executors/{executorId}/activate");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .containsExactlyInAnyOrder(
+                        "listDiscoveryExecutors",
+                        "createDiscoveryExecutor",
+                        "getDiscoveryExecutor",
+                        "registerDiscoveryExecutorPublicKey",
+                        "activateDiscoveryExecutor")
+                .doesNotHaveDuplicates();
+        JsonNode executorSchema = Yaml31.mapper()
+                .readTree(OPENAPI_V50_ROOT.resolve("openapi.yaml").toFile())
+                .path("components")
+                .path("schemas")
+                .path("DiscoveryExecutor");
+        assertThat(executorSchema.path("oneOf")).hasSize(3);
+        assertThat(executorSchema.path("oneOf").get(0).path("properties")
+                        .path("publicKeyRegistered").path("const").asBoolean())
+                .isFalse();
+        assertThat(executorSchema.path("oneOf").get(0).path("properties")
+                        .path("publicKeyFingerprint").path("type").asText())
+                .isEqualTo("null");
+        assertThat(executorSchema.path("oneOf").get(1).path("properties")
+                        .path("publicKeyRegistered").path("const").asBoolean())
+                .isTrue();
     }
 
     @Test

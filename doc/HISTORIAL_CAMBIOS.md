@@ -3,11 +3,19 @@
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
+## Activación y canal SFTP Local/Test de Discovery Executor -- OLA4-DIS-003a, 2026-10-24
+
+Los tres repositorios incorporan localmente activación `PENDING -> ACTIVE` exclusiva de `SYSTEM_ADMIN`, precondiciones de public key y al menos un scope asociado aún activo, reconciliación exacta de una cuenta SFTPGo aislada, evento `DISCOVERY_EXECUTOR_ACTIVATED` mínimo, configuración/verificación puntual Paramiko y respuesta pública conservada solo en memoria frontend. OpenAPI 5.0 es un major breaking porque el schema cerrado 4.5 solo admitía `PENDING` y versión `0`; las versiones 1.0--4.5 permanecen inmutables.
+
+La verificación local concluye con 122 pruebas Python y Ruff, 69 pruebas frontend más lint/typecheck/build, un E2E Chromium multirepo real y 127 pruebas backend `clean verify`, incluidas SFTPGo real y 17 migraciones; contratos, `verify-openapi` y clasificadores también están verdes. No existen todavía commit, Pull Request, CI remota o integración de `OLA4-DIS-003a`. Jobs, resultados, polling, retries, daemon, escaneo, dispositivos, incorporación a Inventory y Production no se implementan. `PRODUCTION_READY = NO`.
+
+---
+
 ## Pre-registro e identidad local de Discovery Executor -- OLA4-DIS-002a, 2026-10-24
 
-Los tres repositorios incorporan localmente el corte autorizado: inicializador Ed25519 sin red y estado separado del Agent; pre-registro `PENDING`, asociación inicial N:M con scopes activos, ownership Discovery/Identity sin acceso cross-schema, outboxes mínimos y cuatro operaciones REST exclusivas de `SYSTEM_ADMIN`; frontend responsive con parsers cerrados, estado sensible en memoria e instrucciones que nunca solicitan private key. OpenAPI 4.5 conserva 4.4 byte a byte.
+Los tres repositorios incorporaron el corte autorizado: inicializador Ed25519 sin red y estado separado del Agent; pre-registro `PENDING`, asociación inicial N:M con scopes activos, ownership Discovery/Identity sin acceso cross-schema, outboxes mínimos y cuatro operaciones REST exclusivas de `SYSTEM_ADMIN`; frontend responsive con parsers cerrados, estado sensible en memoria e instrucciones que nunca solicitan private key. OpenAPI 4.5 conserva 4.4 byte a byte.
 
-La verificación dirigida y el E2E Chromium multirepo real quedaron verdes, incluida persistencia, privacidad de outboxes, idempotencia de clave y conservación de asociación tras deshabilitar el scope. Integración remota y evidencia post-merge permanecen pendientes. Activación, revocación, SFTP Discovery, jobs, escaneo, dispositivos e incorporación a Inventory no se implementan. `PRODUCTION_READY = NO`.
+La verificación dirigida y el E2E Chromium multirepo real quedaron verdes, incluida persistencia, privacidad de outboxes, idempotencia de clave y conservación de asociación tras deshabilitar el scope. `AUTOMATION-COLLECTOR#9`, squash `ba98aa904ce6d3deaaa91d27ec7752828f641ac3`, tuvo runs verdes `40113410669`/`40113466098`; `FRONTEND#22`, squash `800554785970c262eaee3effde7a8d34888c5ae1`, `40133522732`/`40133626229`; y `BACKEND#45`, squash `920cefbff0977d886a2447796846adf076556955`, `40133928890`/`40134154144`. `AC-JAXON-080` está cerrado. `PRODUCTION_READY = NO`.
 
 ---
 
