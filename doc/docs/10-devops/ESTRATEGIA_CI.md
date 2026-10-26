@@ -84,6 +84,8 @@ En Pull Requests se compara el SHA base/head del evento. En push a `develop`, el
 
 `OLA4-DIS-004a` no modifica workflows ni clasificadores. Frontend clasificó `PLATFORM_FULL`, en vez de la `APPLICATION` prevista, porque el E2E real amplía un script del arnés; LUIS autorizó puntualmente aceptar ese nivel más estricto para `FRONTEND#24`. Backend modifica Docker/Compose/SFTPGo y debe clasificar `PLATFORM_FULL`. La verificación local quedó verde con 74 pruebas frontend, lint/typecheck/build, E2E Chromium multirepo y 141 pruebas backend `clean verify`, incluidas SFTPGo real, 18 migraciones, contratos y OpenAPI.
 
+Durante `BACKEND#47`, dos descargas consecutivas de la DB Trivy desde `mirror.gcr.io` devolvieron `404` antes de ejecutar el scan. La excepción puntual autorizada mantiene Trivy 0.75.0, severidades, formatos, condiciones y gates, y cambia únicamente sus cuatro invocaciones existentes al repositorio oficial `public.ecr.aws/aquasecurity/trivy-db:2`.
+
 El run inicial de `BACKEND#44`, `40060796361`, confirmó de forma bloqueante el nuevo `CVE-2026-111497` en `brotli-libs 1.2.0-r1` de la fixture PostgreSQL Local/Test. La corrección autorizada fija `1.2.1-r0` en la etapa runtime sin excepción de scan ni cambio de PostgreSQL/pgvector; el mismo PR debe reconstruir la fixture, pasar Trivy y repetir todos los gates `PLATFORM_FULL`.
 
 El primer run de PR `39865316279` falló en 60 segundos porque confirmó que el driver `docker` del runner no soporta `cache-to type=local`; no se relanzó. La corrección incorpora el builder efímero fijado descrito arriba y debe validarse mediante un nuevo run asociado al nuevo commit.

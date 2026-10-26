@@ -133,7 +133,8 @@ jobs:
         run: >-
           docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock
           aquasec/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa
-          image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --no-progress
+          image --db-repository public.ecr.aws/aquasecurity/trivy-db:2
+          --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --no-progress
           jaxon-postgres-pgvector-test:18.6-0.8.6
 
       - name: Verify Local/Test SFTPGo build cache key
@@ -220,5 +221,6 @@ jobs:
         run: >-
           docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock
           aquasec/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa
-          image --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --no-progress
+          image --db-repository public.ecr.aws/aquasecurity/trivy-db:2
+          --exit-code 1 --severity HIGH,CRITICAL --scanners vuln --no-progress
           jaxon-backend:ci
