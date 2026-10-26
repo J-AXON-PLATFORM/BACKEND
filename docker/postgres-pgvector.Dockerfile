@@ -19,7 +19,7 @@ FROM postgres:18.6-alpine3.24@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c666
 
 USER root
 
-RUN apk add --no-cache brotli-libs=1.2.1-r0 su-exec && \
+RUN apk add --no-cache brotli-libs=1.2.1-r0 libcurl=8.23.0-r0 su-exec && \
     rm /usr/local/bin/gosu && \
     install -m 0755 /sbin/su-exec /usr/local/bin/gosu
 
