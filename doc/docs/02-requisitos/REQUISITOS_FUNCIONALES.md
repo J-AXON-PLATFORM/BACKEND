@@ -51,6 +51,7 @@
 - **Corte ejecutable OLA4-DIS-002a:** materializa únicamente pre-registro/listado/consulta `PENDING`, asociación inicial inmutable con uno o más scopes activos e identidad local Ed25519 separada; no implementa activación/revocación, cambio de asociaciones, SFTP, jobs, escaneo, dispositivos o incorporación.
 - **Corte ejecutable OLA4-DIS-003a:** materializa únicamente activación `PENDING -> ACTIVE` por `SYSTEM_ADMIN`, con public key registrada, al menos un scope asociado aún activo, cuenta SFTPGo Local/Test aislada y verificación puntual del canal; no implementa revocación/rotación, cambio de asociaciones, jobs/resultados, polling, escaneo, dispositivos o incorporación.
 - **Corte ejecutable OLA4-DIS-004a:** materializa únicamente creación y consulta puntual de `DiscoveryJob` `BASIC` por `IT_OPERATOR`, exclusión de un job no terminal por executor, TTL de una hora, publicación atómica en `/jobs` y reconciliación de pendientes; no implementa polling/pickup del executor, ejecución, resultados, escaneo, dispositivos o incorporación.
+- **Corte ejecutable OLA4-DIS-005a:** materializa únicamente pickup manual de máximo un Job mediante `run-once`, revalidación local de identidad/scope, ejecución `BASIC` limitada a 4096 direcciones, concurrencia 32, timeout 2 s y TCP `22|53|80|443|445|3389`, más Discovery Result 1.0 durable y entrega atómica `/results`; no implementa polling periódico, retries automáticos, daemon, ingestión backend, estado oficial posterior a `DISPATCHED`, dispositivos o incorporación.
 
 ## MOD-03 -- Collector
 

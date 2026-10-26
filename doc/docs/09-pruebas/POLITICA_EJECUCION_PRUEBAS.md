@@ -12,6 +12,7 @@
 - PR `develop/main`: `fast + integration` bloqueantes.
 - Release/promoción: suite más completa según riesgo; pruebas costosas pueden tener ejecución periódica.
 - Cross-repo: validar combinaciones explícitas de backend/Agent/contratos.
+- Discovery `OLA4-DIS-005a`: contrato/manifest byte a byte, ledger/filesystem adversarial, reinicio sin reejecución, límites y correlación, probes reales solo en loopback, SFTPGo real con upgrades históricos/aislamiento/no-overwrite y suites completas de ambos repositorios.
 <!-- JAXON-CKP003:END -->
 
 ## Propósito

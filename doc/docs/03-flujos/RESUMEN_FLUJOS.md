@@ -68,6 +68,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA4-DIS-004a` ejecuta únicamente la creación y despacho inicial de los pasos 2--3: `IT_OPERATOR` elige una combinación executor/scope activa, backend crea `PENDING` con TTL de una hora, publica atómicamente el mensaje en `/jobs` y confirma `DISPATCHED`. Se detiene antes de pickup, `RUNNING`, ejecución, resultados, dispositivos o incorporación.
 
+`OLA4-DIS-005a` ejecuta únicamente la parte técnica local de los pasos 4--5: una invocación manual recoge como máximo un Job, persiste estado local antes de probes, ejecuta `BASIC` dentro del CIDR y entrega un Discovery Result 1.0 atómico en `/results`. La entrega no ingresa al backend ni confirma `RUNNING|SUCCEEDED|FAILED`: el estado oficial permanece `DISPATCHED`. Se detiene antes de polling, daemon, dispositivos, revisión o incorporación.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.

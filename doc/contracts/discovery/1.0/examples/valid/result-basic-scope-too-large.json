@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "messageType": "DISCOVERY_RESULT",
+  "resultId": "f077bc8c-0110-4201-88c7-c1b37f11c851",
+  "jobId": "ea9dc882-57ce-4b40-a552-969760f33196",
+  "executorId": "33482f80-4772-45a5-adc9-72c96bf46185",
+  "scopeId": "b37ab92c-7b53-4ef5-aa75-74aec4215c70",
+  "profile": "BASIC",
+  "startedAt": "2026-10-25T12:10:00Z",
+  "completedAt": "2026-10-25T12:10:00Z",
+  "status": "FAILED",
+  "failureCode": "SCOPE_TOO_LARGE",
+  "summary": {
+    "targetsConsidered": 65536,
+    "targetsScanned": 0,
+    "observationsFound": 0
+  },
+  "observations": []
+}

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "messageType": "DISCOVERY_RESULT",
+  "resultId": "f077bc8c-0110-4201-88c7-c1b37f11c851",
+  "jobId": "ea9dc882-57ce-4b40-a552-969760f33196",
+  "executorId": "33482f80-4772-45a5-adc9-72c96bf46185",
+  "scopeId": "b37ab92c-7b53-4ef5-aa75-74aec4215c70",
+  "profile": "BASIC",
+  "startedAt": "2026-10-25T12:10:00Z",
+  "completedAt": "2026-10-25T12:10:02Z",
+  "status": "SUCCEEDED",
+  "failureCode": null,
+  "summary": {
+    "targetsConsidered": 256,
+    "targetsScanned": 256,
+    "observationsFound": 1
+  },
+  "observations": [
+    {
+      "ipAddress": "192.0.2.10",
+      "macAddress": "02:00:5e:10:00:01",
+      "hostname": "host.example.internal",
+      "evidence": ["ARP", "TCP"],
+      "openTcpPorts": [22, 443]
+    }
+  ]
+}

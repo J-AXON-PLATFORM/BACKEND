@@ -34,6 +34,7 @@
 - Tareas expiran por clase; default aprobado 1 h y `COLLECT_SNAPSHOT` 15 min; otros tipos pueden definir TTL específico al diseñarse.
 - Agent valida destino/versión/tipo/vigencia/parámetros.
 - Backend y Agent recuperan/reconcilian estado tras restart.
+- `OLA4-DIS-005a` aplica al Discovery Executor un ledger separado `RECEIVED|RUNNING|RESULT_READY|DELIVERED`: persiste `RUNNING` antes del primer probe, un restart produce `EXECUTION_INTERRUPTED` sin reejecución y `RESULT_READY` conserva bytes/IDs hasta una invocación manual posterior. No añade retry automático.
 - Acciones no idempotentes/peligrosas no se reintentan ciegamente.
 - Timeouts externos; circuit breaker, bulkhead y rate limit solo selectivamente.
 - IA, n8n y SSE degradan sin corromper core; PostgreSQL down hace core degradado/not-ready y no permite éxito falso de escrituras críticas.

@@ -66,6 +66,7 @@ RUN mkdir -p \
         /out/srv/sftpgo/data \
         /out/srv/sftpgo/tasks \
         /out/srv/sftpgo/discovery-jobs \
+        /out/srv/sftpgo/discovery-results \
         /out/srv/sftpgo/backups \
         /out/usr/local/bin \
         /out/usr/share/sftpgo \
@@ -78,6 +79,7 @@ RUN mkdir -p \
         -o /out/usr/local/bin/sftpgo . \
     && chmod 0770 /out/srv/sftpgo/tasks \
     && chmod 0770 /out/srv/sftpgo/discovery-jobs \
+    && chmod 0770 /out/srv/sftpgo/discovery-results \
     && sed 's|"users_base_dir": "",|"users_base_dir": "/srv/sftpgo/data",|' sftpgo.json \
         | sed 's|"backups"|"/srv/sftpgo/backups"|' \
         | sed 's|"sqlite"|"bolt"|' \

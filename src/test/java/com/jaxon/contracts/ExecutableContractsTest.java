@@ -36,6 +36,7 @@ import org.junit.jupiter.api.Test;
 class ExecutableContractsTest {
 
     private static final Path AGENT_ROOT = Path.of("doc/contracts/agent/1.0");
+    private static final Path DISCOVERY_ROOT = Path.of("doc/contracts/discovery/1.0");
     private static final Path OPENAPI_V10_ROOT = Path.of("doc/contracts/openapi/1.0");
     private static final Path OPENAPI_V11_ROOT = Path.of("doc/contracts/openapi/1.1");
     private static final Path OPENAPI_V20_ROOT = Path.of("doc/contracts/openapi/2.0");
@@ -55,9 +56,13 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V50_ROOT = Path.of("doc/contracts/openapi/5.0");
     private static final Path OPENAPI_V51_ROOT = Path.of("doc/contracts/openapi/5.1");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
+    private static final String DISCOVERY_SCHEMA_BASE =
+            "https://schemas.j-axon.invalid/discovery/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
             "common.schema.json", "snapshot.schema.json", "task.schema.json", "result.schema.json");
+    private static final List<String> DISCOVERY_SCHEMAS =
+            List.of("common.schema.json", "job.schema.json", "result.schema.json");
     private static final ObjectMapper JSON = new ObjectMapper();
 
     @Test
@@ -1000,11 +1005,94 @@ class ExecutableContractsTest {
     @Test
     void manifestIsCompleteDeterministicAndTamperEvident() throws IOException {
         JsonNode manifest = JSON.readTree(AGENT_ROOT.resolve("manifest.json").toFile());
-        assertThat(verifyManifest(manifest)).isTrue();
+        assertThat(verifyManifest(manifest, AGENT_ROOT, "agent")).isTrue();
 
         ObjectNode tampered = manifest.deepCopy();
         ((ObjectNode) tampered.get("files").get(0)).put("sha256", "0".repeat(64));
-        assertThat(verifyManifest(tampered)).isFalse();
+        assertThat(verifyManifest(tampered, AGENT_ROOT, "agent")).isFalse();
+    }
+
+    @Test
+    void discoverySchemasFixturesAndManifestAreExecutableOffline() throws IOException {
+        Map<String, String> schemas = new HashMap<>();
+        for (String file : DISCOVERY_SCHEMAS) {
+            schemas.put(DISCOVERY_SCHEMA_BASE + file, read(DISCOVERY_ROOT.resolve(file)));
+        }
+        Schema metaSchema = SchemaRegistry.withDialect(Dialects.getDraft202012())
+                .getSchema(SchemaLocation.of(DRAFT_2020_12));
+        for (String file : DISCOVERY_SCHEMAS) {
+            assertThat(metaSchema.validate(schemas.get(DISCOVERY_SCHEMA_BASE + file), InputFormat.JSON))
+                    .as("meta-schema validation for %s", file)
+                    .isEmpty();
+            assertThat(invalidReferences(
+                            JSON.readTree(DISCOVERY_ROOT.resolve(file).toFile()), DISCOVERY_SCHEMA_BASE))
+                    .as("safe references in %s", file)
+                    .isEmpty();
+            try (var packaged = getClass().getResourceAsStream("/contracts/discovery/1.0/" + file)) {
+                assertThat(packaged).as("packaged Discovery schema %s", file).isNotNull();
+                assertThat(packaged.readAllBytes())
+                        .isEqualTo(Files.readAllBytes(DISCOVERY_ROOT.resolve(file)));
+            }
+        }
+
+        SchemaRegistry registry = SchemaRegistry.withDefaultDialect(
+                SpecificationVersion.DRAFT_2020_12,
+                builder -> builder.schemas(schemas).schemaRegistryConfig(SchemaRegistryConfig.builder()
+                        .formatAssertionsEnabled(true)
+                        .failFast(false)
+                        .build()));
+        try (Stream<Path> files = Files.list(DISCOVERY_ROOT.resolve("examples/valid"))) {
+            files.sorted().forEach(path -> assertThat(validateDiscovery(registry, schemaFor(path), path))
+                    .as("valid Discovery fixture %s", path.getFileName())
+                    .isEmpty());
+        }
+        try (Stream<Path> files = Files.list(DISCOVERY_ROOT.resolve("examples/invalid"))) {
+            files.filter(path -> !List.of("job-invalid-expiry.json", "job-noncanonical-cidr.json")
+                            .contains(path.getFileName().toString()))
+                    .sorted()
+                    .forEach(path -> assertThat(validateDiscovery(registry, schemaFor(path), path))
+                    .as("invalid Discovery fixture %s", path.getFileName())
+                    .isNotEmpty());
+        }
+        JsonNode manifest = JSON.readTree(DISCOVERY_ROOT.resolve("manifest.json").toFile());
+        assertThat(verifyManifest(manifest, DISCOVERY_ROOT, "discovery")).isTrue();
+        ObjectNode tampered = manifest.deepCopy();
+        ((ObjectNode) tampered.get("files").get(0)).put("sha256", "0".repeat(64));
+        assertThat(verifyManifest(tampered, DISCOVERY_ROOT, "discovery")).isFalse();
+    }
+
+    @Test
+    void previousDiscoveryJobAndCurrentOpenApiRemainByteIdentical() throws IOException {
+        assertThat(sha256(Files.readAllBytes(DISCOVERY_ROOT.resolve("common.schema.json"))))
+                .isEqualTo("a08b85fce1b4a85f0378ec0a6eab45b8b6b2c02860355725e456df058a52c9aa");
+        assertThat(sha256(Files.readAllBytes(DISCOVERY_ROOT.resolve("job.schema.json"))))
+                .isEqualTo("6eb8e33b83dca4127330a756a98b91678e37dbc3ef4649450ca5497059639fae");
+        assertThat(sha256(Files.readAllBytes(
+                        DISCOVERY_ROOT.resolve("examples/valid/job-basic.json"))))
+                .isEqualTo("66fb54d58e43bad3ca4d4354078d2ae148b8cc48140a6d86030514f2a8a80a8e");
+        assertThat(sha256(Files.readAllBytes(
+                        DISCOVERY_ROOT.resolve("examples/invalid/job-extra-property.json"))))
+                .isEqualTo("03e7eab0f5ed95e4481c0a2c50c865e74247195953a855ae29e5ae30573d89c2");
+        assertThat(sha256(Files.readAllBytes(
+                        DISCOVERY_ROOT.resolve("examples/invalid/job-invalid-expiry.json"))))
+                .isEqualTo("628724e56cf665b612b647d227b3027426833a912b643167fff556222f0b0ce5");
+        assertThat(sha256(Files.readAllBytes(
+                        DISCOVERY_ROOT.resolve("examples/invalid/job-invalid-uuid.json"))))
+                .isEqualTo("e9f61220be216e52860b9f9cc7ea9d3dbedf52295435d3f56f39de539d8cb25b");
+        assertThat(sha256(Files.readAllBytes(
+                        DISCOVERY_ROOT.resolve("examples/invalid/job-non-utc-time.json"))))
+                .isEqualTo("cc5f7e5dcc78af025a082190845dcdbc24a5af9af0c30c01bac684e451a3cdb0");
+        assertThat(sha256(Files.readAllBytes(
+                        DISCOVERY_ROOT.resolve("examples/invalid/job-noncanonical-cidr.json"))))
+                .isEqualTo("c7555ed2c171c3b0aac5ef33fdcbfb76c0ba5aa23d3823a8306ec6b6c4261d86");
+        assertThat(sha256(Files.readAllBytes(
+                        DISCOVERY_ROOT.resolve("examples/invalid/job-unknown-version.json"))))
+                .isEqualTo("d9a66a93ffc2918d0bdc45658c3bd7cf5cb76115a91f230877a7a438c76b21ea");
+        assertThat(sha256(Files.readAllBytes(
+                        DISCOVERY_ROOT.resolve("examples/invalid/job-wrong-message-type.json"))))
+                .isEqualTo("54b4833e81338657f003f93fbdd95339cbe844d70eed4ae021ad828dfb7ae647");
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V51_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("bbf30faef7d6da3e0e204ed874434c30fa0b71aa5fb69645fb185e0a14f18a94");
     }
 
     private static List<Operation> operations(OpenAPI api) {
@@ -1051,6 +1139,15 @@ class ExecutableContractsTest {
                 context -> context.executionConfig(config -> config.formatAssertionsEnabled(true)));
     }
 
+    private static List<com.networknt.schema.Error> validateDiscovery(
+            SchemaRegistry registry, String schemaFile, Path fixture) {
+        Schema schema = registry.getSchema(SchemaLocation.of(DISCOVERY_SCHEMA_BASE + schemaFile));
+        return schema.validate(
+                read(fixture),
+                InputFormat.JSON,
+                context -> context.executionConfig(config -> config.formatAssertionsEnabled(true)));
+    }
+
     private static String schemaFor(Path fixture) {
         String name = fixture.getFileName().toString();
         if (name.equals("snapshot.json") || name.startsWith("snapshot-")) {
@@ -1062,23 +1159,31 @@ class ExecutableContractsTest {
         if (name.startsWith("result-")) {
             return "result.schema.json";
         }
+        if (name.startsWith("job-")) {
+            return "job.schema.json";
+        }
         throw new IllegalArgumentException("Unknown fixture family: " + name);
     }
 
     private static List<String> invalidReferences(JsonNode node) {
+        return invalidReferences(node, SCHEMA_BASE);
+    }
+
+    private static List<String> invalidReferences(JsonNode node, String schemaBase) {
         List<String> invalid = new ArrayList<>();
         node.findValuesAsText("$ref").forEach(reference -> {
             if (reference.contains("..")
-                    || (!reference.startsWith("#") && !reference.startsWith(SCHEMA_BASE))) {
+                    || (!reference.startsWith("#") && !reference.startsWith(schemaBase))) {
                 invalid.add(reference);
             }
         });
         return invalid;
     }
 
-    private static boolean verifyManifest(JsonNode manifest) throws IOException {
+    private static boolean verifyManifest(JsonNode manifest, Path root, String family)
+            throws IOException {
         if (!"1.0".equals(manifest.path("manifestVersion").asText())
-                || !"agent".equals(manifest.path("contractFamily").asText())
+                || !family.equals(manifest.path("contractFamily").asText())
                 || !"1.0".equals(manifest.path("contractVersion").asText())
                 || !DRAFT_2020_12.equals(manifest.path("schemaDialect").asText())) {
             return false;
@@ -1091,8 +1196,8 @@ class ExecutableContractsTest {
             if (relative.isBlank() || relative.contains("..") || relative.startsWith("/")) {
                 return false;
             }
-            Path file = AGENT_ROOT.resolve(relative).normalize();
-            if (!file.startsWith(AGENT_ROOT) || !Files.isRegularFile(file)) {
+            Path file = root.resolve(relative).normalize();
+            if (!file.startsWith(root) || !Files.isRegularFile(file)) {
                 return false;
             }
             String digest = sha256(Files.readAllBytes(file));
@@ -1108,10 +1213,10 @@ class ExecutableContractsTest {
             return false;
         }
         List<String> diskPaths;
-        try (Stream<Path> files = Files.walk(AGENT_ROOT)) {
+        try (Stream<Path> files = Files.walk(root)) {
             diskPaths = files.filter(Files::isRegularFile)
-                    .filter(path -> !path.equals(AGENT_ROOT.resolve("manifest.json")))
-                    .map(AGENT_ROOT::relativize)
+                    .filter(path -> !path.equals(root.resolve("manifest.json")))
+                    .map(root::relativize)
                     .map(Path::toString)
                     .map(path -> path.replace('\\', '/'))
                     .sorted()

@@ -39,13 +39,41 @@
       "sha256": "54b4833e81338657f003f93fbdd95339cbe844d70eed4ae021ad828dfb7ae647"
     },
     {
+      "path": "examples/invalid/result-extra-property.json",
+      "sha256": "f30e6047fa0908292304aacefd2bc19fb4a8e130898f94e6f24b8bb30e46a082"
+    },
+    {
+      "path": "examples/invalid/result-failed-with-observation.json",
+      "sha256": "fe1a912e177300114de2464381bd1636d0d0fe06298eb2d293cb1cc12635c3f8"
+    },
+    {
+      "path": "examples/invalid/result-success-with-failure.json",
+      "sha256": "0e03d47fbb29a920fb15659896224d4b6b625a87876ad254310a729f6249774b"
+    },
+    {
       "path": "examples/valid/job-basic.json",
       "sha256": "66fb54d58e43bad3ca4d4354078d2ae148b8cc48140a6d86030514f2a8a80a8e"
     },
     {
+      "path": "examples/valid/result-basic-failed.json",
+      "sha256": "3925e3a79efa25685d08ee8949c6b8c81953f931614de7a9dc74a9980c29f6a5"
+    },
+    {
+      "path": "examples/valid/result-basic-scope-too-large.json",
+      "sha256": "ba2879ee62a0c3e2c918297b78c383724a35c13bf57b93a8d54a2865edbc11ba"
+    },
+    {
+      "path": "examples/valid/result-basic-succeeded.json",
+      "sha256": "772d7243f319f2333966b26813b3f8b4b4e2e7a9b1484a8a394cce08697f9b49"
+    },
+    {
       "path": "job.schema.json",
       "sha256": "6eb8e33b83dca4127330a756a98b91678e37dbc3ef4649450ca5497059639fae"
+    },
+    {
+      "path": "result.schema.json",
+      "sha256": "87f8a0fccd678fa58cf151e7eed2c5ffe1e892e739c0027d7ded6bdd898a6ef3"
     }
   ],
-  "bundleSha256": "772d1df8f6729c70d4fb927f08f00e0402e013209488a209380aeae7beafcb23"
+  "bundleSha256": "cd5d9b020298e7ed8094d5458bc8d428b42a120f1d34a2fe4496891941ee3f9e"
 }

@@ -44,6 +44,8 @@ El 2026-10-09 se verificó la baseline Compose Local:
 
 `OLA4-DIS-004a` amplía esa fixture Local/Test sin añadir servicios: volumen dedicado `/srv/sftpgo/discovery-jobs`, escritura backend y virtual folder `/jobs` read-only para cada executor, mapeado a un directorio determinista aislado. El perfil permite solo `list|download`; conserva sin contraseña, grupos o cuotas funcionales y sigue sin `/results`. Compose smoke verifica montaje y permisos; Production permanece fuera de alcance.
 
+`OLA4-DIS-005a` añade solo el volumen SFTPGo Local/Test `/srv/sftpgo/discovery-results` y el virtual folder aislado `/results`. El executor puede `list|download|upload|rename_files`, sin delete, overwrite o creación de directorios, con máximo 5 MiB; backend no monta ese volumen porque la ingestión no está autorizada. Los perfiles históricos exactos se actualizan y cualquier drift se rechaza. Production permanece fuera de alcance.
+
 Compose no incluye frontend, n8n, observabilidad, reverse proxy, TLS o topología Production.
 
 ## Propósito
