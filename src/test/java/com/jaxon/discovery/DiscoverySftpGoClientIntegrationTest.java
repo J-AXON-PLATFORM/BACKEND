@@ -73,6 +73,23 @@ class DiscoverySftpGoClientIntegrationTest {
             assertThat(first.hostKey()).isEqualTo(hostPublicKey);
             assertThat(first.hostKeyFingerprint()).isEqualTo(fingerprint(hostPublicKey));
             assertTargetProfile(apiUrl, objectMapper, first.username());
+
+            UUID originalId = UUID.randomUUID();
+            Ed25519PrivateKeyParameters originalPrivate =
+                    new Ed25519PrivateKeyParameters(new SecureRandom());
+            createHistoricalUser(
+                    apiUrl, objectMapper, originalId, publicKey(originalPrivate), false);
+            client.ensureProvisioned(originalId, publicKey(originalPrivate));
+            assertTargetProfile(apiUrl, objectMapper, "discovery-executor-" + originalId);
+
+            UUID jobsOnlyId = UUID.randomUUID();
+            Ed25519PrivateKeyParameters jobsOnlyPrivate =
+                    new Ed25519PrivateKeyParameters(new SecureRandom());
+            createHistoricalUser(
+                    apiUrl, objectMapper, jobsOnlyId, publicKey(jobsOnlyPrivate), true);
+            client.ensureProvisioned(jobsOnlyId, publicKey(jobsOnlyPrivate));
+            assertTargetProfile(apiUrl, objectMapper, "discovery-executor-" + jobsOnlyId);
+
             verifyAuthenticationAndIsolation(
                     client, sftpGo, apiUrl, objectMapper, hostPublicKey, first, firstPrivate);
 
@@ -134,9 +151,13 @@ class DiscoverySftpGoClientIntegrationTest {
             Path secondDocument = Files.createTempFile("jaxon-discovery-foreign-", ".json");
             Path downloaded = Files.createTempFile("jaxon-discovery-download-", ".json");
             Path upload = Files.createTempFile("jaxon-discovery-upload-", ".json");
+            Path exactLimit = Files.createTempFile("jaxon-discovery-exact-limit-", ".json");
+            Path oversized = Files.createTempFile("jaxon-discovery-oversized-", ".json");
             Files.writeString(firstDocument, "{\"owner\":\"first\"}");
             Files.writeString(secondDocument, "{\"owner\":\"second\"}");
             Files.writeString(upload, "forbidden");
+            Files.write(exactLimit, new byte[5 * 1024 * 1024]);
+            Files.write(oversized, new byte[5 * 1024 * 1024 + 1]);
             sftpGo.copyFileToContainer(
                     MountableFile.forHostPath(firstDocument, 0644),
                     "/srv/sftpgo/discovery-jobs/" + first.username() + "-jobs/own.json");
@@ -161,10 +182,62 @@ class DiscoverySftpGoClientIntegrationTest {
                             "get /jobs/../" + second.username() + "-jobs/foreign.json "
                                     + downloaded + "\n").exitCode())
                     .isNotZero();
+
+            String resultName = UUID.randomUUID() + ".json";
+            String partial = "/results/" + resultName + ".part";
+            String result = "/results/" + resultName;
+            assertThat(sftp(first, host, port, firstKey, knownHosts,
+                            "put " + firstDocument + " " + partial + "\n").exitCode())
+                    .isZero();
+            assertThat(sftp(first, host, port, firstKey, knownHosts,
+                            "put " + firstDocument + " " + partial + "\n").exitCode())
+                    .isNotZero();
+            assertThat(sftp(first, host, port, firstKey, knownHosts,
+                            "rename " + partial + " " + result + "\n").exitCode())
+                    .isZero();
+            assertThat(sftp(first, host, port, firstKey, knownHosts,
+                            "get " + result + " " + downloaded + "\n").exitCode())
+                    .isZero();
+            assertThat(Files.readString(downloaded)).isEqualTo("{\"owner\":\"first\"}");
+            assertThat(sftp(first, host, port, firstKey, knownHosts,
+                            "put " + secondDocument + " " + result + "\n").exitCode())
+                    .isNotZero();
+            String conflictingPartial = "/results/" + UUID.randomUUID() + ".json.part";
+            assertThat(sftp(first, host, port, firstKey, knownHosts,
+                            "put " + secondDocument + " " + conflictingPartial + "\n")
+                    .exitCode())
+                    .isZero();
+            assertThat(sftp(first, host, port, firstKey, knownHosts,
+                            "rename " + conflictingPartial + " " + result + "\n")
+                    .exitCode())
+                    .isNotZero();
+            assertThat(sftp(first, host, port, firstKey, knownHosts,
+                            "rm " + conflictingPartial + "\n").exitCode())
+                    .isNotZero();
+            assertThat(sftp(first, host, port, firstKey, knownHosts,
+                            "mkdir /results/forbidden\n").exitCode())
+                    .isNotZero();
+            String exactPartial = "/results/" + UUID.randomUUID() + ".json.part";
+            String exactFinal = exactPartial.substring(0, exactPartial.length() - ".part".length());
+            assertThat(sftp(first, host, port, firstKey, knownHosts,
+                            "put " + exactLimit + " " + exactPartial + "\nrename " + exactPartial
+                                    + " " + exactFinal + "\n")
+                    .exitCode())
+                    .isZero();
+            assertThat(sftp(first, host, port, firstKey, knownHosts,
+                            "put " + oversized + " /results/" + UUID.randomUUID()
+                                    + ".json.part\n").exitCode())
+                    .isNotZero();
+            assertThat(sftp(second, host, port, secondKey, knownHosts,
+                            "get /results/../" + first.username() + "-results/" + resultName + " "
+                                    + downloaded + "\n").exitCode())
+                    .isNotZero();
             Files.deleteIfExists(firstDocument);
             Files.deleteIfExists(secondDocument);
             Files.deleteIfExists(downloaded);
             Files.deleteIfExists(upload);
+            Files.deleteIfExists(exactLimit);
+            Files.deleteIfExists(oversized);
         } finally {
             Files.deleteIfExists(knownHosts);
             Files.deleteIfExists(firstKey);
@@ -193,22 +266,86 @@ class DiscoverySftpGoClientIntegrationTest {
         assertThat(user.path("username").asText()).isEqualTo(username);
         assertThat(user.path("has_password").asBoolean()).isFalse();
         assertThat(user.path("home_dir").asText()).isEqualTo("/srv/sftpgo/data/" + username);
-        assertThat(user.path("permissions").size()).isEqualTo(2);
+        assertThat(user.path("permissions").size()).isEqualTo(3);
         assertThat(user.path("permissions").path("/"))
                 .extracting(JsonNode::asText)
                 .containsExactly("list");
         assertThat(user.path("permissions").path("/jobs"))
                 .extracting(JsonNode::asText)
                 .containsExactlyInAnyOrder("list", "download");
-        assertThat(user.path("virtual_folders")).hasSize(1);
-        assertThat(user.path("virtual_folders").get(0).path("virtual_path").asText())
-                .isEqualTo("/jobs");
-        assertThat(user.path("virtual_folders").get(0).path("mapped_path").asText())
-                .isEqualTo("/srv/sftpgo/discovery-jobs/" + username + "-jobs");
+        assertThat(user.path("permissions").path("/results"))
+                .extracting(JsonNode::asText)
+                .containsExactlyInAnyOrder("list", "download", "upload", "rename_files");
+        assertThat(user.path("virtual_folders")).hasSize(2);
+        assertThat(user.path("virtual_folders"))
+                .extracting(node -> node.path("virtual_path").asText())
+                .containsExactlyInAnyOrder("/jobs", "/results");
+        assertThat(user.path("virtual_folders"))
+                .extracting(node -> node.path("mapped_path").asText())
+                .containsExactlyInAnyOrder(
+                        "/srv/sftpgo/discovery-jobs/" + username + "-jobs",
+                        "/srv/sftpgo/discovery-results/" + username + "-results");
         assertThat(user.path("groups")).isEmpty();
         assertThat(user.path("quota_size").asLong()).isZero();
         assertThat(user.path("quota_files").asLong()).isZero();
-        assertThat(user.path("filters").path("max_upload_file_size").asLong()).isZero();
+        assertThat(user.path("filters").path("max_upload_file_size").asLong())
+                .isEqualTo(5L * 1024 * 1024);
+    }
+
+    private static void createHistoricalUser(
+            String apiUrl,
+            ObjectMapper objectMapper,
+            UUID executorId,
+            String publicKey,
+            boolean jobsProfile)
+            throws Exception {
+        String username = "discovery-executor-" + executorId;
+        List<Map<String, Object>> folders = List.of();
+        Map<String, List<String>> permissions = Map.of("/", List.of("list"));
+        if (jobsProfile) {
+            String folderName = username + "-jobs";
+            String mappedPath = "/srv/sftpgo/discovery-jobs/" + folderName;
+            HttpResponse<String> folderResponse = HttpClient.newHttpClient().send(
+                    authorizedRequest(apiUrl, objectMapper, "/folders")
+                            .header("Content-Type", "application/json")
+                            .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(Map.of(
+                                    "name", folderName,
+                                    "mapped_path", mappedPath,
+                                    "filesystem", Map.of("provider", 0)))))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertThat(folderResponse.statusCode()).isEqualTo(201);
+            folders = List.of(Map.of(
+                    "name", folderName,
+                    "mapped_path", mappedPath,
+                    "virtual_path", "/jobs",
+                    "quota_size", 0,
+                    "quota_files", 0,
+                    "filesystem", Map.of("provider", 0)));
+            permissions = Map.of(
+                    "/", List.of("list"), "/jobs", List.of("list", "download"));
+        }
+        Map<String, Object> body = Map.of(
+                "status", 1,
+                "username", username,
+                "public_keys", List.of(publicKey),
+                "home_dir", "/srv/sftpgo/data/" + username,
+                "permissions", permissions,
+                "filters", Map.of(
+                        "denied_protocols", List.of("FTP", "DAV", "HTTP"),
+                        "denied_login_methods", List.of(
+                                "password", "password-over-SSH", "keyboard-interactive",
+                                "publickey+password", "publickey+keyboard-interactive",
+                                "TLSCertificate", "TLSCertificate+password")),
+                "virtual_folders", folders,
+                "filesystem", Map.of("provider", 0));
+        HttpResponse<String> response = HttpClient.newHttpClient().send(
+                authorizedRequest(apiUrl, objectMapper, "/users")
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertThat(response.statusCode()).isEqualTo(201);
     }
 
     private static SftpResult sftp(

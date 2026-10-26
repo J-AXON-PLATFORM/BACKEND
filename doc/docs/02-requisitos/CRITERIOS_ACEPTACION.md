@@ -78,3 +78,13 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - SFTPGo expone `/jobs` al executor únicamente con `list|download`; no concede upload, overwrite, delete, rename ni acceso a buzones ajenos.
 - OpenAPI 5.1 conserva 5.0 byte a byte, frontend no reintenta la mutación ni anticipa estados y `automation-collector` valida el bundle offline sin polling o ejecución.
 - La verificación local cubre 138 pruebas Python ya integradas, 74 pruebas frontend más lint/typecheck/build, E2E Chromium multirepo real y 141 pruebas backend `clean verify` con 18 migraciones, SFTPGo real y contratos verdes.
+
+## OLA4-DIS-005a
+
+- `jaxon-discovery-executor run-once --state-dir <ruta>` selecciona determinísticamente como máximo un `<jobId>.json` final, valida Job 1.0 offline y exige coincidencia de filename, job, executor y scope.
+- El estado local privado usa solo `RECEIVED|RUNNING|RESULT_READY|DELIVERED`, lock no bloqueante, no-follow, `0700|0600`, fsync y reemplazo atómico; un reinicio desde `RUNNING` emite `EXECUTION_INTERRUPTED` sin repetir probes.
+- `BASIC` rechaza scopes mayores de 4096 direcciones, limita concurrencia a 32 y timeout a 2 s, prueba únicamente TCP `22,53,80,443,445,3389`, usa ARP solo pasivo y no realiza UDP, banners, autenticación, fingerprinting, explotación o salida del CIDR.
+- Discovery Result 1.0 es cerrado, máximo 5 MiB/4096 observaciones, correlaciona UUIDv4 Job/Executor/Scope/Result, exige tiempos/contadores/IP/puertos coherentes y no contiene texto libre, rutas, excepciones, secretos o credenciales.
+- `/results` permite solo listar, descargar, upload sin overwrite y rename; la entrega exclusiva `.part -> .json` relee bytes finales, acepta un final idéntico y rechaza cualquier conflicto sin delete.
+- Backend acepta upgrades exactos desde los perfiles históricos sin `/jobs` y `/jobs`-only, pero rechaza drift; no monta ni ingiere el buzón Result y mantiene el Job oficial `DISPATCHED`.
+- Job 1.0, OpenAPI 5.1, dependencias, lockfiles, migraciones, workflows y frontend permanecen inmutables.

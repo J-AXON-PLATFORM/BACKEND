@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.j-axon.invalid/discovery/1.0/result.schema.json",
+  "title": "J-AXON Discovery Result 1.0",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "messageType",
+    "resultId",
+    "jobId",
+    "executorId",
+    "scopeId",
+    "profile",
+    "startedAt",
+    "completedAt",
+    "status",
+    "failureCode",
+    "summary",
+    "observations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "messageType": { "const": "DISCOVERY_RESULT" },
+    "resultId": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/uuidV4"
+    },
+    "jobId": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/uuidV4"
+    },
+    "executorId": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/uuidV4"
+    },
+    "scopeId": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/uuidV4"
+    },
+    "profile": { "const": "BASIC" },
+    "startedAt": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/utcDateTime"
+    },
+    "completedAt": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/utcDateTime"
+    },
+    "status": { "enum": ["SUCCEEDED", "FAILED"] },
+    "failureCode": {
+      "type": ["string", "null"],
+      "enum": [
+        null,
+        "JOB_EXPIRED",
+        "SCOPE_TOO_LARGE",
+        "UNSUPPORTED_PLATFORM",
+        "EXECUTION_INTERRUPTED",
+        "EXECUTION_ERROR"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "required": ["targetsConsidered", "targetsScanned", "observationsFound"],
+      "properties": {
+        "targetsConsidered": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 340282366920938463463374607431768211456
+        },
+        "targetsScanned": { "type": "integer", "minimum": 0, "maximum": 4096 },
+        "observationsFound": { "type": "integer", "minimum": 0, "maximum": 4096 }
+      },
+      "additionalProperties": false
+    },
+    "observations": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "required": ["ipAddress", "macAddress", "hostname", "evidence", "openTcpPorts"],
+        "properties": {
+          "ipAddress": {
+            "type": "string",
+            "anyOf": [{ "format": "ipv4" }, { "format": "ipv6" }]
+          },
+          "macAddress": {
+            "type": ["string", "null"],
+            "pattern": "^[0-9a-f]{2}(?::[0-9a-f]{2}){5}$"
+          },
+          "hostname": {
+            "type": ["string", "null"],
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[^\\x00-\\x20\\x7f]+$"
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "uniqueItems": true,
+            "items": { "enum": ["ARP", "ICMP", "TCP"] }
+          },
+          "openTcpPorts": {
+            "type": "array",
+            "maxItems": 6,
+            "uniqueItems": true,
+            "items": { "enum": [22, 53, 80, 443, 445, 3389] }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "SUCCEEDED" } }, "required": ["status"] },
+      "then": { "properties": { "failureCode": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "FAILED" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "failureCode": {
+            "enum": [
+              "JOB_EXPIRED",
+              "SCOPE_TOO_LARGE",
+              "UNSUPPORTED_PLATFORM",
+              "EXECUTION_INTERRUPTED",
+              "EXECUTION_ERROR"
+            ]
+          },
+          "observations": { "maxItems": 0 }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

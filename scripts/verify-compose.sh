@@ -11,6 +11,7 @@ readonly DATABASE_VOLUME_NAME="${PROJECT_NAME}_jaxon-postgres-data"
 readonly MAILBOX_VOLUME_NAME="${PROJECT_NAME}_jaxon-sftpgo-mailboxes"
 readonly TASK_VOLUME_NAME="${PROJECT_NAME}_jaxon-sftpgo-tasks"
 readonly DISCOVERY_JOB_VOLUME_NAME="${PROJECT_NAME}_jaxon-sftpgo-discovery-jobs"
+readonly DISCOVERY_RESULT_VOLUME_NAME="${PROJECT_NAME}_jaxon-sftpgo-discovery-results"
 readonly NETWORK_NAME="${PROJECT_NAME}_jaxon-local"
 readonly DATABASE_IMAGE="${1:-jaxon-postgres-pgvector-test:18.6-0.8.6}"
 readonly APP_IMAGE="${2:-jaxon-backend:local}"
@@ -195,6 +196,12 @@ readonly APP_TASK_MOUNT="$(docker inspect --format '{{range .Mounts}}{{if eq .De
 readonly APP_DISCOVERY_JOB_MOUNT="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/srv/sftpgo/discovery-jobs"}}{{.Name}}:{{.RW}}{{end}}{{end}}' "${APP_CONTAINER}")"
 [[ "${APP_DISCOVERY_JOB_MOUNT}" == "${DISCOVERY_JOB_VOLUME_NAME}:true" ]] || \
   fail "backend Discovery Job volume is not the isolated writable project volume"
+readonly APP_DISCOVERY_RESULT_MOUNT="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/srv/sftpgo/discovery-results"}}{{.Name}}:{{.RW}}{{end}}{{end}}' "${APP_CONTAINER}")"
+[[ -z "${APP_DISCOVERY_RESULT_MOUNT}" ]] || \
+  fail "backend must not mount the unimplemented Discovery Result ingestion volume"
+readonly SFTPGO_DISCOVERY_RESULT_MOUNT="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/srv/sftpgo/discovery-results"}}{{.Name}}:{{.RW}}{{end}}{{end}}' "${SFTPGO_CONTAINER}")"
+[[ "${SFTPGO_DISCOVERY_RESULT_MOUNT}" == "${DISCOVERY_RESULT_VOLUME_NAME}:true" ]] || \
+  fail "SFTPGo Discovery Result volume is not the isolated writable project volume"
 readonly APP_GROUPS="$(docker inspect --format '{{json .HostConfig.GroupAdd}}' "${APP_CONTAINER}")"
 [[ "${APP_GROUPS}" == *'65532'* ]] || fail "backend lacks the SFTPGo mailbox supplementary group"
 docker exec "${APP_CONTAINER}" sh -c '[ "${JAXON_ENVIRONMENT}" = "local" ]' || \

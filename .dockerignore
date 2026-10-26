@@ -21,6 +21,7 @@ doc/contracts/discovery/*
 doc/contracts/discovery/1.0/*
 !doc/contracts/discovery/1.0/common.schema.json
 !doc/contracts/discovery/1.0/job.schema.json
+!doc/contracts/discovery/1.0/result.schema.json
 logs
 target
 .env

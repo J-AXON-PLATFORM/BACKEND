@@ -32,7 +32,7 @@
 | CTR-JAXON-INTERNAL | módulo/módulo | commands/queries in-process por API pública; hechos por eventos internos; outbox PostgreSQL durable, at-least-once e idempotencia | tipos Java/event payloads ejecutables por caso de uso |
 | CTR-JAXON-AI | Backend/proveedor IA | adapters `EmbeddingProvider`/`GenerationProvider`; retrieval autorizado, fuentes/citas y degradación segura | proveedor/modelo/protocolo concreto |
 | CTR-JAXON-N8N | Backend/n8n | async start + callback; `executionId`; HMAC-SHA-256/timestamp/`eventId`; backend conserva estado | endpoints/headers exactos y workflows concretos |
-| CTR-JAXON-DISCOVERY | Backend/SFTPGo/Discovery Executor | job/result sobre SFTP, identidad separada; scope/executor/job validados | schema/archivo ejecutable y límites exactos por perfil |
+| CTR-JAXON-DISCOVERY | Backend/SFTPGo/Discovery Executor | Job/Result 1.0 cerrados sobre SFTP, identidad separada; 64 KiB Job, 5 MiB Result, `jobId` estable y scope/executor/job validados | ingestión backend, dispositivos y lifecycle oficial posterior a `DISPATCHED` |
 
 `OLA2-AGT-001a` materializa `CTR-JAXON-INTERNAL` mediante `AssetLookup` de Inventory y `AgentIdentityRegistry` de Identity. Collector genera/vincula el Agent y emite `AGENT_PRE_REGISTERED`; Identity crea su identidad técnica, normaliza/valida la public key y emite `AGENT_PUBLIC_KEY_REGISTERED`. La transacción puede ser común, pero ningún módulo lee o escribe tablas ajenas y no existen FKs cross-schema.
 
@@ -59,7 +59,7 @@
 - JSON/SFTP debe exponer versión legible por máquina; OpenAPI declara su versión.
 - Validar frontera antes de modificar estado oficial.
 - Distinguir éxito de transporte, recepción/validación y resultado de negocio.
-- Tareas/jobs tienen identidad estable controlada por backend; nombre de campo no fijado.
+- Tareas/jobs tienen identidad estable controlada por backend; Discovery usa `jobId` UUIDv4 y entrega Result final como `<jobId>.json`.
 - No introducir Kafka/RabbitMQ solo para comunicación interna inicial.
 - Swagger UI no reemplaza JSON Schema; SSE no reemplaza REST ni SFTP.
 

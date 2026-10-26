@@ -61,6 +61,7 @@ services:
       - jaxon-sftpgo-mailboxes:/srv/sftpgo/data
       - jaxon-sftpgo-tasks:/srv/sftpgo/tasks
       - jaxon-sftpgo-discovery-jobs:/srv/sftpgo/discovery-jobs
+      - jaxon-sftpgo-discovery-results:/srv/sftpgo/discovery-results
     networks:
       - jaxon-local
 
@@ -141,6 +142,9 @@ volumes:
     labels:
       com.jaxon.resource-owner: ${JAXON_RESOURCE_OWNER:-local-persistent}
   jaxon-sftpgo-discovery-jobs:
+    labels:
+      com.jaxon.resource-owner: ${JAXON_RESOURCE_OWNER:-local-persistent}
+  jaxon-sftpgo-discovery-results:
     labels:
       com.jaxon.resource-owner: ${JAXON_RESOURCE_OWNER:-local-persistent}
 
