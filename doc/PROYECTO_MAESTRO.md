@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA4-DIS-003a`: implementación local multirepo verificada, integración pendiente, 2026-10-24
-> **Estado documental:** baseline v1 `DESIGN_READY`; activación SFTP Discovery Local/Test acotada en integración controlada; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA4-DIS-004a`: Python/frontend integrados, backend pendiente, 2026-10-26
+> **Estado documental:** baseline v1 `DESIGN_READY`; primer despacho SFTP de Discovery Jobs en integración controlada; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-24.
+- Fecha de última revisión: 2026-10-26.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, `AuthorizedScope` y pre-registro/identidad de Discovery Executor están integrados. La activación y verificación puntual de un canal SFTPGo aislado Local/Test está implementada y verificada localmente en los tres repositorios con OpenAPI 5.0; jobs, resultados, polling, escaneo, dispositivos, incorporación a Inventory y Production permanecen fuera del corte.
+- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal y Discovery Executor hasta activación/canal SFTP Local/Test están integrados. `OLA4-DIS-004a` implementa y verifica creación, consulta y despacho de Discovery Jobs; Python y frontend están integrados, y backend permanece pendiente. Pickup, ejecución, resultados, polling, escaneo, dispositivos, incorporación a Inventory y Production quedan fuera del corte.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con `OLA4-DIS-002a` integrado mediante `AUTOMATION-COLLECTOR#9`, `FRONTEND#22` y `BACKEND#45`. `OLA4-DIS-003a` implementa y verifica localmente activación `PENDING -> ACTIVE`, perfil SFTPGo aislado Local/Test, configuración/verificación puntual del ejecutable, OpenAPI 5.0 y UI estricta; sus tres PR permanecen pendientes. No autoriza jobs, resultados, polling, escaneo, dispositivos, incorporación a Inventory ni Production. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con `OLA4-DIS-003a` integrado mediante `AUTOMATION-COLLECTOR#10`, `FRONTEND#23` y `BACKEND#46`. `OLA4-DIS-004a` implementa y verifica creación/consulta `IT_OPERATOR`, persistencia/outbox Discovery, contrato Discovery 1.0, publicación atómica `/jobs`, reconciliación, OpenAPI 5.1 y UI estricta; `AUTOMATION-COLLECTOR#11` y `FRONTEND#24` están integrados, y backend permanece pendiente. No autoriza pickup, ejecución, resultados, polling, escaneo, dispositivos, incorporación a Inventory ni Production. `PRODUCTION_READY = NO`.

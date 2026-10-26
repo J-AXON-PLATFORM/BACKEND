@@ -10,6 +10,7 @@ readonly SFTPGO_CONTAINER_NAME="${PROJECT_NAME}-sftpgo-1"
 readonly DATABASE_VOLUME_NAME="${PROJECT_NAME}_jaxon-postgres-data"
 readonly MAILBOX_VOLUME_NAME="${PROJECT_NAME}_jaxon-sftpgo-mailboxes"
 readonly TASK_VOLUME_NAME="${PROJECT_NAME}_jaxon-sftpgo-tasks"
+readonly DISCOVERY_JOB_VOLUME_NAME="${PROJECT_NAME}_jaxon-sftpgo-discovery-jobs"
 readonly NETWORK_NAME="${PROJECT_NAME}_jaxon-local"
 readonly DATABASE_IMAGE="${1:-jaxon-postgres-pgvector-test:18.6-0.8.6}"
 readonly APP_IMAGE="${2:-jaxon-backend:local}"
@@ -191,6 +192,9 @@ readonly APP_MAILBOX_MOUNT="$(docker inspect --format '{{range .Mounts}}{{if eq 
 readonly APP_TASK_MOUNT="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/srv/sftpgo/tasks"}}{{.Name}}:{{.RW}}{{end}}{{end}}' "${APP_CONTAINER}")"
 [[ "${APP_TASK_MOUNT}" == "${TASK_VOLUME_NAME}:true" ]] || \
   fail "backend task volume is not the isolated writable project volume"
+readonly APP_DISCOVERY_JOB_MOUNT="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/srv/sftpgo/discovery-jobs"}}{{.Name}}:{{.RW}}{{end}}{{end}}' "${APP_CONTAINER}")"
+[[ "${APP_DISCOVERY_JOB_MOUNT}" == "${DISCOVERY_JOB_VOLUME_NAME}:true" ]] || \
+  fail "backend Discovery Job volume is not the isolated writable project volume"
 readonly APP_GROUPS="$(docker inspect --format '{{json .HostConfig.GroupAdd}}' "${APP_CONTAINER}")"
 [[ "${APP_GROUPS}" == *'65532'* ]] || fail "backend lacks the SFTPGo mailbox supplementary group"
 docker exec "${APP_CONTAINER}" sh -c '[ "${JAXON_ENVIRONMENT}" = "local" ]' || \
@@ -199,6 +203,8 @@ docker exec "${APP_CONTAINER}" sh -c '[ -r /srv/sftpgo/data ] && [ ! -w /srv/sft
   fail "backend mailbox root is not safely readable and read-only"
 docker exec "${APP_CONTAINER}" sh -c '[ -r /srv/sftpgo/tasks ] && [ -w /srv/sftpgo/tasks ]' || \
   fail "backend task publication root is not safely writable"
+docker exec "${APP_CONTAINER}" sh -c '[ -r /srv/sftpgo/discovery-jobs ] && [ -w /srv/sftpgo/discovery-jobs ]' || \
+  fail "backend Discovery Job publication root is not safely writable"
 
 readonly APP_BINDING="$("${COMPOSE[@]}" --profile application port backend 8080)"
 [[ "${APP_BINDING}" =~ ^127\.0\.0\.1:[0-9]+$ ]] || \

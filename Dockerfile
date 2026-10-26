@@ -8,6 +8,7 @@ RUN ./mvnw --batch-mode --no-transfer-progress dependency:go-offline
 
 COPY src/ src/
 COPY doc/contracts/agent/1.0/ doc/contracts/agent/1.0/
+COPY doc/contracts/discovery/1.0/ doc/contracts/discovery/1.0/
 RUN ./mvnw --batch-mode --no-transfer-progress -DskipTests package && \
     cp target/jaxon-backend-*.jar /workspace/application.jar
 

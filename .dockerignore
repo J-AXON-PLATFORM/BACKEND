@@ -15,6 +15,12 @@ doc/contracts/agent/1.0/*
 !doc/contracts/agent/1.0/task.schema.json
 !doc/contracts/agent/1.0/result.schema.json
 !doc/contracts/agent/1.0/snapshot.schema.json
+!doc/contracts/discovery/
+doc/contracts/discovery/*
+!doc/contracts/discovery/1.0/
+doc/contracts/discovery/1.0/*
+!doc/contracts/discovery/1.0/common.schema.json
+!doc/contracts/discovery/1.0/job.schema.json
 logs
 target
 .env

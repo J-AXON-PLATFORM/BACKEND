@@ -26,7 +26,11 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
 
-    private static final Map<String, List<String>> PERMISSIONS = Map.of("/", List.of("list"));
+    private static final Map<String, List<String>> ORIGINAL_PERMISSIONS =
+            Map.of("/", List.of("list"));
+    private static final Map<String, List<String>> PERMISSIONS = Map.of(
+            "/", List.of("list"),
+            "/jobs", List.of("list", "download"));
     private static final List<String> DENIED_PROTOCOLS = List.of("FTP", "DAV", "HTTP");
     private static final List<String> DENIED_LOGIN_METHODS = List.of(
             "password",
@@ -89,12 +93,19 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
             verifyHostKey(token, hostKeyFingerprint);
             JsonNode current = getUser(token, username);
             if (current == null) {
+                ensureFolder(token, username, false);
                 createUser(token, username, publicKey);
-                current = getUser(token, username);
+            } else if (matchesOriginal(current, username, publicKey)) {
+                ensureFolder(token, username, false);
+                updateUser(token, username, publicKey);
+            } else if (!matches(current, username, publicKey)) {
+                throw new DiscoverySftpProvisioningConflictException();
             }
+            current = getUser(token, username);
             if (current == null || !matches(current, username, publicKey)) {
                 throw new DiscoverySftpProvisioningConflictException();
             }
+            ensureFolder(token, username, true);
             return new DiscoveryExecutorActivationResponse(
                     publicHost, publicPort, username, publicHostKey, hostKeyFingerprint);
         } catch (DiscoverySftpProvisioningConflictException
@@ -161,6 +172,18 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
         }
     }
 
+    private void updateUser(String token, String username, String publicKey) throws Exception {
+        String encoded = URLEncoder.encode(username, StandardCharsets.UTF_8);
+        HttpRequest request = authorized(token, apiUrl + "/users/" + encoded + "?disconnect=1")
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(
+                        objectMapper.writeValueAsString(userBody(username, publicKey))))
+                .build();
+        if (send(request).statusCode() != 200) {
+            throw new DiscoverySftpProvisioningUnavailableException();
+        }
+    }
+
     private static Map<String, Object> userBody(String username, String publicKey) {
         return Map.of(
                 "status", 1,
@@ -171,8 +194,53 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
                 "filters", Map.of(
                         "denied_protocols", DENIED_PROTOCOLS,
                         "denied_login_methods", DENIED_LOGIN_METHODS),
-                "virtual_folders", List.of(),
+                "virtual_folders", List.of(virtualFolder(username)),
                 "filesystem", Map.of("provider", 0));
+    }
+
+    private static Map<String, Object> virtualFolder(String username) {
+        return Map.of(
+                "name", folderName(username),
+                "mapped_path", mappedPath(username),
+                "virtual_path", "/jobs",
+                "quota_size", 0,
+                "quota_files", 0,
+                "filesystem", Map.of("provider", 0));
+    }
+
+    private void ensureFolder(String token, String username, Boolean attached) throws Exception {
+        String name = folderName(username);
+        JsonNode folder = getFolder(token, name);
+        if (folder == null) {
+            Map<String, Object> body = Map.of(
+                    "name", name,
+                    "mapped_path", mappedPath(username),
+                    "filesystem", Map.of("provider", 0));
+            HttpRequest request = authorized(token, apiUrl + "/folders")
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
+                    .build();
+            int status = send(request).statusCode();
+            if (status != 201 && status != 409) {
+                throw new DiscoverySftpProvisioningUnavailableException();
+            }
+            folder = getFolder(token, name);
+        }
+        if (folder == null || !matchesFolder(folder, username, attached)) {
+            throw new DiscoverySftpProvisioningConflictException();
+        }
+    }
+
+    private JsonNode getFolder(String token, String name) throws Exception {
+        String encoded = URLEncoder.encode(name, StandardCharsets.UTF_8);
+        HttpResponse<String> response = send(authorized(token, apiUrl + "/folders/" + encoded)
+                .GET()
+                .build());
+        if (response.statusCode() == 404) return null;
+        if (response.statusCode() != 200) {
+            throw new DiscoverySftpProvisioningUnavailableException();
+        }
+        return objectMapper.readTree(response.body());
     }
 
     private static boolean matches(JsonNode user, String username, String publicKey) {
@@ -187,11 +255,55 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
                 && sameValues(
                         user.path("filters").path("denied_login_methods"), DENIED_LOGIN_METHODS)
                 && hasDefaultFilters(user.path("filters"))
+                && matchesVirtualFolder(user.path("virtual_folders"), username)
+                && emptyArray(user, "groups")
+                && hasDefaultAccountLimits(user)
+                && hasDefaultIdentityMetadata(user)
+                && hasDefaultFilesystem(user.path("filesystem"));
+    }
+
+    private static boolean matchesOriginal(JsonNode user, String username, String publicKey) {
+        return user.isObject()
+                && textEquals(user, "username", username)
+                && integerEquals(user, "status", 1)
+                && optionalBooleanEquals(user, "has_password", false)
+                && sameValues(user.path("public_keys"), List.of(publicKey))
+                && textEquals(user, "home_dir", homeDirectory(username))
+                && permissions(user.path("permissions")).equals(ORIGINAL_PERMISSIONS)
+                && sameValues(user.path("filters").path("denied_protocols"), DENIED_PROTOCOLS)
+                && sameValues(
+                        user.path("filters").path("denied_login_methods"), DENIED_LOGIN_METHODS)
+                && hasDefaultFilters(user.path("filters"))
                 && emptyArray(user, "virtual_folders")
                 && emptyArray(user, "groups")
                 && hasDefaultAccountLimits(user)
                 && hasDefaultIdentityMetadata(user)
                 && hasDefaultFilesystem(user.path("filesystem"));
+    }
+
+    private static boolean matchesVirtualFolder(JsonNode folders, String username) {
+        return folders.isArray()
+                && folders.size() == 1
+                && folderName(username).equals(folders.get(0).path("name").asText())
+                && mappedPath(username).equals(folders.get(0).path("mapped_path").asText())
+                && "/jobs".equals(folders.get(0).path("virtual_path").asText())
+                && folders.get(0).path("quota_size").asLong() == 0
+                && folders.get(0).path("quota_files").asLong() == 0
+                && hasDefaultFilesystem(folders.get(0).path("filesystem"));
+    }
+
+    private static boolean matchesFolder(JsonNode folder, String username, Boolean attached) {
+        if (!folderName(username).equals(folder.path("name").asText())
+                || !mappedPath(username).equals(folder.path("mapped_path").asText())
+                || !folder.path("description").asText().isBlank()
+                || !hasDefaultFilesystem(folder.path("filesystem"))
+                || !emptyArray(folder, "groups")) {
+            return false;
+        }
+        if (attached == null) return true;
+        return attached
+                ? sameValues(folder.path("users"), List.of(username))
+                : emptyArray(folder, "users");
     }
 
     private static Map<String, List<String>> permissions(JsonNode node) {
@@ -384,6 +496,14 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
 
     private static String homeDirectory(String username) {
         return "/srv/sftpgo/data/" + username;
+    }
+
+    private static String folderName(String username) {
+        return username + "-jobs";
+    }
+
+    private static String mappedPath(String username) {
+        return "/srv/sftpgo/discovery-jobs/" + folderName(username);
     }
 
     private static boolean textEquals(JsonNode parent, String field, String expected) {

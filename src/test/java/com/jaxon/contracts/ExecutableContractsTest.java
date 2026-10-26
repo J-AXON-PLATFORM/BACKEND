@@ -53,6 +53,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V44_ROOT = Path.of("doc/contracts/openapi/4.4");
     private static final Path OPENAPI_V45_ROOT = Path.of("doc/contracts/openapi/4.5");
     private static final Path OPENAPI_V50_ROOT = Path.of("doc/contracts/openapi/5.0");
+    private static final Path OPENAPI_V51_ROOT = Path.of("doc/contracts/openapi/5.1");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
     private static final List<String> AGENT_SCHEMAS = List.of(
@@ -160,6 +161,29 @@ class ExecutableContractsTest {
         assertThat(executorSchema.path("oneOf").get(1).path("properties")
                         .path("publicKeyRegistered").path("const").asBoolean())
                 .isTrue();
+    }
+
+    @Test
+    void openApi51Preserves50AndAddsOnlyDiscoveryJobOperations() {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        OpenAPI api = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V51_ROOT.resolve("openapi.yaml").toString(), null, options)
+                .getOpenAPI();
+        OpenAPI previous = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V50_ROOT.resolve("openapi.yaml").toString(), null, options)
+                .getOpenAPI();
+        assertThat(api).isNotNull();
+        assertThat(previous).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("5.1");
+        assertThat(api.getPaths().keySet())
+                .containsAll(previous.getPaths().keySet())
+                .hasSize(previous.getPaths().size() + 2)
+                .contains("/discovery/jobs", "/discovery/jobs/{jobId}");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .containsExactlyInAnyOrder("createDiscoveryJob", "getDiscoveryJob")
+                .doesNotHaveDuplicates();
     }
 
     @Test

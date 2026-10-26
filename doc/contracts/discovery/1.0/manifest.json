@@ -1,0 +1,51 @@
+{
+  "manifestVersion": "1.0",
+  "contractFamily": "discovery",
+  "contractVersion": "1.0",
+  "schemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "sourceRepository": "J-AXON-PLATFORM/BACKEND",
+  "sourcePath": "doc/contracts/discovery/1.0",
+  "files": [
+    {
+      "path": "common.schema.json",
+      "sha256": "a08b85fce1b4a85f0378ec0a6eab45b8b6b2c02860355725e456df058a52c9aa"
+    },
+    {
+      "path": "examples/invalid/job-extra-property.json",
+      "sha256": "03e7eab0f5ed95e4481c0a2c50c865e74247195953a855ae29e5ae30573d89c2"
+    },
+    {
+      "path": "examples/invalid/job-invalid-expiry.json",
+      "sha256": "628724e56cf665b612b647d227b3027426833a912b643167fff556222f0b0ce5"
+    },
+    {
+      "path": "examples/invalid/job-invalid-uuid.json",
+      "sha256": "e9f61220be216e52860b9f9cc7ea9d3dbedf52295435d3f56f39de539d8cb25b"
+    },
+    {
+      "path": "examples/invalid/job-non-utc-time.json",
+      "sha256": "cc5f7e5dcc78af025a082190845dcdbc24a5af9af0c30c01bac684e451a3cdb0"
+    },
+    {
+      "path": "examples/invalid/job-noncanonical-cidr.json",
+      "sha256": "c7555ed2c171c3b0aac5ef33fdcbfb76c0ba5aa23d3823a8306ec6b6c4261d86"
+    },
+    {
+      "path": "examples/invalid/job-unknown-version.json",
+      "sha256": "d9a66a93ffc2918d0bdc45658c3bd7cf5cb76115a91f230877a7a438c76b21ea"
+    },
+    {
+      "path": "examples/invalid/job-wrong-message-type.json",
+      "sha256": "54b4833e81338657f003f93fbdd95339cbe844d70eed4ae021ad828dfb7ae647"
+    },
+    {
+      "path": "examples/valid/job-basic.json",
+      "sha256": "66fb54d58e43bad3ca4d4354078d2ae148b8cc48140a6d86030514f2a8a80a8e"
+    },
+    {
+      "path": "job.schema.json",
+      "sha256": "6eb8e33b83dca4127330a756a98b91678e37dbc3ef4649450ca5497059639fae"
+    }
+  ],
+  "bundleSha256": "772d1df8f6729c70d4fb927f08f00e0402e013209488a209380aeae7beafcb23"
+}

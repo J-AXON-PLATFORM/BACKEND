@@ -69,3 +69,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - OpenAPI 5.0 conserva 4.5 byte a byte como histórico y limita la respuesta a cinco datos públicos de conexión; frontend no reintenta ni anticipa, reconsulta REST y conserva esa respuesta solo en memoria.
 - El ejecutable guarda `sftp.json` privado de forma exclusiva/idempotente y verifica una sola conexión con private key exacta, host key Ed25519 fijada, `RejectPolicy`, `allow_agent=False` y `look_for_keys=False`.
 - La prueba E2E Chromium real recorre activación, repetición idempotente, configuración/verificación Python, perfil SFTPGo y persistencia/outbox; no publica ni ejecuta jobs. Evidencia local: Python 120 pruebas + Ruff, frontend 68 + lint/typecheck/build, backend 126 `clean verify` + 17 migraciones y contratos verdes.
+
+## OLA4-DIS-004a
+
+- Solo `IT_OPERATOR` crea y consulta jobs; se exige executor `ACTIVE`, scope asociado `ACTIVE` y ausencia de otro job no terminal para ese executor.
+- El alta confirma `PENDING`, perfil `BASIC`, UUIDv4 y TTL exacto de una hora con outbox mínimo antes de intentar publicación; una indisponibilidad devuelve `503`, conserva el pendiente y expone su URI de consulta mediante `Location`.
+- La publicación usa un mensaje Discovery 1.0 cerrado de máximo 64 KiB y ruta aislada `/jobs/<jobId>.json`, con `.part`, fsync, rename atómico, verificación byte a byte e idempotencia por contenido; solo entonces confirma `DISPATCHED`/versión `1` y su outbox.
+- SFTPGo expone `/jobs` al executor únicamente con `list|download`; no concede upload, overwrite, delete, rename ni acceso a buzones ajenos.
+- OpenAPI 5.1 conserva 5.0 byte a byte, frontend no reintenta la mutación ni anticipa estados y `automation-collector` valida el bundle offline sin polling o ejecución.
+- La verificación local cubre 138 pruebas Python ya integradas, 74 pruebas frontend más lint/typecheck/build, E2E Chromium multirepo real y 141 pruebas backend `clean verify` con 18 migraciones, SFTPGo real y contratos verdes.

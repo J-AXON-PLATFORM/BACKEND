@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.j-axon.invalid/discovery/1.0/job.schema.json",
+  "title": "J-AXON Discovery Job 1.0",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "messageType",
+    "jobId",
+    "executorId",
+    "scopeId",
+    "scopeCidr",
+    "profile",
+    "createdAt",
+    "expiresAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "messageType": { "const": "DISCOVERY_JOB" },
+    "jobId": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/uuidV4"
+    },
+    "executorId": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/uuidV4"
+    },
+    "scopeId": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/uuidV4"
+    },
+    "scopeCidr": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/canonicalCidr"
+    },
+    "profile": { "const": "BASIC" },
+    "createdAt": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/utcDateTime"
+    },
+    "expiresAt": {
+      "$ref": "https://schemas.j-axon.invalid/discovery/1.0/common.schema.json#/$defs/utcDateTime"
+    }
+  },
+  "additionalProperties": false
+}
