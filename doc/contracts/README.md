@@ -19,10 +19,12 @@ Esta carpeta es la fuente canónica de los contratos externos de J-AXON.
 - `openapi/4.4/openapi.yaml`: minor compatible que añade administración y consulta de ámbitos autorizados Discovery.
 - `openapi/4.5/openapi.yaml`: minor compatible que añade pre-registro, consulta y registro de public key de Discovery Executor.
 - `openapi/5.0/openapi.yaml`: major que añade activación y datos públicos del canal SFTP de Discovery Executor.
+- `openapi/5.1/openapi.yaml`: minor compatible que añade creación y consulta puntual de Discovery Jobs.
 - `openapi/manifest.tsv`: inventario declarativo fail-closed de integridad y compatibilidad OpenAPI.
 - `agent/1.0/`: contratos JSON Schema Draft 2020-12 para snapshot, Task y Result Agent.
+- `discovery/1.0/`: contrato JSON Schema Draft 2020-12 para Discovery Job.
 
-Los contratos usan versión `MAJOR.MINOR`, independiente de la versión del software. Un cambio incompatible requiere un nuevo major. Un minor nuevo debe aceptar las instancias válidas del minor anterior y coexistir con él durante la transición. OpenAPI 5.0 es el contrato actual; 1.0--4.5 permanecen históricos e inmutables.
+Los contratos usan versión `MAJOR.MINOR`, independiente de la versión del software. Un cambio incompatible requiere un nuevo major. Un minor nuevo debe aceptar las instancias válidas del minor anterior y coexistir con él durante la transición. OpenAPI 5.1 es el contrato actual; 1.0--5.0 permanecen históricos e inmutables.
 
 Los identificadores bajo `https://schemas.j-axon.invalid/` no son endpoints. Los validadores deben resolverlos únicamente contra recursos locales. `backend` conserva la fuente canónica; las copias en consumidores se sincronizan y verifican mediante el manifest SHA-256.
 
@@ -54,4 +56,8 @@ OpenAPI 4.4 permanece byte a byte inmutable. OpenAPI 4.5 añade únicamente pre-
 
 OpenAPI 4.5 permanece byte a byte inmutable. OpenAPI 5.0 es breaking porque amplía el schema cerrado de `DiscoveryExecutor` desde solo `PENDING`/versión `0` a `PENDING|ACTIVE`/versión `0|1`; añade únicamente `POST /discovery/executors/{executorId}/activate` y la respuesta pública `host|port|username|hostKey|hostKeyFingerprint`. No añade jobs, resultados, polling, escaneo, dispositivos o incorporación a Inventory.
 
+OpenAPI 5.0 permanece byte a byte inmutable. OpenAPI 5.1 añade únicamente `POST /discovery/jobs` y `GET /discovery/jobs/{jobId}` para `IT_OPERATOR`; no añade listado, polling, ejecución, resultados, dispositivos o incorporación a Inventory.
+
 Agent 1.0, incluidos `task.schema.json`, `result.schema.json`, manifest y copia vendorizada, permanece byte a byte inmutable. Backend empaqueta los cuatro schemas existentes para validación runtime.
+
+Discovery 1.0 define únicamente el mensaje `DISCOVERY_JOB` cerrado, con perfil `BASIC`, referencias UUIDv4, CIDR canónico y vigencia UTC exacta de una hora. Backend es la fuente canónica y `automation-collector` consume una copia vendorizada byte a byte para validación offline.

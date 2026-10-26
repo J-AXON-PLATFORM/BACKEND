@@ -1,0 +1,171 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "5.1"
+  description: >-
+    Minor compatible que conserva OpenAPI 5.0 y añade creación y consulta
+    puntual de Discovery Jobs BASIC por IT_OPERATOR.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Identity
+  - name: Assets
+  - name: Agents
+  - name: Support
+  - name: Discovery
+paths:
+  /auth/login: { $ref: "../5.0/openapi.yaml#/paths/~1auth~1login" }
+  /auth/me: { $ref: "../5.0/openapi.yaml#/paths/~1auth~1me" }
+  /auth/logout: { $ref: "../5.0/openapi.yaml#/paths/~1auth~1logout" }
+  /users: { $ref: "../5.0/openapi.yaml#/paths/~1users" }
+  /assets: { $ref: "../5.0/openapi.yaml#/paths/~1assets" }
+  /assets/{assetId}: { $ref: "../5.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D" }
+  /assets/{assetId}/technical-state: { $ref: "../5.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state" }
+  /assets/{assetId}/technical-state/events: { $ref: "../5.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events" }
+  /agents: { $ref: "../5.0/openapi.yaml#/paths/~1agents" }
+  /agents/{agentId}: { $ref: "../5.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D" }
+  /agents/{agentId}/ssh-key: { $ref: "../5.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key" }
+  /agents/{agentId}/activate: { $ref: "../5.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate" }
+  /agents/{agentId}/tasks: { $ref: "../5.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks" }
+  /agents/{agentId}/tasks/{taskId}: { $ref: "../5.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D" }
+  /tickets: { $ref: "../5.0/openapi.yaml#/paths/~1tickets" }
+  /tickets/technician-queue: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1technician-queue" }
+  /tickets/technician-queue/{ticketId}: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D" }
+  /tickets/technician-queue/{ticketId}/comments: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1comments" }
+  /tickets/technician-queue/{ticketId}/conversation: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1conversation" }
+  /tickets/technician-queue/{ticketId}/lifecycle: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1lifecycle" }
+  /tickets/{ticketId}: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D" }
+  /tickets/{ticketId}/comments: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1comments" }
+  /tickets/{ticketId}/claim: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1claim" }
+  /tickets/{ticketId}/priority: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1priority" }
+  /tickets/{ticketId}/status: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1status" }
+  /tickets/{ticketId}/resolve: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1resolve" }
+  /tickets/{ticketId}/close: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1close" }
+  /tickets/{ticketId}/reopen: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1reopen" }
+  /tickets/{ticketId}/lifecycle: { $ref: "../5.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1lifecycle" }
+  /discovery/scopes: { $ref: "../5.0/openapi.yaml#/paths/~1discovery~1scopes" }
+  /discovery/scopes/{scopeId}: { $ref: "../5.0/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D" }
+  /discovery/scopes/{scopeId}/status: { $ref: "../5.0/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D~1status" }
+  /discovery/executors: { $ref: "../5.0/openapi.yaml#/paths/~1discovery~1executors" }
+  /discovery/executors/{executorId}: { $ref: "../5.0/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D" }
+  /discovery/executors/{executorId}/ssh-key: { $ref: "../5.0/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1ssh-key" }
+  /discovery/executors/{executorId}/activate: { $ref: "../5.0/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1activate" }
+  /discovery/jobs:
+    post:
+      tags: [Discovery]
+      operationId: createDiscoveryJob
+      summary: Crea y despacha un Discovery Job BASIC
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiscoveryJobCreateRequest" }
+      responses:
+        "201":
+          description: Job persistido y publicado de forma segura
+          headers:
+            Location: { schema: { type: string, format: uri-reference } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryJob" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/PendingJobPublication" }
+  /discovery/jobs/{jobId}:
+    get:
+      tags: [Discovery]
+      operationId: getDiscoveryJob
+      summary: Consulta un Discovery Job por identificador
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Estado oficial del Discovery Job
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryJob" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+components:
+  securitySchemes:
+    SessionCookie: { $ref: "../5.0/openapi.yaml#/components/securitySchemes/SessionCookie" }
+  parameters:
+    CsrfToken: { $ref: "../5.0/openapi.yaml#/components/parameters/CsrfToken" }
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+  schemas:
+    DiscoveryJobCreateRequest:
+      type: object
+      required: [executorId, scopeId]
+      properties:
+        executorId:
+          type: string
+          format: uuid
+          pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        scopeId:
+          type: string
+          format: uuid
+          pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+      additionalProperties: false
+    DiscoveryJob:
+      type: object
+      required:
+        - jobId
+        - executorId
+        - scopeId
+        - profile
+        - status
+        - createdAt
+        - expiresAt
+        - dispatchedAt
+        - version
+      properties:
+        jobId: { type: string, format: uuid }
+        executorId: { type: string, format: uuid }
+        scopeId: { type: string, format: uuid }
+        profile: { const: BASIC }
+        status:
+          type: string
+          enum: [PENDING, DISPATCHED, RUNNING, SUCCEEDED, FAILED, EXPIRED, CANCELLED]
+        createdAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        dispatchedAt: { type: [string, "null"], format: date-time }
+        version: { type: integer, minimum: 0 }
+      additionalProperties: false
+  responses:
+    BadRequest: { $ref: "../5.0/openapi.yaml#/components/responses/BadRequest" }
+    AuthenticationRequired: { $ref: "../5.0/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../5.0/openapi.yaml#/components/responses/Forbidden" }
+    NotFound: { $ref: "../5.0/openapi.yaml#/components/responses/NotFound" }
+    Conflict: { $ref: "../5.0/openapi.yaml#/components/responses/Conflict" }
+    ValidationFailed: { $ref: "../5.0/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../5.0/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../5.0/openapi.yaml#/components/responses/ServiceUnavailable" }
+    PendingJobPublication:
+      description: Job persistido como PENDING; la publicación será reconciliada
+      headers:
+        Location:
+          required: true
+          schema: { type: string, format: uri-reference }
+      content:
+        application/problem+json:
+          schema: { $ref: "../1.0/openapi.yaml#/components/schemas/Problem" }
+security:
+  - SessionCookie: []

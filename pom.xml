@@ -147,6 +147,14 @@
                     <include>snapshot.schema.json</include>
                 </includes>
             </resource>
+            <resource>
+                <directory>doc/contracts/discovery/1.0</directory>
+                <targetPath>contracts/discovery/1.0</targetPath>
+                <includes>
+                    <include>common.schema.json</include>
+                    <include>job.schema.json</include>
+                </includes>
+            </resource>
         </resources>
         <plugins>
             <plugin>

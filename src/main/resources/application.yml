@@ -34,6 +34,10 @@ jaxon:
     public-host-key: ${JAXON_SFTP_PUBLIC_HOST_KEY:}
     connect-timeout: ${JAXON_SFTPGO_CONNECT_TIMEOUT:5s}
     request-timeout: ${JAXON_SFTPGO_REQUEST_TIMEOUT:10s}
+  discovery:
+    jobs:
+      publication-root: ${JAXON_DISCOVERY_JOB_PUBLICATION_ROOT:}
+      reconciliation-interval: ${JAXON_DISCOVERY_JOB_RECONCILIATION_INTERVAL:5m}
   collector:
     agent-operational-status:
       offline-threshold: ${JAXON_COLLECTOR_AGENT_OFFLINE_THRESHOLD:5m}

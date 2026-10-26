@@ -50,6 +50,7 @@
 - **Corte ejecutable OLA4-DIS-001a:** materializa únicamente el mantenimiento y consulta de `AuthorizedScope` `ACTIVE|DISABLED`: administración `SYSTEM_ADMIN`, lectura `IT_OPERATOR` limitada a activos, nombre único normalizado y CIDR canónico; no implementa executors, jobs, SFTP, escaneo, dispositivos o incorporación.
 - **Corte ejecutable OLA4-DIS-002a:** materializa únicamente pre-registro/listado/consulta `PENDING`, asociación inicial inmutable con uno o más scopes activos e identidad local Ed25519 separada; no implementa activación/revocación, cambio de asociaciones, SFTP, jobs, escaneo, dispositivos o incorporación.
 - **Corte ejecutable OLA4-DIS-003a:** materializa únicamente activación `PENDING -> ACTIVE` por `SYSTEM_ADMIN`, con public key registrada, al menos un scope asociado aún activo, cuenta SFTPGo Local/Test aislada y verificación puntual del canal; no implementa revocación/rotación, cambio de asociaciones, jobs/resultados, polling, escaneo, dispositivos o incorporación.
+- **Corte ejecutable OLA4-DIS-004a:** materializa únicamente creación y consulta puntual de `DiscoveryJob` `BASIC` por `IT_OPERATOR`, exclusión de un job no terminal por executor, TTL de una hora, publicación atómica en `/jobs` y reconciliación de pendientes; no implementa polling/pickup del executor, ejecución, resultados, escaneo, dispositivos o incorporación.
 
 ## MOD-03 -- Collector
 

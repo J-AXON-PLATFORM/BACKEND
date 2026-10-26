@@ -20,6 +20,7 @@ Definir dominios, ownership, almacenamiento, movimiento y ciclo de vida.
 - Discovery produce observaciones temporales; incorporar a Inventory es una operación explícita y no transfiere ownership de tablas.
 - En `OLA4-DIS-002a`, Discovery posee `discovery_executors`, la asociación N:M `discovery_executor_scopes` y su outbox; Identity posee `technical_identities`, public key, huella y outbox de identidad. No existen FK cross-schema ni acceso directo de Discovery a tablas Identity: el alta coordinada usa contrato público in-process y una única transacción PostgreSQL.
 - En `OLA4-DIS-003a`, Discovery añade sobre su agregado la transición `PENDING`/versión `0` a `ACTIVE`/versión `1`, username SFTP determinista y timestamp de activación, más el evento propio `DISCOVERY_EXECUTOR_ACTIVATED`. La clave se consulta mediante el contrato público Identity; SFTPGo se reconcilia antes de la transacción PostgreSQL, de forma idempotente y estricta, pero no forma una transacción atómica cross-system.
+- En `OLA4-DIS-004a`, Discovery posee `discovery_jobs` y sus eventos. La FK compuesta garantiza asociación executor/scope, un índice parcial impide más de un job no terminal por executor y los checks fijan perfil, estados, TTL y coherencia estado/versión/timestamps. La publicación filesystem ocurre después del alta transaccional; una segunda transacción confirma `DISPATCHED`, por lo que los `PENDING` se reconcilian por identidad estable sin escribir datos de otros módulos.
 
 ## Consistencia
 

@@ -211,7 +211,7 @@ class DiscoveryExecutorIntegrationTest {
     }
 
     @Test
-    void preservesAssociationsWhenAScopeIsDisabledAndDeniesOperators() throws Exception {
+    void preservesAssociationsAndAllowsOperatorReadOnlySelection() throws Exception {
         Session administrator = login();
         UUID scopeId = createScope(administrator, "Persistent", "10.10.0.0/16");
         UUID executorId = UUID.fromString(extract(
@@ -242,7 +242,7 @@ class DiscoveryExecutorIntegrationTest {
                 """);
         Session operator = login();
         assertThat(send("GET", "/api/v1/discovery/executors", operator, null, null).statusCode())
-                .isEqualTo(403);
+                .isEqualTo(200);
         assertThat(createExecutor(operator, "Denied", scopeId, UUID.randomUUID()).statusCode())
                 .isEqualTo(403);
         assertThat(send(
@@ -252,7 +252,7 @@ class DiscoveryExecutorIntegrationTest {
                                 null,
                                 null)
                         .statusCode())
-                .isEqualTo(403);
+                .isEqualTo(200);
         assertThat(registerKey(operator, executorId, PUBLIC_KEY, UUID.randomUUID()).statusCode())
                 .isEqualTo(403);
         assertThat(activate(operator, executorId, UUID.randomUUID()).statusCode()).isEqualTo(403);

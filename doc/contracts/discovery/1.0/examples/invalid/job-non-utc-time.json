@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "messageType": "DISCOVERY_JOB",
+  "jobId": "ea9dc882-57ce-4b40-a552-969760f33196",
+  "executorId": "33482f80-4772-45a5-adc9-72c96bf46185",
+  "scopeId": "b37ab92c-7b53-4ef5-aa75-74aec4215c70",
+  "scopeCidr": "192.0.2.0/24",
+  "profile": "BASIC",
+  "createdAt": "2026-10-25T14:00:00+02:00",
+  "expiresAt": "2026-10-25T15:00:00+02:00"
+}

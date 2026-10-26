@@ -33,6 +33,8 @@ En `OLA4-DIS-002a`, las cuatro operaciones `/discovery/executors` requieren `SYS
 
 En `OLA4-DIS-003a`, `POST /discovery/executors/{executorId}/activate` requiere `SYSTEM_ADMIN`; cualquier otro rol queda denegado por backend. Antes de aprovisionar se exige public key registrada mediante Identity y al menos un scope asociado todavía `ACTIVE`. La visibilidad o ausencia del botón frontend no sustituye estas comprobaciones ni `default deny`.
 
+En `OLA4-DIS-004a`, `POST|GET /discovery/jobs` requiere `IT_OPERATOR`; `SYSTEM_ADMIN` sin ese rol y el resto de roles permanecen denegados. El backend comprueba executor `ACTIVE`, scope `ACTIVE`, asociación y exclusión no terminal en cada alta. El executor solo obtiene `list|download` sobre su `/jobs` aislado; no recibe permisos de escritura ni acceso a otros buzones.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

@@ -66,6 +66,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA4-DIS-003a` completa solo la activación administrativa del paso 1 y el canal técnico previo al paso 3: valida public key y al menos un scope asociado activo, reconcilia una cuenta SFTPGo aislada, confirma `ACTIVE` y verifica una conexión puntual con host key fijada. Se detiene antes de buzones `/jobs|/results`, publicación, polling, ejecución, resultados o escaneo.
 
+`OLA4-DIS-004a` ejecuta únicamente la creación y despacho inicial de los pasos 2--3: `IT_OPERATOR` elige una combinación executor/scope activa, backend crea `PENDING` con TTL de una hora, publica atómicamente el mensaje en `/jobs` y confirma `DISPATCHED`. Se detiene antes de pickup, `RUNNING`, ejecución, resultados, dispositivos o incorporación.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.

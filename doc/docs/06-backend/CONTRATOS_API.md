@@ -86,9 +86,15 @@ El estado y versión de negocio permanecen `PENDING` y `0`; el contrato expone �
 
 La respuesta cerrada contiene solo `host`, `port`, username determinista, host key Ed25519 y huella SHA-256. `409` cubre precondición o drift y `503` indisponibilidad/problema seguro de aprovisionamiento. OpenAPI 5.0 es major porque 4.5 cerraba el estado a `PENDING` y la versión a `0`; OpenAPI 1.0--4.5 permanece byte a byte inmutable.
 
+## Contrato compatible 5.1 -- OLA4-DIS-004a
+
+`doc/contracts/openapi/5.1/openapi.yaml` conserva todas las operaciones 5.0 y añade únicamente `POST /discovery/jobs` y `GET /discovery/jobs/{jobId}`, exclusivos de `IT_OPERATOR`. El alta recibe solo `executorId|scopeId`, exige executor y asociación activos, aplica exclusión de job no terminal y devuelve el estado oficial cerrado con TTL exacto de una hora.
+
+La respuesta contiene exclusivamente `jobId`, `executorId`, `scopeId`, `profile`, `status`, `createdAt`, `expiresAt`, `dispatchedAt` y `version`. `409` cubre combinación inválida o job no terminal y `503` conserva el job `PENDING` cuando falla la publicación, devolviendo en `Location` la URI exacta para consultarlo. OpenAPI 5.0 permanece byte a byte inmutable; REST sigue siendo fuente oficial y el canal del ejecutable continúa siendo SFTP/JSON Schema Discovery 1.0.
+
 ## Pendiente de diseño detallado
 
-Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 5.0. SFTP/JSON Schema permanece separado para los ejecutables; SSE solo notifica al navegador y no crea un canal HTTP Agent/Discovery.
+Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 5.1. SFTP/JSON Schema permanece separado para los ejecutables; SSE solo notifica al navegador y no crea un canal HTTP Agent/Discovery.
 
 ---
 > **Clasificación:** CONDICIONAL  

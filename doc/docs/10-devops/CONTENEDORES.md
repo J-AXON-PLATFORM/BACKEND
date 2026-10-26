@@ -42,6 +42,8 @@ El 2026-10-09 se verificó la baseline Compose Local:
 
 `OLA4-DIS-003a` tampoco cambia imagen ni Compose. Añade solo un perfil SFTPGo Local/Test separado del Agent: username/home `discovery-executor-{executorId}`, una public key Ed25519, autenticación sin contraseña, permiso mínimo `list` sobre `/`, sin virtual folders, grupos, cuotas funcionales, `/jobs` o `/results`. La reconciliación acepta perfil exacto o creación; cualquier drift se rechaza. Production permanece fuera de alcance.
 
+`OLA4-DIS-004a` amplía esa fixture Local/Test sin añadir servicios: volumen dedicado `/srv/sftpgo/discovery-jobs`, escritura backend y virtual folder `/jobs` read-only para cada executor, mapeado a un directorio determinista aislado. El perfil permite solo `list|download`; conserva sin contraseña, grupos o cuotas funcionales y sigue sin `/results`. Compose smoke verifica montaje y permisos; Production permanece fuera de alcance.
+
 Compose no incluye frontend, n8n, observabilidad, reverse proxy, TLS o topología Production.
 
 ## Propósito
