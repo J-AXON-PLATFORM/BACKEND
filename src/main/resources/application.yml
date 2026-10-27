@@ -38,6 +38,10 @@ jaxon:
     jobs:
       publication-root: ${JAXON_DISCOVERY_JOB_PUBLICATION_ROOT:}
       reconciliation-interval: ${JAXON_DISCOVERY_JOB_RECONCILIATION_INTERVAL:5m}
+    results:
+      mailbox-root: ${JAXON_DISCOVERY_RESULT_MAILBOX_ROOT:}
+      stability-age: ${JAXON_DISCOVERY_RESULT_STABILITY_AGE:2s}
+      batch-size: ${JAXON_DISCOVERY_RESULT_BATCH_SIZE:100}
   collector:
     agent-operational-status:
       offline-threshold: ${JAXON_COLLECTOR_AGENT_OFFLINE_THRESHOLD:5m}

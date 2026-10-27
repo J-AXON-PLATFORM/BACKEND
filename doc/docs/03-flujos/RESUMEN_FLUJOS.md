@@ -70,6 +70,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA4-DIS-005a` ejecuta únicamente la parte técnica local de los pasos 4--5: una invocación manual recoge como máximo un Job, persiste estado local antes de probes, ejecuta `BASIC` dentro del CIDR y entrega un Discovery Result 1.0 atómico en `/results`. La entrega no ingresa al backend ni confirma `RUNNING|SUCCEEDED|FAILED`: el estado oficial permanece `DISPATCHED`. Se detiene antes de polling, daemon, dispositivos, revisión o incorporación.
 
+`OLA4-DIS-006a` completa únicamente la ingestión de los pasos 5--6: backend valida el archivo final y su correlación, registra ledger, termina atómicamente el Job como `SUCCEEDED|FAILED` y, solo para éxito, persiste una observación `UNREVIEWED` por dispositivo. Frontend reconsulta Job y lista la página REST. Se detiene antes de `IGNORED`, incorporación, deduplicación entre Jobs, Inventory, SSE, polling o daemon.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.

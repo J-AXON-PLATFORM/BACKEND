@@ -1,11 +1,17 @@
 # Historial de cambios
 
+## Ingestión de Discovery Result y dispositivos observados -- OLA4-DIS-006a, 2026-10-26
+
+`AC-JAXON-084` autoriza en backend/frontend ingestión de Discovery Result 1.0 con claim interno atómico, ledger idempotente, conflicto por reemplazo, transición directa `DISPATCHED -> SUCCEEDED|FAILED`, dispositivos `UNREVIEWED`, outbox terminal, OpenAPI 5.2 y consulta/UI paginada. La implementación backend local añade migración, reconciliador seguro, persistencia Discovery y pruebas reales; integración remota y frontend continúan pendientes. `automation-collector` y Production permanecen intactos.
+
+Se sincroniza además el cierre real de `OLA4-DIS-005a`: `AUTOMATION-COLLECTOR#12`, squash `3dac71ca95442e4f50e77dd2a172b561ca49face`, runs `40398561696`/`40398712766`; y `BACKEND#48`, squash `1e01e7774e1446ae2aadab0320654d82186f7a90`, runs `40398914418`/`40402246330`, todos verdes.
+
 > **Instancia J-AXON | CKP-JAXON-005 | 2026-09-29**
 > Cumplimentación parcial: solo decisiones aprobadas. Las guías genéricas se conservan; sus ejemplos no son requisitos aprobados del producto.
 
 ## Pickup puntual, ejecución BASIC y Discovery Result -- OLA4-DIS-005a, 2026-10-26
 
-`AC-JAXON-083` autoriza en `automation-collector` y `backend` el comando foreground `jaxon-discovery-executor run-once`, estado local durable `RECEIVED|RUNNING|RESULT_READY|DELIVERED`, perfil `BASIC` limitado a 4096 direcciones, concurrencia 32, timeout 2 s y TCP `22,53,80,443,445,3389`. Discovery Result 1.0 es cerrado, máximo 5 MiB/4096 observaciones y se entrega como `/results/<jobId>.json.part -> <jobId>.json` sin delete ni overwrite. Backend amplía solo contrato y SFTPGo Local/Test; no ingiere el resultado ni cambia el Job oficial desde `DISPATCHED`. OpenAPI 5.1 y Discovery Job 1.0 permanecen byte a byte inmutables. La integración remota continúa pendiente; `PRODUCTION_READY = NO`.
+`AC-JAXON-083` autoriza en `automation-collector` y `backend` el comando foreground `jaxon-discovery-executor run-once`, estado local durable `RECEIVED|RUNNING|RESULT_READY|DELIVERED`, perfil `BASIC` limitado a 4096 direcciones, concurrencia 32, timeout 2 s y TCP `22,53,80,443,445,3389`. Discovery Result 1.0 es cerrado, máximo 5 MiB/4096 observaciones y se entrega como `/results/<jobId>.json.part -> <jobId>.json` sin delete ni overwrite. Backend amplía solo contrato y SFTPGo Local/Test; no ingiere el resultado ni cambia el Job oficial desde `DISPATCHED`. OpenAPI 5.1 y Discovery Job 1.0 permanecen byte a byte inmutables. El cierre remoto se verificó mediante `AUTOMATION-COLLECTOR#12` y `BACKEND#48`; `PRODUCTION_READY = NO`.
 
 ---
 

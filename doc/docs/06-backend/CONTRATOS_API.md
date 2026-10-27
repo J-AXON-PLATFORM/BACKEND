@@ -90,6 +90,8 @@ La respuesta cerrada contiene solo `host`, `port`, username determinista, host k
 
 `doc/contracts/openapi/5.1/openapi.yaml` conserva todas las operaciones 5.0 y añade únicamente `POST /discovery/jobs` y `GET /discovery/jobs/{jobId}`, exclusivos de `IT_OPERATOR`. El alta recibe solo `executorId|scopeId`, exige executor y asociación activos, aplica exclusión de job no terminal y devuelve el estado oficial cerrado con TTL exacto de una hora.
 
+`doc/contracts/openapi/5.2/openapi.yaml` conserva todas las operaciones 5.1, amplía de forma compatible `DiscoveryJob` con `startedAt|completedAt|failureCode|summary` nullable y añade únicamente `GET /discovery-jobs/{jobId}/discovered-devices`, exclusivo de `IT_OPERATOR`. La colección usa página cero, tamaño 20, máximo 50 y orden estable de observación; no permite mutaciones, revisión o incorporación.
+
 La respuesta contiene exclusivamente `jobId`, `executorId`, `scopeId`, `profile`, `status`, `createdAt`, `expiresAt`, `dispatchedAt` y `version`. `409` cubre combinación inválida o job no terminal y `503` conserva el job `PENDING` cuando falla la publicación, devolviendo en `Location` la URI exacta para consultarlo. OpenAPI 5.0 permanece byte a byte inmutable; REST sigue siendo fuente oficial y el canal del ejecutable continúa siendo SFTP/JSON Schema Discovery 1.0.
 
 ## Pendiente de diseño detallado

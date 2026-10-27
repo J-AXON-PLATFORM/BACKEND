@@ -103,7 +103,8 @@ class DatabaseBootstrapIntegrationTest {
                         "20261024000000",
                         "20261025000000",
                         "20261026000000",
-                        "20261027000000");
+                        "20261027000000",
+                        "20261028000000");
         assertThat(modularSchemas).containsExactlyInAnyOrderElementsOf(EXPECTED_SCHEMAS);
         assertThat(modularTables).containsExactly(
                 "collector.accepted_snapshots",
@@ -113,10 +114,13 @@ class DatabaseBootstrapIntegrationTest {
                 "collector.outbox_events",
                 "collector.snapshot_ingestions",
                 "collector.task_result_ingestions",
+                "discovery.accepted_discovery_results",
                 "discovery.authorized_scopes",
+                "discovery.discovered_devices",
                 "discovery.discovery_executor_scopes",
                 "discovery.discovery_executors",
                 "discovery.discovery_jobs",
+                "discovery.discovery_result_ingestions",
                 "discovery.outbox_events",
                 "identity.human_sessions",
                 "identity.human_user_roles",

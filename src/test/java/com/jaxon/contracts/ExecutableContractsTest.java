@@ -55,6 +55,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V45_ROOT = Path.of("doc/contracts/openapi/4.5");
     private static final Path OPENAPI_V50_ROOT = Path.of("doc/contracts/openapi/5.0");
     private static final Path OPENAPI_V51_ROOT = Path.of("doc/contracts/openapi/5.1");
+    private static final Path OPENAPI_V52_ROOT = Path.of("doc/contracts/openapi/5.2");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DISCOVERY_SCHEMA_BASE =
             "https://schemas.j-axon.invalid/discovery/1.0/";
@@ -188,6 +189,32 @@ class ExecutableContractsTest {
                 .contains("/discovery/jobs", "/discovery/jobs/{jobId}");
         assertThat(operations(api).stream().map(Operation::getOperationId))
                 .containsExactlyInAnyOrder("createDiscoveryJob", "getDiscoveryJob")
+                .doesNotHaveDuplicates();
+    }
+
+    @Test
+    void openApi52Preserves51AndAddsOnlyDiscoveredDeviceListing() {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V52_ROOT.resolve("openapi.yaml").toString(), null, options);
+        OpenAPI api = result.getOpenAPI();
+        OpenAPI previous = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V51_ROOT.resolve("openapi.yaml").toString(), null, options)
+                .getOpenAPI();
+
+        assertThat(result.getMessages()).isEmpty();
+        assertThat(api).isNotNull();
+        assertThat(previous).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("5.2");
+        assertThat(api.getPaths().keySet())
+                .containsAll(previous.getPaths().keySet())
+                .hasSize(previous.getPaths().size() + 1)
+                .contains("/discovery-jobs/{jobId}/discovered-devices");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .containsExactlyInAnyOrder(
+                        "createDiscoveryJob", "getDiscoveryJob", "listDiscoveredDevices")
                 .doesNotHaveDuplicates();
     }
 

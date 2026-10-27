@@ -36,6 +36,8 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
             "/jobs", List.of("list", "download"),
             "/results", List.of("list", "download", "upload", "rename_files"));
     private static final long MAX_RESULT_BYTES = 5L * 1024 * 1024;
+    private static final long MAX_RESULT_FOLDER_BYTES = 15L * 1024 * 1024;
+    private static final int MAX_RESULT_FOLDER_FILES = 3;
     private static final List<String> DENIED_PROTOCOLS = List.of("FTP", "DAV", "HTTP");
     private static final List<String> DENIED_LOGIN_METHODS = List.of(
             "password",
@@ -109,6 +111,10 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
                 ensureFolder(token, username, FolderType.JOBS, true);
                 ensureFolder(token, username, FolderType.RESULTS, false);
                 updateUser(token, username, publicKey);
+            } else if (matchesPreviousResultsProfile(current, username, publicKey)) {
+                ensureFolder(token, username, FolderType.JOBS, true);
+                ensureFolder(token, username, FolderType.RESULTS, true);
+                updateUser(token, username, publicKey);
             } else if (!matches(current, username, publicKey)) {
                 throw new DiscoverySftpProvisioningConflictException();
             }
@@ -128,6 +134,38 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
             throw new DiscoverySftpProvisioningUnavailableException();
         } catch (Exception exception) {
             throw new DiscoverySftpProvisioningUnavailableException();
+        }
+    }
+
+    @Override
+    public boolean startResultQuotaScan(UUID executorId) {
+        if (!enabled) return false;
+        String username = "discovery-executor-" + executorId;
+        String name = folderName(username, FolderType.RESULTS);
+        try {
+            String token = token();
+            JsonNode current = getUser(token, username);
+            if (current == null
+                    || current.path("public_keys").size() != 1
+                    || !current.path("public_keys").get(0).isTextual()) {
+                return false;
+            }
+            String publicKey = current.path("public_keys").get(0).asText();
+            if (matchesPreviousResultsProfile(current, username, publicKey)) {
+                ensureFolder(token, username, FolderType.JOBS, true);
+                ensureFolder(token, username, FolderType.RESULTS, true);
+                updateUser(token, username, publicKey);
+                current = getUser(token, username);
+            }
+            if (current == null || !matches(current, username, publicKey)) return false;
+            String encoded = URLEncoder.encode(name, StandardCharsets.UTF_8);
+            HttpRequest request = authorized(token, apiUrl + "/quotas/folders/" + encoded + "/scan")
+                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .build();
+            int status = send(request).statusCode();
+            return status == 202;
+        } catch (Exception ignored) {
+            return false;
         }
     }
 
@@ -218,8 +256,8 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
                 "name", folderName(username, type),
                 "mapped_path", mappedPath(username, type),
                 "virtual_path", type.virtualPath,
-                "quota_size", 0,
-                "quota_files", 0,
+                "quota_size", type == FolderType.RESULTS ? MAX_RESULT_FOLDER_BYTES : 0,
+                "quota_files", type == FolderType.RESULTS ? MAX_RESULT_FOLDER_FILES : 0,
                 "filesystem", Map.of("provider", 0));
     }
 
@@ -317,6 +355,26 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
                 && hasDefaultFilesystem(user.path("filesystem"));
     }
 
+    private static boolean matchesPreviousResultsProfile(
+            JsonNode user, String username, String publicKey) {
+        return user.isObject()
+                && textEquals(user, "username", username)
+                && integerEquals(user, "status", 1)
+                && optionalBooleanEquals(user, "has_password", false)
+                && sameValues(user.path("public_keys"), List.of(publicKey))
+                && textEquals(user, "home_dir", homeDirectory(username))
+                && permissions(user.path("permissions")).equals(PERMISSIONS)
+                && sameValues(user.path("filters").path("denied_protocols"), DENIED_PROTOCOLS)
+                && sameValues(
+                        user.path("filters").path("denied_login_methods"), DENIED_LOGIN_METHODS)
+                && hasFilters(user.path("filters"), MAX_RESULT_BYTES)
+                && matchesPreviousVirtualFolders(user.path("virtual_folders"), username)
+                && emptyArray(user, "groups")
+                && hasDefaultAccountLimits(user)
+                && hasDefaultIdentityMetadata(user)
+                && hasDefaultFilesystem(user.path("filesystem"));
+    }
+
     private static boolean matchesVirtualFolders(JsonNode folders, String username) {
         if (!folders.isArray() || folders.size() != 2) {
             return false;
@@ -328,6 +386,16 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
                 && matchesVirtualFolder(byPath.get("/results"), username, FolderType.RESULTS);
     }
 
+    private static boolean matchesPreviousVirtualFolders(JsonNode folders, String username) {
+        if (!folders.isArray() || folders.size() != 2) return false;
+        Map<String, JsonNode> byPath = new HashMap<>();
+        folders.forEach(folder -> byPath.put(folder.path("virtual_path").asText(), folder));
+        return byPath.size() == 2
+                && matchesVirtualFolder(byPath.get("/jobs"), username, FolderType.JOBS)
+                && matchesVirtualFolderIdentity(
+                        byPath.get("/results"), username, FolderType.RESULTS, 0, 0);
+    }
+
     private static boolean matchesSingleVirtualFolder(
             JsonNode folders, String username, FolderType type) {
         return folders.isArray()
@@ -336,12 +404,22 @@ class DiscoverySftpGoClient implements DiscoverySftpGoProvisioner {
     }
 
     private static boolean matchesVirtualFolder(JsonNode folder, String username, FolderType type) {
+        return matchesVirtualFolderIdentity(
+                folder,
+                username,
+                type,
+                type == FolderType.RESULTS ? MAX_RESULT_FOLDER_BYTES : 0,
+                type == FolderType.RESULTS ? MAX_RESULT_FOLDER_FILES : 0);
+    }
+
+    private static boolean matchesVirtualFolderIdentity(
+            JsonNode folder, String username, FolderType type, long quotaSize, int quotaFiles) {
         return folder != null
                 && folderName(username, type).equals(folder.path("name").asText())
                 && mappedPath(username, type).equals(folder.path("mapped_path").asText())
                 && type.virtualPath.equals(folder.path("virtual_path").asText())
-                && folder.path("quota_size").asLong() == 0
-                && folder.path("quota_files").asLong() == 0
+                && folder.path("quota_size").asLong() == quotaSize
+                && folder.path("quota_files").asLong() == quotaFiles
                 && hasDefaultFilesystem(folder.path("filesystem"));
     }
 

@@ -16,7 +16,9 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -73,12 +75,13 @@ class DiscoverySftpGoClientIntegrationTest {
             assertThat(first.hostKey()).isEqualTo(hostPublicKey);
             assertThat(first.hostKeyFingerprint()).isEqualTo(fingerprint(hostPublicKey));
             assertTargetProfile(apiUrl, objectMapper, first.username());
+            assertThat(client.startResultQuotaScan(firstId)).isTrue();
 
             UUID originalId = UUID.randomUUID();
             Ed25519PrivateKeyParameters originalPrivate =
                     new Ed25519PrivateKeyParameters(new SecureRandom());
             createHistoricalUser(
-                    apiUrl, objectMapper, originalId, publicKey(originalPrivate), false);
+                    apiUrl, objectMapper, originalId, publicKey(originalPrivate), false, false);
             client.ensureProvisioned(originalId, publicKey(originalPrivate));
             assertTargetProfile(apiUrl, objectMapper, "discovery-executor-" + originalId);
 
@@ -86,9 +89,25 @@ class DiscoverySftpGoClientIntegrationTest {
             Ed25519PrivateKeyParameters jobsOnlyPrivate =
                     new Ed25519PrivateKeyParameters(new SecureRandom());
             createHistoricalUser(
-                    apiUrl, objectMapper, jobsOnlyId, publicKey(jobsOnlyPrivate), true);
+                    apiUrl, objectMapper, jobsOnlyId, publicKey(jobsOnlyPrivate), true, false);
             client.ensureProvisioned(jobsOnlyId, publicKey(jobsOnlyPrivate));
             assertTargetProfile(apiUrl, objectMapper, "discovery-executor-" + jobsOnlyId);
+
+            UUID previousId = UUID.randomUUID();
+            Ed25519PrivateKeyParameters previousPrivate =
+                    new Ed25519PrivateKeyParameters(new SecureRandom());
+            createHistoricalUser(
+                    apiUrl, objectMapper, previousId, publicKey(previousPrivate), true, true);
+            client.ensureProvisioned(previousId, publicKey(previousPrivate));
+            assertTargetProfile(apiUrl, objectMapper, "discovery-executor-" + previousId);
+
+            UUID scanUpgradeId = UUID.randomUUID();
+            Ed25519PrivateKeyParameters scanUpgradePrivate =
+                    new Ed25519PrivateKeyParameters(new SecureRandom());
+            createHistoricalUser(
+                    apiUrl, objectMapper, scanUpgradeId, publicKey(scanUpgradePrivate), true, true);
+            assertThat(client.startResultQuotaScan(scanUpgradeId)).isTrue();
+            assertTargetProfile(apiUrl, objectMapper, "discovery-executor-" + scanUpgradeId);
 
             verifyAuthenticationAndIsolation(
                     client, sftpGo, apiUrl, objectMapper, hostPublicKey, first, firstPrivate);
@@ -281,6 +300,12 @@ class DiscoverySftpGoClientIntegrationTest {
                 .extracting(node -> node.path("virtual_path").asText())
                 .containsExactlyInAnyOrder("/jobs", "/results");
         assertThat(user.path("virtual_folders"))
+                .filteredOn(node -> node.path("virtual_path").asText().equals("/results"))
+                .allSatisfy(node -> {
+                    assertThat(node.path("quota_size").asLong()).isEqualTo(15L * 1024 * 1024);
+                    assertThat(node.path("quota_files").asLong()).isEqualTo(3);
+                });
+        assertThat(user.path("virtual_folders"))
                 .extracting(node -> node.path("mapped_path").asText())
                 .containsExactlyInAnyOrder(
                         "/srv/sftpgo/discovery-jobs/" + username + "-jobs",
@@ -297,10 +322,11 @@ class DiscoverySftpGoClientIntegrationTest {
             ObjectMapper objectMapper,
             UUID executorId,
             String publicKey,
-            boolean jobsProfile)
+            boolean jobsProfile,
+            boolean resultsProfile)
             throws Exception {
         String username = "discovery-executor-" + executorId;
-        List<Map<String, Object>> folders = List.of();
+        List<Map<String, Object>> folders = new ArrayList<>();
         Map<String, List<String>> permissions = Map.of("/", List.of("list"));
         if (jobsProfile) {
             String folderName = username + "-jobs";
@@ -315,7 +341,7 @@ class DiscoverySftpGoClientIntegrationTest {
                             .build(),
                     HttpResponse.BodyHandlers.ofString());
             assertThat(folderResponse.statusCode()).isEqualTo(201);
-            folders = List.of(Map.of(
+            folders.add(Map.of(
                     "name", folderName,
                     "mapped_path", mappedPath,
                     "virtual_path", "/jobs",
@@ -325,18 +351,45 @@ class DiscoverySftpGoClientIntegrationTest {
             permissions = Map.of(
                     "/", List.of("list"), "/jobs", List.of("list", "download"));
         }
+        if (resultsProfile) {
+            String folderName = username + "-results";
+            String mappedPath = "/srv/sftpgo/discovery-results/" + folderName;
+            HttpResponse<String> folderResponse = HttpClient.newHttpClient().send(
+                    authorizedRequest(apiUrl, objectMapper, "/folders")
+                            .header("Content-Type", "application/json")
+                            .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(Map.of(
+                                    "name", folderName,
+                                    "mapped_path", mappedPath,
+                                    "filesystem", Map.of("provider", 0)))))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertThat(folderResponse.statusCode()).isEqualTo(201);
+            folders.add(Map.of(
+                    "name", folderName,
+                    "mapped_path", mappedPath,
+                    "virtual_path", "/results",
+                    "quota_size", 0,
+                    "quota_files", 0,
+                    "filesystem", Map.of("provider", 0)));
+            permissions = Map.of(
+                    "/", List.of("list"),
+                    "/jobs", List.of("list", "download"),
+                    "/results", List.of("list", "download", "upload", "rename_files"));
+        }
+        Map<String, Object> filters = new HashMap<>();
+        filters.put("denied_protocols", List.of("FTP", "DAV", "HTTP"));
+        filters.put("denied_login_methods", List.of(
+                "password", "password-over-SSH", "keyboard-interactive",
+                "publickey+password", "publickey+keyboard-interactive",
+                "TLSCertificate", "TLSCertificate+password"));
+        if (resultsProfile) filters.put("max_upload_file_size", 5L * 1024 * 1024);
         Map<String, Object> body = Map.of(
                 "status", 1,
                 "username", username,
                 "public_keys", List.of(publicKey),
                 "home_dir", "/srv/sftpgo/data/" + username,
                 "permissions", permissions,
-                "filters", Map.of(
-                        "denied_protocols", List.of("FTP", "DAV", "HTTP"),
-                        "denied_login_methods", List.of(
-                                "password", "password-over-SSH", "keyboard-interactive",
-                                "publickey+password", "publickey+keyboard-interactive",
-                                "TLSCertificate", "TLSCertificate+password")),
+                "filters", filters,
                 "virtual_folders", folders,
                 "filesystem", Map.of("provider", 0));
         HttpResponse<String> response = HttpClient.newHttpClient().send(

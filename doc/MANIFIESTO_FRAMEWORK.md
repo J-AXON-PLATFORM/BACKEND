@@ -42,7 +42,7 @@ Se conserva el framework 1.0.0. CKP-JAXON-005 consolida decisiones de la instanc
 
 ## Inventario
 
-Total de archivos: **276**
+Total de archivos: **296**
 
 - `.github/ISSUE_TEMPLATE/bug.yml`
 - `.github/ISSUE_TEMPLATE/config.yml`
@@ -84,6 +84,24 @@ Total de archivos: **276**
 - `contracts/agent/1.0/manifest.json`
 - `contracts/agent/1.0/result.schema.json`
 - `contracts/agent/1.0/snapshot.schema.json`
+- `contracts/discovery/1.0/common.schema.json`
+- `contracts/discovery/1.0/examples/invalid/job-extra-property.json`
+- `contracts/discovery/1.0/examples/invalid/job-invalid-expiry.json`
+- `contracts/discovery/1.0/examples/invalid/job-invalid-uuid.json`
+- `contracts/discovery/1.0/examples/invalid/job-non-utc-time.json`
+- `contracts/discovery/1.0/examples/invalid/job-noncanonical-cidr.json`
+- `contracts/discovery/1.0/examples/invalid/job-unknown-version.json`
+- `contracts/discovery/1.0/examples/invalid/job-wrong-message-type.json`
+- `contracts/discovery/1.0/examples/invalid/result-extra-property.json`
+- `contracts/discovery/1.0/examples/invalid/result-failed-with-observation.json`
+- `contracts/discovery/1.0/examples/invalid/result-success-with-failure.json`
+- `contracts/discovery/1.0/examples/valid/job-basic.json`
+- `contracts/discovery/1.0/examples/valid/result-basic-failed.json`
+- `contracts/discovery/1.0/examples/valid/result-basic-scope-too-large.json`
+- `contracts/discovery/1.0/examples/valid/result-basic-succeeded.json`
+- `contracts/discovery/1.0/job.schema.json`
+- `contracts/discovery/1.0/manifest.json`
+- `contracts/discovery/1.0/result.schema.json`
 - `contracts/agent/1.0/task.schema.json`
 - `contracts/openapi/1.0/examples/asset-create-request.json`
 - `contracts/openapi/1.0/examples/asset-response.json`
@@ -116,6 +134,9 @@ Total de archivos: **276**
 - `contracts/openapi/4.4/openapi.yaml`
 - `contracts/openapi/4.5/openapi.yaml`
 - `contracts/openapi/5.0/openapi.yaml`
+- `contracts/openapi/5.1/openapi.yaml`
+- `contracts/openapi/5.2/openapi.yaml`
+- `contracts/openapi/manifest.tsv`
 - `docs/00-gobierno/CONSTITUCION_IA.md`
 - `docs/00-gobierno/CRITERIOS_CALIDAD.md`
 - `docs/00-gobierno/DEFINICION_PREPARADO.md`

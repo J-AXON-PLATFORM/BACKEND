@@ -86,6 +86,9 @@ services:
       JAXON_COLLECTOR_TASK_RECONCILIATION_INTERVAL: ${JAXON_COLLECTOR_TASK_RECONCILIATION_INTERVAL:-5m}
       JAXON_DISCOVERY_JOB_PUBLICATION_ROOT: /srv/sftpgo/discovery-jobs
       JAXON_DISCOVERY_JOB_RECONCILIATION_INTERVAL: ${JAXON_DISCOVERY_JOB_RECONCILIATION_INTERVAL:-5m}
+      JAXON_DISCOVERY_RESULT_MAILBOX_ROOT: /srv/sftpgo/discovery-results
+      JAXON_DISCOVERY_RESULT_STABILITY_AGE: ${JAXON_DISCOVERY_RESULT_STABILITY_AGE:-2s}
+      JAXON_DISCOVERY_RESULT_BATCH_SIZE: ${JAXON_DISCOVERY_RESULT_BATCH_SIZE:-100}
       JAXON_COLLECTOR_RESULT_BATCH_SIZE: ${JAXON_COLLECTOR_RESULT_BATCH_SIZE:-100}
       JAXON_COLLECTOR_RESULT_STABILITY_AGE: ${JAXON_COLLECTOR_RESULT_STABILITY_AGE:-2s}
       JAXON_COLLECTOR_RECONCILIATION_INTERVAL: ${JAXON_COLLECTOR_RECONCILIATION_INTERVAL:-5m}
@@ -123,6 +126,7 @@ services:
       - jaxon-sftpgo-mailboxes:/srv/sftpgo/data:ro
       - jaxon-sftpgo-tasks:/srv/sftpgo/tasks:rw
       - jaxon-sftpgo-discovery-jobs:/srv/sftpgo/discovery-jobs:rw
+      - jaxon-sftpgo-discovery-results:/srv/sftpgo/discovery-results:rw
     tmpfs:
       - /tmp:rw,nosuid,nodev,noexec,size=64m
     networks:

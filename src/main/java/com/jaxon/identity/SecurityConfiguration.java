@@ -77,6 +77,8 @@ class SecurityConfiguration {
                         .hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/discovery/jobs/*")
                         .hasRole("IT_OPERATOR")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/discovery-jobs/*/discovered-devices")
+                        .hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/assets").hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/assets/*/technical-state")
                         .hasRole("IT_OPERATOR")
