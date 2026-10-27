@@ -5,4 +5,6 @@ import java.util.UUID;
 interface DiscoverySftpGoProvisioner {
 
     DiscoveryExecutorActivationResponse ensureProvisioned(UUID executorId, String publicKey);
+
+    boolean startResultQuotaScan(UUID executorId);
 }

@@ -13,6 +13,7 @@
 - Release/promoción: suite más completa según riesgo; pruebas costosas pueden tener ejecución periódica.
 - Cross-repo: validar combinaciones explícitas de backend/Agent/contratos.
 - Discovery `OLA4-DIS-005a`: contrato/manifest byte a byte, ledger/filesystem adversarial, reinicio sin reejecución, límites y correlación, probes reales solo en loopback, SFTPGo real con upgrades históricos/aislamiento/no-overwrite y suites completas de ambos repositorios.
+- Discovery `OLA4-DIS-006a`: PostgreSQL/Flyway limpio, filesystem adversarial y move atómico a claim interno, schema/semántica/correlación, idempotencia/conflicto, éxito/fallo y atomicidad, seguridad/paginación API, OpenAPI 5.2 compatible, Compose con escritura backend limitada al claim y E2E Chromium backend real; `automation-collector` se verifica byte a byte sin cambios.
 <!-- JAXON-CKP003:END -->
 
 ## Propósito

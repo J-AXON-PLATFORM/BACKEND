@@ -35,6 +35,8 @@ En `OLA4-DIS-003a`, `POST /discovery/executors/{executorId}/activate` requiere `
 
 En `OLA4-DIS-004a`, `POST|GET /discovery/jobs` requiere `IT_OPERATOR`; `SYSTEM_ADMIN` sin ese rol y el resto de roles permanecen denegados. El backend comprueba executor `ACTIVE`, scope `ACTIVE`, asociación y exclusión no terminal en cada alta. El executor solo obtiene `list|download` sobre su `/jobs` aislado; no recibe permisos de escritura ni acceso a otros buzones.
 
+En `OLA4-DIS-006a`, `GET /discovery-jobs/{jobId}/discovered-devices` requiere `IT_OPERATOR`; `SYSTEM_ADMIN` sin ese rol y los demás roles permanecen denegados. La reconciliación técnica no confía en la ruta SFTP: mueve primero el final a un claim atómico único bajo `.jaxon-claims`, fuera de los virtual folders, y revalida executor, Job, scope, perfil, CIDR y contenido antes de una transición atómica. Backend no altera los bytes reclamados ni expone rutas físicas, hashes o razones internas por API.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

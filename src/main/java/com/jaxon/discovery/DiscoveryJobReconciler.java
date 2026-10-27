@@ -7,10 +7,12 @@ import org.springframework.stereotype.Component;
 @Component
 class DiscoveryJobReconciler {
     private final DiscoveryJobService jobs;
+    private final DiscoveryResultReconciler results;
     private final AtomicBoolean running = new AtomicBoolean();
 
-    DiscoveryJobReconciler(DiscoveryJobService jobs) {
+    DiscoveryJobReconciler(DiscoveryJobService jobs, DiscoveryResultReconciler results) {
         this.jobs = jobs;
+        this.results = results;
     }
 
     @Scheduled(
@@ -19,6 +21,7 @@ class DiscoveryJobReconciler {
     void reconcile() {
         if (!running.compareAndSet(false, true)) return;
         try {
+            results.reconcile();
             jobs.reconcilePending();
         } finally {
             running.set(false);

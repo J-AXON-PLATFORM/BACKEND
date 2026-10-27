@@ -1,0 +1,241 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "5.2"
+  description: >-
+    Minor compatible que conserva OpenAPI 5.1 y añade el estado terminal de
+    Discovery Jobs y la consulta paginada de Discovered Devices por IT_OPERATOR.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Identity
+  - name: Assets
+  - name: Agents
+  - name: Support
+  - name: Discovery
+paths:
+  /auth/login: { $ref: "../5.1/openapi.yaml#/paths/~1auth~1login" }
+  /auth/me: { $ref: "../5.1/openapi.yaml#/paths/~1auth~1me" }
+  /auth/logout: { $ref: "../5.1/openapi.yaml#/paths/~1auth~1logout" }
+  /users: { $ref: "../5.1/openapi.yaml#/paths/~1users" }
+  /assets: { $ref: "../5.1/openapi.yaml#/paths/~1assets" }
+  /assets/{assetId}: { $ref: "../5.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D" }
+  /assets/{assetId}/technical-state: { $ref: "../5.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state" }
+  /assets/{assetId}/technical-state/events: { $ref: "../5.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events" }
+  /agents: { $ref: "../5.1/openapi.yaml#/paths/~1agents" }
+  /agents/{agentId}: { $ref: "../5.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D" }
+  /agents/{agentId}/ssh-key: { $ref: "../5.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key" }
+  /agents/{agentId}/activate: { $ref: "../5.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate" }
+  /agents/{agentId}/tasks: { $ref: "../5.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks" }
+  /agents/{agentId}/tasks/{taskId}: { $ref: "../5.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D" }
+  /tickets: { $ref: "../5.1/openapi.yaml#/paths/~1tickets" }
+  /tickets/technician-queue: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1technician-queue" }
+  /tickets/technician-queue/{ticketId}: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D" }
+  /tickets/technician-queue/{ticketId}/comments: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1comments" }
+  /tickets/technician-queue/{ticketId}/conversation: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1conversation" }
+  /tickets/technician-queue/{ticketId}/lifecycle: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1lifecycle" }
+  /tickets/{ticketId}: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D" }
+  /tickets/{ticketId}/comments: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1comments" }
+  /tickets/{ticketId}/claim: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1claim" }
+  /tickets/{ticketId}/priority: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1priority" }
+  /tickets/{ticketId}/status: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1status" }
+  /tickets/{ticketId}/resolve: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1resolve" }
+  /tickets/{ticketId}/close: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1close" }
+  /tickets/{ticketId}/reopen: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1reopen" }
+  /tickets/{ticketId}/lifecycle: { $ref: "../5.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1lifecycle" }
+  /discovery/scopes: { $ref: "../5.1/openapi.yaml#/paths/~1discovery~1scopes" }
+  /discovery/scopes/{scopeId}: { $ref: "../5.1/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D" }
+  /discovery/scopes/{scopeId}/status: { $ref: "../5.1/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D~1status" }
+  /discovery/executors: { $ref: "../5.1/openapi.yaml#/paths/~1discovery~1executors" }
+  /discovery/executors/{executorId}: { $ref: "../5.1/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D" }
+  /discovery/executors/{executorId}/ssh-key: { $ref: "../5.1/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1ssh-key" }
+  /discovery/executors/{executorId}/activate: { $ref: "../5.1/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1activate" }
+  /discovery/jobs:
+    post:
+      tags: [Discovery]
+      operationId: createDiscoveryJob
+      summary: Crea y despacha un Discovery Job BASIC
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiscoveryJobCreateRequest" }
+      responses:
+        "201":
+          description: Job persistido y publicado de forma segura
+          headers:
+            Location: { schema: { type: string, format: uri-reference } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryJob" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/PendingJobPublication" }
+  /discovery/jobs/{jobId}:
+    get:
+      tags: [Discovery]
+      operationId: getDiscoveryJob
+      summary: Consulta un Discovery Job por identificador
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Estado oficial del Discovery Job
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryJob" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /discovery-jobs/{jobId}/discovered-devices:
+    get:
+      tags: [Discovery]
+      operationId: listDiscoveredDevices
+      summary: Lista los dispositivos observados por un Discovery Job
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: size
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      responses:
+        "200":
+          description: Página estable de Discovered Devices
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveredDevicePage" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+components:
+  securitySchemes:
+    SessionCookie: { $ref: "../5.1/openapi.yaml#/components/securitySchemes/SessionCookie" }
+  parameters:
+    CsrfToken: { $ref: "../5.1/openapi.yaml#/components/parameters/CsrfToken" }
+    JobId: { $ref: "../5.1/openapi.yaml#/components/parameters/JobId" }
+  schemas:
+    DiscoveryJobCreateRequest: { $ref: "../5.1/openapi.yaml#/components/schemas/DiscoveryJobCreateRequest" }
+    DiscoveryJob:
+      type: object
+      required:
+        - jobId
+        - executorId
+        - scopeId
+        - profile
+        - status
+        - createdAt
+        - expiresAt
+        - dispatchedAt
+        - startedAt
+        - completedAt
+        - failureCode
+        - summary
+        - version
+      properties:
+        jobId: { type: string, format: uuid }
+        executorId: { type: string, format: uuid }
+        scopeId: { type: string, format: uuid }
+        profile: { const: BASIC }
+        status:
+          type: string
+          enum: [PENDING, DISPATCHED, RUNNING, SUCCEEDED, FAILED, EXPIRED, CANCELLED]
+        createdAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        dispatchedAt: { type: [string, "null"], format: date-time }
+        startedAt: { type: [string, "null"], format: date-time }
+        completedAt: { type: [string, "null"], format: date-time }
+        failureCode:
+          type: [string, "null"]
+          enum: [null, JOB_EXPIRED, SCOPE_TOO_LARGE, UNSUPPORTED_PLATFORM, EXECUTION_INTERRUPTED, EXECUTION_ERROR]
+        summary:
+          oneOf:
+            - { $ref: "#/components/schemas/DiscoveryResultSummary" }
+            - { type: "null" }
+        version: { type: integer, minimum: 0 }
+      additionalProperties: false
+    DiscoveryResultSummary:
+      type: object
+      required: [targetsConsidered, targetsScanned, observationsFound]
+      properties:
+        targetsConsidered:
+          type: integer
+          minimum: 0
+          maximum: 340282366920938463463374607431768211456
+        targetsScanned: { type: integer, minimum: 0, maximum: 4096 }
+        observationsFound: { type: integer, minimum: 0, maximum: 4096 }
+      additionalProperties: false
+    DiscoveredDevice:
+      type: object
+      required:
+        - discoveredDeviceId
+        - jobId
+        - status
+        - ipAddress
+        - macAddress
+        - hostname
+        - evidence
+        - openTcpPorts
+        - observedAt
+      properties:
+        discoveredDeviceId: { type: string, format: uuid }
+        jobId: { type: string, format: uuid }
+        status: { const: UNREVIEWED }
+        ipAddress:
+          type: string
+          anyOf: [{ format: ipv4 }, { format: ipv6 }]
+        macAddress:
+          type: [string, "null"]
+          pattern: "^[0-9a-f]{2}(?::[0-9a-f]{2}){5}$"
+        hostname: { type: [string, "null"], minLength: 1, maxLength: 253 }
+        evidence:
+          type: array
+          minItems: 1
+          maxItems: 3
+          uniqueItems: true
+          items: { enum: [ARP, ICMP, TCP] }
+        openTcpPorts:
+          type: array
+          maxItems: 6
+          uniqueItems: true
+          items: { enum: [22, 53, 80, 443, 445, 3389] }
+        observedAt: { type: string, format: date-time }
+      additionalProperties: false
+    DiscoveredDevicePage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
+        items:
+          type: array
+          maxItems: 50
+          items: { $ref: "#/components/schemas/DiscoveredDevice" }
+        page: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 50 }
+        totalElements: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+      additionalProperties: false
+  responses:
+    BadRequest: { $ref: "../5.1/openapi.yaml#/components/responses/BadRequest" }
+    AuthenticationRequired: { $ref: "../5.1/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../5.1/openapi.yaml#/components/responses/Forbidden" }
+    NotFound: { $ref: "../5.1/openapi.yaml#/components/responses/NotFound" }
+    Conflict: { $ref: "../5.1/openapi.yaml#/components/responses/Conflict" }
+    ValidationFailed: { $ref: "../5.1/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../5.1/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../5.1/openapi.yaml#/components/responses/ServiceUnavailable" }
+    PendingJobPublication: { $ref: "../5.1/openapi.yaml#/components/responses/PendingJobPublication" }
+security:
+  - SessionCookie: []

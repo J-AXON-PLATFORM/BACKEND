@@ -88,3 +88,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - `/results` permite solo listar, descargar, upload sin overwrite y rename; la entrega exclusiva `.part -> .json` relee bytes finales, acepta un final idéntico y rechaza cualquier conflicto sin delete.
 - Backend acepta upgrades exactos desde los perfiles históricos sin `/jobs` y `/jobs`-only, pero rechaza drift; no monta ni ingiere el buzón Result y mantiene el Job oficial `DISPATCHED`.
 - Job 1.0, OpenAPI 5.1, dependencias, lockfiles, migraciones, workflows y frontend permanecen inmutables.
+
+## OLA4-DIS-006a
+
+- Backend monta `/results` con escritura limitada a mover el final a un claim interno atómico y eliminarlo tras registrar el desenlace, ignora `.part` y procesa únicamente finales UUIDv4 regulares, estables, sin symlinks, UTF-8 estrictos y de hasta 5 MiB dentro del buzón aislado del executor.
+- Antes de mutar valida Discovery Result 1.0, filename, Job `DISPATCHED`, executor/scope/perfil, tiempos no futuros, contadores exactos, IP dentro del CIDR y puertos permitidos.
+- Ledger SHA-256/tamaño hace idempotente una repetición idéntica; cualquier reemplazo posterior de bytes se registra como conflicto y un inválido no cambia Job ni dispositivos.
+- La aceptación transaccional realiza solo `DISPATCHED -> SUCCEEDED|FAILED`, versión `2`, evidencia terminal y un `DISCOVERY_JOB_COMPLETED`; `SUCCEEDED` crea dispositivos `UNREVIEWED` y `FAILED` ninguno.
+- OpenAPI 5.2 conserva 5.1 byte a byte y añade solo `GET /discovery-jobs/{jobId}/discovered-devices`, con autorización `IT_OPERATOR`, paginación 0/20/máximo 50 y orden estable.
+- Frontend valida estrictamente Job/dispositivos, segmenta caché por usuario y usa REST como fuente oficial, sin SSE ni mutaciones de revisión/incorporación. `automation-collector`, dependencias y workflows permanecen intactos.

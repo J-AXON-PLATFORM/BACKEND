@@ -4,6 +4,9 @@ import com.jaxon.identity.DiscoveryExecutorIdentityRegistry;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.math.BigDecimal;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -14,6 +17,7 @@ import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
@@ -27,6 +31,8 @@ class DiscoveryJobService {
     private final DiscoverySftpGoProvisioner provisioner;
     private final DiscoveryJobContract contract;
     private final DiscoveryJobFilePublisher publisher;
+    private final DiscoveryResultFileReader resultFiles;
+    private final Path resultMailboxRoot;
 
     DiscoveryJobService(
             JdbcTemplate jdbc,
@@ -35,7 +41,9 @@ class DiscoveryJobService {
             DiscoveryExecutorIdentityRegistry identities,
             DiscoverySftpGoProvisioner provisioner,
             DiscoveryJobContract contract,
-            DiscoveryJobFilePublisher publisher) {
+            DiscoveryJobFilePublisher publisher,
+            DiscoveryResultFileReader resultFiles,
+            @Value("${jaxon.discovery.results.mailbox-root:}") String resultMailboxRoot) {
         this.jdbc = jdbc;
         this.clock = clock;
         this.transactions = transactions;
@@ -43,6 +51,9 @@ class DiscoveryJobService {
         this.provisioner = provisioner;
         this.contract = contract;
         this.publisher = publisher;
+        this.resultFiles = resultFiles;
+        this.resultMailboxRoot = resultMailboxRoot.isBlank()
+                ? null : Path.of(resultMailboxRoot).toAbsolutePath().normalize();
     }
 
     DiscoveryJobResponse create(
@@ -260,12 +271,25 @@ class DiscoveryJobService {
             Instant now = now();
             if ((job.status() != DiscoveryJobStatus.PENDING
                             && job.status() != DiscoveryJobStatus.DISPATCHED)
+                    || protectedResultExists(job)
                     || now.isBefore(job.expiresAt())) {
                 return;
             }
             publisher.removeExpired(job.executorId(), job.jobId());
             markExpired(job, now);
         });
+    }
+
+    private boolean protectedResultExists(JobRow job) {
+        if (job.status() != DiscoveryJobStatus.DISPATCHED || resultMailboxRoot == null) return false;
+        try {
+            String mailbox = "discovery-executor-" + job.executorId() + "-results";
+            return resultFiles.hasFinal(resultMailboxRoot, mailbox, job.jobId() + ".json")
+                    || resultFiles.hasClaim(resultMailboxRoot, mailbox, job.jobId().toString());
+        } catch (IOException exception) {
+            // Fail closed while result storage cannot be verified.
+            return true;
+        }
     }
 
     private void markExpired(JobRow job, Instant now) {
@@ -304,6 +328,11 @@ class DiscoveryJobService {
 
     private static JobRow row(ResultSet resultSet, int ignored) throws SQLException {
         Timestamp dispatched = resultSet.getTimestamp("dispatched_at");
+        Timestamp started = resultSet.getTimestamp("started_at");
+        Timestamp completed = resultSet.getTimestamp("completed_at");
+        BigDecimal targetsConsidered = resultSet.getBigDecimal("targets_considered");
+        Integer targetsScanned = (Integer) resultSet.getObject("targets_scanned");
+        Integer observationsFound = (Integer) resultSet.getObject("observations_found");
         return new JobRow(
                 resultSet.getObject("job_id", UUID.class),
                 resultSet.getObject("executor_id", UUID.class),
@@ -316,12 +345,18 @@ class DiscoveryJobService {
                 resultSet.getTimestamp("created_at").toInstant(),
                 resultSet.getTimestamp("expires_at").toInstant(),
                 dispatched == null ? null : dispatched.toInstant(),
+                started == null ? null : started.toInstant(),
+                completed == null ? null : completed.toInstant(),
+                resultSet.getString("failure_code"),
+                targetsConsidered == null ? null : new ResultSummary(
+                        targetsConsidered.toBigIntegerExact(), targetsScanned, observationsFound),
                 resultSet.getLong("version"));
     }
 
     private static DiscoveryJobResponse response(JobRow row) {
         return new DiscoveryJobResponse(row.jobId(), row.executorId(), row.scopeId(), row.profile(),
-                row.status(), row.createdAt(), row.expiresAt(), row.dispatchedAt(), row.version());
+                row.status(), row.createdAt(), row.expiresAt(), row.dispatchedAt(), row.startedAt(),
+                row.completedAt(), row.failureCode(), row.summary(), row.version());
     }
 
     private Instant now() {
@@ -344,10 +379,12 @@ class DiscoveryJobService {
     private record ScopeState(String cidr, String status) {}
     private record JobRow(UUID jobId, UUID executorId, UUID scopeId, String scopeCidr,
             String profile, DiscoveryJobStatus status, UUID actorId, UUID correlationId,
-            Instant createdAt, Instant expiresAt, Instant dispatchedAt, long version) {
+            Instant createdAt, Instant expiresAt, Instant dispatchedAt, Instant startedAt,
+            Instant completedAt, String failureCode, ResultSummary summary, long version) {
         JobRow withScopeCidr(String value) {
             return new JobRow(jobId, executorId, scopeId, value, profile, status, actorId,
-                    correlationId, createdAt, expiresAt, dispatchedAt, version);
+                    correlationId, createdAt, expiresAt, dispatchedAt, startedAt, completedAt,
+                    failureCode, summary, version);
         }
     }
 }

@@ -46,6 +46,8 @@ El 2026-10-09 se verificó la baseline Compose Local:
 
 `OLA4-DIS-005a` añade solo el volumen SFTPGo Local/Test `/srv/sftpgo/discovery-results` y el virtual folder aislado `/results`. El executor puede `list|download|upload|rename_files`, sin delete, overwrite o creación de directorios, con máximo 5 MiB; backend no monta ese volumen porque la ingestión no está autorizada. Los perfiles históricos exactos se actualizan y cualquier drift se rechaza. Production permanece fuera de alcance.
 
+`OLA4-DIS-006a` monta ese mismo volumen en backend como `/srv/sftpgo/discovery-results:rw` exclusivamente para mover cada final a un claim atómico único bajo `.jaxon-claims`, ruta no expuesta por ningún virtual folder SFTP, y eliminarlo solo tras persistir su desenlace. Los claims pendientes sobreviven a reinicios; backend no altera sus bytes y conserva el aislamiento por executor. La selección de candidatos procede de Jobs conocidos en PostgreSQL y no enumera temporales o nombres ajenos; `EXPIRED` solo permite registrar y retirar un final tardío sin mutar el Job ni crear dispositivos. Cada `/results` tiene cuota de 15 MiB y tres archivos, y backend solicita un scan idempotente de cuota SFTPGo después del move y antes del procesamiento, también durante recovery; no se añade purga general. Production permanece fuera de alcance.
+
 Compose no incluye frontend, n8n, observabilidad, reverse proxy, TLS o topología Production.
 
 ## Propósito

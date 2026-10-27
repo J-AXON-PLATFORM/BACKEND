@@ -197,8 +197,8 @@ readonly APP_DISCOVERY_JOB_MOUNT="$(docker inspect --format '{{range .Mounts}}{{
 [[ "${APP_DISCOVERY_JOB_MOUNT}" == "${DISCOVERY_JOB_VOLUME_NAME}:true" ]] || \
   fail "backend Discovery Job volume is not the isolated writable project volume"
 readonly APP_DISCOVERY_RESULT_MOUNT="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/srv/sftpgo/discovery-results"}}{{.Name}}:{{.RW}}{{end}}{{end}}' "${APP_CONTAINER}")"
-[[ -z "${APP_DISCOVERY_RESULT_MOUNT}" ]] || \
-  fail "backend must not mount the unimplemented Discovery Result ingestion volume"
+[[ "${APP_DISCOVERY_RESULT_MOUNT}" == "${DISCOVERY_RESULT_VOLUME_NAME}:true" ]] || \
+  fail "backend Discovery Result volume is not the isolated writable claim volume"
 readonly SFTPGO_DISCOVERY_RESULT_MOUNT="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/srv/sftpgo/discovery-results"}}{{.Name}}:{{.RW}}{{end}}{{end}}' "${SFTPGO_CONTAINER}")"
 [[ "${SFTPGO_DISCOVERY_RESULT_MOUNT}" == "${DISCOVERY_RESULT_VOLUME_NAME}:true" ]] || \
   fail "SFTPGo Discovery Result volume is not the isolated writable project volume"
@@ -212,6 +212,8 @@ docker exec "${APP_CONTAINER}" sh -c '[ -r /srv/sftpgo/tasks ] && [ -w /srv/sftp
   fail "backend task publication root is not safely writable"
 docker exec "${APP_CONTAINER}" sh -c '[ -r /srv/sftpgo/discovery-jobs ] && [ -w /srv/sftpgo/discovery-jobs ]' || \
   fail "backend Discovery Job publication root is not safely writable"
+docker exec "${APP_CONTAINER}" sh -c '[ -r /srv/sftpgo/discovery-results ] && [ -w /srv/sftpgo/discovery-results ]' || \
+  fail "backend Discovery Result root is not safely readable and writable for claims"
 
 readonly APP_BINDING="$("${COMPOSE[@]}" --profile application port backend 8080)"
 [[ "${APP_BINDING}" =~ ^127\.0\.0\.1:[0-9]+$ ]] || \

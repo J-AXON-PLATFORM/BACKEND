@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA4-DIS-005a`: ejecución y Result Discovery en implementación controlada, 2026-10-26
-> **Estado documental:** baseline v1 `DESIGN_READY`; `OLA4-DIS-004a` cerrado y pickup puntual/Result en implementación; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA4-DIS-006a`: ingestión y dispositivos Discovery en implementación controlada, 2026-10-26
+> **Estado documental:** baseline v1 `DESIGN_READY`; `OLA4-DIS-005a` cerrado e ingestión/resultados observados en implementación; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-10-26.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal y Discovery hasta creación, consulta y despacho de Jobs están integrados y verificados. `OLA4-DIS-005a` implementa de forma acotada pickup `run-once`, ejecución `BASIC`, Discovery Result 1.0 y entrega `/results`; ingestión backend, polling periódico, daemon, dispositivos, incorporación a Inventory y Production quedan fuera del corte.
+- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal y Discovery hasta ejecución y entrega de Result están integrados y verificados. `OLA4-DIS-006a` implementa de forma acotada ingestión backend, estado terminal, dispositivos observados y consulta/UI; polling periódico, daemon, revisión/incorporación, Inventory y Production quedan fuera del corte.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con `OLA4-DIS-004a` integrado mediante `AUTOMATION-COLLECTOR#11`, `FRONTEND#24` y `BACKEND#47`. `OLA4-DIS-005a` es el incremento activo bajo `AC-JAXON-083`: autoriza exclusivamente pickup manual `run-once`, ejecución `BASIC`, estado local durable, Discovery Result 1.0 y entrega atómica `/results` en `automation-collector`/`backend`. No autoriza ingestión backend, lifecycle oficial posterior a `DISPATCHED`, polling periódico, retries automáticos, daemon, dispositivos, incorporación a Inventory ni Production. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con `OLA4-DIS-005a` integrado mediante `AUTOMATION-COLLECTOR#12` y `BACKEND#48`. `OLA4-DIS-006a` es el incremento activo bajo `AC-JAXON-084`: autoriza exclusivamente ingestión de Result mediante claim interno atómico, transición terminal, dispositivos `UNREVIEWED`, OpenAPI 5.2 y consulta/UI en `backend`/`frontend`. No autoriza polling periódico, retries automáticos, daemon, revisión/incorporación, Inventory ni Production. `PRODUCTION_READY = NO`.
