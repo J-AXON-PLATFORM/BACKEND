@@ -37,6 +37,8 @@ En `OLA4-DIS-004a`, `POST|GET /discovery/jobs` requiere `IT_OPERATOR`; `SYSTEM_A
 
 En `OLA4-DIS-006a`, `GET /discovery-jobs/{jobId}/discovered-devices` requiere `IT_OPERATOR`; `SYSTEM_ADMIN` sin ese rol y los demás roles permanecen denegados. La reconciliación técnica no confía en la ruta SFTP: mueve primero el final a un claim atómico único bajo `.jaxon-claims`, fuera de los virtual folders, y revalida executor, Job, scope, perfil, CIDR y contenido antes de una transición atómica. Backend no altera los bytes reclamados ni expone rutas físicas, hashes o razones internas por API.
 
+En `OLA4-DIS-007a`, `POST /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/ignore` requiere `IT_OPERATOR`, sesión y CSRF. Backend comprueba Job y dispositivo conjuntamente bajo bloqueo y oculta con `404` uniforme inexistencia, UUID inválido o pertenencia incorrecta; frontend solo presenta la acción y no sustituye `default deny`. El actor revisor permanece interno y no se serializa.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

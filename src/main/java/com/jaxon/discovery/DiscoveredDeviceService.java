@@ -3,6 +3,10 @@ package com.jaxon.discovery;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -15,9 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 class DiscoveredDeviceService {
     private final JdbcTemplate jdbc;
+    private final Clock clock;
 
-    DiscoveredDeviceService(JdbcTemplate jdbc) {
+    DiscoveredDeviceService(JdbcTemplate jdbc, Clock clock) {
         this.jdbc = jdbc;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
@@ -41,11 +47,79 @@ class DiscoveredDeviceService {
         return Optional.of(new DiscoveredDevicePage(items, page, size, total, totalPages));
     }
 
+    @Transactional
+    DiscoveredDeviceResponse ignore(
+            UUID jobId,
+            UUID discoveredDeviceId,
+            long expectedVersion,
+            UUID actorId,
+            UUID correlationId) {
+        DiscoveredDeviceResponse current = jdbc.query(
+                        """
+                        SELECT * FROM discovery.discovered_devices
+                        WHERE job_id = ? AND discovered_device_id = ?
+                        FOR UPDATE
+                        """,
+                        DiscoveredDeviceService::response,
+                        jobId,
+                        discoveredDeviceId)
+                .stream()
+                .findFirst()
+                .orElseThrow(DiscoveredDeviceNotFoundException::new);
+        if (current.version() != expectedVersion) {
+            throw new DiscoveredDeviceMutationConflictException();
+        }
+        if (current.status().equals("IGNORED")) {
+            return current;
+        }
+
+        Instant now = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
+        long newVersion = current.version() + 1;
+        jdbc.update(
+                """
+                UPDATE discovery.discovered_devices
+                SET status = 'IGNORED', version = ?, reviewed_at = ?, reviewed_by_user_id = ?
+                WHERE job_id = ? AND discovered_device_id = ?
+                """,
+                newVersion,
+                Timestamp.from(now),
+                actorId,
+                jobId,
+                discoveredDeviceId);
+        jdbc.update(
+                """
+                INSERT INTO discovery.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, 'DISCOVERED_DEVICE_IGNORED', '1.0', ?, 'DISCOVERY',
+                        'HUMAN_USER', ?, 'DISCOVERED_DEVICE', ?, ?, 'SUCCESS', ?,
+                        jsonb_build_object('previousStatus', 'UNREVIEWED', 'newStatus', 'IGNORED'), ?)
+                """,
+                UUID.randomUUID(),
+                Timestamp.from(now),
+                actorId,
+                discoveredDeviceId,
+                newVersion,
+                correlationId,
+                Timestamp.from(now));
+        return jdbc.query(
+                        "SELECT * FROM discovery.discovered_devices WHERE discovered_device_id = ?",
+                        DiscoveredDeviceService::response,
+                        discoveredDeviceId)
+                .stream()
+                .findFirst()
+                .orElseThrow();
+    }
+
     private static DiscoveredDeviceResponse response(ResultSet resultSet, int ignored) throws SQLException {
         return new DiscoveredDeviceResponse(
                 resultSet.getObject("discovered_device_id", UUID.class),
                 resultSet.getObject("job_id", UUID.class),
                 resultSet.getString("status"),
+                resultSet.getLong("version"),
+                resultSet.getTimestamp("reviewed_at") == null
+                        ? null : resultSet.getTimestamp("reviewed_at").toInstant(),
                 resultSet.getString("ip_address"),
                 resultSet.getString("mac_address"),
                 resultSet.getString("hostname"),
@@ -62,3 +136,7 @@ class DiscoveredDeviceService {
         return Arrays.asList((Integer[]) array.getArray());
     }
 }
+
+final class DiscoveredDeviceNotFoundException extends RuntimeException {}
+
+final class DiscoveredDeviceMutationConflictException extends RuntimeException {}

@@ -46,7 +46,7 @@ Si la respuesta es no, no cargarlo.
 
 ## Instancia J-AXON -- ruta inmediata CKP-JAXON-005
 
-Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..084 aprobados; OLA 3 está integrada y verificada hasta `OLA3-SUP-006a`; `OLA4-DIS-005a` está cerrado y `OLA4-DIS-006a` es el corte activo en `backend` y `frontend`; `PRODUCTION_READY = NO`.
+Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..085 aprobados; OLA 3 está integrada y verificada hasta `OLA3-SUP-006a`; `OLA4-DIS-006a` está cerrado y `OLA4-DIS-007a` es el corte activo en `backend` y `frontend`; `PRODUCTION_READY = NO`.
 
 Estado remoto histórico verificado el 2026-10-07: la organización oficial nueva `J-AXON-PLATFORM` contiene los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos canónicos `backend`, `frontend` y `automation-collector`; `backend` fue inicializado y publicado mediante `TEC-GIT-001C`.
 
@@ -56,7 +56,7 @@ Estado frontend verificado el 2026-10-08: `FRONTEND` fue publicado con `main` y 
 
 Estado Python verificado el 2026-10-08: `AUTOMATION-COLLECTOR` fue publicado con `main` y `develop`; contiene una fundación Python 3.14.8/uv 0.12.24 con Agent y Discovery Executor separados, sin SFTP o discovery funcional. `Python CI` fue integrado en `develop` mediante el Pull Request `#1` y squash `a040c5fba34fae22903088b82191e8355deaab26`; los runs de PR `37852626079` y post-merge `37852683236` quedaron verdes, incluida la auditoría sin vulnerabilidades conocidas. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues.
 
-Los bloques técnicos de OLA 0 fueron completados. Identity, Inventory, Agent/Collector autorizado, Support hasta lifecycle terminal y Discovery hasta ejecución/entrega de Result están integrados. El corte activo materializa solo ingestión backend, terminalización, dispositivos observados y consulta/UI; polling periódico, daemon, revisión e incorporación siguen fuera de alcance. Para este trabajo cargar obligatoriamente las cinco fuentes de continuidad y luego contratos Discovery/OpenAPI, seguridad filesystem/SFTP, datos, backend/frontend, contenedores y pruebas E2E:
+Los bloques técnicos de OLA 0 fueron completados. Identity, Inventory, Agent/Collector autorizado, Support hasta lifecycle terminal y Discovery hasta ingestión/consulta de dispositivos están integrados. El corte activo materializa solo revisión individual a `IGNORED`; incorporación, Inventory, polling periódico, daemon y SSE siguen fuera de alcance. Para este trabajo cargar obligatoriamente las cinco fuentes de continuidad y luego contratos Discovery/OpenAPI, datos, seguridad, backend/frontend y pruebas E2E:
 
 - `docs/12-agil/GESTION_BACKLOG.md`, `docs/12-agil/GUIAS_TAREAS.md` y `docs/12-agil/FLUJO_KANBAN.md`;
 - los documentos específicos de plataforma, arquitectura, contratos, datos, seguridad y pruebas capaces de delimitar el incremento;
@@ -64,6 +64,6 @@ Los bloques técnicos de OLA 0 fueron completados. Identity, Inventory, Agent/Co
 
 LUIS autorizó un flujo de continuación incremental: después de verificar cada tarea, el coordinador determina el siguiente incremento pequeño y prepara un alcance concreto. No interpretar ese flujo, `DESIGN_READY` ni `TEC-PLT-001a` como permiso ilimitado para implementar toda OLA 0. Crear o modificar repositorios, ramas, Issues, Projects, workflows, GitHub, código, despliegues o infraestructura Production fuera de un alcance concreto requiere autorización expresa de LUIS.
 
-Para cambios backend/frontend, los workflows clasifican `DOCS_ONLY|APPLICATION|PLATFORM_FULL` con fallback cerrado; el nivel completo conserva todos los gates históricos. `OLA4-DIS-006a` debe clasificar `PLATFORM_FULL` en backend por migración/Compose y `APPLICATION` en frontend salvo clasificación fail-closed más estricta. `automation-collector` no cambia. Los rulesets permanecen pendientes por la limitación del plan para repositorios privados; PR y checks verdes se aplican como disciplina operativa, no como bloqueo técnico de GitHub.
+Para cambios backend/frontend, los workflows clasifican `DOCS_ONLY|APPLICATION|PLATFORM_FULL` con fallback cerrado; el nivel completo conserva todos los gates históricos. `OLA4-DIS-007a` clasifica `APPLICATION` en ambos repositorios porque no modifica mecanismos de plataforma; una clasificación fail-closed más estricta también sería válida. `automation-collector` no cambia. Los rulesets permanecen pendientes por la limitación del plan para repositorios privados; PR y checks verdes se aplican como disciplina operativa, no como bloqueo técnico de GitHub.
 
 Para trabajo remoto, cualquier cambio adicional en los tres repositorios debe analizarse y delimitarse en una tarea independiente, solicitando antes autorización expresa de LUIS. Las autorizaciones consumidas no cubren backlog, nuevas CI, reglas de protección, releases ni despliegue.

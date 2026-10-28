@@ -92,11 +92,17 @@ La respuesta cerrada contiene solo `host`, `port`, username determinista, host k
 
 `doc/contracts/openapi/5.2/openapi.yaml` conserva todas las operaciones 5.1, amplía de forma compatible `DiscoveryJob` con `startedAt|completedAt|failureCode|summary` nullable y añade únicamente `GET /discovery-jobs/{jobId}/discovered-devices`, exclusivo de `IT_OPERATOR`. La colección usa página cero, tamaño 20, máximo 50 y orden estable de observación; no permite mutaciones, revisión o incorporación.
 
+## Contrato breaking 6.0 -- OLA4-DIS-007a
+
+`doc/contracts/openapi/6.0/openapi.yaml` conserva las operaciones de 5.2, amplía `DiscoveredDevice.status` a `UNREVIEWED|IGNORED`, añade `version|reviewedAt` y añade únicamente `POST /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/ignore`. La mutación requiere `IT_OPERATOR`, CSRF y body cerrado con `expectedVersion`; no expone `reviewedByUserId` y usa `409` para versión obsoleta.
+
+El salto major fue autorizado tras confirmar ejecutablemente que el `const: UNREVIEWED` de 5.2 convierte la ampliación de respuesta en breaking. OpenAPI 1.0--5.2 permanece byte a byte inmutable y `oasdiff` no se relaja.
+
 La respuesta contiene exclusivamente `jobId`, `executorId`, `scopeId`, `profile`, `status`, `createdAt`, `expiresAt`, `dispatchedAt` y `version`. `409` cubre combinación inválida o job no terminal y `503` conserva el job `PENDING` cuando falla la publicación, devolviendo en `Location` la URI exacta para consultarlo. OpenAPI 5.0 permanece byte a byte inmutable; REST sigue siendo fuente oficial y el canal del ejecutable continúa siendo SFTP/JSON Schema Discovery 1.0.
 
 ## Pendiente de diseño detallado
 
-Permanecen pendientes Swagger UI runtime, generación de cliente y contratos posteriores a 5.1. SFTP/JSON Schema permanece separado para los ejecutables; SSE solo notifica al navegador y no crea un canal HTTP Agent/Discovery.
+Permanecen pendientes Swagger UI runtime y generación de cliente. SFTP/JSON Schema permanece separado para los ejecutables; SSE solo notifica al navegador y no crea un canal HTTP Agent/Discovery.
 
 ---
 > **Clasificación:** CONDICIONAL  
