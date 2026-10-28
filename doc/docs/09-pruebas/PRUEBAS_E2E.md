@@ -18,6 +18,8 @@ Primera vertical: 1) login `IT_OPERATOR`; 2) crear activo; 3) pre-registrar/enro
 `OLA4-DIS-003a` amplía el journey Discovery: crea scope, pre-registra executor, inicializa Ed25519 localmente, registra solo la public key, activa, recibe cinco datos públicos de conexión, configura `sftp.json` y verifica una conexión real contra SFTPGo. Repite la activación para comprobar idempotencia y valida perfil aislado, estado/versión/timestamp y evento mínimo en PostgreSQL antes de deshabilitar el scope. No publica, recoge ni ejecuta jobs o resultados Discovery.
 
 `OLA4-DIS-004a` continúa el mismo journey antes de deshabilitar el scope: selecciona el executor y scope activos, crea un job `BASIC`, confirma `DISPATCHED`/versión `1`, reconsulta REST y verifica perfil `/jobs`, archivo final sin `.part`, payload Discovery 1.0 cerrado, TTL de una hora y ambos outboxes en PostgreSQL. No simula pickup, ejecución, resultado o escaneo.
+
+`OLA4-DIS-006a` prolonga el journey mediante entrega real del Result final, ingestión PostgreSQL y presentación de un dispositivo `UNREVIEWED`. `OLA4-DIS-007a` añade después confirmación UI de “Ignorar”, respuesta REST, refetch de la misma página, estado `IGNORED` y verificación PostgreSQL/outbox, demostrando además que Inventory no cambia.
 <!-- JAXON-CKP003:END -->
 
 

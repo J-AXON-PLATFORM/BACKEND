@@ -97,3 +97,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - La aceptación transaccional realiza solo `DISPATCHED -> SUCCEEDED|FAILED`, versión `2`, evidencia terminal y un `DISCOVERY_JOB_COMPLETED`; `SUCCEEDED` crea dispositivos `UNREVIEWED` y `FAILED` ninguno.
 - OpenAPI 5.2 conserva 5.1 byte a byte y añade solo `GET /discovery-jobs/{jobId}/discovered-devices`, con autorización `IT_OPERATOR`, paginación 0/20/máximo 50 y orden estable.
 - Frontend valida estrictamente Job/dispositivos, segmenta caché por usuario y usa REST como fuente oficial, sin SSE ni mutaciones de revisión/incorporación. `automation-collector`, dependencias y workflows permanecen intactos.
+
+## OLA4-DIS-007a
+
+- Solo `IT_OPERATOR` ignora un dispositivo individual perteneciente al Job indicado; recurso inexistente, UUID inválido o pertenencia incorrecta reciben el mismo `404`.
+- La transición efectiva `UNREVIEWED -> IGNORED` bloquea la fila, exige versión `0`, fija versión `1`, timestamp y actor interno, y confirma un único `DISCOVERED_DEVICE_IGNORED` mínimo en la misma transacción.
+- Repetir `IGNORED` con versión vigente es no-op sin timestamp, versión o evento nuevos; versión obsoleta devuelve `409`, incluso si el estado solicitado ya coincide.
+- Dos solicitudes concurrentes con versión `0` producen exactamente un éxito, un `409` y un evento; un fallo del outbox revierte estado y revisión.
+- OpenAPI 6.0 conserva 5.2 byte a byte, expone `UNREVIEWED|IGNORED`, `version|reviewedAt` y nunca `reviewedByUserId`; el salto major conserva el gate estricto ante la ampliación breaking del enum cerrado.
+- Frontend pide confirmación, no reintenta ni anticipa la mutación y reconsulta la página exacta tras éxito o `409`; no añade SSE ni incorporación.

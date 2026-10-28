@@ -1,8 +1,16 @@
 # Historial de cambios
 
+## Revisión individual de Discovered Device -- OLA4-DIS-007a, 2026-10-28
+
+`AC-JAXON-085` autoriza en backend/frontend únicamente `UNREVIEWED -> IGNORED` individual por `IT_OPERATOR`, con versión optimista, no-op vigente, revisión interna y `DISCOVERED_DEVICE_IGNORED` transaccional. La validación contractual detectó que ampliar el `const: UNREVIEWED` de OpenAPI 5.2 era breaking; LUIS autorizó OpenAPI 6.0, preservando 1.0--5.2 y el gate `oasdiff` estricto. La implementación backend local incorpora una migración, endpoint, autorización y pruebas de concurrencia/rollback; integración remota y frontend continúan pendientes.
+
+Se sincroniza además el cierre real de `OLA4-DIS-006a`: `BACKEND#49`, squash `93e313172b013652a9b289bc3207716fa8d8aa1d`, runs `40541202943`/`40544632304`; y `FRONTEND#25`, squash `2aa8131aae52dcbe381eee115fa6b821ade8e2e5`, runs `40603866441`/`40604192213`, todos verdes `PLATFORM_FULL`.
+
+---
+
 ## Ingestión de Discovery Result y dispositivos observados -- OLA4-DIS-006a, 2026-10-26
 
-`AC-JAXON-084` autoriza en backend/frontend ingestión de Discovery Result 1.0 con claim interno atómico, ledger idempotente, conflicto por reemplazo, transición directa `DISPATCHED -> SUCCEEDED|FAILED`, dispositivos `UNREVIEWED`, outbox terminal, OpenAPI 5.2 y consulta/UI paginada. La implementación backend local añade migración, reconciliador seguro, persistencia Discovery y pruebas reales; integración remota y frontend continúan pendientes. `automation-collector` y Production permanecen intactos.
+`AC-JAXON-084` autorizó en backend/frontend ingestión de Discovery Result 1.0 con claim interno atómico, ledger idempotente, conflicto por reemplazo, transición directa `DISPATCHED -> SUCCEEDED|FAILED`, dispositivos `UNREVIEWED`, outbox terminal, OpenAPI 5.2 y consulta/UI paginada. Quedó integrado mediante `BACKEND#49` y `FRONTEND#25`, con CI de PR/post-merge verde. `automation-collector` y Production permanecieron intactos.
 
 Se sincroniza además el cierre real de `OLA4-DIS-005a`: `AUTOMATION-COLLECTOR#12`, squash `3dac71ca95442e4f50e77dd2a172b561ca49face`, runs `40398561696`/`40398712766`; y `BACKEND#48`, squash `1e01e7774e1446ae2aadab0320654d82186f7a90`, runs `40398914418`/`40402246330`, todos verdes.
 

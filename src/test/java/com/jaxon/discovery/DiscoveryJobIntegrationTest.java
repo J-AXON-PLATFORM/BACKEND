@@ -293,6 +293,8 @@ class DiscoveryJobIntegrationTest {
         assertThat(devices.statusCode()).isEqualTo(200);
         assertThat(devices.body())
                 .contains("\"status\":\"UNREVIEWED\"")
+                .contains("\"version\":0")
+                .contains("\"reviewedAt\":null")
                 .contains("\"ipAddress\":\"192.0.2.10\"")
                 .contains("\"openTcpPorts\":[22,443]")
                 .contains("\"totalElements\":1");
@@ -303,6 +305,151 @@ class DiscoveryJobIntegrationTest {
         jdbc.update("DELETE FROM identity.human_user_roles WHERE role_code = 'IT_OPERATOR'");
         assertThat(send("GET", "/api/v1/discovery-jobs/" + jobId
                 + "/discovered-devices", session, null, null).statusCode()).isEqualTo(403);
+    }
+
+    @Test
+    void ignoresADeviceOnceAndReturnsCurrentStateForTheNoOp() throws Exception {
+        Session session = login();
+        DeviceSeed device = seedSucceededDevice(session);
+        UUID correlationId = UUID.randomUUID();
+
+        HttpResponse<String> ignored = ignoreDevice(
+                session, device.jobId(), device.discoveredDeviceId(), 0, correlationId);
+
+        assertThat(ignored.statusCode()).isEqualTo(200);
+        assertThat(ignored.body())
+                .contains("\"status\":\"IGNORED\"")
+                .contains("\"version\":1")
+                .doesNotContain("reviewedByUserId");
+        String reviewedAt = extract(ignored.body(), "reviewedAt");
+        UUID actorId = jdbc.queryForObject(
+                "SELECT id FROM identity.human_users WHERE normalized_username = 'job.operator'",
+                UUID.class);
+        assertThat(jdbc.queryForMap(
+                        "SELECT status, version, reviewed_by_user_id FROM discovery.discovered_devices "
+                                + "WHERE discovered_device_id = ?",
+                        device.discoveredDeviceId()))
+                .containsEntry("status", "IGNORED")
+                .containsEntry("version", 1L)
+                .containsEntry("reviewed_by_user_id", actorId);
+        assertThat(jdbc.queryForMap(
+                        "SELECT event_version, producer_module, actor_type, actor_id, resource_type, "
+                                + "resource_version, correlation_id, payload FROM discovery.outbox_events "
+                                + "WHERE event_type = 'DISCOVERED_DEVICE_IGNORED' AND resource_id = ?",
+                        device.discoveredDeviceId()))
+                .containsEntry("event_version", "1.0")
+                .containsEntry("producer_module", "DISCOVERY")
+                .containsEntry("actor_type", "HUMAN_USER")
+                .containsEntry("actor_id", actorId)
+                .containsEntry("resource_type", "DISCOVERED_DEVICE")
+                .containsEntry("resource_version", 1L)
+                .containsEntry("correlation_id", correlationId);
+
+        HttpResponse<String> noOp = ignoreDevice(
+                session, device.jobId(), device.discoveredDeviceId(), 1, UUID.randomUUID());
+        assertThat(noOp.statusCode()).isEqualTo(200);
+        assertThat(extract(noOp.body(), "reviewedAt")).isEqualTo(reviewedAt);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM discovery.outbox_events "
+                                + "WHERE event_type = 'DISCOVERED_DEVICE_IGNORED' AND resource_id = ?",
+                        Integer.class,
+                        device.discoveredDeviceId()))
+                .isEqualTo(1);
+        assertThat(ignoreDevice(
+                        session, device.jobId(), device.discoveredDeviceId(), 0, UUID.randomUUID())
+                .statusCode()).isEqualTo(409);
+    }
+
+    @Test
+    void enforcesIgnoreAuthorizationValidationOwnershipAndAtomicity() throws Exception {
+        Session session = login();
+        DeviceSeed device = seedSucceededDevice(session);
+        String path = "/api/v1/discovery-jobs/" + device.jobId()
+                + "/discovered-devices/" + device.discoveredDeviceId() + "/ignore";
+
+        assertThat(send("POST", path, null, "{\"expectedVersion\":0}", UUID.randomUUID()).statusCode())
+                .isEqualTo(401);
+        HttpRequest noCsrf = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+                .header("Cookie", session.cookie())
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("{\"expectedVersion\":0}"))
+                .build();
+        assertThat(http.send(noCsrf, HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(403);
+        assertThat(send("POST", path, session, "{\"expectedVersion\":-1}", UUID.randomUUID()).statusCode())
+                .isEqualTo(422);
+        assertThat(send("POST", path, session, "{}", UUID.randomUUID()).statusCode()).isEqualTo(422);
+        assertThat(send(
+                                "POST",
+                                path,
+                                session,
+                                "{\"expectedVersion\":0,\"unexpected\":true}",
+                                UUID.randomUUID())
+                        .statusCode())
+                .isEqualTo(400);
+        assertThat(ignoreDevice(
+                        session, UUID.randomUUID(), device.discoveredDeviceId(), 0, UUID.randomUUID())
+                .statusCode()).isEqualTo(404);
+        assertThat(ignoreDevice(
+                        session, device.jobId(), UUID.randomUUID(), 0, UUID.randomUUID())
+                .statusCode()).isEqualTo(404);
+
+        jdbc.execute(
+                """
+                CREATE OR REPLACE FUNCTION discovery.reject_test_device_outbox() RETURNS trigger
+                LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced device outbox failure'; END; $$
+                """);
+        jdbc.execute(
+                """
+                CREATE TRIGGER reject_test_device_outbox BEFORE INSERT ON discovery.outbox_events
+                FOR EACH ROW WHEN (NEW.event_type = 'DISCOVERED_DEVICE_IGNORED')
+                EXECUTE FUNCTION discovery.reject_test_device_outbox()
+                """);
+        try {
+            assertThat(ignoreDevice(
+                            session, device.jobId(), device.discoveredDeviceId(), 0, UUID.randomUUID())
+                    .statusCode()).isEqualTo(503);
+            assertThat(jdbc.queryForMap(
+                            "SELECT status, version, reviewed_at, reviewed_by_user_id "
+                                    + "FROM discovery.discovered_devices WHERE discovered_device_id = ?",
+                            device.discoveredDeviceId()))
+                    .containsEntry("status", "UNREVIEWED")
+                    .containsEntry("version", 0L)
+                    .containsEntry("reviewed_at", null)
+                    .containsEntry("reviewed_by_user_id", null);
+        } finally {
+            jdbc.execute("DROP TRIGGER IF EXISTS reject_test_device_outbox ON discovery.outbox_events");
+            jdbc.execute("DROP FUNCTION IF EXISTS discovery.reject_test_device_outbox()");
+        }
+    }
+
+    @Test
+    void serializesConcurrentIgnoreRequests() throws Exception {
+        Session session = login();
+        DeviceSeed device = seedSucceededDevice(session);
+        CountDownLatch start = new CountDownLatch(1);
+
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var first = executor.submit(() -> {
+                start.await();
+                return ignoreDevice(
+                        session, device.jobId(), device.discoveredDeviceId(), 0, UUID.randomUUID())
+                        .statusCode();
+            });
+            var second = executor.submit(() -> {
+                start.await();
+                return ignoreDevice(
+                        session, device.jobId(), device.discoveredDeviceId(), 0, UUID.randomUUID())
+                        .statusCode();
+            });
+            start.countDown();
+            assertThat(List.of(first.get(), second.get())).containsExactlyInAnyOrder(200, 409);
+        }
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM discovery.outbox_events "
+                                + "WHERE event_type = 'DISCOVERED_DEVICE_IGNORED' AND resource_id = ?",
+                        Integer.class,
+                        device.discoveredDeviceId()))
+                .isEqualTo(1);
     }
 
     @Test
@@ -562,6 +709,37 @@ class DiscoveryJobIntegrationTest {
                         + seed.scopeId() + "\"}", correlationId);
     }
 
+    private DeviceSeed seedSucceededDevice(Session session) throws Exception {
+        Seed seed = seedActiveExecutor(true);
+        UUID jobId = UUID.fromString(extract(postJob(session, seed, UUID.randomUUID()).body(), "jobId"));
+        Instant dispatchedAt = jdbc.queryForObject(
+                "SELECT dispatched_at FROM discovery.discovery_jobs WHERE job_id = ?",
+                java.sql.Timestamp.class,
+                jobId).toInstant();
+        Path mailbox = Files.createDirectory(RESULT_ROOT.resolve(
+                "discovery-executor-" + seed.executorId() + "-results"));
+        Files.writeString(mailbox.resolve(jobId + ".json"), succeededResult(
+                UUID.randomUUID(), jobId, seed, dispatchedAt, dispatchedAt));
+        results.reconcile();
+        UUID discoveredDeviceId = jdbc.queryForObject(
+                "SELECT discovered_device_id FROM discovery.discovered_devices WHERE job_id = ?",
+                UUID.class,
+                jobId);
+        return new DeviceSeed(jobId, discoveredDeviceId);
+    }
+
+    private HttpResponse<String> ignoreDevice(
+            Session session, UUID jobId, UUID discoveredDeviceId, long expectedVersion, UUID correlationId)
+            throws Exception {
+        return send(
+                "POST",
+                "/api/v1/discovery-jobs/" + jobId + "/discovered-devices/"
+                        + discoveredDeviceId + "/ignore",
+                session,
+                "{\"expectedVersion\":" + expectedVersion + "}",
+                correlationId);
+    }
+
     private static String succeededResult(
             UUID resultId, UUID jobId, Seed seed, Instant startedAt, Instant completedAt) {
         return """
@@ -663,4 +841,5 @@ class DiscoveryJobIntegrationTest {
 
     private record Session(String cookie, String csrfToken) {}
     private record Seed(UUID executorId, UUID scopeId) {}
+    private record DeviceSeed(UUID jobId, UUID discoveredDeviceId) {}
 }

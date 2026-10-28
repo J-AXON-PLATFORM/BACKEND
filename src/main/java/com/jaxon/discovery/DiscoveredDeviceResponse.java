@@ -8,6 +8,8 @@ record DiscoveredDeviceResponse(
         UUID discoveredDeviceId,
         UUID jobId,
         String status,
+        long version,
+        Instant reviewedAt,
         String ipAddress,
         String macAddress,
         String hostname,

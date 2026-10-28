@@ -72,6 +72,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA4-DIS-006a` completa únicamente la ingestión de los pasos 5--6: backend valida el archivo final y su correlación, registra ledger, termina atómicamente el Job como `SUCCEEDED|FAILED` y, solo para éxito, persiste una observación `UNREVIEWED` por dispositivo. Frontend reconsulta Job y lista la página REST. Se detiene antes de `IGNORED`, incorporación, deduplicación entre Jobs, Inventory, SSE, polling o daemon.
 
+`OLA4-DIS-007a` ejecuta únicamente la alternativa `IGNORED` del paso 7: `IT_OPERATOR` confirma una revisión individual, backend aplica concurrencia optimista y outbox atómico y frontend reconsulta la misma página REST. Se detiene antes de `INCORPORATED`, Inventory, deduplicación, motivo textual, SSE, polling o daemon.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.
