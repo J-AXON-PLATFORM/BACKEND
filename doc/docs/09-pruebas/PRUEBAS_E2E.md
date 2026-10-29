@@ -20,6 +20,8 @@ Primera vertical: 1) login `IT_OPERATOR`; 2) crear activo; 3) pre-registrar/enro
 `OLA4-DIS-004a` continúa el mismo journey antes de deshabilitar el scope: selecciona el executor y scope activos, crea un job `BASIC`, confirma `DISPATCHED`/versión `1`, reconsulta REST y verifica perfil `/jobs`, archivo final sin `.part`, payload Discovery 1.0 cerrado, TTL de una hora y ambos outboxes en PostgreSQL. No simula pickup, ejecución, resultado o escaneo.
 
 `OLA4-DIS-006a` prolonga el journey mediante entrega real del Result final, ingestión PostgreSQL y presentación de un dispositivo `UNREVIEWED`. `OLA4-DIS-007a` añade después confirmación UI de “Ignorar”, respuesta REST, refetch de la misma página, estado `IGNORED` y verificación PostgreSQL/outbox, demostrando además que Inventory no cambia.
+
+`OLA4-DIS-008a` añade un segundo dispositivo `UNREVIEWED`, captura un UUID de activo `ACTIVE`, confirma “Incorporar”, reconsulta la misma página y verifica `INCORPORATED`, vínculo y outbox Discovery, demostrando que el activo y el outbox Inventory no cambian.
 <!-- JAXON-CKP003:END -->
 
 

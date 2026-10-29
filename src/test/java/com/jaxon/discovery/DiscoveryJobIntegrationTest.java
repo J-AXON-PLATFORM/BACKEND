@@ -90,6 +90,8 @@ class DiscoveryJobIntegrationTest {
         jdbc.update("DELETE FROM discovery.discovery_executors");
         jdbc.update("DELETE FROM discovery.authorized_scopes");
         jdbc.update("DELETE FROM identity.technical_identities WHERE identity_type = 'DISCOVERY_EXECUTOR'");
+        jdbc.update("DELETE FROM inventory.outbox_events");
+        jdbc.update("DELETE FROM inventory.assets");
         jdbc.update(
                 """
                 INSERT INTO identity.human_user_roles (user_id, role_code)
@@ -453,6 +455,188 @@ class DiscoveryJobIntegrationTest {
     }
 
     @Test
+    void incorporatesADeviceOnceIntoTheSameActiveAsset() throws Exception {
+        Session session = login();
+        DeviceSeed device = seedSucceededDevice(session);
+        UUID assetId = seedAsset("ACTIVE");
+        UUID correlationId = UUID.randomUUID();
+
+        HttpResponse<String> incorporated = incorporateDevice(
+                session, device.jobId(), device.discoveredDeviceId(), assetId, 0, correlationId);
+
+        assertThat(incorporated.statusCode()).isEqualTo(200);
+        assertThat(incorporated.body())
+                .contains("\"status\":\"INCORPORATED\"")
+                .contains("\"version\":1")
+                .contains("\"assetId\":\"" + assetId + "\"")
+                .doesNotContain("reviewedByUserId");
+        String reviewedAt = extract(incorporated.body(), "reviewedAt");
+        UUID actorId = jdbc.queryForObject(
+                "SELECT id FROM identity.human_users WHERE normalized_username = 'job.operator'",
+                UUID.class);
+        assertThat(jdbc.queryForMap(
+                        "SELECT status, version, reviewed_by_user_id, inventory_asset_id "
+                                + "FROM discovery.discovered_devices WHERE discovered_device_id = ?",
+                        device.discoveredDeviceId()))
+                .containsEntry("status", "INCORPORATED")
+                .containsEntry("version", 1L)
+                .containsEntry("reviewed_by_user_id", actorId)
+                .containsEntry("inventory_asset_id", assetId);
+        assertThat(jdbc.queryForMap(
+                        "SELECT event_version, producer_module, actor_type, actor_id, resource_type, "
+                                + "resource_version, correlation_id, payload FROM discovery.outbox_events "
+                                + "WHERE event_type = 'DISCOVERED_DEVICE_INCORPORATED' AND resource_id = ?",
+                        device.discoveredDeviceId()))
+                .containsEntry("event_version", "1.0")
+                .containsEntry("producer_module", "DISCOVERY")
+                .containsEntry("actor_type", "HUMAN_USER")
+                .containsEntry("actor_id", actorId)
+                .containsEntry("resource_type", "DISCOVERED_DEVICE")
+                .containsEntry("resource_version", 1L)
+                .containsEntry("correlation_id", correlationId);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory.outbox_events", Integer.class))
+                .isZero();
+
+        HttpResponse<String> noOp = incorporateDevice(
+                session, device.jobId(), device.discoveredDeviceId(), assetId, 1, UUID.randomUUID());
+        assertThat(noOp.statusCode()).isEqualTo(200);
+        assertThat(extract(noOp.body(), "reviewedAt")).isEqualTo(reviewedAt);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM discovery.outbox_events "
+                                + "WHERE event_type = 'DISCOVERED_DEVICE_INCORPORATED' AND resource_id = ?",
+                        Integer.class,
+                        device.discoveredDeviceId()))
+                .isEqualTo(1);
+        assertThat(incorporateDevice(
+                        session, device.jobId(), device.discoveredDeviceId(), assetId, 0, UUID.randomUUID())
+                .statusCode()).isEqualTo(409);
+        assertThat(incorporateDevice(
+                        session, device.jobId(), device.discoveredDeviceId(), seedAsset("ACTIVE"), 1,
+                        UUID.randomUUID())
+                .statusCode()).isEqualTo(409);
+        assertThat(ignoreDevice(
+                        session, device.jobId(), device.discoveredDeviceId(), 1, UUID.randomUUID())
+                .statusCode()).isEqualTo(409);
+    }
+
+    @Test
+    void enforcesIncorporationAssetValidationOwnershipAndAtomicity() throws Exception {
+        Session session = login();
+        DeviceSeed device = seedSucceededDevice(session);
+        UUID activeAssetId = seedAsset("ACTIVE");
+        UUID inactiveAssetId = seedAsset("INACTIVE");
+        String path = "/api/v1/discovery-jobs/" + device.jobId()
+                + "/discovered-devices/" + device.discoveredDeviceId() + "/incorporate";
+
+        assertThat(send("POST", path, null,
+                        "{\"assetId\":\"" + activeAssetId + "\",\"expectedVersion\":0}",
+                        UUID.randomUUID()).statusCode())
+                .isEqualTo(401);
+        HttpRequest noCsrf = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+                .header("Cookie", session.cookie())
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(
+                        "{\"assetId\":\"" + activeAssetId + "\",\"expectedVersion\":0}"))
+                .build();
+        assertThat(http.send(noCsrf, HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(403);
+        assertThat(send("POST", path, session,
+                        "{\"assetId\":\"00000000-0000-1000-8000-000000000000\",\"expectedVersion\":0}",
+                        UUID.randomUUID()).statusCode())
+                .isEqualTo(422);
+        assertThat(send("POST", path, session,
+                        "{\"assetId\":\"" + activeAssetId.toString().toUpperCase()
+                                + "\",\"expectedVersion\":0}",
+                        UUID.randomUUID()).statusCode())
+                .isEqualTo(422);
+        assertThat(send("POST", path, session, "{\"expectedVersion\":0}", UUID.randomUUID()).statusCode())
+                .isEqualTo(422);
+        assertThat(send("POST", path, session,
+                        "{\"assetId\":\"" + activeAssetId
+                                + "\",\"expectedVersion\":0,\"unexpected\":true}",
+                        UUID.randomUUID()).statusCode())
+                .isEqualTo(400);
+        assertThat(incorporateDevice(
+                        session, device.jobId(), device.discoveredDeviceId(), UUID.randomUUID(), 0,
+                        UUID.randomUUID()).statusCode())
+                .isEqualTo(404);
+        assertThat(incorporateDevice(
+                        session, device.jobId(), device.discoveredDeviceId(), inactiveAssetId, 0,
+                        UUID.randomUUID()).statusCode())
+                .isEqualTo(409);
+        assertThat(incorporateDevice(
+                        session, UUID.randomUUID(), device.discoveredDeviceId(), activeAssetId, 0,
+                        UUID.randomUUID()).statusCode())
+                .isEqualTo(404);
+
+        jdbc.execute(
+                """
+                CREATE OR REPLACE FUNCTION discovery.reject_test_incorporation_outbox() RETURNS trigger
+                LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced incorporation outbox failure'; END; $$
+                """);
+        jdbc.execute(
+                """
+                CREATE TRIGGER reject_test_incorporation_outbox BEFORE INSERT ON discovery.outbox_events
+                FOR EACH ROW WHEN (NEW.event_type = 'DISCOVERED_DEVICE_INCORPORATED')
+                EXECUTE FUNCTION discovery.reject_test_incorporation_outbox()
+                """);
+        try {
+            assertThat(incorporateDevice(
+                            session, device.jobId(), device.discoveredDeviceId(), activeAssetId, 0,
+                            UUID.randomUUID()).statusCode())
+                    .isEqualTo(503);
+            assertThat(jdbc.queryForMap(
+                            "SELECT status, version, reviewed_at, reviewed_by_user_id, inventory_asset_id "
+                                    + "FROM discovery.discovered_devices WHERE discovered_device_id = ?",
+                            device.discoveredDeviceId()))
+                    .containsEntry("status", "UNREVIEWED")
+                    .containsEntry("version", 0L)
+                    .containsEntry("reviewed_at", null)
+                    .containsEntry("reviewed_by_user_id", null)
+                    .containsEntry("inventory_asset_id", null);
+        } finally {
+            jdbc.execute("DROP TRIGGER IF EXISTS reject_test_incorporation_outbox ON discovery.outbox_events");
+            jdbc.execute("DROP FUNCTION IF EXISTS discovery.reject_test_incorporation_outbox()");
+        }
+        jdbc.update("DELETE FROM identity.human_user_roles WHERE role_code = 'IT_OPERATOR'");
+        assertThat(incorporateDevice(
+                        session, device.jobId(), device.discoveredDeviceId(), activeAssetId, 0,
+                        UUID.randomUUID()).statusCode())
+                .isEqualTo(403);
+    }
+
+    @Test
+    void serializesConcurrentIgnoreAndIncorporateRequests() throws Exception {
+        Session session = login();
+        DeviceSeed device = seedSucceededDevice(session);
+        UUID assetId = seedAsset("ACTIVE");
+        CountDownLatch start = new CountDownLatch(1);
+
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var ignored = executor.submit(() -> {
+                start.await();
+                return ignoreDevice(
+                        session, device.jobId(), device.discoveredDeviceId(), 0, UUID.randomUUID())
+                        .statusCode();
+            });
+            var incorporated = executor.submit(() -> {
+                start.await();
+                return incorporateDevice(
+                        session, device.jobId(), device.discoveredDeviceId(), assetId, 0, UUID.randomUUID())
+                        .statusCode();
+            });
+            start.countDown();
+            assertThat(List.of(ignored.get(), incorporated.get())).containsExactlyInAnyOrder(200, 409);
+        }
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM discovery.outbox_events WHERE resource_id = ? "
+                                + "AND event_type IN ('DISCOVERED_DEVICE_IGNORED', "
+                                + "'DISCOVERED_DEVICE_INCORPORATED')",
+                        Integer.class,
+                        device.discoveredDeviceId()))
+                .isEqualTo(1);
+    }
+
+    @Test
     void rejectsChangedBytesAfterAcceptingAResultWithoutMutatingTheTerminalJob() throws Exception {
         Session session = login();
         Seed seed = seedActiveExecutor(true);
@@ -738,6 +922,35 @@ class DiscoveryJobIntegrationTest {
                 session,
                 "{\"expectedVersion\":" + expectedVersion + "}",
                 correlationId);
+    }
+
+    private HttpResponse<String> incorporateDevice(
+            Session session,
+            UUID jobId,
+            UUID discoveredDeviceId,
+            UUID assetId,
+            long expectedVersion,
+            UUID correlationId) throws Exception {
+        return send(
+                "POST",
+                "/api/v1/discovery-jobs/" + jobId + "/discovered-devices/"
+                        + discoveredDeviceId + "/incorporate",
+                session,
+                "{\"assetId\":\"" + assetId + "\",\"expectedVersion\":" + expectedVersion + "}",
+                correlationId);
+    }
+
+    private UUID seedAsset(String status) {
+        UUID assetId = UUID.randomUUID();
+        jdbc.update(
+                """
+                INSERT INTO inventory.assets (id, name, asset_type, status, created_at, updated_at, version)
+                VALUES (?, ?, 'DESKTOP', ?, now(), now(), 0)
+                """,
+                assetId,
+                "Discovery target " + assetId,
+                status);
+        return assetId;
     }
 
     private static String succeededResult(

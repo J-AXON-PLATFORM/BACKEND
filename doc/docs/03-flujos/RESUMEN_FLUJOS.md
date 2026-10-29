@@ -74,6 +74,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA4-DIS-007a` ejecuta únicamente la alternativa `IGNORED` del paso 7: `IT_OPERATOR` confirma una revisión individual, backend aplica concurrencia optimista y outbox atómico y frontend reconsulta la misma página REST. Se detiene antes de `INCORPORATED`, Inventory, deduplicación, motivo textual, SSE, polling o daemon.
 
+`OLA4-DIS-008a` ejecuta únicamente la alternativa de vínculo del paso 8: `IT_OPERATOR` indica un activo existente y `ACTIVE`, Discovery lo valida mediante la operación pública Inventory y conserva el `assetId` como trazabilidad al marcar `INCORPORATED`. Inventory no se muta, no se crea un activo, no hay merge o deduplicación y el enrolamiento Agent permanece separado.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.

@@ -10,6 +10,7 @@ record DiscoveredDeviceResponse(
         String status,
         long version,
         Instant reviewedAt,
+        UUID assetId,
         String ipAddress,
         String macAddress,
         String hostname,

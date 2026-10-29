@@ -53,6 +53,8 @@
 - **Corte ejecutable OLA4-DIS-004a:** materializa únicamente creación y consulta puntual de `DiscoveryJob` `BASIC` por `IT_OPERATOR`, exclusión de un job no terminal por executor, TTL de una hora, publicación atómica en `/jobs` y reconciliación de pendientes; no implementa polling/pickup del executor, ejecución, resultados, escaneo, dispositivos o incorporación.
 - **Corte ejecutable OLA4-DIS-005a:** materializa únicamente pickup manual de máximo un Job mediante `run-once`, revalidación local de identidad/scope, ejecución `BASIC` limitada a 4096 direcciones, concurrencia 32, timeout 2 s y TCP `22|53|80|443|445|3389`, más Discovery Result 1.0 durable y entrega atómica `/results`; no implementa polling periódico, retries automáticos, daemon, ingestión backend, estado oficial posterior a `DISPATCHED`, dispositivos o incorporación.
 - **Corte ejecutable OLA4-DIS-006a:** materializa únicamente ingestión backend de Discovery Result 1.0 con claim interno atómico, transición directa a `SUCCEEDED|FAILED`, persistencia de observaciones `UNREVIEWED` y consulta/UI paginada; no implementa polling/retries/daemon del executor, revisión `IGNORED`, incorporación `INCORPORATED`, deduplicación entre Jobs, Inventory o SSE.
+- **Corte ejecutable OLA4-DIS-007a:** materializa únicamente revisión individual `UNREVIEWED -> IGNORED` por `IT_OPERATOR`, con concurrencia optimista, no-op, revisión interna y outbox Discovery.
+- **Corte ejecutable OLA4-DIS-008a:** materializa únicamente `UNREVIEWED -> INCORPORATED` vinculando un activo Inventory existente y `ACTIVE` mediante contrato público; no crea ni muta activos, no relinkea, no deduplica entre Jobs y no escribe tablas Inventory.
 
 ## MOD-03 -- Collector
 

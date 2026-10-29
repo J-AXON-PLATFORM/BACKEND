@@ -1,5 +1,6 @@
 package com.jaxon.discovery;
 
+import com.jaxon.inventory.AssetLookup;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,10 +21,12 @@ import org.springframework.transaction.annotation.Transactional;
 class DiscoveredDeviceService {
     private final JdbcTemplate jdbc;
     private final Clock clock;
+    private final AssetLookup assetLookup;
 
-    DiscoveredDeviceService(JdbcTemplate jdbc, Clock clock) {
+    DiscoveredDeviceService(JdbcTemplate jdbc, Clock clock, AssetLookup assetLookup) {
         this.jdbc = jdbc;
         this.clock = clock;
+        this.assetLookup = assetLookup;
     }
 
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
@@ -72,6 +75,9 @@ class DiscoveredDeviceService {
         if (current.status().equals("IGNORED")) {
             return current;
         }
+        if (!current.status().equals("UNREVIEWED")) {
+            throw new DiscoveredDeviceMutationConflictException();
+        }
 
         Instant now = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
         long newVersion = current.version() + 1;
@@ -112,6 +118,88 @@ class DiscoveredDeviceService {
                 .orElseThrow();
     }
 
+    @Transactional
+    DiscoveredDeviceResponse incorporate(
+            UUID jobId,
+            UUID discoveredDeviceId,
+            UUID assetId,
+            long expectedVersion,
+            UUID actorId,
+            UUID correlationId) {
+        DiscoveredDeviceResponse current = jdbc.query(
+                        """
+                        SELECT * FROM discovery.discovered_devices
+                        WHERE job_id = ? AND discovered_device_id = ?
+                        FOR UPDATE
+                        """,
+                        DiscoveredDeviceService::response,
+                        jobId,
+                        discoveredDeviceId)
+                .stream()
+                .findFirst()
+                .orElseThrow(DiscoveredDeviceNotFoundException::new);
+        if (current.version() != expectedVersion) {
+            throw new DiscoveredDeviceMutationConflictException();
+        }
+        if (current.status().equals("INCORPORATED")) {
+            if (assetId.equals(current.assetId())) return current;
+            throw new DiscoveredDeviceMutationConflictException();
+        }
+        if (!current.status().equals("UNREVIEWED")) {
+            throw new DiscoveredDeviceMutationConflictException();
+        }
+        AssetLookup.ReferenceStatus assetStatus = assetLookup.lockForReference(assetId);
+        if (assetStatus == AssetLookup.ReferenceStatus.NOT_FOUND) {
+            throw new IncorporationAssetNotFoundException();
+        }
+        if (assetStatus != AssetLookup.ReferenceStatus.ACTIVE) {
+            throw new IncorporationAssetNotActiveException();
+        }
+
+        Instant now = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
+        long newVersion = current.version() + 1;
+        jdbc.update(
+                """
+                UPDATE discovery.discovered_devices
+                SET status = 'INCORPORATED', version = ?, reviewed_at = ?,
+                    reviewed_by_user_id = ?, inventory_asset_id = ?
+                WHERE job_id = ? AND discovered_device_id = ?
+                """,
+                newVersion,
+                Timestamp.from(now),
+                actorId,
+                assetId,
+                jobId,
+                discoveredDeviceId);
+        jdbc.update(
+                """
+                INSERT INTO discovery.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, 'DISCOVERED_DEVICE_INCORPORATED', '1.0', ?, 'DISCOVERY',
+                        'HUMAN_USER', ?, 'DISCOVERED_DEVICE', ?, ?, 'SUCCESS', ?,
+                        jsonb_build_object('previousStatus', 'UNREVIEWED',
+                                           'newStatus', 'INCORPORATED',
+                                           'assetId', ?::text), ?)
+                """,
+                UUID.randomUUID(),
+                Timestamp.from(now),
+                actorId,
+                discoveredDeviceId,
+                newVersion,
+                correlationId,
+                assetId,
+                Timestamp.from(now));
+        return jdbc.query(
+                        "SELECT * FROM discovery.discovered_devices WHERE discovered_device_id = ?",
+                        DiscoveredDeviceService::response,
+                        discoveredDeviceId)
+                .stream()
+                .findFirst()
+                .orElseThrow();
+    }
+
     private static DiscoveredDeviceResponse response(ResultSet resultSet, int ignored) throws SQLException {
         return new DiscoveredDeviceResponse(
                 resultSet.getObject("discovered_device_id", UUID.class),
@@ -120,6 +208,7 @@ class DiscoveredDeviceService {
                 resultSet.getLong("version"),
                 resultSet.getTimestamp("reviewed_at") == null
                         ? null : resultSet.getTimestamp("reviewed_at").toInstant(),
+                resultSet.getObject("inventory_asset_id", UUID.class),
                 resultSet.getString("ip_address"),
                 resultSet.getString("mac_address"),
                 resultSet.getString("hostname"),
@@ -140,3 +229,7 @@ class DiscoveredDeviceService {
 final class DiscoveredDeviceNotFoundException extends RuntimeException {}
 
 final class DiscoveredDeviceMutationConflictException extends RuntimeException {}
+
+final class IncorporationAssetNotFoundException extends RuntimeException {}
+
+final class IncorporationAssetNotActiveException extends RuntimeException {}

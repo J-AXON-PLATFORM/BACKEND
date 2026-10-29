@@ -106,3 +106,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Dos solicitudes concurrentes con versión `0` producen exactamente un éxito, un `409` y un evento; un fallo del outbox revierte estado y revisión.
 - OpenAPI 6.0 conserva 5.2 byte a byte, expone `UNREVIEWED|IGNORED`, `version|reviewedAt` y nunca `reviewedByUserId`; el salto major conserva el gate estricto ante la ampliación breaking del enum cerrado.
 - Frontend pide confirmación, no reintenta ni anticipa la mutación y reconsulta la página exacta tras éxito o `409`; no añade SSE ni incorporación.
+
+## OLA4-DIS-008a
+
+- Solo `IT_OPERATOR` vincula un dispositivo `UNREVIEWED` perteneciente al Job indicado con un activo existente y `ACTIVE`; path inválido, inexistencia o pertenencia incorrecta reciben `404` uniforme para el dispositivo.
+- La transición efectiva bloquea la fila, exige versión `0`, consulta Inventory mediante `AssetLookup`, fija `INCORPORATED`, versión `1`, revisión interna y `inventory_asset_id`, y confirma un único evento mínimo en la misma transacción.
+- Repetir con versión `1` y el mismo activo es no-op; versión obsoleta, activo distinto, `IGNORED` o transición inversa devuelven `409`. Un activo inexistente devuelve `404` y uno no `ACTIVE`, `409`.
+- No existe FK cross-schema, mutación de Inventory, creación de activo ni deduplicación entre Jobs. Un fallo de outbox revierte vínculo, estado y revisión.
+- OpenAPI 7.0 conserva 6.0 byte a byte y expone `UNREVIEWED|IGNORED|INCORPORATED`, `assetId` nullable y tres estados coherentes sin actor interno.
+- Frontend solicita UUID explícito, confirma, evita doble envío, conserva el valor ante error, no reintenta ni anticipa y reconsulta la página exacta tras éxito o `409`.

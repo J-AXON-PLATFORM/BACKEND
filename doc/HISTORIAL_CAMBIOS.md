@@ -1,10 +1,18 @@
 # Historial de cambios
 
+## Incorporación de Discovered Device -- OLA4-DIS-008a, 2026-10-29
+
+`AC-JAXON-086` autoriza en backend/frontend únicamente `UNREVIEWED -> INCORPORATED` individual por `IT_OPERATOR` hacia un activo Inventory existente y `ACTIVE`, validado mediante frontera pública. Backend añade vínculo Discovery sin FK cross-schema, versión/no-op, revisión interna, outbox `DISCOVERED_DEVICE_INCORPORATED`, OpenAPI 7.0 y pruebas de migración, autoridad, concurrencia y rollback. Inventory no se muta y `automation-collector` permanece intacto. Implementación local no equivale todavía a integración o verificación remota.
+
+Se sincroniza el cierre real de `OLA4-DIS-007a`: `BACKEND#50`, squash `fb3e0437fbee0dd4444e73b4717fe1c1405b77f4`, runs `40789206348`/`40789597962`; corrección `BACKEND#51`, squash `0faaac7fe7cbaf44bf0a4ae9ee407c75293eeea1`, runs `40793831618`/`40796404760`; y `FRONTEND#26`, squash `7f898b290313138a9d0d3df8b0f3424221b93664`, runs `40800806462`/`40800999200`, todos verdes.
+
+---
+
 ## Revisión individual de Discovered Device -- OLA4-DIS-007a, 2026-10-28
 
-`AC-JAXON-085` autoriza en backend/frontend únicamente `UNREVIEWED -> IGNORED` individual por `IT_OPERATOR`, con versión optimista, no-op vigente, revisión interna y `DISCOVERED_DEVICE_IGNORED` transaccional. La validación contractual detectó que ampliar el `const: UNREVIEWED` de OpenAPI 5.2 era breaking; LUIS autorizó OpenAPI 6.0, preservando 1.0--5.2 y el gate `oasdiff` estricto. Backend fue integrado mediante `BACKEND#50`, squash `fb3e0437fbee0dd4444e73b4717fe1c1405b77f4`, con runs `40789206348`/`40789597962` verdes `APPLICATION`; frontend continúa en verificación.
+`AC-JAXON-085` autoriza en backend/frontend únicamente `UNREVIEWED -> IGNORED` individual por `IT_OPERATOR`, con versión optimista, no-op vigente, revisión interna y `DISCOVERED_DEVICE_IGNORED` transaccional. La validación contractual detectó que ampliar el `const: UNREVIEWED` de OpenAPI 5.2 era breaking; LUIS autorizó OpenAPI 6.0, preservando 1.0--5.2 y el gate `oasdiff` estricto. Backend fue integrado mediante `BACKEND#50`, squash `fb3e0437fbee0dd4444e73b4717fe1c1405b77f4`, con runs `40789206348`/`40789597962` verdes `APPLICATION`; frontend quedó integrado mediante `FRONTEND#26`, squash `7f898b290313138a9d0d3df8b0f3424221b93664`, con runs `40800806462`/`40800999200` verdes.
 
-El E2E frontend posterior fue bloqueado antes de Playwright por el nuevo `CVE-2026-116587` HIGH en `go-jose/v4@v4.1.5` de la fixture SFTPGo Local/Test. LUIS autorizó una excepción puntual para fijar solo 4.1.6, mantener todos los gates y tramitar un Pull Request backend correctivo adicional.
+El E2E frontend posterior fue bloqueado antes de Playwright por el nuevo `CVE-2026-116587` HIGH en `go-jose/v4@v4.1.5` de la fixture SFTPGo Local/Test. La excepción puntual fijó solo 4.1.6 mediante `BACKEND#51`, squash `0faaac7fe7cbaf44bf0a4ae9ee407c75293eeea1`, con runs `40793831618`/`40796404760` verdes.
 
 Se sincroniza además el cierre real de `OLA4-DIS-006a`: `BACKEND#49`, squash `93e313172b013652a9b289bc3207716fa8d8aa1d`, runs `40541202943`/`40544632304`; y `FRONTEND#25`, squash `2aa8131aae52dcbe381eee115fa6b821ade8e2e5`, runs `40603866441`/`40604192213`, todos verdes `PLATFORM_FULL`.
 
