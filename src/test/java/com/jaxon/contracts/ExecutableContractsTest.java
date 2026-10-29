@@ -57,6 +57,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V51_ROOT = Path.of("doc/contracts/openapi/5.1");
     private static final Path OPENAPI_V52_ROOT = Path.of("doc/contracts/openapi/5.2");
     private static final Path OPENAPI_V60_ROOT = Path.of("doc/contracts/openapi/6.0");
+    private static final Path OPENAPI_V70_ROOT = Path.of("doc/contracts/openapi/7.0");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DISCOVERY_SCHEMA_BASE =
             "https://schemas.j-axon.invalid/discovery/1.0/";
@@ -258,6 +259,50 @@ class ExecutableContractsTest {
         assertThat(root.at(
                                 "/paths/~1discovery-jobs~1{jobId}~1discovered-devices~1{discoveredDeviceId}~1ignore/post/responses")
                         .has("400"))
+                .isTrue();
+    }
+
+    @Test
+    void openApi70Preserves60OperationsAndAddsOnlyDiscoveredDeviceIncorporation() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V70_ROOT.resolve("openapi.yaml").toString(), null, options);
+        OpenAPI api = result.getOpenAPI();
+        OpenAPI previous = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V60_ROOT.resolve("openapi.yaml").toString(), null, options)
+                .getOpenAPI();
+
+        assertThat(result.getMessages()).isEmpty();
+        assertThat(api).isNotNull();
+        assertThat(previous).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("7.0");
+        assertThat(api.getPaths().keySet())
+                .containsAll(previous.getPaths().keySet())
+                .hasSize(previous.getPaths().size() + 1)
+                .contains("/discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .containsExactlyInAnyOrder(
+                        "listDiscoveredDevices", "ignoreDiscoveredDevice", "incorporateDiscoveredDevice")
+                .doesNotHaveDuplicates();
+
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_V70_ROOT.resolve("openapi.yaml").toFile());
+        JsonNode schemas = root.path("components").path("schemas");
+        assertThat(textValues(schemas.at("/DiscoveredDeviceIncorporateRequest/required")))
+                .containsExactly("assetId", "expectedVersion");
+        assertThat(schemas.path("DiscoveredDeviceIncorporateRequest")
+                        .path("additionalProperties").asBoolean())
+                .isFalse();
+        assertThat(textValues(schemas.at("/DiscoveredDevice/properties/status/enum")))
+                .containsExactly("UNREVIEWED", "IGNORED", "INCORPORATED");
+        assertThat(textValues(schemas.path("DiscoveredDevice").path("required")))
+                .contains("version", "reviewedAt", "assetId")
+                .doesNotContain("reviewedByUserId");
+        assertThat(schemas.path("DiscoveredDevice").path("oneOf")).hasSize(3);
+        assertThat(root.at(
+                                "/paths/~1discovery-jobs~1{jobId}~1discovered-devices~1{discoveredDeviceId}~1incorporate/post/responses")
+                        .has("409"))
                 .isTrue();
     }
 

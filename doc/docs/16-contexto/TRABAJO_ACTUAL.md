@@ -8,31 +8,32 @@ Mantener este archivo corto: orienta a una IA sin sustituir el Registro de Acuer
 - Estado actual: baseline documental v1 `DESIGN_READY`; implementación iniciada de forma acotada; `PRODUCTION_READY = NO`.
 - Descubrimiento inicial: cerrado.
 - Refinamiento/diseño v1: **Lotes 30--54 aprobados y consolidados**.
-- Trabajo activo: `OLA4-DIS-007a`, autorizado exclusivamente en `backend` y `frontend` bajo `AC-JAXON-085`; backend integrado mediante `BACKEND#50` y frontend en verificación. `automation-collector` permanece byte a byte intacto.
-- Alcance activo: transición individual `UNREVIEWED -> IGNORED` por `IT_OPERATOR`, versión optimista/no-op, revisión interna, outbox atómico, OpenAPI 6.0 y confirmación/refetch frontend.
-- No implementado en este corte: `INCORPORATED`, Inventory, deduplicación, motivo textual, polling/retries/daemon del executor, SSE, purga, workflows, Compose o infraestructura Production. Una excepción supply-chain puntual fija solo `go-jose/v4@v4.1.6` en SFTPGo Local/Test por `CVE-2026-116587`.
+- Trabajo activo: `OLA4-DIS-008a`, autorizado exclusivamente en `backend` y `frontend` bajo `AC-JAXON-086`; implementación backend en curso. `automation-collector` permanece byte a byte intacto.
+- Alcance activo: transición individual `UNREVIEWED -> INCORPORATED` por `IT_OPERATOR` hacia un activo existente y `ACTIVE`, versión optimista/no-op, vínculo Discovery, outbox atómico, OpenAPI 7.0 y confirmación/refetch frontend.
+- No implementado en este corte: creación/mutación de activos, búsqueda global, relink, deduplicación entre Jobs, polling/retries/daemon del executor, SSE, purga, workflows, Compose o infraestructura Production.
 - Estado remoto histórico verificado el 2026-10-07: existe la organización `J-AXON-PLATFORM` con los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos `backend`, `frontend` y `automation-collector`; `backend` fue publicado inicialmente mediante `TEC-GIT-001C`.
 - Estado remoto de contenedores verificado el 2026-10-08: `BACKEND#5` fue integrado en `develop` con squash `90c550714b861beb7d6388cf571744efcda4af8d`; los runs `37879426717` de PR y `37879749721` post-merge quedaron verdes. `FRONTEND#2` fue integrado con squash `94d8ce2e8dd3309b7683f09041785c000f6fe21d`; los runs `37879426584` de PR y `37880065517` post-merge quedaron verdes. No se publicaron imágenes ni artefactos.
 - Estado remoto Python verificado el 2026-10-08: `AUTOMATION-COLLECTOR` es privado; `main` apunta a `a1079d8d5bac0d0436daae844e0b1ba9e42a9d12`; `Python CI` fue integrado en `develop` mediante el Pull Request `#1` y squash `a040c5fba34fae22903088b82191e8355deaab26`; los runs `37852626079` de PR y `37852683236` post-merge quedaron verdes. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues.
 - Organización histórica: `j-axon` es distinta, contiene repositorios preexistentes ajenos al nuevo inicio controlado, no fue modificada y no debe confundirse con `J-AXON-PLATFORM`. La diferencia depende del identificador de organización, no solo de mayúsculas, que GitHub trata sin distinción efectiva.
 - Autorización general para implementar/modificar GitHub/desplegar: **NO EXISTE**.
-- Sprint actual: `OLA4-DIS-007a` en implementación e integración controlada; cualquier incremento posterior requiere delimitación y autorización propias.
+- Sprint actual: `OLA4-DIS-008a` en implementación e integración controlada; cualquier incremento posterior requiere delimitación y autorización propias.
 - Backlog: inicial aprobado; no publicado en GitHub.
 - Primera vertical: login/logout, alta administrativa de usuarios, activo, Agent/Collector hasta Result resiliente y los cortes Support hasta prioridad/ciclo no terminal están integrados. El lifecycle terminal y su timeline están implementados localmente en ambos repositorios. REST continúa como fuente oficial.
 - Dominios refinados: Identity, Discovery, Support, Inventory, Collector tasks, AI/RAG, Automation, Audit/Reporting.
 - Contratos internos: commands/queries in-process; eventos durables por Transactional Outbox PostgreSQL `at-least-once`; SSE best-effort y REST fuente de verdad.
-- CI backend/frontend local: clasificación determinista por riesgo, fallback `PLATFORM_FULL`, procedencia read-only para push y todos los gates previos intactos en completo. OpenAPI 6.0 es el contrato web en implementación; OpenAPI 1.0--5.2, Discovery Job/Result 1.0 y Agent 1.0 permanecen inmutables.
+- CI backend/frontend local: clasificación determinista por riesgo, fallback `PLATFORM_FULL`, procedencia read-only para push y todos los gates previos intactos en completo. OpenAPI 7.0 es el contrato web en implementación; OpenAPI 1.0--6.0, Discovery Job/Result 1.0 y Agent 1.0 permanecen inmutables.
 - CI frontend completo conserva Node.js 24.21.0, `npm ci`, lint, typecheck, Vitest/RTL, build, auditorías, standalone, smoke y Trivy. Tras el refresh puntual a `undici@8.12.2` y `zod@4.6.6`, las auditorías npm de producción y completa están limpias.
 - CI Python: conserva sync/lock, Ruff, pytest, bundle, build, auditoría y entrypoints sin cambiar el workflow; el corte activo añade pruebas de Result, ledger, runner, filesystem, SFTP y probes loopback.
 - Riesgos frontend abiertos: ESLint 9.39.5 está EOL y debe migrarse cuando la cadena oficial soporte ESLint 10; Dependabot confirma como única alerta inicial `GHSA-vfj7-8cjw-p6xm` / `CVE-2026-93687` en `braces@3.0.3`, y la excepción debe retirarse cuando exista corrección oficial o desaparezca la cadena.
 - Excepción correctiva activa: el primer run de `FRONTEND#18` (`39922328221`) falló solo en audit Production por advisories nuevas de Next.js; se autorizó actualizar Next.js/`eslint-config-next` 16.3.8 -> 16.4.2 y realizar un segundo push al mismo PR, sin ampliar funcionalidad ni workflows.
 - Excepciones correctivas cerradas de `BACKEND#47`: el run `40268720046` falló en Trivy por `CVE-2026-92392` sobre `libcurl 8.22.0-r0`; `40273409779` abortó por `404` del mirror GCR y `40274247684` recibió `TOOMANYREQUESTS` desde ECR. Las correcciones puntuales autorizadas conservaron Trivy 0.75.0 y sus gates; los runs definitivos `40344101014`/`40347343505` quedaron verdes.
-- Excepción correctiva activa de `OLA4-DIS-007a`: el E2E frontend local fue bloqueado antes de Playwright por `CVE-2026-116587` HIGH en `go-jose/v4@v4.1.5` de SFTPGo 2.7.6. Se autorizó fijar solo 4.1.6 en la fixture Local/Test mediante un Pull Request backend adicional, sin relajar gates ni ampliar alcance.
+- Corrección cerrada de `OLA4-DIS-007a`: `BACKEND#51` fijó solo `go-jose/v4@v4.1.6` en SFTPGo 2.7.6 Local/Test por `CVE-2026-116587`, sin relajar gates ni ampliar alcance.
 - IDs técnicos: UUIDv4; externos como strings opacos.
 - Cierre verificado de `OLA4-DIS-005a`: `AUTOMATION-COLLECTOR#12`, squash `3dac71ca95442e4f50e77dd2a172b561ca49face`, runs `40398561696`/`40398712766`; `BACKEND#48`, squash `1e01e7774e1446ae2aadab0320654d82186f7a90`, runs `40398914418`/`40402246330`, todos verdes. Ramas eliminadas y repositorios limpios.
 - Corrección de caché SFTPGo: `cache-key.sh` hashea contenido y nombres relativos canónicos, y su prueba compara dos ubicaciones distintas; la evidencia histórica de `TEC-QLT-006a` no se reinterpreta.
 - Cierre verificado de `OLA4-DIS-006a`: `BACKEND#49`, squash `93e313172b013652a9b289bc3207716fa8d8aa1d`, runs `40541202943`/`40544632304`; `FRONTEND#25`, squash `2aa8131aae52dcbe381eee115fa6b821ade8e2e5`, runs `40603866441`/`40604192213`, todos verdes `PLATFORM_FULL`.
-- Próxima acción técnica: completar y verificar backend `OLA4-DIS-007a`, crear/integrar su PR; después implementar, verificar e integrar frontend y emitir el cierre.
+- Cierre verificado de `OLA4-DIS-007a`: `BACKEND#50` (`fb3e0437fbee0dd4444e73b4717fe1c1405b77f4`, runs `40789206348`/`40789597962`), `BACKEND#51` (`0faaac7fe7cbaf44bf0a4ae9ee407c75293eeea1`, runs `40793831618`/`40796404760`) y `FRONTEND#26` (`7f898b290313138a9d0d3df8b0f3424221b93664`, runs `40800806462`/`40800999200`) quedaron verdes.
+- Próxima acción técnica: completar y verificar backend `OLA4-DIS-008a`, integrar su único PR; después implementar, verificar e integrar frontend y emitir el cierre.
 - Evidencia remota verificada: `AUTOMATION-COLLECTOR#6`, squash `5bec06539b7fa3014e8231cde84b960bf4f74a50`, tuvo runs verdes `38935923442` y `38935999273`; `BACKEND#18`, squash `12c877b9f890e48e47bc338dcee024b155b92e09`, tuvo runs verdes `38936213131` y `38941377804`.
 - Evidencia remota de `OLA2-TSK-001a`: `AUTOMATION-COLLECTOR#7`, squash `cb324b498b7e0f13324c7485a167c2999cac9683`, tuvo runs verdes `39192254745` y `39192308664`; `FRONTEND#11`, squash `a173c0816a104851561635831235c08d4bf8f4b7`, tuvo runs verdes `39192380140` y `39192566258`; `BACKEND#23`, squash `478d5cae56c73a28c88783e123b8e635d6c1ff12`, tuvo runs verdes `39192945194` y `39194236599`.
 - Evidencia remota de `OLA2-RSL-001a`: `AUTOMATION-COLLECTOR#8`, squash `bc508336af7c2082a2a36e20c1dd180d4507c169`, tuvo runs verdes `39254574671` de PR y `39254685186` post-merge.
@@ -72,9 +73,9 @@ Antes de proponer una acción o implementación:
 
 ## Regla de continuidad
 
-- No reabrir AC-JAXON-001..084 salvo contradicción documental real o instrucción expresa; `AC-JAXON-085` delimita el trabajo activo.
+- No reabrir AC-JAXON-001..085 salvo contradicción documental real o instrucción expresa; `AC-JAXON-086` delimita el trabajo activo.
 - `DESIGN_READY` != `IMPLEMENTATION_READY` != `PRODUCTION_READY`.
-- `IMPLEMENTATION_READY` se evalúa por alcance concreto; `OLA4-DIS-007a` autoriza únicamente la transición individual a `IGNORED`, no incorporación ni el resto de OLA 4.
+- `IMPLEMENTATION_READY` se evalúa por alcance concreto; `OLA4-DIS-008a` autoriza únicamente vínculo individual a un activo existente y `ACTIVE`, no creación/mutación Inventory ni el resto de OLA 4.
 - Decidido/documentado != implementado != verificado.
 - Los `POR_DECIDIR` restantes son deliberados y están ligados a Production, organización, evidencia o scope futuro; no rellenarlos artificialmente.
 - No asumir autorización de código, Git, GitHub, despliegues o infraestructura Production a partir de la aprobación de los Lotes 49--54 ni de la finalización de los incrementos backend/frontend ya verificados.

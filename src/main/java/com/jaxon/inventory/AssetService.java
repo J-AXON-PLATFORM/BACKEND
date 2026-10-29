@@ -102,6 +102,19 @@ class AssetService implements AssetLookup {
                 assetId);
         return count != null && count == 1;
     }
+
+    @Override
+    @Transactional
+    public ReferenceStatus lockForReference(UUID assetId) {
+        return jdbc.query(
+                        "SELECT status FROM inventory.assets WHERE id = ? FOR SHARE",
+                        (resultSet, row) -> "ACTIVE".equals(resultSet.getString("status"))
+                                ? ReferenceStatus.ACTIVE : ReferenceStatus.INACTIVE,
+                        assetId)
+                .stream()
+                .findFirst()
+                .orElse(ReferenceStatus.NOT_FOUND);
+    }
 }
 
 final class AssetValidationException extends RuntimeException {}

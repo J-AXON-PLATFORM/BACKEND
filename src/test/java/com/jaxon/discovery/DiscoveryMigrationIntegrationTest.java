@@ -126,13 +126,14 @@ class DiscoveryMigrationIntegrationTest {
                 .migrate();
 
         assertThat(jdbc.queryForMap(
-                        "SELECT status, version, reviewed_at, reviewed_by_user_id "
+                        "SELECT status, version, reviewed_at, reviewed_by_user_id, inventory_asset_id "
                                 + "FROM discovery.discovered_devices WHERE discovered_device_id = ?",
                         deviceId))
                 .containsEntry("status", "UNREVIEWED")
                 .containsEntry("version", 0L)
                 .containsEntry("reviewed_at", null)
-                .containsEntry("reviewed_by_user_id", null);
+                .containsEntry("reviewed_by_user_id", null)
+                .containsEntry("inventory_asset_id", null);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM discovery.outbox_events", Integer.class))
                 .isEqualTo(7);
         assertThat(jdbc.queryForList(
@@ -150,9 +151,54 @@ class DiscoveryMigrationIntegrationTest {
                         "outbox_events_event_type_check",
                         "outbox_events_resource_type_check",
                         "outbox_events_payload_check");
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM pg_constraint
+                        WHERE conrelid = 'discovery.discovered_devices'::regclass
+                          AND confrelid = 'inventory.assets'::regclass
+                        """,
+                        Integer.class))
+                .isZero();
         assertThatThrownBy(() -> jdbc.update(
                         "UPDATE discovery.discovered_devices SET status = 'IGNORED' WHERE discovered_device_id = ?",
                         deviceId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.update(
+                        "UPDATE discovery.discovered_devices SET inventory_asset_id = ? "
+                                + "WHERE discovered_device_id = ?",
+                        UUID.randomUUID(), deviceId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+        UUID assetId = UUID.randomUUID();
+        jdbc.update(
+                """
+                UPDATE discovery.discovered_devices
+                SET status = 'INCORPORATED', version = 1, reviewed_at = ?,
+                    reviewed_by_user_id = ?, inventory_asset_id = ?
+                WHERE discovered_device_id = ?
+                """,
+                Timestamp.from(now), actorId, assetId, deviceId);
+        assertThat(jdbc.queryForMap(
+                        "SELECT status, version, inventory_asset_id FROM discovery.discovered_devices "
+                                + "WHERE discovered_device_id = ?",
+                        deviceId))
+                .containsEntry("status", "INCORPORATED")
+                .containsEntry("version", 1L)
+                .containsEntry("inventory_asset_id", assetId);
+        assertThatThrownBy(() -> jdbc.update(
+                        "UPDATE discovery.discovered_devices SET status = 'IGNORED' "
+                                + "WHERE discovered_device_id = ?",
+                        deviceId))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+        insertEvent(jdbc, "DISCOVERED_DEVICE_INCORPORATED", "HUMAN_USER", "DISCOVERED_DEVICE", 1,
+                "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"INCORPORATED\","
+                        + "\"assetId\":\"" + assetId + "\"}",
+                actorId, now);
+        assertThatThrownBy(() -> insertEvent(
+                        jdbc, "DISCOVERED_DEVICE_INCORPORATED", "HUMAN_USER", "DISCOVERED_DEVICE", 1,
+                        "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"INCORPORATED\"}",
+                        actorId, now))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

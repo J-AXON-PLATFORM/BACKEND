@@ -39,6 +39,8 @@ En `OLA4-DIS-006a`, `GET /discovery-jobs/{jobId}/discovered-devices` requiere `I
 
 En `OLA4-DIS-007a`, `POST /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/ignore` requiere `IT_OPERATOR`, sesión y CSRF. Backend comprueba Job y dispositivo conjuntamente bajo bloqueo y oculta con `404` uniforme inexistencia, UUID inválido o pertenencia incorrecta; frontend solo presenta la acción y no sustituye `default deny`. El actor revisor permanece interno y no se serializa.
 
+En `OLA4-DIS-008a`, `POST /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate` requiere `IT_OPERATOR`, sesión y CSRF. Backend aplica la misma ocultación contextual, toma actor solo de sesión y valida el activo existente/`ACTIVE` por contrato público Inventory; no confía en la UI, no escribe Inventory y no expone el actor revisor.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

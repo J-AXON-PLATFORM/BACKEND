@@ -68,6 +68,29 @@ class DiscoveredDeviceController {
                 UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY))));
     }
 
+    @PostMapping("/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate")
+    ResponseEntity<?> incorporate(
+            @PathVariable String jobId,
+            @PathVariable String discoveredDeviceId,
+            @Valid @RequestBody DiscoveredDeviceIncorporateRequest body,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(jobId).matches() || !UUID_V4.matcher(discoveredDeviceId).matches()) {
+            return deviceNotFound(request);
+        }
+        if (!UUID_V4.matcher(body.assetId()).matches()) {
+            return problem(request, HttpStatus.UNPROCESSABLE_CONTENT, "Validación fallida",
+                    "assetId debe ser un UUIDv4.", "VALIDATION_FAILED");
+        }
+        return ResponseEntity.ok(service.incorporate(
+                UUID.fromString(jobId),
+                UUID.fromString(discoveredDeviceId),
+                UUID.fromString(body.assetId()),
+                body.expectedVersion(),
+                (UUID) authentication.getDetails(),
+                UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY))));
+    }
+
     @ExceptionHandler(DiscoveredDeviceNotFoundException.class)
     ResponseEntity<Problem> deviceNotFound(
             DiscoveredDeviceNotFoundException exception, HttpServletRequest request) {
@@ -77,9 +100,23 @@ class DiscoveredDeviceController {
     @ExceptionHandler(DiscoveredDeviceMutationConflictException.class)
     ResponseEntity<Problem> mutationConflict(
             DiscoveredDeviceMutationConflictException exception, HttpServletRequest request) {
-        return problem(request, HttpStatus.CONFLICT, "Conflicto al ignorar el dispositivo",
-                "El dispositivo descubierto cambió de versión.",
+        return problem(request, HttpStatus.CONFLICT, "Conflicto al revisar el dispositivo",
+                "La versión, el estado o el vínculo del dispositivo no permite la operación.",
                 "DISCOVERED_DEVICE_MUTATION_CONFLICT");
+    }
+
+    @ExceptionHandler(IncorporationAssetNotFoundException.class)
+    ResponseEntity<Problem> assetNotFound(
+            IncorporationAssetNotFoundException exception, HttpServletRequest request) {
+        return problem(request, HttpStatus.NOT_FOUND, "Activo no encontrado",
+                "No existe un activo con el identificador indicado.", "ASSET_NOT_FOUND");
+    }
+
+    @ExceptionHandler(IncorporationAssetNotActiveException.class)
+    ResponseEntity<Problem> assetNotActive(
+            IncorporationAssetNotActiveException exception, HttpServletRequest request) {
+        return problem(request, HttpStatus.CONFLICT, "Activo no disponible",
+                "El activo indicado no está ACTIVE.", "ASSET_NOT_ACTIVE");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

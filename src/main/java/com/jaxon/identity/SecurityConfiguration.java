@@ -80,7 +80,8 @@ class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/discovery-jobs/*/discovered-devices")
                         .hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.POST,
-                                "/api/v1/discovery-jobs/*/discovered-devices/*/ignore")
+                                "/api/v1/discovery-jobs/*/discovered-devices/*/ignore",
+                                "/api/v1/discovery-jobs/*/discovered-devices/*/incorporate")
                         .hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/assets").hasRole("IT_OPERATOR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/assets/*/technical-state")
