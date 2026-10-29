@@ -2,7 +2,9 @@
 
 ## Revisión individual de Discovered Device -- OLA4-DIS-007a, 2026-10-28
 
-`AC-JAXON-085` autoriza en backend/frontend únicamente `UNREVIEWED -> IGNORED` individual por `IT_OPERATOR`, con versión optimista, no-op vigente, revisión interna y `DISCOVERED_DEVICE_IGNORED` transaccional. La validación contractual detectó que ampliar el `const: UNREVIEWED` de OpenAPI 5.2 era breaking; LUIS autorizó OpenAPI 6.0, preservando 1.0--5.2 y el gate `oasdiff` estricto. La implementación backend local incorpora una migración, endpoint, autorización y pruebas de concurrencia/rollback; integración remota y frontend continúan pendientes.
+`AC-JAXON-085` autoriza en backend/frontend únicamente `UNREVIEWED -> IGNORED` individual por `IT_OPERATOR`, con versión optimista, no-op vigente, revisión interna y `DISCOVERED_DEVICE_IGNORED` transaccional. La validación contractual detectó que ampliar el `const: UNREVIEWED` de OpenAPI 5.2 era breaking; LUIS autorizó OpenAPI 6.0, preservando 1.0--5.2 y el gate `oasdiff` estricto. Backend fue integrado mediante `BACKEND#50`, squash `fb3e0437fbee0dd4444e73b4717fe1c1405b77f4`, con runs `40789206348`/`40789597962` verdes `APPLICATION`; frontend continúa en verificación.
+
+El E2E frontend posterior fue bloqueado antes de Playwright por el nuevo `CVE-2026-116587` HIGH en `go-jose/v4@v4.1.5` de la fixture SFTPGo Local/Test. LUIS autorizó una excepción puntual para fijar solo 4.1.6, mantener todos los gates y tramitar un Pull Request backend correctivo adicional.
 
 Se sincroniza además el cierre real de `OLA4-DIS-006a`: `BACKEND#49`, squash `93e313172b013652a9b289bc3207716fa8d8aa1d`, runs `40541202943`/`40544632304`; y `FRONTEND#25`, squash `2aa8131aae52dcbe381eee115fa6b821ade8e2e5`, runs `40603866441`/`40604192213`, todos verdes `PLATFORM_FULL`.
 

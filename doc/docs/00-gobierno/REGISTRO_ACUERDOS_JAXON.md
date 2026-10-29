@@ -504,6 +504,8 @@ La petición inicial indicaba OpenAPI 5.3, pero la validación ejecutable confir
 
 Se autoriza exclusivamente la rama `feature/ola4-dis-007a`, un Pull Request por `backend` y `frontend`, integración squash con backend antes que frontend, verificación post-merge, eliminación de ramas, sincronización documental y reporte final externo. `automation-collector` debe permanecer byte a byte intacto. No se autorizan `INCORPORATED`, Inventory, deduplicación, motivo textual, polling, retries del executor, daemon, SSE, purga, dependencias, lockfiles, workflows, Compose/infraestructura, Production, `main`, Issues, Projects, rulesets, tags, releases, Packages, imágenes/artefactos publicados o despliegues. La autorización permanece activa hasta completar ambos Pull Requests y su cierre.
 
+Durante la verificación frontend, el gate Trivy bloqueante detectó la nueva `CVE-2026-116587` HIGH en `github.com/go-jose/go-jose/v4@v4.1.5`, transitiva de la fixture SFTPGo 2.7.6 Local/Test, antes de iniciar Playwright. LUIS autorizó una excepción correctiva puntual para fijar exclusivamente `go-jose/v4@v4.1.6`, verificar el grafo, tests upstream, `govulncheck`, Trivy y SBOM, actualizar la documentación exacta y tramitar un Pull Request backend adicional. No autoriza relajar gates, cambiar SFTPGo/Go/workflows, otras dependencias, Production ni ampliar `OLA4-DIS-007a`.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)

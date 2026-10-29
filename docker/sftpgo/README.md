@@ -5,9 +5,11 @@ not an official prebuilt SFTPGo image and must not be published or deployed to
 Production.
 
 The official `v2.7.6` prebuilt images are not used because the blocking Trivy
-scan detected `CVE-2026-78667`, `CVE-2026-78669`, and `CVE-2026-97031` after
+scan detected `CVE-2026-78667`, `CVE-2026-78669`, `CVE-2026-97031`, and
+`CVE-2026-116587` after
 their publication. The recipe starts from the exact signed upstream commit,
-uses Go 1.26.10, and updates only `golang.org/x/net` from `v0.59.0` to `v0.60.0`.
+uses Go 1.26.10, and updates only `golang.org/x/net` from `v0.59.0` to `v0.60.0`
+and `github.com/go-jose/go-jose/v4` from `v4.1.5` to `v4.1.6`.
 
 Supply-chain pins:
 
