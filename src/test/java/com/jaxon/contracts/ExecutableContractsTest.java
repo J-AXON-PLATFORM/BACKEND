@@ -58,6 +58,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V52_ROOT = Path.of("doc/contracts/openapi/5.2");
     private static final Path OPENAPI_V60_ROOT = Path.of("doc/contracts/openapi/6.0");
     private static final Path OPENAPI_V70_ROOT = Path.of("doc/contracts/openapi/7.0");
+    private static final Path OPENAPI_V71_ROOT = Path.of("doc/contracts/openapi/7.1");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DISCOVERY_SCHEMA_BASE =
             "https://schemas.j-axon.invalid/discovery/1.0/";
@@ -302,6 +303,40 @@ class ExecutableContractsTest {
         assertThat(schemas.path("DiscoveredDevice").path("oneOf")).hasSize(3);
         assertThat(root.at(
                                 "/paths/~1discovery-jobs~1{jobId}~1discovered-devices~1{discoveredDeviceId}~1incorporate/post/responses")
+                        .has("409"))
+                .isTrue();
+    }
+
+    @Test
+    void openApi71Preserves70AndAddsOnlyNewAssetIncorporation() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V71_ROOT.resolve("openapi.yaml").toString(), null, options);
+        OpenAPI api = result.getOpenAPI();
+        OpenAPI previous = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V70_ROOT.resolve("openapi.yaml").toString(), null, options)
+                .getOpenAPI();
+
+        assertThat(result.getMessages()).isEmpty();
+        assertThat(api).isNotNull();
+        assertThat(previous).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("7.1");
+        assertThat(api.getPaths().keySet())
+                .containsAll(previous.getPaths().keySet())
+                .hasSize(previous.getPaths().size() + 1)
+                .contains("/discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate-new-asset");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .containsExactly("incorporateDiscoveredDeviceWithNewAsset");
+
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_V71_ROOT.resolve("openapi.yaml").toFile());
+        JsonNode schema = root.at("/components/schemas/DiscoveredDeviceNewAssetRequest");
+        assertThat(textValues(schema.path("required")))
+                .containsExactly("name", "assetType", "expectedVersion");
+        assertThat(schema.path("additionalProperties").asBoolean()).isFalse();
+        assertThat(root.at(
+                                "/paths/~1discovery-jobs~1{jobId}~1discovered-devices~1{discoveredDeviceId}~1incorporate-new-asset/post/responses")
                         .has("409"))
                 .isTrue();
     }

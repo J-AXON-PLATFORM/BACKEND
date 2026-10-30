@@ -516,6 +516,8 @@ La migración pertenece exclusivamente a `discovery`, no crea FK cross-schema ni
 
 Se autorizan exclusivamente ramas `feature/ola4-dis-008a`, un Pull Request por `backend` y `frontend`, integración squash con backend antes que frontend, verificación post-merge, eliminación de ramas, sincronización documental y reporte final externo. `automation-collector` permanece byte a byte intacto. No se autorizan creación o mutación de activos, búsqueda global, `IGNORED -> INCORPORATED`, relink, deduplicación entre Jobs, SSE, polling, daemon, dependencias, lockfiles, workflows, clasificadores, Compose/SFTPGo, Production, `main`, Issues, Projects, rulesets, tags, releases, Packages, imágenes/artefactos publicados o despliegues. La autorización permanece activa hasta completar ambos Pull Requests y su cierre; implementación local no equivale a integración ni a `PRODUCTION_READY`.
 
+El cierre real quedó verificado el 2026-10-29: `BACKEND#52` se integró mediante squash `c4b512cb0e33a741b8f642bdc729470268a67dbe`, con runs verdes `40910433400`/`40911013824`; y `FRONTEND#27`, mediante squash `3020c61a9955ae1522d06993d1f44555ac3a4768`, con runs verdes `40956938534`/`40957203933`. Los cuatro runs se clasificaron `APPLICATION`, las ramas autorizadas fueron eliminadas, los tres repositorios quedaron limpios y sincronizados, `automation-collector` permaneció en `3dac71ca95442e4f50e77dd2a172b561ca49face` y `PRODUCTION_READY = NO`. `AC-JAXON-086` está consumido y cerrado.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)

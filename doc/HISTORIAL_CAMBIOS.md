@@ -1,8 +1,16 @@
 # Historial de cambios
 
+## Creación de activo desde Discovered Device -- OLA4-DIS-008b, 2026-10-29
+
+La autorización específica de LUIS limita `OLA4-DIS-008b` a crear un único activo Inventory `ACTIVE` desde un dispositivo `UNREVIEWED` mediante `/incorporate-new-asset`, con body cerrado `name|assetType|expectedVersion`. Discovery bloquea primero el dispositivo e invoca el contrato público síncrono `AssetCreator`; activo, `ASSET_CREATED`, vínculo, transición y `DISCOVERED_DEVICE_INCORPORATED` se confirman en una transacción PostgreSQL. OpenAPI 7.1 añade solo esta operación y no se crea migración. Frontend e integración remota permanecen pendientes.
+
+Se sincroniza el cierre real de `OLA4-DIS-008a`: `BACKEND#52`, squash `c4b512cb0e33a741b8f642bdc729470268a67dbe`, runs `40910433400`/`40911013824`; y `FRONTEND#27`, squash `3020c61a9955ae1522d06993d1f44555ac3a4768`, runs `40956938534`/`40957203933`, todos verdes `APPLICATION`, con ramas eliminadas y `automation-collector` intacto.
+
+---
+
 ## Incorporación de Discovered Device -- OLA4-DIS-008a, 2026-10-29
 
-`AC-JAXON-086` autoriza en backend/frontend únicamente `UNREVIEWED -> INCORPORATED` individual por `IT_OPERATOR` hacia un activo Inventory existente y `ACTIVE`, validado mediante frontera pública. Backend añade vínculo Discovery sin FK cross-schema, versión/no-op, revisión interna, outbox `DISCOVERED_DEVICE_INCORPORATED`, OpenAPI 7.0 y pruebas de migración, autoridad, concurrencia y rollback. Inventory no se muta y `automation-collector` permanece intacto. Implementación local no equivale todavía a integración o verificación remota.
+`AC-JAXON-086` autorizó en backend/frontend únicamente `UNREVIEWED -> INCORPORATED` individual por `IT_OPERATOR` hacia un activo Inventory existente y `ACTIVE`, validado mediante frontera pública. Backend añadió vínculo Discovery sin FK cross-schema, versión/no-op, revisión interna, outbox `DISCOVERED_DEVICE_INCORPORATED`, OpenAPI 7.0 y pruebas de migración, autoridad, concurrencia y rollback. Inventory no se mutó y `automation-collector` permaneció intacto. El cierre remoto quedó verificado mediante `BACKEND#52` y `FRONTEND#27`.
 
 Se sincroniza el cierre real de `OLA4-DIS-007a`: `BACKEND#50`, squash `fb3e0437fbee0dd4444e73b4717fe1c1405b77f4`, runs `40789206348`/`40789597962`; corrección `BACKEND#51`, squash `0faaac7fe7cbaf44bf0a4ae9ee407c75293eeea1`, runs `40793831618`/`40796404760`; y `FRONTEND#26`, squash `7f898b290313138a9d0d3df8b0f3424221b93664`, runs `40800806462`/`40800999200`, todos verdes.
 

@@ -24,6 +24,7 @@ Definir dominios, ownership, almacenamiento, movimiento y ciclo de vida.
 - En `OLA4-DIS-006a`, Discovery posee `discovery_result_ingestions`, `accepted_discovery_results` y `discovered_devices`. Ledger, resultado aceptado, transición terminal, dispositivos y outbox se confirman en una transacción; FK compuesta impide asociar un dispositivo a otro Job o a un resultado `FAILED`. Inventory no recibe escrituras y el archivo SFTP retenido no sustituye la evidencia PostgreSQL.
 - En `OLA4-DIS-007a`, Discovery amplía su propio `discovered_devices` con `UNREVIEWED|IGNORED`, versión y revisión coherentes. La identidad humana revisora se conserva como UUID estable sin FK cross-schema y no se expone por API; dispositivo, metadatos de revisión y outbox se confirman en una transacción. Inventory permanece intacto.
 - En `OLA4-DIS-008a`, Discovery añade `INCORPORATED` e `inventory_asset_id` nullable a su propia tabla, sin FK cross-schema ni unicidad entre Jobs. La existencia y estado `ACTIVE` se validan y protegen con bloqueo compartido mediante la frontera pública Inventory antes de confirmar dispositivo, revisión, vínculo y outbox Discovery; Inventory no se muta.
+- En `OLA4-DIS-008b`, la estructura persistente de `008a` se reutiliza sin migración. Discovery bloquea primero su dispositivo e invoca `AssetCreator`; Inventory crea en sus tablas el activo `ACTIVE` y `ASSET_CREATED`, y Discovery conserva vínculo, revisión y evento propio. La única transacción PostgreSQL abarca ambas operaciones públicas sin escritura cross-module directa.
 
 ## Consistencia
 

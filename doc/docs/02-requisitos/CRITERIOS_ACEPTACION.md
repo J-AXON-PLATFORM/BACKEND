@@ -115,3 +115,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - No existe FK cross-schema, mutación de Inventory, creación de activo ni deduplicación entre Jobs. Un fallo de outbox revierte vínculo, estado y revisión.
 - OpenAPI 7.0 conserva 6.0 byte a byte y expone `UNREVIEWED|IGNORED|INCORPORATED`, `assetId` nullable y tres estados coherentes sin actor interno.
 - Frontend solicita UUID explícito, confirma, evita doble envío, conserva el valor ante error, no reintenta ni anticipa y reconsulta la página exacta tras éxito o `409`.
+
+## OLA4-DIS-008b
+
+- Solo `IT_OPERATOR` puede crear un activo desde un dispositivo `UNREVIEWED`; la petición cerrada contiene `name|assetType|expectedVersion` y el activo resultante siempre es `ACTIVE`.
+- Discovery bloquea primero el dispositivo y llama a la operación pública Inventory que reutiliza normalización, catálogo y evento de alta; no escribe tablas Inventory directamente.
+- Activo, `ASSET_CREATED`, vínculo, transición `INCORPORATED`, revisión y `DISCOVERED_DEVICE_INCORPORATED` se confirman en una única transacción PostgreSQL; cualquier fallo revierte todo.
+- Dos solicitudes concurrentes con versión `0` producen un éxito y un `409`, exactamente un activo y un evento de cada tipo. Toda repetición posterior devuelve `409` y no crea otro activo.
+- OpenAPI 7.1 conserva 7.0 byte a byte y añade solo `/incorporate-new-asset`; no existe migración, dependencia o cambio de workflow.
+- Frontend separa ambas acciones de incorporación, confirma la creación, no reintenta ni anticipa, conserva el formulario ante error y reconsulta la página exacta tras éxito o `409`.

@@ -1,0 +1,114 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "7.1"
+  description: >-
+    Versión compatible que conserva OpenAPI 7.0 y añade la creación atómica de
+    un activo Inventory ACTIVE al incorporar un Discovered Device individual.
+servers:
+  - url: /api/v1
+tags:
+  - name: Authentication
+  - name: Identity
+  - name: Assets
+  - name: Agents
+  - name: Support
+  - name: Discovery
+paths:
+  /auth/login: { $ref: "../7.0/openapi.yaml#/paths/~1auth~1login" }
+  /auth/me: { $ref: "../7.0/openapi.yaml#/paths/~1auth~1me" }
+  /auth/logout: { $ref: "../7.0/openapi.yaml#/paths/~1auth~1logout" }
+  /users: { $ref: "../7.0/openapi.yaml#/paths/~1users" }
+  /assets: { $ref: "../7.0/openapi.yaml#/paths/~1assets" }
+  /assets/{assetId}: { $ref: "../7.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D" }
+  /assets/{assetId}/technical-state: { $ref: "../7.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state" }
+  /assets/{assetId}/technical-state/events: { $ref: "../7.0/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events" }
+  /agents: { $ref: "../7.0/openapi.yaml#/paths/~1agents" }
+  /agents/{agentId}: { $ref: "../7.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D" }
+  /agents/{agentId}/ssh-key: { $ref: "../7.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key" }
+  /agents/{agentId}/activate: { $ref: "../7.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate" }
+  /agents/{agentId}/tasks: { $ref: "../7.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks" }
+  /agents/{agentId}/tasks/{taskId}: { $ref: "../7.0/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D" }
+  /tickets: { $ref: "../7.0/openapi.yaml#/paths/~1tickets" }
+  /tickets/technician-queue: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1technician-queue" }
+  /tickets/technician-queue/{ticketId}: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D" }
+  /tickets/technician-queue/{ticketId}/comments: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1comments" }
+  /tickets/technician-queue/{ticketId}/conversation: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1conversation" }
+  /tickets/technician-queue/{ticketId}/lifecycle: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1lifecycle" }
+  /tickets/{ticketId}: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D" }
+  /tickets/{ticketId}/comments: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1comments" }
+  /tickets/{ticketId}/claim: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1claim" }
+  /tickets/{ticketId}/priority: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1priority" }
+  /tickets/{ticketId}/status: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1status" }
+  /tickets/{ticketId}/resolve: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1resolve" }
+  /tickets/{ticketId}/close: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1close" }
+  /tickets/{ticketId}/reopen: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1reopen" }
+  /tickets/{ticketId}/lifecycle: { $ref: "../7.0/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1lifecycle" }
+  /discovery/scopes: { $ref: "../7.0/openapi.yaml#/paths/~1discovery~1scopes" }
+  /discovery/scopes/{scopeId}: { $ref: "../7.0/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D" }
+  /discovery/scopes/{scopeId}/status: { $ref: "../7.0/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D~1status" }
+  /discovery/executors: { $ref: "../7.0/openapi.yaml#/paths/~1discovery~1executors" }
+  /discovery/executors/{executorId}: { $ref: "../7.0/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D" }
+  /discovery/executors/{executorId}/ssh-key: { $ref: "../7.0/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1ssh-key" }
+  /discovery/executors/{executorId}/activate: { $ref: "../7.0/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1activate" }
+  /discovery/jobs: { $ref: "../7.0/openapi.yaml#/paths/~1discovery~1jobs" }
+  /discovery/jobs/{jobId}: { $ref: "../7.0/openapi.yaml#/paths/~1discovery~1jobs~1%7BjobId%7D" }
+  /discovery-jobs/{jobId}/discovered-devices: { $ref: "../7.0/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/ignore: { $ref: "../7.0/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices~1%7BdiscoveredDeviceId%7D~1ignore" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate: { $ref: "../7.0/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices~1%7BdiscoveredDeviceId%7D~1incorporate" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate-new-asset:
+    post:
+      tags: [Discovery]
+      operationId: incorporateDiscoveredDeviceWithNewAsset
+      summary: Incorpora un Discovered Device creando un activo ACTIVE
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+        - $ref: "#/components/parameters/DiscoveredDeviceId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiscoveredDeviceNewAssetRequest" }
+      responses:
+        "200":
+          description: Dispositivo incorporado y vinculado al activo recién creado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveredDevice" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+components:
+  securitySchemes:
+    SessionCookie: { $ref: "../7.0/openapi.yaml#/components/securitySchemes/SessionCookie" }
+  parameters:
+    CsrfToken: { $ref: "../7.0/openapi.yaml#/components/parameters/CsrfToken" }
+    JobId: { $ref: "../7.0/openapi.yaml#/components/parameters/JobId" }
+    DiscoveredDeviceId: { $ref: "../7.0/openapi.yaml#/components/parameters/DiscoveredDeviceId" }
+  schemas:
+    DiscoveredDeviceNewAssetRequest:
+      type: object
+      required: [name, assetType, expectedVersion]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 256 }
+        assetType: { type: string, minLength: 1, maxLength: 64, pattern: "^[A-Z][A-Z0-9_]*$" }
+        expectedVersion: { type: integer, minimum: 0 }
+      additionalProperties: false
+    DiscoveredDevice: { $ref: "../7.0/openapi.yaml#/components/schemas/DiscoveredDevice" }
+  responses:
+    BadRequest: { $ref: "../7.0/openapi.yaml#/components/responses/BadRequest" }
+    AuthenticationRequired: { $ref: "../7.0/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../7.0/openapi.yaml#/components/responses/Forbidden" }
+    NotFound: { $ref: "../7.0/openapi.yaml#/components/responses/NotFound" }
+    Conflict: { $ref: "../7.0/openapi.yaml#/components/responses/Conflict" }
+    ValidationFailed: { $ref: "../7.0/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../7.0/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../7.0/openapi.yaml#/components/responses/ServiceUnavailable" }
+security:
+  - SessionCookie: []

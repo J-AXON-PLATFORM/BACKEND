@@ -6,13 +6,15 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-class AssetService implements AssetLookup {
+class AssetService implements AssetLookup, AssetCreator {
 
+    private static final Pattern ASSET_TYPE = Pattern.compile("^[A-Z][A-Z0-9_]*$");
     private final JdbcTemplate jdbc;
     private final Clock clock;
 
@@ -23,11 +25,26 @@ class AssetService implements AssetLookup {
 
     @Transactional
     AssetResponse create(AssetCreateRequest request, UUID actorId, UUID correlationId) {
-        String name = request.name().trim();
+        return create(request.name(), request.assetType(), request.status(), actorId, correlationId);
+    }
+
+    @Override
+    @Transactional
+    public UUID createActive(String name, String assetType, UUID actorId, UUID correlationId) {
+        return create(name, assetType, "ACTIVE", actorId, correlationId).assetId();
+    }
+
+    private AssetResponse create(
+            String rawName, String assetType, String status, UUID actorId, UUID correlationId) {
+        if (rawName == null || rawName.isBlank() || rawName.length() > 256
+                || assetType == null || assetType.length() > 64 || !ASSET_TYPE.matcher(assetType).matches()) {
+            throw new AssetValidationException();
+        }
+        String name = rawName.trim();
         Integer activeType = jdbc.queryForObject(
                 "SELECT count(*) FROM inventory.asset_types WHERE code = ? AND status = 'ACTIVE'",
                 Integer.class,
-                request.assetType());
+                assetType);
         if (activeType == null || activeType == 0) {
             throw new AssetValidationException();
         }
@@ -41,8 +58,8 @@ class AssetService implements AssetLookup {
                 """,
                 assetId,
                 name,
-                request.assetType(),
-                request.status(),
+                assetType,
+                status,
                 Timestamp.from(now),
                 Timestamp.from(now));
         jdbc.update(
@@ -61,7 +78,7 @@ class AssetService implements AssetLookup {
                 assetId,
                 correlationId,
                 Timestamp.from(now));
-        return new AssetResponse(assetId, name, request.assetType(), request.status(), now, now, 0);
+        return new AssetResponse(assetId, name, assetType, status, now, now, 0);
     }
 
     @Transactional(readOnly = true)
@@ -116,5 +133,3 @@ class AssetService implements AssetLookup {
                 .orElse(ReferenceStatus.NOT_FOUND);
     }
 }
-
-final class AssetValidationException extends RuntimeException {}
