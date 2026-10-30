@@ -605,6 +605,162 @@ class DiscoveryJobIntegrationTest {
     }
 
     @Test
+    void incorporatesADeviceByCreatingOneActiveAssetAtomically() throws Exception {
+        Session session = login();
+        DeviceSeed device = seedSucceededDevice(session);
+        UUID correlationId = UUID.randomUUID();
+
+        HttpResponse<String> incorporated = incorporateDeviceWithNewAsset(
+                session, device.jobId(), device.discoveredDeviceId(), "  Discovered server  ",
+                "DESKTOP", 0, correlationId);
+
+        assertThat(incorporated.statusCode()).isEqualTo(200);
+        assertThat(incorporated.body())
+                .contains("\"status\":\"INCORPORATED\"")
+                .contains("\"version\":1")
+                .doesNotContain("reviewedByUserId");
+        UUID assetId = UUID.fromString(extract(incorporated.body(), "assetId"));
+        assertThat(jdbc.queryForMap(
+                        "SELECT name, asset_type, status, version FROM inventory.assets WHERE id = ?",
+                        assetId))
+                .containsEntry("name", "Discovered server")
+                .containsEntry("asset_type", "DESKTOP")
+                .containsEntry("status", "ACTIVE")
+                .containsEntry("version", 0L);
+        assertThat(jdbc.queryForMap(
+                        "SELECT event_type, resource_id, correlation_id FROM inventory.outbox_events "
+                                + "WHERE resource_id = ?",
+                        assetId))
+                .containsEntry("event_type", "ASSET_CREATED")
+                .containsEntry("resource_id", assetId)
+                .containsEntry("correlation_id", correlationId);
+        assertThat(jdbc.queryForMap(
+                        "SELECT event_type, resource_id, correlation_id FROM discovery.outbox_events "
+                                + "WHERE resource_id = ? AND event_type = 'DISCOVERED_DEVICE_INCORPORATED'",
+                        device.discoveredDeviceId()))
+                .containsEntry("event_type", "DISCOVERED_DEVICE_INCORPORATED")
+                .containsEntry("resource_id", device.discoveredDeviceId())
+                .containsEntry("correlation_id", correlationId);
+
+        assertThat(incorporateDeviceWithNewAsset(
+                        session, device.jobId(), device.discoveredDeviceId(), "Another server",
+                        "DESKTOP", 1, UUID.randomUUID()).statusCode())
+                .isEqualTo(409);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory.assets", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM inventory.outbox_events WHERE event_type = 'ASSET_CREATED'",
+                        Integer.class))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void validatesAndRollsBackNewAssetIncorporation() throws Exception {
+        Session session = login();
+        DeviceSeed device = seedSucceededDevice(session);
+        String path = "/api/v1/discovery-jobs/" + device.jobId()
+                + "/discovered-devices/" + device.discoveredDeviceId() + "/incorporate-new-asset";
+        String validBody = "{\"name\":\"Discovered server\",\"assetType\":\"DESKTOP\","
+                + "\"expectedVersion\":0}";
+
+        assertThat(send("POST", path, null, validBody, UUID.randomUUID()).statusCode()).isEqualTo(401);
+        HttpRequest noCsrf = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+                .header("Cookie", session.cookie())
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(validBody))
+                .build();
+        assertThat(http.send(noCsrf, HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(403);
+        assertThat(send("POST", path, session,
+                        "{\"name\":\" \",\"assetType\":\"DESKTOP\",\"expectedVersion\":0}",
+                        UUID.randomUUID()).statusCode())
+                .isEqualTo(422);
+        assertThat(send("POST", path, session,
+                        "{\"name\":\"Server\",\"assetType\":\"ROUTER\",\"expectedVersion\":0}",
+                        UUID.randomUUID()).statusCode())
+                .isEqualTo(422);
+        assertThat(send("POST", path, session,
+                        "{\"name\":\"Server\",\"assetType\":\"DESKTOP\","
+                                + "\"expectedVersion\":0,\"unexpected\":true}",
+                        UUID.randomUUID()).statusCode())
+                .isEqualTo(400);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory.assets", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory.outbox_events", Integer.class)).isZero();
+
+        jdbc.execute(
+                """
+                CREATE OR REPLACE FUNCTION discovery.reject_test_new_asset_incorporation_outbox()
+                RETURNS trigger LANGUAGE plpgsql AS $$
+                BEGIN RAISE EXCEPTION 'forced new asset incorporation outbox failure'; END; $$
+                """);
+        jdbc.execute(
+                """
+                CREATE TRIGGER reject_test_new_asset_incorporation_outbox
+                BEFORE INSERT ON discovery.outbox_events
+                FOR EACH ROW WHEN (NEW.event_type = 'DISCOVERED_DEVICE_INCORPORATED')
+                EXECUTE FUNCTION discovery.reject_test_new_asset_incorporation_outbox()
+                """);
+        try {
+            assertThat(incorporateDeviceWithNewAsset(
+                            session, device.jobId(), device.discoveredDeviceId(), "Discovered server",
+                            "DESKTOP", 0, UUID.randomUUID()).statusCode())
+                    .isEqualTo(503);
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory.assets", Integer.class)).isZero();
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory.outbox_events", Integer.class))
+                    .isZero();
+            assertThat(jdbc.queryForMap(
+                            "SELECT status, version, inventory_asset_id FROM discovery.discovered_devices "
+                                    + "WHERE discovered_device_id = ?",
+                            device.discoveredDeviceId()))
+                    .containsEntry("status", "UNREVIEWED")
+                    .containsEntry("version", 0L)
+                    .containsEntry("inventory_asset_id", null);
+        } finally {
+            jdbc.execute("DROP TRIGGER IF EXISTS reject_test_new_asset_incorporation_outbox "
+                    + "ON discovery.outbox_events");
+            jdbc.execute("DROP FUNCTION IF EXISTS discovery.reject_test_new_asset_incorporation_outbox()");
+        }
+        jdbc.update("DELETE FROM identity.human_user_roles WHERE role_code = 'IT_OPERATOR'");
+        assertThat(incorporateDeviceWithNewAsset(
+                        session, device.jobId(), device.discoveredDeviceId(), "Discovered server",
+                        "DESKTOP", 0, UUID.randomUUID()).statusCode())
+                .isEqualTo(403);
+    }
+
+    @Test
+    void serializesConcurrentNewAssetIncorporationWithoutDuplicates() throws Exception {
+        Session session = login();
+        DeviceSeed device = seedSucceededDevice(session);
+        CountDownLatch start = new CountDownLatch(1);
+
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var first = executor.submit(() -> {
+                start.await();
+                return incorporateDeviceWithNewAsset(
+                        session, device.jobId(), device.discoveredDeviceId(),
+                        "First server", "DESKTOP", 0, UUID.randomUUID()).statusCode();
+            });
+            var second = executor.submit(() -> {
+                start.await();
+                return incorporateDeviceWithNewAsset(
+                        session, device.jobId(), device.discoveredDeviceId(),
+                        "Second server", "DESKTOP", 0, UUID.randomUUID()).statusCode();
+            });
+            start.countDown();
+            assertThat(List.of(first.get(), second.get())).containsExactlyInAnyOrder(200, 409);
+        }
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory.assets", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM inventory.outbox_events WHERE event_type = 'ASSET_CREATED'",
+                        Integer.class))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM discovery.outbox_events WHERE resource_id = ? "
+                                + "AND event_type = 'DISCOVERED_DEVICE_INCORPORATED'",
+                        Integer.class,
+                        device.discoveredDeviceId()))
+                .isEqualTo(1);
+    }
+
+    @Test
     void serializesConcurrentIgnoreAndIncorporateRequests() throws Exception {
         Session session = login();
         DeviceSeed device = seedSucceededDevice(session);
@@ -937,6 +1093,24 @@ class DiscoveryJobIntegrationTest {
                         + discoveredDeviceId + "/incorporate",
                 session,
                 "{\"assetId\":\"" + assetId + "\",\"expectedVersion\":" + expectedVersion + "}",
+                correlationId);
+    }
+
+    private HttpResponse<String> incorporateDeviceWithNewAsset(
+            Session session,
+            UUID jobId,
+            UUID discoveredDeviceId,
+            String name,
+            String assetType,
+            long expectedVersion,
+            UUID correlationId) throws Exception {
+        return send(
+                "POST",
+                "/api/v1/discovery-jobs/" + jobId + "/discovered-devices/"
+                        + discoveredDeviceId + "/incorporate-new-asset",
+                session,
+                "{\"name\":\"" + name + "\",\"assetType\":\"" + assetType
+                        + "\",\"expectedVersion\":" + expectedVersion + "}",
                 correlationId);
     }
 

@@ -88,6 +88,8 @@ En Pull Requests se compara el SHA base/head del evento. En push a `develop`, el
 
 `OLA4-DIS-008a` conserva igualmente workflows y clasificadores. Backend y frontend deben clasificar `APPLICATION`; una clasificación fail-closed más estricta es aceptable. `automation-collector` permanece byte a byte intacto.
 
+`OLA4-DIS-008b` conserva workflows y clasificadores, no añade migración ni dependencia y debe clasificar `APPLICATION` en backend y frontend; un nivel fail-closed más estricto también es válido. `automation-collector` permanece byte a byte intacto.
+
 Durante `BACKEND#47`, dos descargas consecutivas de la DB Trivy desde `mirror.gcr.io` devolvieron `404` antes de ejecutar el scan y ECR respondió después `TOOMANYREQUESTS`. Las excepciones puntuales autorizadas mantienen Trivy 0.75.0, severidades, formatos, condiciones y gates, y cambian únicamente sus cuatro invocaciones existentes para usar `ghcr.io/aquasecurity/trivy-db:2` como origen oficial primario y `public.ecr.aws/aquasecurity/trivy-db:2` como fallback.
 
 El run inicial de `BACKEND#44`, `40060796361`, confirmó de forma bloqueante el nuevo `CVE-2026-111497` en `brotli-libs 1.2.0-r1` de la fixture PostgreSQL Local/Test. La corrección autorizada fija `1.2.1-r0` en la etapa runtime sin excepción de scan ni cambio de PostgreSQL/pgvector; el mismo PR debe reconstruir la fixture, pasar Trivy y repetir todos los gates `PLATFORM_FULL`.

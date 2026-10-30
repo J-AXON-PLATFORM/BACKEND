@@ -102,6 +102,10 @@ El salto major fue autorizado tras confirmar ejecutablemente que el `const: UNRE
 
 `doc/contracts/openapi/7.0/openapi.yaml` conserva las operaciones de 6.0, amplía `DiscoveredDevice.status` a `UNREVIEWED|IGNORED|INCORPORATED`, añade `assetId` nullable y añade únicamente `POST /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate`. La mutación requiere `IT_OPERATOR`, CSRF y body cerrado `assetId|expectedVersion`; `409` cubre versión, estado o vínculo incompatibles. OpenAPI 1.0--6.0 permanece byte a byte inmutable.
 
+## Contrato compatible 7.1 -- OLA4-DIS-008b
+
+`doc/contracts/openapi/7.1/openapi.yaml` conserva 7.0 y añade únicamente `POST /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate-new-asset`. Requiere `IT_OPERATOR`, CSRF y body cerrado `name|assetType|expectedVersion`; el activo siempre se crea `ACTIVE` y la respuesta es el `DiscoveredDevice` incorporado con su `assetId`. `409` cubre versión obsoleta, estado no `UNREVIEWED` y toda repetición. OpenAPI 1.0--7.0 permanece byte a byte inmutable.
+
 La respuesta contiene exclusivamente `jobId`, `executorId`, `scopeId`, `profile`, `status`, `createdAt`, `expiresAt`, `dispatchedAt` y `version`. `409` cubre combinación inválida o job no terminal y `503` conserva el job `PENDING` cuando falla la publicación, devolviendo en `Location` la URI exacta para consultarlo. OpenAPI 5.0 permanece byte a byte inmutable; REST sigue siendo fuente oficial y el canal del ejecutable continúa siendo SFTP/JSON Schema Discovery 1.0.
 
 ## Pendiente de diseño detallado

@@ -1,6 +1,7 @@
 package com.jaxon.discovery;
 
 import com.jaxon.CorrelationIdFilter;
+import com.jaxon.inventory.AssetValidationException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -91,6 +92,26 @@ class DiscoveredDeviceController {
                 UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY))));
     }
 
+    @PostMapping("/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate-new-asset")
+    ResponseEntity<?> incorporateNewAsset(
+            @PathVariable String jobId,
+            @PathVariable String discoveredDeviceId,
+            @Valid @RequestBody DiscoveredDeviceNewAssetRequest body,
+            Authentication authentication,
+            HttpServletRequest request) {
+        if (!UUID_V4.matcher(jobId).matches() || !UUID_V4.matcher(discoveredDeviceId).matches()) {
+            return deviceNotFound(request);
+        }
+        return ResponseEntity.ok(service.incorporateNewAsset(
+                UUID.fromString(jobId),
+                UUID.fromString(discoveredDeviceId),
+                body.name(),
+                body.assetType(),
+                body.expectedVersion(),
+                (UUID) authentication.getDetails(),
+                UUID.fromString(MDC.get(CorrelationIdFilter.MDC_KEY))));
+    }
+
     @ExceptionHandler(DiscoveredDeviceNotFoundException.class)
     ResponseEntity<Problem> deviceNotFound(
             DiscoveredDeviceNotFoundException exception, HttpServletRequest request) {
@@ -117,6 +138,13 @@ class DiscoveredDeviceController {
             IncorporationAssetNotActiveException exception, HttpServletRequest request) {
         return problem(request, HttpStatus.CONFLICT, "Activo no disponible",
                 "El activo indicado no está ACTIVE.", "ASSET_NOT_ACTIVE");
+    }
+
+    @ExceptionHandler(AssetValidationException.class)
+    ResponseEntity<Problem> invalidAssetType(
+            AssetValidationException exception, HttpServletRequest request) {
+        return problem(request, HttpStatus.UNPROCESSABLE_CONTENT, "Validación fallida",
+                "El tipo de activo no pertenece al catálogo activo.", "VALIDATION_FAILED");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

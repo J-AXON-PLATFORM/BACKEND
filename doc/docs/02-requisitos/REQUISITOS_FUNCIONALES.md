@@ -55,6 +55,7 @@
 - **Corte ejecutable OLA4-DIS-006a:** materializa únicamente ingestión backend de Discovery Result 1.0 con claim interno atómico, transición directa a `SUCCEEDED|FAILED`, persistencia de observaciones `UNREVIEWED` y consulta/UI paginada; no implementa polling/retries/daemon del executor, revisión `IGNORED`, incorporación `INCORPORATED`, deduplicación entre Jobs, Inventory o SSE.
 - **Corte ejecutable OLA4-DIS-007a:** materializa únicamente revisión individual `UNREVIEWED -> IGNORED` por `IT_OPERATOR`, con concurrencia optimista, no-op, revisión interna y outbox Discovery.
 - **Corte ejecutable OLA4-DIS-008a:** materializa únicamente `UNREVIEWED -> INCORPORATED` vinculando un activo Inventory existente y `ACTIVE` mediante contrato público; no crea ni muta activos, no relinkea, no deduplica entre Jobs y no escribe tablas Inventory.
+- **Corte ejecutable OLA4-DIS-008b:** añade únicamente `UNREVIEWED -> INCORPORATED` creando un activo Inventory nuevo y siempre `ACTIVE` mediante contrato público, con una transacción común y sin migración; no permite relink, `IGNORED -> INCORPORATED`, creación independiente adicional ni deduplicación entre Jobs.
 
 ## MOD-03 -- Collector
 

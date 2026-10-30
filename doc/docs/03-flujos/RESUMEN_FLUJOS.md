@@ -76,6 +76,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA4-DIS-008a` ejecuta únicamente la alternativa de vínculo del paso 8: `IT_OPERATOR` indica un activo existente y `ACTIVE`, Discovery lo valida mediante la operación pública Inventory y conserva el `assetId` como trazabilidad al marcar `INCORPORATED`. Inventory no se muta, no se crea un activo, no hay merge o deduplicación y el enrolamiento Agent permanece separado.
 
+`OLA4-DIS-008b` añade únicamente la alternativa de creación del paso 8: tras bloquear un dispositivo `UNREVIEWED`, Discovery solicita a la operación pública Inventory crear un activo siempre `ACTIVE`; ambos módulos confirman activo, outboxes, vínculo y transición en una transacción PostgreSQL. Repetir o competir por el mismo dispositivo no crea activos adicionales.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.

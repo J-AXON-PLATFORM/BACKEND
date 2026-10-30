@@ -1,5 +1,6 @@
 package com.jaxon.discovery;
 
+import com.jaxon.inventory.AssetCreator;
 import com.jaxon.inventory.AssetLookup;
 import java.sql.Array;
 import java.sql.ResultSet;
@@ -22,11 +23,14 @@ class DiscoveredDeviceService {
     private final JdbcTemplate jdbc;
     private final Clock clock;
     private final AssetLookup assetLookup;
+    private final AssetCreator assetCreator;
 
-    DiscoveredDeviceService(JdbcTemplate jdbc, Clock clock, AssetLookup assetLookup) {
+    DiscoveredDeviceService(
+            JdbcTemplate jdbc, Clock clock, AssetLookup assetLookup, AssetCreator assetCreator) {
         this.jdbc = jdbc;
         this.clock = clock;
         this.assetLookup = assetLookup;
+        this.assetCreator = assetCreator;
     }
 
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
@@ -156,6 +160,76 @@ class DiscoveredDeviceService {
             throw new IncorporationAssetNotActiveException();
         }
 
+        Instant now = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
+        long newVersion = current.version() + 1;
+        jdbc.update(
+                """
+                UPDATE discovery.discovered_devices
+                SET status = 'INCORPORATED', version = ?, reviewed_at = ?,
+                    reviewed_by_user_id = ?, inventory_asset_id = ?
+                WHERE job_id = ? AND discovered_device_id = ?
+                """,
+                newVersion,
+                Timestamp.from(now),
+                actorId,
+                assetId,
+                jobId,
+                discoveredDeviceId);
+        jdbc.update(
+                """
+                INSERT INTO discovery.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, 'DISCOVERED_DEVICE_INCORPORATED', '1.0', ?, 'DISCOVERY',
+                        'HUMAN_USER', ?, 'DISCOVERED_DEVICE', ?, ?, 'SUCCESS', ?,
+                        jsonb_build_object('previousStatus', 'UNREVIEWED',
+                                           'newStatus', 'INCORPORATED',
+                                           'assetId', ?::text), ?)
+                """,
+                UUID.randomUUID(),
+                Timestamp.from(now),
+                actorId,
+                discoveredDeviceId,
+                newVersion,
+                correlationId,
+                assetId,
+                Timestamp.from(now));
+        return jdbc.query(
+                        "SELECT * FROM discovery.discovered_devices WHERE discovered_device_id = ?",
+                        DiscoveredDeviceService::response,
+                        discoveredDeviceId)
+                .stream()
+                .findFirst()
+                .orElseThrow();
+    }
+
+    @Transactional
+    DiscoveredDeviceResponse incorporateNewAsset(
+            UUID jobId,
+            UUID discoveredDeviceId,
+            String name,
+            String assetType,
+            long expectedVersion,
+            UUID actorId,
+            UUID correlationId) {
+        DiscoveredDeviceResponse current = jdbc.query(
+                        """
+                        SELECT * FROM discovery.discovered_devices
+                        WHERE job_id = ? AND discovered_device_id = ?
+                        FOR UPDATE
+                        """,
+                        DiscoveredDeviceService::response,
+                        jobId,
+                        discoveredDeviceId)
+                .stream()
+                .findFirst()
+                .orElseThrow(DiscoveredDeviceNotFoundException::new);
+        if (current.version() != expectedVersion || !current.status().equals("UNREVIEWED")) {
+            throw new DiscoveredDeviceMutationConflictException();
+        }
+
+        UUID assetId = assetCreator.createActive(name, assetType, actorId, correlationId);
         Instant now = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
         long newVersion = current.version() + 1;
         jdbc.update(
