@@ -43,6 +43,8 @@ En `OLA4-DIS-008a`, `POST /discovery-jobs/{jobId}/discovered-devices/{discovered
 
 En `OLA4-DIS-008b`, `POST /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate-new-asset` mantiene `IT_OPERATOR`, sesión, CSRF, ocultación contextual y actor interno. Backend valida el body cerrado y el catálogo Inventory; frontend no concede autoridad y no puede seleccionar otro estado que `ACTIVE`.
 
+En `OLA5-AI-001a`, las tres operaciones `/ai/sources` requieren exclusivamente `SYSTEM_ADMIN`; el alta exige además CSRF. Backend valida media type, UTF-8, tamaño y nombre, obtiene el actor de la sesión y nunca expone contenido, filename, clave o ruta física. Frontend oculta el workspace a otros roles solo como UX y no sustituye `default deny`.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

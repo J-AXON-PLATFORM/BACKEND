@@ -124,3 +124,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Dos solicitudes concurrentes con versión `0` producen un éxito y un `409`, exactamente un activo y un evento de cada tipo. Toda repetición posterior devuelve `409` y no crea otro activo.
 - OpenAPI 7.1 conserva 7.0 byte a byte y añade solo `/incorporate-new-asset`; no existe migración, dependencia o cambio de workflow.
 - Frontend separa ambas acciones de incorporación, confirma la creación, no reintenta ni anticipa, conserva el formulario ante error y reconsulta la página exacta tras éxito o `409`.
+
+## OLA5-AI-001a
+
+- Solo `SYSTEM_ADMIN` registra, lista y consulta fuentes; backend exige sesión y CSRF en el alta y otros roles quedan denegados.
+- El alta acepta únicamente multipart cerrado `name|file`, `text/plain`, UTF-8 estricto y hasta 1 MiB; nombre normalizado, tamaño y SHA-256 corresponden a los bytes finales almacenados.
+- `DocumentStorage` usa raíz explícita, clave aleatoria opaca, rutas contenidas, no-follow, permisos privados, temporal exclusivo, fsync y rename atómico sin overwrite; nunca persiste ni expone filename o ruta física.
+- Metadata `PENDING`/versión `0` y `AI_SOURCE_REGISTERED` 1.0 se confirman atómicamente solo después del archivo; el evento contiene exclusivamente `{"status":"PENDING"}`. Un fallo filesystem no persiste nada y un fallo DB no publica metadata.
+- Bytes idénticos pueden producir fuentes distintas. Listado y detalle no descargan contenido ni exponen `storageKey`; la página usa 0/20/máximo 50 y orden `createdAt DESC, sourceId DESC`.
+- OpenAPI 7.2 conserva 7.1 byte a byte. Frontend usa parser cerrado, caché por usuario, confirmación, bloqueo de doble envío, sin retry/optimistic update, conserva formulario ante fallo y reconsulta REST tras éxito.

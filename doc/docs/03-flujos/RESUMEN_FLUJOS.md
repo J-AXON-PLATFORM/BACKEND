@@ -78,6 +78,10 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA4-DIS-008b` añade únicamente la alternativa de creación del paso 8: tras bloquear un dispositivo `UNREVIEWED`, Discovery solicita a la operación pública Inventory crear un activo siempre `ACTIVE`; ambos módulos confirman activo, outboxes, vínculo y transición en una transacción PostgreSQL. Repetir o competir por el mismo dispositivo no crea activos adicionales.
 
+## FL-AI-001 -- Fuente documental mínima
+
+`OLA5-AI-001a` ejecuta solo la entrada del flujo: `SYSTEM_ADMIN` confirma un original `text/plain` UTF-8 de hasta 1 MiB -> backend valida y publica bytes privados mediante `DocumentStorage` -> AI confirma metadata `PENDING` y `AI_SOURCE_REGISTERED` en una transacción -> UI reconsulta listado/detalle REST. Se detiene antes de descarga, extracción, chunks, embeddings, indexación, permisos de retrieval, consulta RAG o generación.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.

@@ -1,8 +1,16 @@
 # Historial de cambios
 
+## Fuentes documentales AI -- OLA5-AI-001a, 2026-10-30
+
+`AC-JAXON-088` autoriza en backend/frontend exclusivamente alta multipart de fuentes `text/plain` UTF-8 de hasta 1 MiB, almacenamiento filesystem mediante `DocumentStorage`, metadata y `AI_SOURCE_REGISTERED` propios del schema `ai`, listado/consulta `SYSTEM_ADMIN`, OpenAPI 7.2 y UI estricta. Backend se encuentra en implementación local; integración remota y frontend no se anticipan. Indexación, embeddings, retrieval/RAG, descarga, mutación, borrado/purga y Production quedan fuera.
+
+`AC-JAXON-087` sincroniza el cierre real de `OLA4-DIS-008b`: `BACKEND#53`, squash `d4bedc3d0a41fbc1c01906ea7fc982471f1e1296`, runs `40991703548`/`40992009318`; y `FRONTEND#28`, squash `149639bd7ac0d99cbf3e89e29623cbddbf6eeecd`, runs `40995034437`/`40995224824`, todos verdes `APPLICATION`. `automation-collector` permaneció intacto.
+
+---
+
 ## Creación de activo desde Discovered Device -- OLA4-DIS-008b, 2026-10-29
 
-La autorización específica de LUIS limita `OLA4-DIS-008b` a crear un único activo Inventory `ACTIVE` desde un dispositivo `UNREVIEWED` mediante `/incorporate-new-asset`, con body cerrado `name|assetType|expectedVersion`. Discovery bloquea primero el dispositivo e invoca el contrato público síncrono `AssetCreator`; activo, `ASSET_CREATED`, vínculo, transición y `DISCOVERED_DEVICE_INCORPORATED` se confirman en una transacción PostgreSQL. OpenAPI 7.1 añade solo esta operación y no se crea migración. Frontend e integración remota permanecen pendientes.
+La autorización específica de LUIS limita `OLA4-DIS-008b` a crear un único activo Inventory `ACTIVE` desde un dispositivo `UNREVIEWED` mediante `/incorporate-new-asset`, con body cerrado `name|assetType|expectedVersion`. Discovery bloquea primero el dispositivo e invoca el contrato público síncrono `AssetCreator`; activo, `ASSET_CREATED`, vínculo, transición y `DISCOVERED_DEVICE_INCORPORATED` se confirman en una transacción PostgreSQL. OpenAPI 7.1 añade solo esta operación y no se crea migración. El cierre remoto quedó verificado mediante `BACKEND#53` y `FRONTEND#28` y se registra retrospectivamente bajo `AC-JAXON-087`.
 
 Se sincroniza el cierre real de `OLA4-DIS-008a`: `BACKEND#52`, squash `c4b512cb0e33a741b8f642bdc729470268a67dbe`, runs `40910433400`/`40911013824`; y `FRONTEND#27`, squash `3020c61a9955ae1522d06993d1f44555ac3a4768`, runs `40956938534`/`40957203933`, todos verdes `APPLICATION`, con ramas eliminadas y `automation-collector` intacto.
 

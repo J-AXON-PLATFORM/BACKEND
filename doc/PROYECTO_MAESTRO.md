@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA4-DIS-008b`: creación de activo desde Discovery en implementación controlada, 2026-10-29
-> **Estado documental:** baseline v1 `DESIGN_READY`; `OLA4-DIS-008a` cerrado y creación de activo desde Discovery en implementación; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA5-AI-001a`: fuentes documentales AI en implementación controlada, 2026-10-30
+> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 4 cerrada hasta `OLA4-DIS-008b` y primer corte AI en implementación; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-29.
+- Fecha de última revisión: 2026-10-30.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal y Discovery hasta vínculo `INCORPORATED` a activo existente están integrados y verificados. `OLA4-DIS-008b` implementa de forma acotada creación de un activo `ACTIVE` durante la incorporación; polling periódico, daemon, otras mutaciones Inventory y Production quedan fuera del corte.
+- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal y Discovery hasta creación/vínculo `INCORPORATED` están integrados y verificados. `OLA5-AI-001a` inicia de forma acotada alta y consulta de fuentes documentales `PENDING`; indexación, embeddings, retrieval, generación y Production quedan fuera del corte.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con `OLA4-DIS-008a` integrado y verificado mediante `BACKEND#52` y `FRONTEND#27`. `OLA4-DIS-008b` es el incremento activo autorizado de forma específica: crea exclusivamente un activo nuevo y `ACTIVE` desde un dispositivo `UNREVIEWED`, mediante contrato público Inventory, transacción PostgreSQL común, ambos outboxes, OpenAPI 7.1 y UI explícita. No autoriza creación independiente o mutación posterior, relink, deduplicación, polling periódico, retries automáticos, daemon, SSE, purga ni Production. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con OLA 4 integrada y verificada hasta `OLA4-DIS-008b` mediante `BACKEND#53` y `FRONTEND#28`. `OLA5-AI-001a` es el incremento activo autorizado de forma específica: registra exclusivamente originales `text/plain` UTF-8 de hasta 1 MiB, metadata/outbox AI, listado/consulta `SYSTEM_ADMIN`, OpenAPI 7.2 y UI explícita. No autoriza indexación, embeddings, retrieval, generación, descarga, mutación, purga, SSE ni Production. `PRODUCTION_READY = NO`.

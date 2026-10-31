@@ -24,6 +24,8 @@ Primera vertical: 1) login `IT_OPERATOR`; 2) crear activo; 3) pre-registrar/enro
 `OLA4-DIS-008a` añade un segundo dispositivo `UNREVIEWED`, captura un UUID de activo `ACTIVE`, confirma “Incorporar”, reconsulta la misma página y verifica `INCORPORATED`, vínculo y outbox Discovery, demostrando que el activo y el outbox Inventory no cambian.
 
 `OLA4-DIS-008b` añade otro dispositivo `UNREVIEWED`, completa nombre y tipo, confirma la creación/incorporación y verifica mediante UI, REST y PostgreSQL el activo `ACTIVE`, el vínculo y ambos outboxes. Repetir la operación debe devolver conflicto sin segundo activo ni eventos duplicados.
+
+`OLA5-AI-001a` añade un journey separado `SYSTEM_ADMIN`: selecciona un `.txt` UTF-8 menor de 1 MiB, confirma el alta, observa metadata `PENDING`, reconsulta listado y detalle y verifica PostgreSQL, outbox y bytes/hash/permisos del storage. Cubre además rechazo frontend/backend de rol, CSRF, media type, UTF-8 y tamaño, conservación del formulario ante error y ausencia de descarga o exposición de claves/rutas.
 <!-- JAXON-CKP003:END -->
 
 
