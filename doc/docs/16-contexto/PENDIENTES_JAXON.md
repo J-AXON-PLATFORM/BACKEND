@@ -6,7 +6,7 @@
 
 ## Punto de reanudación
 
-No reabrir AC-JAXON-001..084 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
+No reabrir AC-JAXON-001..087 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
 
 La baseline técnica de OLA 0 fue completada y verificada. `OLA1-IAM-001a` incorpora la primera funcionalidad: tablas exclusivamente en `identity`, login, `/auth/me`, sesión opaca, bootstrap, límites de intentos, outbox productor, UI mínima y Playwright real. El bloque fue completado, integrado y verificado el 2026-10-11.
 
@@ -64,7 +64,9 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 
 `OLA4-DIS-008a` está completado, integrado y verificado. `BACKEND#52`, squash `c4b512cb0e33a741b8f642bdc729470268a67dbe`, tuvo runs verdes `40910433400`/`40911013824`; `FRONTEND#27`, squash `3020c61a9955ae1522d06993d1f44555ac3a4768`, `40956938534`/`40957203933`, todos `APPLICATION`.
 
-`OLA4-DIS-008b` es el corte activo autorizado específicamente en `backend` y `frontend`. Añade únicamente creación atómica de un activo `ACTIVE` desde un dispositivo `UNREVIEWED`, ambos outboxes, vínculo, OpenAPI 7.1 y formulario/refetch frontend. Otras creaciones o mutaciones Inventory, búsqueda global, relink, deduplicación, polling, retries, daemon, SSE, purga y Production siguen pendientes.
+`OLA4-DIS-008b` está completado, integrado y verificado. `BACKEND#53`, squash `d4bedc3d0a41fbc1c01906ea7fc982471f1e1296`, tuvo runs verdes `40991703548`/`40992009318`; `FRONTEND#28`, squash `149639bd7ac0d99cbf3e89e29623cbddbf6eeecd`, `40995034437`/`40995224824`, todos `APPLICATION`. `AC-JAXON-087` registra este cierre retrospectivo.
+
+`OLA5-AI-001a` es el corte activo bajo `AC-JAXON-088`. Añade exclusivamente alta `text/plain` UTF-8 de hasta 1 MiB mediante `DocumentStorage`, metadata/outbox en `ai`, listado/consulta `SYSTEM_ADMIN`, OpenAPI 7.2 y UI estricta. Indexación, embeddings, retrieval/RAG, descarga, mutación/borrado/purga, otros formatos, proveedor/modelo, dependencias, workflows y Production siguen pendientes.
 
 ## Decisiones cerradas adicionales en CKP-JAXON-005
 
@@ -117,7 +119,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - Estado remoto de health/contenedores verificado el 2026-10-08: `BACKEND#5`, squash `90c550714b861beb7d6388cf571744efcda4af8d`, tuvo runs verdes `37879426717` y `37879749721`; `FRONTEND#2`, squash `94d8ce2e8dd3309b7683f09041785c000f6fe21d`, tuvo runs verdes `37879426584` y `37880065517`. Backend valida health/probes, fixture PostgreSQL/pgvector, build/smoke y scans; frontend valida standalone, runtime sin gestores JavaScript, smoke y scan. No se publicaron imágenes, Packages ni artefactos.
 - Estado Compose Local verificado el 2026-10-09: `compose.yaml`, `.env.example` y `scripts/verify-compose.sh` implementan PostgreSQL/pgvector predeterminado y backend opcional, puertos loopback, volumen/red dedicados, configuración ficticia y smoke aislado. `Backend CI` conserva sus gates y añade validación/smoke Compose sin publicación ni despliegue.
 - Riesgo temporal frontend: las auditorías npm de producción y completa están limpias tras el refresh correctivo autorizado a `undici@8.12.2` y `zod@4.6.6`; el verificador conserva fallo cerrado. ESLint 9.39.5 sigue EOL y debe migrarse cuando la cadena oficial sea compatible con ESLint 10.
-- OpenAPI 7.1 es el contrato web en implementación y añade solo creación/incorporación atómica; OpenAPI 1.0--7.0, Discovery Job/Result 1.0 y Agent 1.0 permanecen inmutables. Otras creaciones o mutaciones de activos, gestión posterior de usuarios, MFA/SSO, reasignación/adjuntos/búsqueda/SSE de Support, otros tipos de tarea, spool general, retries, purga y PyInstaller siguen pendientes.
+- OpenAPI 7.2 es el contrato web en implementación y añade solo fuentes documentales AI; OpenAPI 1.0--7.1, Discovery Job/Result 1.0 y Agent 1.0 permanecen inmutables. Otras mutaciones de activos, gestión posterior de usuarios, MFA/SSO, reasignación/adjuntos/búsqueda/SSE de Support, indexación/RAG, otros tipos de tarea, spool general, retries, purga y PyInstaller siguen pendientes.
 - La observabilidad base backend produce logs JSON con correlación, métricas Prometheus y trazas W3C/OpenTelemetry opcionales. Continúan pendientes la infraestructura centralizada, dashboards, alertas, validación operativa de SLI/SLO y una estrategia que pueda aproximar la aspiración de conservar trazas de error sin prometerla mediante head sampling.
 - La reconciliación Collector genera un `correlationId` UUIDv4 explícito por candidato, lo instala de forma acotada en MDC y lo transporta al aviso SSE posterior al commit; no reutiliza contexto servlet ni asume propagación implícita entre hilos.
 - La baseline de `TEC-OPS-005a`/`TEC-OPS-006a` crea dumps custom y manifests verificables, restaura únicamente sobre un destino vacío y separado, y prueba escenarios positivos/negativos en recursos efímeros. Backup/DR Production continúa pendiente.
@@ -125,8 +127,8 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - `TEC-QLT-006a` cerró `BACKEND#41` y no requiere acción remota adicional. La corrección documental retrospectiva queda incluida en el alcance backend de `OLA3-SUP-005a`.
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
-- Siguiente paso remoto pendiente: integrar y verificar `BACKEND` para `OLA4-DIS-008b`; solo después crear la rama `frontend`, implementar e integrar su PR y limpiar ambas ramas. `automation-collector` permanece intacto.
-- Próxima acción técnica posterior: emitir el reporte final autorizado de `OLA4-DIS-008b` únicamente tras ambos cierres post-merge.
+- Siguiente paso remoto pendiente: integrar y verificar `BACKEND` para `OLA5-AI-001a`; solo después crear la rama `frontend`, implementar e integrar su PR y limpiar ambas ramas. `automation-collector` permanece intacto.
+- Próxima acción técnica posterior: emitir el reporte final autorizado de `OLA5-AI-001a` únicamente tras ambos cierres post-merge.
 - La primera vertical E2E ya fue alcanzada mediante incrementos autorizados; la continuación mantiene el mismo enfoque incremental y no implementa “todo J-AXON de una vez”.
 
 ## Reglas de continuidad

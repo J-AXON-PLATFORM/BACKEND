@@ -9,10 +9,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.transaction.TransactionException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 class ApiExceptionHandler {
@@ -63,8 +65,8 @@ class ApiExceptionHandler {
                 "MALFORMED_REQUEST"));
     }
 
-    @ExceptionHandler(DataAccessException.class)
-    ResponseEntity<ApiProblem> unavailable(DataAccessException exception, HttpServletRequest request) {
+    @ExceptionHandler({DataAccessException.class, TransactionException.class})
+    ResponseEntity<ApiProblem> unavailable(RuntimeException exception, HttpServletRequest request) {
         LOGGER.error("API persistence is unavailable", exception);
         return response(ApiProblem.of(
                 request,
@@ -72,6 +74,17 @@ class ApiExceptionHandler {
                 "Servicio no disponible",
                 "No fue posible completar la solicitud.",
                 "SERVICE_UNAVAILABLE"));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiProblem> uploadTooLarge(
+            MaxUploadSizeExceededException exception, HttpServletRequest request) {
+        return response(ApiProblem.of(
+                request,
+                HttpStatus.PAYLOAD_TOO_LARGE.value(),
+                "Fuente documental demasiado grande",
+                "El archivo no puede superar 1 MiB.",
+                "AI_SOURCE_TOO_LARGE"));
     }
 
     @ExceptionHandler(HumanUserService.UsernameConflictException.class)

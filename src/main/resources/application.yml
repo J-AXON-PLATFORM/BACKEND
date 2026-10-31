@@ -15,9 +15,16 @@ spring:
       fail-on-unknown-properties: true
   lifecycle:
     timeout-per-shutdown-phase: 20s
+  servlet:
+    multipart:
+      max-file-size: 1048576B
+      max-request-size: 1052672B
 
 jaxon:
   environment: ${JAXON_ENVIRONMENT:local}
+  ai:
+    document-storage:
+      root: ${JAXON_AI_DOCUMENT_STORAGE_ROOT:}
   identity:
     frontend-origin: ${JAXON_FRONTEND_ORIGIN:http://localhost:3000}
     bootstrap:

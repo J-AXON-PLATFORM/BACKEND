@@ -46,7 +46,7 @@ Si la respuesta es no, no cargarlo.
 
 ## Instancia J-AXON -- ruta inmediata CKP-JAXON-005
 
-Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..086 aprobados; OLA 3 está integrada y verificada hasta `OLA3-SUP-006a`; `OLA4-DIS-008a` está cerrado y `OLA4-DIS-008b` es el corte activo autorizado específicamente en `backend` y `frontend`; `PRODUCTION_READY = NO`.
+Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..088 aprobados; OLA 3 está integrada y verificada hasta `OLA3-SUP-006a`; OLA 4 está cerrada hasta `OLA4-DIS-008b` y `OLA5-AI-001a` es el corte activo autorizado específicamente en `backend` y `frontend`; `PRODUCTION_READY = NO`.
 
 Estado remoto histórico verificado el 2026-10-07: la organización oficial nueva `J-AXON-PLATFORM` contiene los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos canónicos `backend`, `frontend` y `automation-collector`; `backend` fue inicializado y publicado mediante `TEC-GIT-001C`.
 
@@ -64,6 +64,6 @@ Los bloques técnicos de OLA 0 fueron completados. Identity, Inventory, Agent/Co
 
 LUIS autorizó un flujo de continuación incremental: después de verificar cada tarea, el coordinador determina el siguiente incremento pequeño y prepara un alcance concreto. No interpretar ese flujo, `DESIGN_READY` ni `TEC-PLT-001a` como permiso ilimitado para implementar toda OLA 0. Crear o modificar repositorios, ramas, Issues, Projects, workflows, GitHub, código, despliegues o infraestructura Production fuera de un alcance concreto requiere autorización expresa de LUIS.
 
-Para cambios backend/frontend, los workflows clasifican `DOCS_ONLY|APPLICATION|PLATFORM_FULL` con fallback cerrado; el nivel completo conserva todos los gates históricos. `OLA4-DIS-008b` clasifica `APPLICATION` en ambos repositorios porque no modifica mecanismos de plataforma; una clasificación fail-closed más estricta también sería válida. `automation-collector` no cambia. Los rulesets permanecen pendientes por la limitación del plan para repositorios privados; PR y checks verdes se aplican como disciplina operativa, no como bloqueo técnico de GitHub.
+Para cambios backend/frontend, los workflows clasifican `DOCS_ONLY|APPLICATION|PLATFORM_FULL` con fallback cerrado; el nivel completo conserva todos los gates históricos. `OLA5-AI-001a` clasifica `APPLICATION` en ambos repositorios porque no modifica mecanismos de plataforma; una clasificación fail-closed más estricta también es válida. `automation-collector` no cambia. Los rulesets permanecen pendientes por la limitación del plan para repositorios privados; PR y checks verdes se aplican como disciplina operativa, no como bloqueo técnico de GitHub.
 
 Para trabajo remoto, cualquier cambio adicional en los tres repositorios debe analizarse y delimitarse en una tarea independiente, solicitando antes autorización expresa de LUIS. Las autorizaciones consumidas no cubren backlog, nuevas CI, reglas de protección, releases ni despliegue.

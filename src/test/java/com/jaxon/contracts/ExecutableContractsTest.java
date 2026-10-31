@@ -59,6 +59,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V60_ROOT = Path.of("doc/contracts/openapi/6.0");
     private static final Path OPENAPI_V70_ROOT = Path.of("doc/contracts/openapi/7.0");
     private static final Path OPENAPI_V71_ROOT = Path.of("doc/contracts/openapi/7.1");
+    private static final Path OPENAPI_V72_ROOT = Path.of("doc/contracts/openapi/7.2");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DISCOVERY_SCHEMA_BASE =
             "https://schemas.j-axon.invalid/discovery/1.0/";
@@ -339,6 +340,53 @@ class ExecutableContractsTest {
                                 "/paths/~1discovery-jobs~1{jobId}~1discovered-devices~1{discoveredDeviceId}~1incorporate-new-asset/post/responses")
                         .has("409"))
                 .isTrue();
+    }
+
+    @Test
+    void openApi72Preserves71AndAddsOnlyAiSourceOperations() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V72_ROOT.resolve("openapi.yaml").toString(), null, options);
+        OpenAPI api = result.getOpenAPI();
+        OpenAPI previous = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V71_ROOT.resolve("openapi.yaml").toString(), null, options)
+                .getOpenAPI();
+
+        assertThat(result.getMessages()).isEmpty();
+        assertThat(api).isNotNull();
+        assertThat(previous).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("7.2");
+        assertThat(api.getPaths().keySet())
+                .containsAll(previous.getPaths().keySet())
+                .hasSize(previous.getPaths().size() + 2)
+                .contains("/ai/sources", "/ai/sources/{sourceId}");
+        assertThat(operations(api).stream().map(Operation::getOperationId))
+                .containsExactlyInAnyOrder("createAiSource", "listAiSources", "getAiSource")
+                .doesNotHaveDuplicates();
+
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_V72_ROOT.resolve("openapi.yaml").toFile());
+        JsonNode schemas = root.path("components").path("schemas");
+        assertThat(textValues(schemas.at("/AiSourceCreateRequest/required")))
+                .containsExactly("name", "file");
+        assertThat(schemas.path("AiSourceCreateRequest").path("additionalProperties").asBoolean())
+                .isFalse();
+        assertThat(schemas.at("/AiSourceCreateRequest/properties/file/contentMediaType").asText())
+                .isEqualTo("text/plain");
+        assertThat(schemas.at("/AiSourceCreateRequest/properties/file/x-maxBytes").asInt())
+                .isEqualTo(1_048_576);
+        assertThat(schemas.path("AiSource").path("additionalProperties").asBoolean()).isFalse();
+        assertThat(textValues(schemas.path("AiSource").path("required")))
+                .containsExactlyInAnyOrder(
+                        "sourceId", "name", "mediaType", "sizeBytes", "sha256", "status",
+                        "version", "createdByUserId", "createdAt", "updatedAt")
+                .doesNotContain("storageKey", "filename", "content");
+        assertThat(schemas.at("/AiSource/properties/status/const").asText()).isEqualTo("PENDING");
+        assertThat(schemas.at("/AiSource/properties/sourceId/pattern").asText()).contains("-4");
+        assertThat(root.at("/components/parameters/SourceId/schema/pattern").asText()).contains("-4");
+        assertThat(schemas.path("AiSourcePage").path("additionalProperties").asBoolean()).isFalse();
+        assertThat(root.at("/paths/~1ai~1sources/post/responses").has("413")).isTrue();
     }
 
     @Test
@@ -1093,6 +1141,8 @@ class ExecutableContractsTest {
                 .isEqualTo("805c2fc9f8015fde0db161da39c9c58f54aae2c9789a8937f3cb324a2836a748");
         assertThat(sha256(Files.readAllBytes(OPENAPI_V42_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("ff4961375b266d9ca7dc217fb7993219efe166b77d2aed918f4d934607676c70");
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V71_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("15aea35382ed0eeb618d507ed5701a908296526b04414de062ca31a78d3f2404");
     }
 
     @Test

@@ -117,6 +117,7 @@
 - **RF-AI-011:** IA no modifica activos autónomamente.
 - **RF-AI-012:** IA no ejecuta comandos en Agents autónomamente.
 - **RF-AI-013:** indisponibilidad IA no bloquea Inventario, Collector o Soporte.
+- **Corte ejecutable OLA5-AI-001a:** materializa únicamente `RF-AI-001` para `SYSTEM_ADMIN`: alta de originales `text/plain` UTF-8 de hasta 1 MiB mediante `DocumentStorage`, metadata `PENDING`, outbox mínimo y listado/consulta REST. No implementa descarga, actualización, borrado/purga, otros formatos, chunking, embeddings, indexación, retrieval, generación o proveedor/modelo IA.
 
 ## MOD-07 -- Automatización y Notificaciones
 
