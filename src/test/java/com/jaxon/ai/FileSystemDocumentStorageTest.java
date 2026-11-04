@@ -36,6 +36,8 @@ class FileSystemDocumentStorageTest {
         assertThat(Files.getPosixFilePermissions(target))
                 .isEqualTo(PosixFilePermissions.fromString("rw-------"));
         assertThat(Files.list(root).toList()).containsExactly(target);
+        assertThat(storage.readVerified(stored.storageKey(), content.length, stored.sha256()))
+                .isEqualTo(content);
 
         storage.delete(stored.storageKey());
         assertThat(target).doesNotExist();
@@ -84,6 +86,29 @@ class FileSystemDocumentStorageTest {
 
         FileSystemDocumentStorage storage = new FileSystemDocumentStorage(real.toString());
         assertThatThrownBy(() -> storage.delete("../outside.txt"))
+                .isInstanceOf(DocumentStorageUnavailableException.class);
+    }
+
+    @Test
+    void refusesChangedMissingAndSymlinkedOriginals() throws Exception {
+        FileSystemDocumentStorage storage = new FileSystemDocumentStorage(root.toString());
+        DocumentStorage.StoredDocument stored = storage.store(new ByteArrayInputStream("original".getBytes()));
+        Path target = root.resolve(stored.storageKey());
+
+        Files.writeString(target, "changed!");
+        assertThatThrownBy(() -> storage.readVerified(
+                        stored.storageKey(), stored.sizeBytes(), stored.sha256()))
+                .isInstanceOf(DocumentStorageUnavailableException.class);
+
+        Files.delete(target);
+        assertThatThrownBy(() -> storage.readVerified(
+                        stored.storageKey(), stored.sizeBytes(), stored.sha256()))
+                .isInstanceOf(DocumentStorageUnavailableException.class);
+
+        Path real = Files.writeString(root.resolve("real.txt"), "original");
+        Files.createSymbolicLink(target, real);
+        assertThatThrownBy(() -> storage.readVerified(
+                        stored.storageKey(), stored.sizeBytes(), stored.sha256()))
                 .isInstanceOf(DocumentStorageUnavailableException.class);
     }
 }

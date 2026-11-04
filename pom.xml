@@ -21,6 +21,7 @@
         <jackson-bom.version>3.1.7</jackson-bom.version>
         <project.build.outputTimestamp>2026-10-08T00:00:00Z</project.build.outputTimestamp>
         <spring-modulith.version>2.1.1</spring-modulith.version>
+        <spring-ai.version>2.0.2</spring-ai.version>
         <swagger-parser.version>2.1.48</swagger-parser.version>
         <json-schema-validator.version>3.0.6</json-schema-validator.version>
         <bouncycastle.version>1.85</bouncycastle.version>
@@ -75,6 +76,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-transformers</artifactId>
+            <version>${spring-ai.version}</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>

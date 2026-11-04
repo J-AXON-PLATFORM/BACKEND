@@ -115,6 +115,34 @@ class FileSystemDocumentStorage implements DocumentStorage {
     }
 
     @Override
+    public byte[] readVerified(String storageKey, long expectedSize, String expectedSha256) {
+        requireRoot();
+        if (!STORAGE_KEY.matcher(storageKey).matches()
+                || expectedSize < 0
+                || expectedSize > MAX_BYTES
+                || expectedSha256 == null
+                || !expectedSha256.matches("^[0-9a-f]{64}$")) {
+            throw new DocumentStorageUnavailableException();
+        }
+        Path target = root.resolve(storageKey).normalize();
+        requireContained(target);
+        try {
+            requirePrivateRegularFile(target, expectedSize);
+            byte[] content;
+            try (InputStream input = Files.newInputStream(target, LinkOption.NOFOLLOW_LINKS)) {
+                content = input.readNBytes(Math.toIntExact(MAX_BYTES + 1));
+            }
+            if (content.length != expectedSize
+                    || !HexFormat.of().formatHex(sha256().digest(content)).equals(expectedSha256)) {
+                throw new DocumentStorageUnavailableException();
+            }
+            return content;
+        } catch (IOException | SecurityException exception) {
+            throw new DocumentStorageUnavailableException();
+        }
+    }
+
+    @Override
     public void delete(String storageKey) {
         requireRoot();
         if (!STORAGE_KEY.matcher(storageKey).matches()) throw new DocumentStorageUnavailableException();

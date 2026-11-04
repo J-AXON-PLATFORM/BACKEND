@@ -22,7 +22,10 @@ LABEL org.opencontainers.image.title="J-AXON Backend" \
       org.opencontainers.image.revision="${VCS_REF}" \
       org.opencontainers.image.source="https://github.com/J-AXON-PLATFORM/BACKEND"
 
-RUN groupadd --system --gid 10001 jaxon && \
+RUN apt-get update && \
+    apt-get install --yes --no-install-recommends libbrotli1=1.1.0-2ubuntu0.1 && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd --system --gid 10001 jaxon && \
     useradd --system --uid 10001 --gid jaxon --home-dir /app --shell /usr/sbin/nologin jaxon && \
     mkdir -p /app && \
     chown jaxon:jaxon /app

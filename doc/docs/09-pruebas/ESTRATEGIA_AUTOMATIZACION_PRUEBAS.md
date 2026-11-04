@@ -17,3 +17,12 @@ Automatizar pruebas sin depender de un proveedor de CI específico
 - Parallelization
 - Flaky test policy
 - Reports/artifacts
+
+## OLA5-AI-002a
+
+- Unitarias: chunking exacto `480/72`, límites estructurales/Unicode, hashes deterministas, normalización L2 y rechazo de embeddings inválidos.
+- Integración PostgreSQL 18/pgvector: solicitud/autorización/CSRF, concurrencia/versionado, lifecycle, chunks `vector(384)`, HNSW, outbox, rollback atómico, proveedor no disponible, recuperación de claim y descarte de resultado tardío.
+- Migración: upgrade desde `OLA5-AI-001a`, preservación de fuentes/eventos históricos y constraints nuevos.
+- Contrato: OpenAPI 8.0 válido, operación única nueva, body/respuesta cerrados y hash inmutable de OpenAPI 7.2.
+- Preflight externo: artefactos fijados, dimensión/norma/determinismo, offsets Unicode, recuperación semántica básica, latencia y throughput; pesos fuera del repositorio y sin artefactos publicados.
+- E2E frontend posterior: aceptación `202`, estados/refetch, errores `403|409|503`, bloqueo de doble envío y backend/PostgreSQL reales; no simular autorización como única evidencia.

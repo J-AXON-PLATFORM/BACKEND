@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -82,6 +83,28 @@ class AiSourceController {
                 .orElseGet(() -> notFound(request));
     }
 
+    @PostMapping(path = "/{sourceId}/index", consumes = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<?> index(
+            @PathVariable String sourceId,
+            @RequestBody IndexRequest body,
+            Authentication authentication,
+            HttpServletRequest request) {
+        UUID parsed = uuidV4(sourceId);
+        if (parsed == null) return notFound(request);
+        if (body == null || body.expectedVersion() == null || body.expectedVersion() < 0) {
+            return problem(
+                    request,
+                    HttpStatus.UNPROCESSABLE_CONTENT,
+                    "Versión no válida",
+                    "expectedVersion debe ser un entero mayor o igual que cero.",
+                    "VALIDATION_FAILED",
+                    List.of(new FieldError(
+                            "/expectedVersion", "INVALID_FIELD", "El valor no es válido.")));
+        }
+        return ResponseEntity.accepted().body(service.index(
+                parsed, body.expectedVersion(), actorId(authentication), correlationId()));
+    }
+
     @ExceptionHandler(InvalidAiSourceException.class)
     ResponseEntity<Problem> invalidSource(
             InvalidAiSourceException exception, HttpServletRequest request) {
@@ -126,6 +149,36 @@ class AiSourceController {
                 "Almacenamiento documental no disponible",
                 "No se pudo almacenar la fuente documental de forma segura.",
                 "DOCUMENT_STORAGE_UNAVAILABLE",
+                List.of());
+    }
+
+    @ExceptionHandler(EmbeddingProviderUnavailableException.class)
+    ResponseEntity<Problem> embeddingUnavailable(
+            EmbeddingProviderUnavailableException exception, HttpServletRequest request) {
+        return problem(
+                request,
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Indexación no disponible",
+                "El servicio local de indexación no está disponible.",
+                "AI_INDEXING_UNAVAILABLE",
+                List.of());
+    }
+
+    @ExceptionHandler(AiSourceNotFoundException.class)
+    ResponseEntity<Problem> sourceNotFound(
+            AiSourceNotFoundException exception, HttpServletRequest request) {
+        return notFound(request);
+    }
+
+    @ExceptionHandler(AiSourceIndexConflictException.class)
+    ResponseEntity<Problem> indexConflict(
+            AiSourceIndexConflictException exception, HttpServletRequest request) {
+        return problem(
+                request,
+                HttpStatus.CONFLICT,
+                "Fuente no indexable",
+                "La versión o el estado de la fuente ya no permite iniciar la indexación.",
+                "AI_SOURCE_INDEX_CONFLICT",
                 List.of());
     }
 
@@ -208,6 +261,8 @@ class AiSourceController {
             List<FieldError> errors) {}
 
     record FieldError(String pointer, String code, String message) {}
+
+    record IndexRequest(Long expectedVersion) {}
 
     private record PageRequest(int page, int size) {}
 }

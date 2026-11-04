@@ -25,6 +25,14 @@ jaxon:
   ai:
     document-storage:
       root: ${JAXON_AI_DOCUMENT_STORAGE_ROOT:}
+    embedding:
+      model-path: ${JAXON_AI_EMBEDDING_MODEL_PATH:}
+      tokenizer-path: ${JAXON_AI_EMBEDDING_TOKENIZER_PATH:}
+    indexing:
+      concurrency: ${JAXON_AI_INDEXING_CONCURRENCY:1}
+      poll-interval: ${JAXON_AI_INDEXING_POLL_INTERVAL:1s}
+      claim-timeout: ${JAXON_AI_INDEXING_CLAIM_TIMEOUT:10m}
+      batch-size: ${JAXON_AI_INDEXING_BATCH_SIZE:16}
   identity:
     frontend-origin: ${JAXON_FRONTEND_ORIGIN:http://localhost:3000}
     bootstrap:

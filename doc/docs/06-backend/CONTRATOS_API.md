@@ -110,6 +110,10 @@ El salto major fue autorizado tras confirmar ejecutablemente que el `const: UNRE
 
 `doc/contracts/openapi/7.2/openapi.yaml` conserva 7.1 y añade únicamente `POST|GET /ai/sources` y `GET /ai/sources/{sourceId}` para `SYSTEM_ADMIN`. El alta requiere CSRF y multipart cerrado `name|file`, exclusivamente `text/plain` UTF-8 de hasta 1 MiB; devuelve metadata `PENDING` sin contenido, filename, `storageKey` o ruta física. El listado usa página 0, tamaño 20, máximo 50 y orden `createdAt DESC, sourceId DESC`. No existe descarga, actualización, borrado, indexación, embeddings o retrieval. OpenAPI 1.0--7.1 permanece byte a byte inmutable.
 
+## Contrato breaking 8.0 -- OLA5-AI-002a
+
+`doc/contracts/openapi/8.0/openapi.yaml` conserva las operaciones de 7.2, amplía el estado cerrado de `AiSource` a `PENDING|INDEXING|READY|FAILED|DISABLED` y añade únicamente `POST /ai/sources/{sourceId}/index` para `SYSTEM_ADMIN`. La mutación requiere CSRF y body cerrado `expectedVersion`; devuelve `202` con la fuente `INDEXING`, `409` para versión/estado incompatible y `503` cuando el proveedor local no está disponible. REST es la fuente oficial; no añade retrieval, consulta semántica, generación, reindexación, retry, SSE, descarga, actualización o borrado. OpenAPI 1.0--7.2 permanece byte a byte inmutable.
+
 La respuesta contiene exclusivamente `jobId`, `executorId`, `scopeId`, `profile`, `status`, `createdAt`, `expiresAt`, `dispatchedAt` y `version`. `409` cubre combinación inválida o job no terminal y `503` conserva el job `PENDING` cuando falla la publicación, devolviendo en `Location` la URI exacta para consultarlo. OpenAPI 5.0 permanece byte a byte inmutable; REST sigue siendo fuente oficial y el canal del ejecutable continúa siendo SFTP/JSON Schema Discovery 1.0.
 
 ## Pendiente de diseño detallado

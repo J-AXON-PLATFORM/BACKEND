@@ -25,11 +25,12 @@ Esta carpeta es la fuente canónica de los contratos externos de J-AXON.
 - `openapi/7.0/openapi.yaml`: major que añade vínculo individual `INCORPORATED` con un activo existente y `ACTIVE`.
 - `openapi/7.1/openapi.yaml`: minor compatible que añade incorporación mediante creación de un activo `ACTIVE`.
 - `openapi/7.2/openapi.yaml`: minor compatible que añade alta y consulta de fuentes documentales de texto.
+- `openapi/8.0/openapi.yaml`: major que amplía estados de fuentes y añade solicitud manual de indexación asíncrona.
 - `openapi/manifest.tsv`: inventario declarativo fail-closed de integridad y compatibilidad OpenAPI.
 - `agent/1.0/`: contratos JSON Schema Draft 2020-12 para snapshot, Task y Result Agent.
 - `discovery/1.0/`: contrato JSON Schema Draft 2020-12 para Discovery Job.
 
-Los contratos usan versión `MAJOR.MINOR`, independiente de la versión del software. Un cambio incompatible requiere un nuevo major. Un minor nuevo debe aceptar las instancias válidas del minor anterior y coexistir con él durante la transición. OpenAPI 7.2 es el contrato actual; 1.0--7.1 permanecen históricos e inmutables.
+Los contratos usan versión `MAJOR.MINOR`, independiente de la versión del software. Un cambio incompatible requiere un nuevo major. Un minor nuevo debe aceptar las instancias válidas del minor anterior y coexistir con él durante la transición. OpenAPI 8.0 es el contrato actual; 1.0--7.2 permanecen históricos e inmutables.
 
 Los identificadores bajo `https://schemas.j-axon.invalid/` no son endpoints. Los validadores deben resolverlos únicamente contra recursos locales. `backend` conserva la fuente canónica; las copias en consumidores se sincronizan y verifican mediante el manifest SHA-256.
 
@@ -72,6 +73,8 @@ OpenAPI 6.0 permanece byte a byte inmutable. OpenAPI 7.0 amplía de forma breaki
 OpenAPI 7.0 permanece byte a byte inmutable. OpenAPI 7.1 añade únicamente `/incorporate-new-asset`, con body cerrado `name|assetType|expectedVersion`, para crear un activo `ACTIVE` mediante Inventory e incorporar el dispositivo en una operación atómica.
 
 OpenAPI 7.1 permanece byte a byte inmutable. OpenAPI 7.2 añade únicamente `POST|GET /ai/sources` y `GET /ai/sources/{sourceId}` para `SYSTEM_ADMIN`. El alta usa multipart `name|file`, admite exclusivamente `text/plain` UTF-8 de hasta 1 MiB y devuelve metadata `PENDING`; no añade descarga, indexación, embeddings, retrieval, actualización o borrado.
+
+OpenAPI 7.2 permanece byte a byte inmutable. OpenAPI 8.0 amplía de forma breaking el estado cerrado de `AiSource` a `PENDING|INDEXING|READY|FAILED|DISABLED` y añade únicamente `POST /ai/sources/{sourceId}/index`, con CSRF y body cerrado `expectedVersion`, para solicitar indexación asíncrona por `SYSTEM_ADMIN`. No añade retrieval, búsqueda semántica pública, generación, reindexación, retries, SSE, descarga, actualización o borrado.
 
 Agent 1.0, incluidos `task.schema.json`, `result.schema.json`, manifest y copia vendorizada, permanece byte a byte inmutable. Backend empaqueta los cuatro schemas existentes para validación runtime.
 

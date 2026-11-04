@@ -94,7 +94,7 @@ class AiSourcePersistence {
                 .findFirst();
     }
 
-    private static AiSourceResponse response(ResultSet resultSet) throws SQLException {
+    static AiSourceResponse response(ResultSet resultSet) throws SQLException {
         return new AiSourceResponse(
                 resultSet.getObject("id", UUID.class),
                 resultSet.getString("name"),
