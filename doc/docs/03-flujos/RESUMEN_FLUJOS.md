@@ -82,6 +82,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA5-AI-001a` ejecuta solo la entrada del flujo: `SYSTEM_ADMIN` confirma un original `text/plain` UTF-8 de hasta 1 MiB -> backend valida y publica bytes privados mediante `DocumentStorage` -> AI confirma metadata `PENDING` y `AI_SOURCE_REGISTERED` en una transacción -> UI reconsulta listado/detalle REST. Se detiene antes de descarga, extracción, chunks, embeddings, indexación, permisos de retrieval, consulta RAG o generación.
 
+`OLA5-AI-002a` añade solo la indexación: `SYSTEM_ADMIN` confirma fuente/versión -> AI confirma job, `INDEXING` y outbox en una transacción corta -> worker reclama un job -> verifica y lee el original -> tokeniza y divide en chunks `480/72` -> calcula batches de embeddings locales fuera de transacción -> publica atómicamente chunks, vector, estado `READY|FAILED` y outbox. Un claim expirado termina `FAILED` y cualquier resultado tardío se descarta; no existe retry, reindexación, retrieval o generación.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.

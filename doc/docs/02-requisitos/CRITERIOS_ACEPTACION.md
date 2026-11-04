@@ -133,3 +133,11 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Metadata `PENDING`/versión `0` y `AI_SOURCE_REGISTERED` 1.0 se confirman atómicamente solo después del archivo; el evento contiene exclusivamente `{"status":"PENDING"}`. Un fallo filesystem no persiste nada y un fallo DB no publica metadata.
 - Bytes idénticos pueden producir fuentes distintas. Listado y detalle no descargan contenido ni exponen `storageKey`; la página usa 0/20/máximo 50 y orden `createdAt DESC, sourceId DESC`.
 - OpenAPI 7.2 conserva 7.1 byte a byte. Frontend usa parser cerrado, caché por usuario, confirmación, bloqueo de doble envío, sin retry/optimistic update, conserva formulario ante fallo y reconsulta REST tras éxito.
+
+## OLA5-AI-002a
+
+- Solo `SYSTEM_ADMIN` solicita indexación manual de una fuente `PENDING` mediante sesión, CSRF y body cerrado `expectedVersion`; aceptación durable devuelve `202` y `INDEXING`, mientras `404|409|503` no crean trabajo incompatible.
+- El modelo es exactamente `intfloat/multilingual-e5-small` revisión `614241f622f53c4eeff9890bdc4f31cfecc418b3`, dimensión 384, prefijos E5 y normalización L2. Modelo y tokenizer externos se verifican por tamaño y SHA-256 streaming y nunca se publican.
+- El chunker determinista `token-480-overlap-72-v1` limita a 480 tokens con overlap 72 y persiste contenido/hash/rangos, identidad de modelo/tokenizer/chunker y vector `vector(384)`; existe índice HNSW coseno.
+- El job durable se reclama en transacción corta, ejecuta filesystem/tokenización/inferencia fuera de transacción y publica atómicamente todos los chunks, `READY|FAILED` y el outbox. Un claim expirado termina `FAILED`, no reintenta inferencia y un resultado tardío se descarta sin declararlo éxito.
+- OpenAPI 8.0 conserva 1.0--7.2 byte a byte, amplía el estado cerrado de `AiSource` y añade solo `POST /ai/sources/{sourceId}/index`. Frontend confirma, bloquea doble envío, no reintenta ni anticipa, conserva caché por usuario y reconsulta REST.

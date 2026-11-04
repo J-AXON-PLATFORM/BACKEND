@@ -1,8 +1,18 @@
 # Historial de cambios
 
+## Indexación local asíncrona AI -- OLA5-AI-002a, 2026-11-04
+
+`AC-JAXON-089` autoriza en backend/frontend exclusivamente indexación manual asíncrona `SYSTEM_ADMIN` de fuentes `PENDING`, lifecycle durable `PENDING -> INDEXING -> READY|FAILED`, chunking token `480/72`, embeddings locales fijados `intfloat/multilingual-e5-small` de 384 dimensiones, pgvector/HNSW, outbox, métricas agregadas, OpenAPI 8.0 y UI estricta. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN`; no está completado, integrado ni verificado.
+
+La validación local backend `PLATFORM_FULL` detectó de forma bloqueante `CVE-2026-111497` en `libbrotli1 1.1.0-2build2` de la imagen runtime heredada. La corrección acotada fija `1.1.0-2ubuntu0.1` en la misma etapa, sin cambiar la imagen base, workflows o producto; la reconstrucción posterior quedó limpia en Trivy HIGH/CRITICAL y repitió correctamente los smokes de contenedor/Compose y backup/restore. La evidencia remota continúa pendiente.
+
+Se sincroniza retrospectivamente el cierre real de `OLA5-AI-001a`: `BACKEND#54`, squash `313d9f73cc49961f4e42142cff1fce689e6b9009`, runs verdes `41149877754`/`41170449520`; `FRONTEND#29`, squash `7da1aad9f7e170047f0766433b0a7da330c885d3`, run definitivo de PR verde `41176507353`; y correctivo `FRONTEND#30`, squash `398f378623e2a7344b3d12735db3fa230f687415`, runs verdes `41178622529`/`41178932736`. El post-merge inicial `41176823480` falló cerrado y quedó corregido por `FRONTEND#30`. `AC-JAXON-088` está consumido y cerrado.
+
+---
+
 ## Fuentes documentales AI -- OLA5-AI-001a, 2026-10-30
 
-`AC-JAXON-088` autoriza en backend/frontend exclusivamente alta multipart de fuentes `text/plain` UTF-8 de hasta 1 MiB, almacenamiento filesystem mediante `DocumentStorage`, metadata y `AI_SOURCE_REGISTERED` propios del schema `ai`, listado/consulta `SYSTEM_ADMIN`, OpenAPI 7.2 y UI estricta. Backend se encuentra en implementación local; integración remota y frontend no se anticipan. Indexación, embeddings, retrieval/RAG, descarga, mutación, borrado/purga y Production quedan fuera.
+`AC-JAXON-088` autorizó en backend/frontend exclusivamente alta multipart de fuentes `text/plain` UTF-8 de hasta 1 MiB, almacenamiento filesystem mediante `DocumentStorage`, metadata y `AI_SOURCE_REGISTERED` propios del schema `ai`, listado/consulta `SYSTEM_ADMIN`, OpenAPI 7.2 y UI estricta. El corte quedó implementado, integrado y verificado mediante `BACKEND#54`, `FRONTEND#29` y `FRONTEND#30`; indexación, embeddings, retrieval/RAG, descarga, mutación, borrado/purga y Production quedaron fuera de ese incremento.
 
 `AC-JAXON-087` sincroniza el cierre real de `OLA4-DIS-008b`: `BACKEND#53`, squash `d4bedc3d0a41fbc1c01906ea7fc982471f1e1296`, runs `40991703548`/`40992009318`; y `FRONTEND#28`, squash `149639bd7ac0d99cbf3e89e29623cbddbf6eeecd`, runs `40995034437`/`40995224824`, todos verdes `APPLICATION`. `automation-collector` permaneció intacto.
 

@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA5-AI-001a`: fuentes documentales AI en implementación controlada, 2026-10-30
-> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 4 cerrada hasta `OLA4-DIS-008b` y primer corte AI en implementación; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA5-AI-002a`: indexación local asíncrona AI en implementación controlada, 2026-11-04
+> **Estado documental:** baseline v1 `DESIGN_READY`; `OLA5-AI-001a` verificado y segundo corte AI autorizado/en implementación; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-10-30.
+- Fecha de última revisión: 2026-11-04.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal y Discovery hasta creación/vínculo `INCORPORATED` están integrados y verificados. `OLA5-AI-001a` inicia de forma acotada alta y consulta de fuentes documentales `PENDING`; indexación, embeddings, retrieval, generación y Production quedan fuera del corte.
+- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, Discovery hasta creación/vínculo `INCORPORATED` y `OLA5-AI-001a` están integrados y verificados. `OLA5-AI-002a` implementa localmente solo indexación manual asíncrona, embeddings ONNX fijados y almacenamiento pgvector; retrieval, generación y Production quedan fuera del corte.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 4 integrada y verificada hasta `OLA4-DIS-008b` mediante `BACKEND#53` y `FRONTEND#28`. `OLA5-AI-001a` es el incremento activo autorizado de forma específica: registra exclusivamente originales `text/plain` UTF-8 de hasta 1 MiB, metadata/outbox AI, listado/consulta `SYSTEM_ADMIN`, OpenAPI 7.2 y UI explícita. No autoriza indexación, embeddings, retrieval, generación, descarga, mutación, purga, SSE ni Production. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con `OLA5-AI-001a` implementado, integrado y verificado mediante `BACKEND#54`, `FRONTEND#29` y el correctivo `FRONTEND#30`. `OLA5-AI-002a`, bajo `AC-JAXON-089`, es el incremento activo `AUTORIZADO` y `EN_IMPLEMENTACIÓN`: añade exclusivamente indexación manual asíncrona por `SYSTEM_ADMIN`, lifecycle durable, chunking token `480/72`, embeddings ONNX locales fijados de dimensión 384, pgvector/HNSW, outbox, observabilidad agregada, OpenAPI 8.0 y UI explícita. No autoriza retrieval, búsqueda pública, RAG/generación, reindexación, retries automáticos, otros modelos/proveedores, workflows, infraestructura ni Production. `PRODUCTION_READY = NO`.

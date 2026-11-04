@@ -45,6 +45,8 @@ En `OLA4-DIS-008b`, `POST /discovery-jobs/{jobId}/discovered-devices/{discovered
 
 En `OLA5-AI-001a`, las tres operaciones `/ai/sources` requieren exclusivamente `SYSTEM_ADMIN`; el alta exige además CSRF. Backend valida media type, UTF-8, tamaño y nombre, obtiene el actor de la sesión y nunca expone contenido, filename, clave o ruta física. Frontend oculta el workspace a otros roles solo como UX y no sustituye `default deny`.
 
+En `OLA5-AI-002a`, `POST /ai/sources/{sourceId}/index` requiere exclusivamente `SYSTEM_ADMIN`, sesión, CSRF y `expectedVersion`. Backend valida existencia/estado/versión bajo lock antes de disponibilidad del proveedor, nunca expone chunks, embeddings, rutas, failure detail o pesos y conserva default deny. Frontend solo presenta la acción como UX; no sustituye la autorización backend.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

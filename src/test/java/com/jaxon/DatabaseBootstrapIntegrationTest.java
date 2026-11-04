@@ -112,6 +112,8 @@ class DatabaseBootstrapIntegrationTest {
         assertThat(modularTables).containsExactly(
                 "ai.document_sources",
                 "ai.outbox_events",
+                "ai.source_chunks",
+                "ai.source_indexing_jobs",
                 "collector.accepted_snapshots",
                 "collector.accepted_task_results",
                 "collector.agent_tasks",

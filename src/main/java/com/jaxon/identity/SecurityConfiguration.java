@@ -60,6 +60,8 @@ class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/v1/users").hasRole("SYSTEM_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/ai/sources")
                         .hasRole("SYSTEM_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/ai/sources/*/index")
+                        .hasRole("SYSTEM_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/ai/sources", "/api/v1/ai/sources/*")
                         .hasRole("SYSTEM_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/discovery/scopes")

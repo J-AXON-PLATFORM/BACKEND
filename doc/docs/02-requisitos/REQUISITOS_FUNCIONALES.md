@@ -118,6 +118,7 @@
 - **RF-AI-012:** IA no ejecuta comandos en Agents autónomamente.
 - **RF-AI-013:** indisponibilidad IA no bloquea Inventario, Collector o Soporte.
 - **Corte ejecutable OLA5-AI-001a:** materializa únicamente `RF-AI-001` para `SYSTEM_ADMIN`: alta de originales `text/plain` UTF-8 de hasta 1 MiB mediante `DocumentStorage`, metadata `PENDING`, outbox mínimo y listado/consulta REST. No implementa descarga, actualización, borrado/purga, otros formatos, chunking, embeddings, indexación, retrieval, generación o proveedor/modelo IA.
+- **Corte ejecutable OLA5-AI-002a:** materializa `RF-AI-002` y la trazabilidad técnica de `RF-AI-003` únicamente para fuentes del corte anterior: solicitud manual `SYSTEM_ADMIN`, job durable, chunking token `480/72`, embeddings ONNX locales fijados de dimensión 384, pgvector/HNSW y estados `INDEXING|READY|FAILED`. No implementa retrieval, consultas, generación, reindexación, retries, otros modelos/proveedores ni gestión posterior de fuentes.
 
 ## MOD-07 -- Automatización y Notificaciones
 

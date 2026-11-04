@@ -20,11 +20,17 @@ class AiSourceService {
 
     private final DocumentStorage storage;
     private final AiSourcePersistence persistence;
+    private final AiIndexingService indexingService;
     private final Clock clock;
 
-    AiSourceService(DocumentStorage storage, AiSourcePersistence persistence, Clock clock) {
+    AiSourceService(
+            DocumentStorage storage,
+            AiSourcePersistence persistence,
+            AiIndexingService indexingService,
+            Clock clock) {
         this.storage = storage;
         this.persistence = persistence;
+        this.indexingService = indexingService;
         this.clock = clock;
     }
 
@@ -69,6 +75,11 @@ class AiSourceService {
 
     Optional<AiSourceResponse> find(UUID sourceId) {
         return persistence.find(sourceId);
+    }
+
+    AiSourceResponse index(
+            UUID sourceId, long expectedVersion, UUID actorId, UUID correlationId) {
+        return indexingService.request(sourceId, expectedVersion, actorId, correlationId);
     }
 
     private static String normalizeName(String input) {
