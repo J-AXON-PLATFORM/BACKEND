@@ -8,8 +8,12 @@ The official `v2.7.6` prebuilt images are not used because the blocking Trivy
 scan detected `CVE-2026-78667`, `CVE-2026-78669`, `CVE-2026-97031`, and
 `CVE-2026-116587` after
 their publication. The recipe starts from the exact signed upstream commit,
-uses Go 1.26.10, and updates only `golang.org/x/net` from `v0.59.0` to `v0.60.0`
-and `github.com/go-jose/go-jose/v4` from `v4.1.5` to `v4.1.6`.
+uses Go 1.26.11, and pins only `golang.org/x/net` from `v0.59.0` to `v0.62.0`
+and `github.com/go-jose/go-jose/v4` from `v4.1.5` to `v4.1.6`. Minimal version
+selection for `golang.org/x/net` `v0.62.0` also raises `golang.org/x/crypto`
+to `v0.58.0`, `golang.org/x/sync` to `v0.24.0`, `golang.org/x/sys` to `v0.49.0`,
+`golang.org/x/term` to `v0.47.0` and `golang.org/x/text` to `v0.43.0`; `go mod verify`
+checks the resulting graph.
 
 Supply-chain pins:
 
@@ -17,7 +21,7 @@ Supply-chain pins:
 - commit: `62ae9ba3957e9ed52b44a4f885e805e2d7b35972`;
 - source SHA-256: `310a475de6eeb1d3e43a4df0ada0091a042487afb2a749e18c5c2d8c9aedd80f`;
 - signer fingerprint: `A7B5CC667C573A1DCD115ECB935D2952DEC4EECF`;
-- Go builder: `golang:1.26.10-bookworm@sha256:5c3f3f28a273c9b61698b2d34f18375929790ab1f1d3835d032d21e2b31eae0c`;
+- Go builder: `golang:1.26.11-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0`;
 - cache builder: `moby/buildkit:buildx-stable-1@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea`;
 - runtime: `gcr.io/distroless/static-debian13:nonroot@sha256:e2e927ec666bae08560abb3c55d0659eceabb657f56b6782ab500a9fc7f555e3`.
 

@@ -23,7 +23,7 @@ LABEL org.opencontainers.image.title="J-AXON Backend" \
       org.opencontainers.image.source="https://github.com/J-AXON-PLATFORM/BACKEND"
 
 RUN apt-get update && \
-    apt-get install --yes --no-install-recommends libbrotli1=1.1.0-2ubuntu0.1 && \
+    apt-get install --yes --no-install-recommends libbrotli1=1.1.0-2ubuntu0.1 apt=2.8.4ubuntu0.1 libapt-pkg6.0t64=2.8.4ubuntu0.1 && \
     rm -rf /var/lib/apt/lists/* && \
     groupadd --system --gid 10001 jaxon && \
     useradd --system --uid 10001 --gid jaxon --home-dir /app --shell /usr/sbin/nologin jaxon && \
