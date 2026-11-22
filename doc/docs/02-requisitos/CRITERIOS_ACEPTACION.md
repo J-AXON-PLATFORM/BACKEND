@@ -141,3 +141,14 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - El chunker determinista `token-480-overlap-72-v1` limita a 480 tokens con overlap 72 y persiste contenido/hash/rangos, identidad de modelo/tokenizer/chunker y vector `vector(384)`; existe índice HNSW coseno.
 - El job durable se reclama en transacción corta, ejecuta filesystem/tokenización/inferencia fuera de transacción y publica atómicamente todos los chunks, `READY|FAILED` y el outbox. Un claim expirado termina `FAILED`, no reintenta inferencia y un resultado tardío se descarta sin declararlo éxito.
 - OpenAPI 8.0 conserva 1.0--7.2 byte a byte, amplía el estado cerrado de `AiSource` y añade solo `POST /ai/sources/{sourceId}/index`. Frontend confirma, bloquea doble envío, no reintenta ni anticipa, conserva caché por usuario y reconsulta REST.
+
+## OLA5-AI-003a
+
+- Solo `SYSTEM_ADMIN` ejecuta `POST /ai/retrieval` con sesión y CSRF; sin sesión `401`, sin CSRF o con otro rol `403`, siempre antes de calcular embeddings.
+- El body es cerrado: `query` string no blanca tras recortar espacios Unicode y caracteres de control o formato, máximo 2000 caracteres y entre 1 y 480 tokens; `limit` entero 1..10 con default 5. Propiedades desconocidas o tipos no exactos devuelven `422` sin reflejar la entrada; JSON mal formado, claves duplicadas o tokens finales `400`.
+- Solo se recuperan chunks de fuentes `READY` del modelo, revisión y tokenizer fijados; fuentes `PENDING|INDEXING|FAILED|DISABLED` u otro modelo nunca aparecen.
+- La recuperación es exacta por coseno y el orden total es similitud descendente, `sourceId` y ordinal ascendentes; dos consultas iguales producen la misma respuesta.
+- Sin evidencia se devuelve `200` con `results: []`. Cada resultado contiene solo `sourceId`, nombre, SHA-256 del original, `chunkId`, ordinal, rango de tokens, SHA-256 y contenido del fragmento y similitud finita en `[-1, 1]`; nunca rutas, `storageKey` ni vectores.
+- Proveedor no disponible o embedding inválido devuelve `503` `AI_RETRIEVAL_UNAVAILABLE`. Ninguna consulta persiste datos, muta fuentes ni crea outbox.
+- OpenAPI 8.1 conserva 8.0 byte a byte y es compatible. El benchmark local con modelo real y PostgreSQL/pgvector cumple p95 <= 500 ms.
+- Frontend muestra la vista solo a `SYSTEM_ADMIN`, valida la respuesta de forma cerrada, segmenta la caché por usuario, presenta similitud y referencia de fuente, y etiqueta los fragmentos como evidencia recuperada, no como respuesta generada.

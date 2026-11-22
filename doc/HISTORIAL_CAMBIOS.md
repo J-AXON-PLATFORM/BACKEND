@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Recuperación vectorial mínima AI -- OLA5-AI-003a, 2026-11-21
+
+`AC-JAXON-090` autoriza en backend/frontend exclusivamente `POST /api/v1/ai/retrieval` para `SYSTEM_ADMIN`, con CSRF, body cerrado `query|limit`, embedding local `query:` del modelo fijado, recuperación exacta por coseno solo sobre fuentes `READY` del mismo modelo/revisión/tokenizer, orden total determinista, referencias verificables, `503` cerrado ante indisponibilidad, lectura sin persistencia ni outbox, OpenAPI 8.1 compatible y vista frontend mínima. No hay migración, dependencia, workflow ni cambio en `automation-collector`. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN`; el backend está verificado localmente y la evidencia remota continúa pendiente.
+
+Se sincroniza retrospectivamente el cierre real de `OLA5-AI-002a`: `BACKEND#55`, squash `6c3af48adc6d5e47300e0f0594c12b6446ba727b`, runs verdes `41793828114`/`41796603333`; `FRONTEND#31`, squash `492f6489e0fab9710c90b3ec649087dca86ebfcb`, runs verdes `41838139926`/`41871072289`. Los cuatro runs clasificaron `PLATFORM_FULL`. Una ejecución E2E local falló antes de Playwright por una colisión efímera de puerto en la suite upstream SFTPGo y la reejecución sin cambios pasó. `AC-JAXON-089` está consumido y cerrado.
+
+---
+
 ## Indexación local asíncrona AI -- OLA5-AI-002a, 2026-11-04
 
 `AC-JAXON-089` autoriza en backend/frontend exclusivamente indexación manual asíncrona `SYSTEM_ADMIN` de fuentes `PENDING`, lifecycle durable `PENDING -> INDEXING -> READY|FAILED`, chunking token `480/72`, embeddings locales fijados `intfloat/multilingual-e5-small` de 384 dimensiones, pgvector/HNSW, outbox, métricas agregadas, OpenAPI 8.0 y UI estricta. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN`; no está completado, integrado ni verificado.
