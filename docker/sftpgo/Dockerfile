@@ -1,4 +1,4 @@
-ARG GO_IMAGE=docker.io/library/golang@sha256:5c3f3f28a273c9b61698b2d34f18375929790ab1f1d3835d032d21e2b31eae0c
+ARG GO_IMAGE=docker.io/library/golang@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0
 ARG RUNTIME_IMAGE=gcr.io/distroless/static-debian13@sha256:e2e927ec666bae08560abb3c55d0659eceabb657f56b6782ab500a9fc7f555e3
 
 FROM ${GO_IMAGE} AS source
@@ -21,9 +21,9 @@ RUN curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error \
 
 # These are the only upstream dependency changes. They fix CVE-2026-78669 and CVE-2026-116587.
 RUN GOFLAGS=-mod=mod go get \
-        golang.org/x/net@v0.60.0 \
+        golang.org/x/net@v0.62.0 \
         github.com/go-jose/go-jose/v4@v4.1.6 \
-    && test "$(go list -m -f '{{.Version}}' golang.org/x/net)" = "v0.60.0" \
+    && test "$(go list -m -f '{{.Version}}' golang.org/x/net)" = "v0.62.0" \
     && test "$(go list -m -f '{{.Version}}' github.com/go-jose/go-jose/v4)" = "v4.1.6" \
     && go mod verify
 
