@@ -88,11 +88,37 @@ verify_manifest() {
   )
 }
 
+prune_transient_entries() {
+  local locks_dir="${cache_dir}/ingest-locks"
+  local unexpected_entry
+
+  rm -f -- "${cache_dir}/cache.lock"
+  if [[ -L "${locks_dir}" ]]; then
+    printf 'SFTPGo build cache ingest-locks is a symlink.\n' >&2
+    return 1
+  fi
+  if [[ ! -e "${locks_dir}" ]]; then
+    return 0
+  fi
+  if [[ ! -d "${locks_dir}" ]]; then
+    printf 'SFTPGo build cache ingest-locks is not a directory.\n' >&2
+    return 1
+  fi
+  unexpected_entry="$(find "${locks_dir}" -mindepth 1 \( ! -type f -o -mindepth 2 \) -print -quit)"
+  if [[ -n "${unexpected_entry}" ]]; then
+    printf 'SFTPGo build cache ingest-locks contains an unexpected entry: %s\n' "${unexpected_entry}" >&2
+    return 1
+  fi
+  find "${locks_dir}" -mindepth 1 -maxdepth 1 -type f -delete
+  rmdir -- "${locks_dir}"
+}
+
 case "${operation}" in
   write) write_manifest ;;
   verify) verify_manifest ;;
+  prune-transient) prune_transient_entries ;;
   *)
-    printf 'Usage: %s <write|verify> <cache-directory>\n' "$0" >&2
+    printf 'Usage: %s <write|verify|prune-transient> <cache-directory>\n' "$0" >&2
     exit 1
     ;;
 esac
