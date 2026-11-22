@@ -84,6 +84,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA5-AI-002a` añade solo la indexación: `SYSTEM_ADMIN` confirma fuente/versión -> AI confirma job, `INDEXING` y outbox en una transacción corta -> worker reclama un job -> verifica y lee el original -> tokeniza y divide en chunks `480/72` -> calcula batches de embeddings locales fuera de transacción -> publica atómicamente chunks, vector, estado `READY|FAILED` y outbox. Un claim expirado termina `FAILED` y cualquier resultado tardío se descarta; no existe retry, reindexación, retrieval o generación.
 
+`OLA5-AI-003a` añade solo la recuperación: `SYSTEM_ADMIN` envía consulta/límite con CSRF -> backend autoriza y valida el body cerrado -> verifica proveedor y límite de tokens -> calcula embedding local `query:` -> una única sentencia de lectura filtra fuentes `READY` y modelo fijado, ordena exactamente por coseno, `sourceId` y ordinal -> devuelve fragmentos con referencias o lista vacía. No persiste la consulta, no emite eventos y se detiene antes de generación, chat o asistencia de soporte.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.

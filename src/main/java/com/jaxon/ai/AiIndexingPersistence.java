@@ -266,7 +266,7 @@ class AiIndexingPersistence {
                 resultSet.getString("sha256").trim());
     }
 
-    private static String vectorLiteral(float[] embedding) {
+    static String vectorLiteral(float[] embedding) {
         StringBuilder value = new StringBuilder("[");
         for (int index = 0; index < embedding.length; index++) {
             if (index > 0) value.append(',');

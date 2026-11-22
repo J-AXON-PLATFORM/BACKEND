@@ -26,3 +26,11 @@ Automatizar pruebas sin depender de un proveedor de CI específico
 - Contrato: OpenAPI 8.0 válido, operación única nueva, body/respuesta cerrados y hash inmutable de OpenAPI 7.2.
 - Preflight externo: artefactos fijados, dimensión/norma/determinismo, offsets Unicode, recuperación semántica básica, latencia y throughput; pesos fuera del repositorio y sin artefactos publicados.
 - E2E frontend posterior: aceptación `202`, estados/refetch, errores `403|409|503`, bloqueo de doble envío y backend/PostgreSQL reales; no simular autorización como única evidencia.
+
+## OLA5-AI-003a
+
+- Integración PostgreSQL 18/pgvector real: autorización `401|403`, CSRF, validación cerrada de body/tipos/límites/tokens, solo fuentes `READY` del modelo fijado, ranking y desempates deterministas, comparación con ranking exacto calculado por fuerza bruta, resultados vacíos, `503` sin mutaciones y lectura sin outbox.
+- Unitarias: conversión de distancia a similitud acotada y rechazo de valores no finitos.
+- Contrato: OpenAPI 8.1 válido, operación única nueva, request/response cerrados, compatibilidad `oasdiff` y hash congelado de 8.0.
+- Rendimiento: `AiRetrievalBenchmarkTest` se ejecuta solo con `-Djaxon.ai.retrieval.benchmark=true` y paths externos del modelo; mide p50/p95 HTTP con modelo real, PostgreSQL/pgvector y 20 000 chunks predeterminados.
+- Frontend: parser cerrado, estados de carga/vacío/error/resultados, caché por usuario y E2E Chromium multirepo con backend, PostgreSQL y modelo reales.

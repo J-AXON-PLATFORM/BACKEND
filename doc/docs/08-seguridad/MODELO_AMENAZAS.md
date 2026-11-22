@@ -25,3 +25,11 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Entradas: petición humana autenticada y original ya registrado; no existe endpoint de contenido, vector o retrieval.
 - Mitigaciones: `SYSTEM_ADMIN` + CSRF + versión optimista; lectura no-follow con tamaño/SHA-256; modelo/tokenizer externos fijados por tamaño y hash streaming; límites de 1 MiB, 480 tokens, batch y concurrencia; inferencia fuera de transacción; publicación atómica; claims expirados terminales y resultados tardíos descartados; logs/métricas sin contenido ni IDs de alta cardinalidad.
 - Riesgos residuales: capacidad/RSS del runtime local, protección operativa de los paths externos de modelo y tokenizer, y tuning HNSW/hardware Production. No se presentan como resueltos por este corte.
+
+## OLA5-AI-003a
+
+- Activos: fragmentos indexados, metadata pública de fuentes y consultas humanas.
+- Entradas: `POST /ai/retrieval` autenticado con CSRF; el contenido recuperado es dato no confiable.
+- Amenazas: acceso no autorizado, fuga de fuentes no elegibles, enumeración por mensajes de error, consumo excesivo por consultas largas, inyección de contenido en la UI y confusión entre evidencia y respuesta generada.
+- Mitigaciones: `SYSTEM_ADMIN` + CSRF antes del embedding; body cerrado, 2000 caracteres y 480 tokens; `limit` <= 10; filtro `READY` y de modelo dentro de la misma sentencia; respuesta allowlisted sin rutas, claves ni vectores; errores RFC 9457 sin eco; logs y métricas sin consulta ni identificadores; lectura sin persistencia; frontend renderiza texto escapado y rotula los fragmentos como evidencia recuperada.
+- Riesgos residuales: sin rate limiting específico para la operación; el escaneo exacto escala linealmente con el número de chunks y su p95 solo está medido localmente hasta 100 000 chunks; dimensionamiento Production pendiente.

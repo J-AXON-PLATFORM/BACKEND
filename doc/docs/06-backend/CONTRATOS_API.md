@@ -114,6 +114,10 @@ El salto major fue autorizado tras confirmar ejecutablemente que el `const: UNRE
 
 `doc/contracts/openapi/8.0/openapi.yaml` conserva las operaciones de 7.2, amplía el estado cerrado de `AiSource` a `PENDING|INDEXING|READY|FAILED|DISABLED` y añade únicamente `POST /ai/sources/{sourceId}/index` para `SYSTEM_ADMIN`. La mutación requiere CSRF y body cerrado `expectedVersion`; devuelve `202` con la fuente `INDEXING`, `409` para versión/estado incompatible y `503` cuando el proveedor local no está disponible. REST es la fuente oficial; no añade retrieval, consulta semántica, generación, reindexación, retry, SSE, descarga, actualización o borrado. OpenAPI 1.0--7.2 permanece byte a byte inmutable.
 
+## Contrato compatible 8.1 -- OLA5-AI-003a
+
+`doc/contracts/openapi/8.1/openapi.yaml` conserva todas las operaciones de 8.0 y añade únicamente `POST /ai/retrieval` (`retrieveAiChunks`) para `SYSTEM_ADMIN`, con CSRF. `AiRetrievalRequest` es cerrado (`query` obligatorio de 1..2000 caracteres con contenido no blanco tras recorte Unicode; claves duplicadas rechazadas con `400`; `limit` 1..10, default 5). `AiRetrievalResponse` contiene `limit` y como máximo 10 `AiRetrievalResult` cerrados con `sourceId`, `sourceName`, `sourceSha256`, `chunkId`, `ordinal`, `startToken`, `endToken`, `contentSha256`, `content` y `similarity` en `[-1, 1]`. Respuestas: `200` (posiblemente vacía), `400`, `401`, `403`, `422`, `500` y `503`. No añade generación, chat, persistencia de consultas, eventos ni SSE. OpenAPI 8.0 queda congelado con SHA-256 `c9072e6f0d317450bfc51c8939ca4755bf68808a005d86c8c4750c2a9c6de14b`; `oasdiff` no reporta cambios incompatibles 8.0 -> 8.1.
+
 La respuesta contiene exclusivamente `jobId`, `executorId`, `scopeId`, `profile`, `status`, `createdAt`, `expiresAt`, `dispatchedAt` y `version`. `409` cubre combinación inválida o job no terminal y `503` conserva el job `PENDING` cuando falla la publicación, devolviendo en `Location` la URI exacta para consultarlo. OpenAPI 5.0 permanece byte a byte inmutable; REST sigue siendo fuente oficial y el canal del ejecutable continúa siendo SFTP/JSON Schema Discovery 1.0.
 
 ## Pendiente de diseño detallado
