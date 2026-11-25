@@ -82,6 +82,11 @@ class AiSourceService {
         return indexingService.request(sourceId, expectedVersion, actorId, correlationId);
     }
 
+    AiSourceResponse disable(
+            UUID sourceId, long expectedVersion, UUID actorId, UUID correlationId) {
+        return persistence.disable(sourceId, expectedVersion, actorId, correlationId, now());
+    }
+
     private static String normalizeName(String input) {
         if (input == null) throw new InvalidAiSourceException("name", "INVALID_FIELD");
         String normalized = Normalizer.normalize(input, Normalizer.Form.NFKC)

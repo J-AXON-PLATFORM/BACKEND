@@ -86,6 +86,8 @@ Payload inicial no incluye usuarios/procesos/archivos/historial/software exhaust
 
 `OLA5-AI-003a` añade solo la recuperación: `SYSTEM_ADMIN` envía consulta/límite con CSRF -> backend autoriza y valida el body cerrado -> verifica proveedor y límite de tokens -> calcula embedding local `query:` -> una única sentencia de lectura filtra fuentes `READY` y modelo fijado, ordena exactamente por coseno, `sourceId` y ordinal -> devuelve fragmentos con referencias o lista vacía. No persiste la consulta, no emite eventos y se detiene antes de generación, chat o asistencia de soporte.
 
+`OLA5-AI-006a` añade solo la desautorización: `SYSTEM_ADMIN` confirma fuente/versión -> backend autoriza, valida el body cerrado y bloquea la fila -> verifica versión y estado `READY|FAILED` -> confirma `DISABLED`, nueva versión y `AI_SOURCE_DISABLED` en una transacción -> la siguiente recuperación ya no la considera por su filtro `READY` -> UI reconsulta REST. No borra evidencia ni reactiva, purga o reindexa.
+
 ## FL-E2E-003 -- Tarea a Agent
 
 1. Usuario autorizado solicita operación permitida.

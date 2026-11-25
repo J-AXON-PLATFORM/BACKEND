@@ -63,6 +63,59 @@ class AiSourcePersistence {
         return find(sourceId).orElseThrow();
     }
 
+    @Transactional
+    AiSourceResponse disable(
+            UUID sourceId, long expectedVersion, UUID actorId, UUID correlationId, Instant now) {
+        String[] state = jdbc.query(
+                        "SELECT status, version FROM ai.document_sources WHERE id = ? FOR UPDATE",
+                        (resultSet, index) -> new String[] {
+                            resultSet.getString("status"), Long.toString(resultSet.getLong("version"))
+                        },
+                        sourceId)
+                .stream()
+                .findFirst()
+                .orElseThrow(AiSourceNotFoundException::new);
+        String previousStatus = state[0];
+        long version = Long.parseLong(state[1]);
+        if (version != expectedVersion) throw new AiSourceDisableConflictException();
+        if (previousStatus.equals("DISABLED")) return find(sourceId).orElseThrow();
+        if (!previousStatus.equals("READY") && !previousStatus.equals("FAILED")) {
+            throw new AiSourceDisableConflictException();
+        }
+        AiSourceResponse disabled = jdbc.query(
+                """
+                UPDATE ai.document_sources
+                SET status = 'DISABLED', version = version + 1, updated_at = ?
+                WHERE id = ? AND status = ? AND version = ?
+                RETURNING id, name, media_type, size_bytes, sha256, status, version,
+                          created_by_user_id, created_at, updated_at
+                """,
+                (resultSet, index) -> response(resultSet),
+                Timestamp.from(now),
+                sourceId,
+                previousStatus,
+                version).getFirst();
+        jdbc.update(
+                """
+                INSERT INTO ai.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, 'AI_SOURCE_DISABLED', '1.0', ?, 'AI', 'HUMAN_USER', ?, 'AI_SOURCE', ?, ?,
+                        'SUCCESS', ?,
+                        jsonb_build_object('previousStatus', ?::text, 'newStatus', 'DISABLED'), ?)
+                """,
+                UUID.randomUUID(),
+                Timestamp.from(now),
+                actorId,
+                sourceId,
+                disabled.version(),
+                correlationId,
+                previousStatus,
+                Timestamp.from(now));
+        return disabled;
+    }
+
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     AiSourcePage findPage(int page, int size) {
         long total = jdbc.queryForObject("SELECT count(*) FROM ai.document_sources", Long.class);
@@ -108,3 +161,5 @@ class AiSourcePersistence {
                 resultSet.getTimestamp("updated_at").toInstant());
     }
 }
+
+final class AiSourceDisableConflictException extends RuntimeException {}
