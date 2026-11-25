@@ -29,6 +29,12 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.StreamReadFeature;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 @RestController
 @RequestMapping("/api/v1/ai/sources")
@@ -36,6 +42,11 @@ class AiSourceController {
 
     private static final Pattern UUID_V4 = Pattern.compile(
             "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$");
+
+    private static final ObjectMapper STRICT_JSON = JsonMapper.builder()
+            .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
+            .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+            .build();
 
     private final AiSourceService service;
 
@@ -103,6 +114,61 @@ class AiSourceController {
         }
         return ResponseEntity.accepted().body(service.index(
                 parsed, body.expectedVersion(), actorId(authentication), correlationId()));
+    }
+
+    @PostMapping(path = "/{sourceId}/disable", consumes = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<?> disable(
+            @PathVariable String sourceId,
+            @RequestBody byte[] body,
+            Authentication authentication,
+            HttpServletRequest request) {
+        UUID parsed = uuidV4(sourceId);
+        if (parsed == null) return notFound(request);
+        JsonNode node;
+        try {
+            node = STRICT_JSON.readTree(body);
+        } catch (JacksonException exception) {
+            return problem(
+                    request,
+                    HttpStatus.BAD_REQUEST,
+                    "Solicitud mal formada",
+                    "El cuerpo JSON no es válido.",
+                    "MALFORMED_REQUEST",
+                    List.of());
+        }
+        Long expectedVersion = expectedVersion(node);
+        if (expectedVersion == null) {
+            return problem(
+                    request,
+                    HttpStatus.UNPROCESSABLE_CONTENT,
+                    "Versión no válida",
+                    "El cuerpo debe contener únicamente expectedVersion como entero mayor o igual que cero.",
+                    "VALIDATION_FAILED",
+                    List.of(new FieldError(
+                            "/expectedVersion", "INVALID_FIELD", "El valor no es válido.")));
+        }
+        return ResponseEntity.ok(service.disable(
+                parsed, expectedVersion, actorId(authentication), correlationId()));
+    }
+
+    static Long expectedVersion(JsonNode node) {
+        if (node == null || !node.isObject() || node.size() != 1) return null;
+        JsonNode value = node.get("expectedVersion");
+        if (value == null || !value.isIntegralNumber() || !value.canConvertToLong()) return null;
+        long version = value.longValue();
+        return version >= 0 ? version : null;
+    }
+
+    @ExceptionHandler(AiSourceDisableConflictException.class)
+    ResponseEntity<Problem> disableConflict(
+            AiSourceDisableConflictException exception, HttpServletRequest request) {
+        return problem(
+                request,
+                HttpStatus.CONFLICT,
+                "Fuente no deshabilitable",
+                "La versión o el estado de la fuente ya no permite deshabilitarla.",
+                "AI_SOURCE_DISABLE_CONFLICT",
+                List.of());
     }
 
     @ExceptionHandler(InvalidAiSourceException.class)

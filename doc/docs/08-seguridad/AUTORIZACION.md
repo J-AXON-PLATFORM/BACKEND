@@ -49,6 +49,8 @@ En `OLA5-AI-002a`, `POST /ai/sources/{sourceId}/index` requiere exclusivamente `
 
 En `OLA5-AI-003a`, `POST /ai/retrieval` requiere exclusivamente `SYSTEM_ADMIN`, sesión y CSRF; el filtro de seguridad deniega antes de cualquier tokenización o embedding. La elegibilidad (`READY` y modelo fijado) se aplica dentro de la sentencia de recuperación, no como post-filtro. La respuesta expone solo metadata pública y fragmentos trazables; nunca `storageKey`, rutas, vectores ni detalles del proveedor, y los errores no reflejan la entrada. Frontend oculta la vista a otros roles solo como UX.
 
+En `OLA5-AI-006a`, `POST /ai/sources/{sourceId}/disable` requiere exclusivamente `SYSTEM_ADMIN`, sesión y CSRF. Backend oculta con `404` uniforme UUID inválido o fuente inexistente, obtiene el actor de la sesión, valida versión y estado bajo bloqueo y no expone `storageKey`, rutas ni contenido. Frontend muestra la acción solo como UX y no sustituye `default deny`.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

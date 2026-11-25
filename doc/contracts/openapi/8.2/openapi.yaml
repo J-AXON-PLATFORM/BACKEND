@@ -1,0 +1,121 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "8.2"
+  description: >-
+    Versión compatible que conserva byte a byte las operaciones de OpenAPI 8.1 y
+    añade únicamente la deshabilitación explícita de fuentes AI READY o FAILED.
+servers:
+  - url: /api/v1
+tags:
+  - { name: Authentication }
+  - { name: Identity }
+  - { name: Assets }
+  - { name: Agents }
+  - { name: Support }
+  - { name: Discovery }
+  - { name: AI }
+paths:
+  /auth/login: { $ref: "../8.1/openapi.yaml#/paths/~1auth~1login" }
+  /auth/me: { $ref: "../8.1/openapi.yaml#/paths/~1auth~1me" }
+  /auth/logout: { $ref: "../8.1/openapi.yaml#/paths/~1auth~1logout" }
+  /users: { $ref: "../8.1/openapi.yaml#/paths/~1users" }
+  /assets: { $ref: "../8.1/openapi.yaml#/paths/~1assets" }
+  /assets/{assetId}: { $ref: "../8.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D" }
+  /assets/{assetId}/technical-state: { $ref: "../8.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state" }
+  /assets/{assetId}/technical-state/events: { $ref: "../8.1/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events" }
+  /agents: { $ref: "../8.1/openapi.yaml#/paths/~1agents" }
+  /agents/{agentId}: { $ref: "../8.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D" }
+  /agents/{agentId}/ssh-key: { $ref: "../8.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key" }
+  /agents/{agentId}/activate: { $ref: "../8.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate" }
+  /agents/{agentId}/tasks: { $ref: "../8.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks" }
+  /agents/{agentId}/tasks/{taskId}: { $ref: "../8.1/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D" }
+  /tickets: { $ref: "../8.1/openapi.yaml#/paths/~1tickets" }
+  /tickets/technician-queue: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1technician-queue" }
+  /tickets/technician-queue/{ticketId}: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D" }
+  /tickets/technician-queue/{ticketId}/comments: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1comments" }
+  /tickets/technician-queue/{ticketId}/conversation: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1conversation" }
+  /tickets/technician-queue/{ticketId}/lifecycle: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1lifecycle" }
+  /tickets/{ticketId}: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D" }
+  /tickets/{ticketId}/comments: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1comments" }
+  /tickets/{ticketId}/claim: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1claim" }
+  /tickets/{ticketId}/priority: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1priority" }
+  /tickets/{ticketId}/status: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1status" }
+  /tickets/{ticketId}/resolve: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1resolve" }
+  /tickets/{ticketId}/close: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1close" }
+  /tickets/{ticketId}/reopen: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1reopen" }
+  /tickets/{ticketId}/lifecycle: { $ref: "../8.1/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1lifecycle" }
+  /discovery/scopes: { $ref: "../8.1/openapi.yaml#/paths/~1discovery~1scopes" }
+  /discovery/scopes/{scopeId}: { $ref: "../8.1/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D" }
+  /discovery/scopes/{scopeId}/status: { $ref: "../8.1/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D~1status" }
+  /discovery/executors: { $ref: "../8.1/openapi.yaml#/paths/~1discovery~1executors" }
+  /discovery/executors/{executorId}: { $ref: "../8.1/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D" }
+  /discovery/executors/{executorId}/ssh-key: { $ref: "../8.1/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1ssh-key" }
+  /discovery/executors/{executorId}/activate: { $ref: "../8.1/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1activate" }
+  /discovery/jobs: { $ref: "../8.1/openapi.yaml#/paths/~1discovery~1jobs" }
+  /discovery/jobs/{jobId}: { $ref: "../8.1/openapi.yaml#/paths/~1discovery~1jobs~1%7BjobId%7D" }
+  /discovery-jobs/{jobId}/discovered-devices: { $ref: "../8.1/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/ignore: { $ref: "../8.1/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices~1%7BdiscoveredDeviceId%7D~1ignore" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate: { $ref: "../8.1/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices~1%7BdiscoveredDeviceId%7D~1incorporate" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate-new-asset: { $ref: "../8.1/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices~1%7BdiscoveredDeviceId%7D~1incorporate-new-asset" }
+  /ai/sources: { $ref: "../8.1/openapi.yaml#/paths/~1ai~1sources" }
+  /ai/sources/{sourceId}: { $ref: "../8.1/openapi.yaml#/paths/~1ai~1sources~1%7BsourceId%7D" }
+  /ai/sources/{sourceId}/index: { $ref: "../8.1/openapi.yaml#/paths/~1ai~1sources~1%7BsourceId%7D~1index" }
+  /ai/retrieval: { $ref: "../8.1/openapi.yaml#/paths/~1ai~1retrieval" }
+  /ai/sources/{sourceId}/disable:
+    post:
+      tags: [AI]
+      operationId: disableAiSource
+      summary: Deshabilita una fuente AI READY o FAILED
+      description: >-
+        Operación exclusiva de SYSTEM_ADMIN. Transiciones efectivas READY -> DISABLED y
+        FAILED -> DISABLED con versión optimista; la fuente deja de participar en la
+        recuperación vectorial de inmediato sin borrar original, fragmentos ni embeddings.
+        Repetir sobre DISABLED con la versión vigente es un no-op sin evento; una versión
+        obsoleta, PENDING o INDEXING devuelven 409.
+      parameters:
+        - $ref: "#/components/parameters/SourceId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiSourceDisableRequest" }
+      responses:
+        "200":
+          description: Fuente DISABLED, tras la transición o como no-op vigente
+          content:
+            application/json:
+              schema: { $ref: "../8.0/openapi.yaml#/components/schemas/AiSource" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+components:
+  securitySchemes:
+    SessionCookie: { $ref: "../8.1/openapi.yaml#/components/securitySchemes/SessionCookie" }
+  parameters:
+    CsrfToken: { $ref: "../8.1/openapi.yaml#/components/parameters/CsrfToken" }
+    SourceId: { $ref: "../8.0/openapi.yaml#/components/parameters/SourceId" }
+  schemas:
+    AiSourceDisableRequest:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, minimum: 0 }
+      additionalProperties: false
+  responses:
+    BadRequest: { $ref: "../8.1/openapi.yaml#/components/responses/BadRequest" }
+    AuthenticationRequired: { $ref: "../8.1/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../8.1/openapi.yaml#/components/responses/Forbidden" }
+    NotFound: { $ref: "../8.0/openapi.yaml#/components/responses/NotFound" }
+    Conflict: { $ref: "../8.0/openapi.yaml#/components/responses/Conflict" }
+    ValidationFailed: { $ref: "../8.1/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../8.1/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../8.1/openapi.yaml#/components/responses/ServiceUnavailable" }
+security:
+  - SessionCookie: []

@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Deshabilitación mínima de fuentes AI -- OLA5-AI-006a, 2026-11-25
+
+`AC-JAXON-091` autoriza en backend/frontend exclusivamente `POST /api/v1/ai/sources/{sourceId}/disable` para `SYSTEM_ADMIN`, con CSRF, body cerrado `expectedVersion`, transiciones `READY|FAILED -> DISABLED`, no-op vigente, `409` para versión obsoleta o `PENDING|INDEXING`, evento `AI_SOURCE_DISABLED` atómico con payload `previousStatus|newStatus`, exclusión inmediata del retrieval sin borrar evidencia, OpenAPI 8.2 compatible y acción frontend explícita. La validación ejecutable confirmó que el outbox AI rechazaba el evento; LUIS autorizó una única migración que amplía solo esas restricciones. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN`.
+
+Se sincroniza retrospectivamente el cierre real de `OLA5-AI-003a`: `BACKEND#56` (`a7b0e7b6f4272cc789fa665c82bedcb48d0d3773`, runs `44970942336`/`44971217429`), `BACKEND#57` (`d9c683d8cb7cf2bed2c2aaaaf4ca16a8c73dbecd`, run fallido no relanzado `45063540936`, runs `45070162465`/`45072019867`) y `FRONTEND#33` (`7753720ca00c95e752eddc9597b732658721889b`, runs `45081609985`/`45081921049`), con los pines Alpine frontend autorizados. `AC-JAXON-090` está cerrado. `SPIKE-AI-GENERATION-001` se registra solo como análisis; su recomendación de generación no está aprobada.
+
+---
+
 ## Recuperación vectorial mínima AI -- OLA5-AI-003a, 2026-11-21
 
 `AC-JAXON-090` autoriza en backend/frontend exclusivamente `POST /api/v1/ai/retrieval` para `SYSTEM_ADMIN`, con CSRF, body cerrado `query|limit`, embedding local `query:` del modelo fijado, recuperación exacta por coseno solo sobre fuentes `READY` del mismo modelo/revisión/tokenizer, orden total determinista, referencias verificables, `503` cerrado ante indisponibilidad, lectura sin persistencia ni outbox, OpenAPI 8.1 compatible y vista frontend mínima. No hay migración, dependencia, workflow ni cambio en `automation-collector`. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN`; `BACKEND#56` integró el backend funcional mediante squash `a7b0e7b6f4272cc789fa665c82bedcb48d0d3773`, con runs verdes `44970942336`/`44971217429` `APPLICATION`; el frontend y su evidencia remota continúan pendientes.

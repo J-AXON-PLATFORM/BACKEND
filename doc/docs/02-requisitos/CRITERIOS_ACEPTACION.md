@@ -152,3 +152,13 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Proveedor no disponible o embedding inválido devuelve `503` `AI_RETRIEVAL_UNAVAILABLE`. Ninguna consulta persiste datos, muta fuentes ni crea outbox.
 - OpenAPI 8.1 conserva 8.0 byte a byte y es compatible. El benchmark local con modelo real y PostgreSQL/pgvector cumple p95 <= 500 ms.
 - Frontend muestra la vista solo a `SYSTEM_ADMIN`, valida la respuesta de forma cerrada, segmenta la caché por usuario, presenta similitud y referencia de fuente, y etiqueta los fragmentos como evidencia recuperada, no como respuesta generada.
+
+## OLA5-AI-006a
+
+- Solo `SYSTEM_ADMIN` ejecuta `POST /ai/sources/{sourceId}/disable` con sesión y CSRF; sin sesión `401`, sin CSRF o con otro rol `403`. UUID inválido y fuente inexistente devuelven el mismo `404`.
+- Body cerrado `{"expectedVersion": entero >= 0}`: propiedades desconocidas o tipos no exactos `422`; JSON mal formado, claves duplicadas o tokens finales `400`.
+- Únicas transiciones efectivas `READY|FAILED -> DISABLED`; versión obsoleta, `PENDING` o `INDEXING` devuelven `409`; `DISABLED` con versión vigente es no-op sin nueva versión ni evento.
+- La transición bloquea la fuente, incrementa una vez la versión y captura atómicamente `AI_SOURCE_DISABLED` 1.0 con payload exclusivo `previousStatus|newStatus`; un fallo del outbox no deja estado parcial. Dos solicitudes concurrentes producen una transición, un `409` y un único evento.
+- La fuente deshabilitada desaparece inmediatamente de `/ai/retrieval` y ya no admite indexación; original, chunks, embeddings, jobs y outbox histórico permanecen intactos.
+- Una única migración amplía solo las restricciones del outbox AI conservando las reglas históricas. OpenAPI 8.2 conserva 8.1 byte a byte y es compatible.
+- Frontend muestra "Deshabilitar" solo para `READY|FAILED`, exige confirmación, envía la versión observada, no reintenta ni anticipa estado, conserva errores accesibles, reconsulta listado y detalle tras éxito o `409` y no ofrece acciones sobre fuentes `DISABLED`.

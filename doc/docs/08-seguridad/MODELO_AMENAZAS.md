@@ -33,3 +33,11 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: acceso no autorizado, fuga de fuentes no elegibles, enumeración por mensajes de error, consumo excesivo por consultas largas, inyección de contenido en la UI y confusión entre evidencia y respuesta generada.
 - Mitigaciones: `SYSTEM_ADMIN` + CSRF antes del embedding; body cerrado, 2000 caracteres y 480 tokens; `limit` <= 10; filtro `READY` y de modelo dentro de la misma sentencia; respuesta allowlisted sin rutas, claves ni vectores; errores RFC 9457 sin eco; logs y métricas sin consulta ni identificadores; lectura sin persistencia; frontend renderiza texto escapado y rotula los fragmentos como evidencia recuperada.
 - Riesgos residuales: sin rate limiting específico para la operación; el escaneo exacto escala linealmente con el número de chunks y su p95 solo está medido localmente hasta 100 000 chunks; dimensionamiento Production pendiente.
+
+## OLA5-AI-006a
+
+- Activos: estado oficial de fuentes, elegibilidad para recuperación y evidencia histórica (original, chunks, embeddings, outbox).
+- Entradas: `POST /ai/sources/{sourceId}/disable` autenticado con CSRF.
+- Amenazas: desautorización no autorizada, carreras que dupliquen eventos o pierdan versiones, enumeración de fuentes y borrado accidental de evidencia.
+- Mitigaciones: `SYSTEM_ADMIN` + CSRF; `404` uniforme; body cerrado; bloqueo de fila y versión optimista; transacción única para estado y outbox; payload sin nombre, contenido ni rutas; ninguna operación borra datos; la recuperación conserva su filtro `READY` dentro de la sentencia.
+- Riesgos residuales: no hay reactivación ni purga en v1, por lo que un error humano exige un corte futuro; la retención física de fuentes deshabilitadas sigue pendiente de una política de purga aprobada.
