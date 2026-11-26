@@ -69,3 +69,5 @@ Después del restore se deben comprobar los ocho schemas, pgvector, historial Fl
 `OLA6-AUD-001c` reutiliza sin nueva configuración ese dispatcher y amplía su allowlist a `HUMAN_USER_CREATED`, `HUMAN_LOGIN_SUCCEEDED` y `HUMAN_LOGOUT_SUCCEEDED`, siempre 2.0. Los 1.0 y `HUMAN_LOGIN_FAILED` no se reclaman; una entrega `FAILED` conserva el mismo tratamiento operativo.
 
 `OLA6-AUD-001d` amplía la misma allowlist a `HUMAN_LOGIN_FAILED`, `AGENT_PUBLIC_KEY_REGISTERED` y `DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED`, siempre 2.0. No existe configuración, scheduler o cola adicional. Los `429`, no-ops y 1.0 no se reclaman; una entrega `FAILED` conserva el tratamiento operativo existente y nunca debe corregirse con SQL manual.
+
+`OLA6-AUD-001e` añade dispatchers propietarios Inventory y Collector. Sus propiedades son `JAXON_INVENTORY_AUDIT_DISPATCH_*` y `JAXON_COLLECTOR_AUDIT_DISPATCH_*`, con polling 1 s y batch 50 por defecto; las métricas `jaxon.inventory.audit.dispatch` y `jaxon.collector.audit.dispatch` usan los outcomes existentes. Solo reclaman sus eventos allowlisted 2.0; 1.0 y activaciones no-op no crean entrega. `FAILED` no se corrige con SQL manual.

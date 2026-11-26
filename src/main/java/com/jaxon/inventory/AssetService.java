@@ -68,7 +68,7 @@ class AssetService implements AssetLookup, AssetCreator {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'ASSET_CREATED', '1.0', ?, 'INVENTORY',
+                VALUES (?, 'ASSET_CREATED', '2.0', ?, 'INVENTORY',
                         'HUMAN_USER', ?, 'ASSET', ?, 0,
                         'SUCCESS', ?, '{}'::jsonb, ?)
                 """,

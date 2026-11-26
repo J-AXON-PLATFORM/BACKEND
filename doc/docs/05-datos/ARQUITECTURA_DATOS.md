@@ -29,6 +29,7 @@ Definir dominios, ownership, almacenamiento, movimiento y ciclo de vida.
 - En `OLA6-AUD-001b`, Identity posee `identity.outbox_deliveries` y despacha únicamente sus `HUMAN_USER_CREATED` 2.0; Audit posee `audit_reporting.audit_events` y amplía su catálogo mediante `AuditFactRecorder`. No existe SQL cross-schema entre módulos. El usuario y su evento 2.0 se confirman atómicamente; la materialización posterior conserva idempotencia y no altera la operación ya confirmada.
 - En `OLA6-AUD-001c`, el mismo dispatcher y tabla de entregas Identity incluyen solo login/logout exitosos 2.0. La sesión y su evento se confirman atómicamente en login; la eliminación de sesión y su evento se confirman atómicamente en logout. Los eventos 1.0 no se mutan ni reclaman.
 - En `OLA6-AUD-001d`, esa infraestructura incluye solo login fallido y registros efectivos de claves Agent/Executor 2.0. Intento/evento o clave/evento se confirman atómicamente; `429`, no-ops y rechazos no crean hechos adicionales. Los eventos 1.0 no se mutan ni reclaman.
+- En `OLA6-AUD-001e`, Inventory y Collector poseen tablas de entrega y dispatchers separados para sus futuros `ASSET_CREATED`, `AGENT_PRE_REGISTERED` y `AGENT_ACTIVATED` 2.0. Cada agregado y evento se confirma atómicamente; Audit recibe solo `AuditFactRecorder`, sin SQL cross-module. 1.0 permanece byte a byte y sin claim.
 
 ## Consistencia
 

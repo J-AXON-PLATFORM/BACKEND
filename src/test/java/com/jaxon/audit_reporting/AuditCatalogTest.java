@@ -188,4 +188,40 @@ class AuditCatalogTest {
             assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
         }
     }
+
+    @Test
+    void acceptsOnlyClosedInventoryAndCollectorFacts() {
+        UUID actor = UUID.randomUUID();
+        assertThat(AuditCatalog.accepts(fact(
+                        "ASSET_CREATED", "2.0", "INVENTORY", "HUMAN_USER", actor,
+                        "ASSET", 0L, "SUCCESS", Map.of())))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "AGENT_PRE_REGISTERED", "2.0", "COLLECTOR", "HUMAN_USER", actor,
+                        "AGENT", 0L, "SUCCESS", Map.of())))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "AGENT_ACTIVATED", "2.0", "COLLECTOR", "HUMAN_USER", actor,
+                        "AGENT", 1L, "SUCCESS", Map.of())))
+                .isTrue();
+
+        for (AuditFact invalid : new AuditFact[] {
+            fact("ASSET_CREATED", "1.0", "INVENTORY", "HUMAN_USER", actor,
+                    "ASSET", 0L, "SUCCESS", Map.of()),
+            fact("ASSET_CREATED", "2.0", "COLLECTOR", "HUMAN_USER", actor,
+                    "ASSET", 0L, "SUCCESS", Map.of()),
+            fact("ASSET_CREATED", "2.0", "INVENTORY", "HUMAN_USER", null,
+                    "ASSET", 0L, "SUCCESS", Map.of()),
+            fact("ASSET_CREATED", "2.0", "INVENTORY", "HUMAN_USER", actor,
+                    "ASSET", 1L, "SUCCESS", Map.of()),
+            fact("AGENT_PRE_REGISTERED", "2.0", "COLLECTOR", "HUMAN_USER", actor,
+                    "AGENT", 1L, "SUCCESS", Map.of()),
+            fact("AGENT_ACTIVATED", "2.0", "COLLECTOR", "HUMAN_USER", actor,
+                    "AGENT", 0L, "SUCCESS", Map.of()),
+            fact("AGENT_ACTIVATED", "2.0", "COLLECTOR", "HUMAN_USER", actor,
+                    "AGENT", 1L, "SUCCESS", Map.of("status", "ACTIVE"))
+        }) {
+            assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
+        }
+    }
 }

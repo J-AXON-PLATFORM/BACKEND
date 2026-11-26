@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
 import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -25,6 +26,23 @@ class AuditMigrationIntegrationTest {
     static final PostgreSQLContainer postgres = new PostgreSQLContainer(
             DockerImageName.parse("jaxon-postgres-pgvector-test:18.6-0.8.6")
                     .asCompatibleSubstituteFor("postgres"));
+
+    @BeforeEach
+    void resetDatabase() {
+        Flyway.configure()
+                .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
+                .locations("classpath:db/migration")
+                .cleanDisabled(false)
+                .load()
+                .clean();
+        JdbcTemplate jdbc = new JdbcTemplate(
+                new DriverManagerDataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword()));
+        jdbc.execute(
+                """
+                DROP SCHEMA IF EXISTS inventory, discovery, collector, support, ai, identity,
+                    automation, audit_reporting CASCADE
+                """);
+    }
 
     @Test
     void upgradesFromAiSourceDisableAndEnforcesDeliveryAndAuditRules() {
@@ -199,6 +217,76 @@ class AuditMigrationIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_reporting.audit_events", Integer.class)).isEqualTo(7);
     }
 
+    @Test
+    void upgradesInventoryAndCollectorWithoutChangingHistoricalEventsAndEnforcesNewCatalogs() {
+        migrate("20261129010000");
+        JdbcTemplate jdbc = new JdbcTemplate(
+                new DriverManagerDataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword()));
+        UUID actorId = UUID.randomUUID();
+        UUID assetId = UUID.randomUUID();
+        UUID agentId = UUID.randomUUID();
+        UUID assetEvent = UUID.randomUUID();
+        UUID agentEvent = UUID.randomUUID();
+        jdbc.update(
+                """
+                INSERT INTO inventory.assets
+                    (id, name, asset_type, status, created_at, updated_at, version)
+                VALUES (?, 'Historical asset', 'DESKTOP', 'ACTIVE', ?, ?, 0)
+                """,
+                assetId, Timestamp.from(NOW), Timestamp.from(NOW));
+        jdbc.update(
+                """
+                INSERT INTO collector.agents
+                    (id, asset_id, status, created_at, updated_at, version)
+                VALUES (?, ?, 'PENDING', ?, ?, 0)
+                """,
+                agentId, assetId, Timestamp.from(NOW), Timestamp.from(NOW));
+        insertProducerEvent(jdbc, "inventory", assetEvent, "ASSET_CREATED", assetId, 0, actorId);
+        insertProducerEvent(jdbc, "collector", agentEvent, "AGENT_PRE_REGISTERED", agentId, 0, actorId);
+
+        migrate(null);
+
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT event_version, payload::text AS payload, status, attempts
+                        FROM inventory.outbox_events WHERE event_id = ?
+                        """,
+                        assetEvent))
+                .containsEntry("event_version", "1.0")
+                .containsEntry("payload", "{}")
+                .containsEntry("status", "PENDING")
+                .containsEntry("attempts", 0);
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT event_version, payload::text AS payload, status, attempts
+                        FROM collector.outbox_events WHERE event_id = ?
+                        """,
+                        agentEvent))
+                .containsEntry("event_version", "1.0")
+                .containsEntry("payload", "{}")
+                .containsEntry("status", "PENDING")
+                .containsEntry("attempts", 0);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory.outbox_deliveries", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM collector.outbox_deliveries", Integer.class)).isZero();
+
+        insertAuditFact(jdbc, "ASSET_CREATED", "INVENTORY", "ASSET", 0);
+        insertAuditFact(jdbc, "AGENT_PRE_REGISTERED", "COLLECTOR", "AGENT", 0);
+        insertAuditFact(jdbc, "AGENT_ACTIVATED", "COLLECTOR", "AGENT", 1);
+        assertThatThrownBy(() -> insertAuditFact(jdbc, "ASSET_CREATED", "INVENTORY", "ASSET", 1))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertAuditFact(jdbc, "AGENT_ACTIVATED", "COLLECTOR", "AGENT", 0))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+        insertProducerDelivery(jdbc, "inventory", assetEvent, "FAILED", 10, null, "AUDIT_CONFLICT");
+        insertProducerDelivery(jdbc, "collector", agentEvent, "DELIVERED", 1, Timestamp.from(NOW), null);
+        assertThatThrownBy(() ->
+                        insertProducerDelivery(jdbc, "inventory", assetEvent, "FAILED", 9, null, "AUDIT_CONFLICT"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() ->
+                        insertProducerDelivery(jdbc, "collector", agentEvent, "PENDING", 10, null, "AUDIT_UNAVAILABLE"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
     private void migrate(String target) {
         var configuration = Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
@@ -283,5 +371,81 @@ class AuditMigrationIntegrationTest {
                 result,
                 UUID.randomUUID(),
                 metadata);
+    }
+
+    private static void insertProducerEvent(
+            JdbcTemplate jdbc,
+            String schema,
+            UUID eventId,
+            String eventType,
+            UUID resourceId,
+            long resourceVersion,
+            UUID actorId) {
+        jdbc.update(
+                """
+                INSERT INTO %s.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, ?, '1.0', ?, ?, 'HUMAN_USER', ?, ?, ?, ?,
+                        'SUCCESS', ?, '{}'::jsonb, ?)
+                """.formatted(schema),
+                eventId,
+                eventType,
+                Timestamp.from(NOW),
+                schema.toUpperCase(java.util.Locale.ROOT),
+                actorId,
+                "inventory".equals(schema) ? "ASSET" : "AGENT",
+                resourceId,
+                resourceVersion,
+                UUID.randomUUID(),
+                Timestamp.from(NOW));
+    }
+
+    private static void insertProducerDelivery(
+            JdbcTemplate jdbc,
+            String schema,
+            UUID eventId,
+            String status,
+            int attempts,
+            Timestamp deliveredAt,
+            String error) {
+        jdbc.update(
+                """
+                INSERT INTO %s.outbox_deliveries
+                    (event_id, consumer, status, attempts, next_attempt_at, delivered_at,
+                     last_error_code, updated_at)
+                VALUES (?, 'AUDIT', ?, ?, ?, ?, ?, ?)
+                """.formatted(schema),
+                eventId,
+                status,
+                attempts,
+                Timestamp.from(NOW),
+                deliveredAt,
+                error,
+                Timestamp.from(NOW));
+    }
+
+    private static void insertAuditFact(
+            JdbcTemplate jdbc, String eventType, String producer, String resourceType, long resourceVersion) {
+        jdbc.update(
+                """
+                INSERT INTO audit_reporting.audit_events
+                    (audit_event_id, source_event_id, event_type, event_version, producer_module,
+                     occurred_at, actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, metadata)
+                VALUES (?, ?, ?, '2.0', ?, ?, 'HUMAN_USER', ?, ?, ?, ?,
+                        'SUCCESS', ?, '{}'::jsonb)
+                """,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                eventType,
+                producer,
+                Timestamp.from(NOW),
+                UUID.randomUUID(),
+                resourceType,
+                UUID.randomUUID(),
+                resourceVersion,
+                UUID.randomUUID());
     }
 }

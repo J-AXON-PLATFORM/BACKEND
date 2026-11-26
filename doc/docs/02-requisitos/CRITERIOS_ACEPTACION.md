@@ -198,3 +198,11 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Username, IP, credenciales, tokens, CSRF, hashes/rate-limit keys, claves públicas, fingerprints, comentarios OpenSSH y metadata adicional se rechazan en Java y PostgreSQL.
 - El dispatcher reclama solo la allowlist 2.0, conserva `SKIP LOCKED`, retries, errores, idempotencia, conflicto e aislamiento; todo 1.0 permanece intacto y sin entrega `AUDIT`.
 - Se crean exactamente dos migraciones. OpenAPI 8.3, endpoints, frontend, automation-collector, dependencias y workflows no cambian.
+
+## OLA6-AUD-001e
+
+- Cada alta futura de activo confirma atómicamente `ASSET_CREATED` 2.0 con productor `INVENTORY`, actor humano, recurso `ASSET`, versión `0`, `SUCCESS` y `{}`.
+- Cada pre-registro y activación efectiva futura confirma `AGENT_PRE_REGISTERED` 2.0 versión `0` o `AGENT_ACTIVATED` 2.0 versión `1`, con productor `COLLECTOR`, actor humano, recurso `AGENT`, `SUCCESS` y `{}`; el no-op de activación no duplica evento.
+- Inventory y Collector controlan entregas y dispatchers independientes, reclaman solo su allowlist 2.0 con `SKIP LOCKED`, 10 intentos, backoff+jitter, idempotencia y conflicto sin sobrescritura.
+- Los eventos 1.0 permanecen byte a byte y sin entrega `AUDIT`; Audit conserva catálogo cerrado, append-only y regresión AI/Identity.
+- Se crean exactamente tres migraciones. OpenAPI 8.3, endpoints, frontend, automation-collector, dependencias y workflows no cambian.

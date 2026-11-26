@@ -62,7 +62,7 @@ class AgentService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'AGENT_PRE_REGISTERED', '1.0', ?, 'COLLECTOR',
+                VALUES (?, 'AGENT_PRE_REGISTERED', '2.0', ?, 'COLLECTOR',
                         'HUMAN_USER', ?, 'AGENT', ?, 0,
                         'SUCCESS', ?, '{}'::jsonb, ?)
                 """,
@@ -150,7 +150,7 @@ class AgentService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'AGENT_ACTIVATED', '1.0', ?, 'COLLECTOR',
+                VALUES (?, 'AGENT_ACTIVATED', '2.0', ?, 'COLLECTOR',
                         'HUMAN_USER', ?, 'AGENT', ?, ?,
                         'SUCCESS', ?, '{}'::jsonb, ?)
                 """,

@@ -107,7 +107,10 @@ class DatabaseBootstrapIntegrationTest {
                         "20261028000000",
                         "20261029000000",
                         "20261030000000",
-                        "20261031000000");
+                        "20261031000000",
+                        "20261130000000",
+                        "20261130010000",
+                        "20261130020000");
         assertThat(modularSchemas).containsExactlyInAnyOrderElementsOf(EXPECTED_SCHEMAS);
         assertThat(modularTables).containsExactly(
                 "ai.document_sources",
@@ -120,6 +123,7 @@ class DatabaseBootstrapIntegrationTest {
                 "collector.accepted_task_results",
                 "collector.agent_tasks",
                 "collector.agents",
+                "collector.outbox_deliveries",
                 "collector.outbox_events",
                 "collector.snapshot_ingestions",
                 "collector.task_result_ingestions",
@@ -141,6 +145,7 @@ class DatabaseBootstrapIntegrationTest {
                 "identity.technical_identities",
                 "inventory.asset_types",
                 "inventory.assets",
+                "inventory.outbox_deliveries",
                 "inventory.outbox_events",
                 "support.outbox_events",
                 "support.ticket_comments",
