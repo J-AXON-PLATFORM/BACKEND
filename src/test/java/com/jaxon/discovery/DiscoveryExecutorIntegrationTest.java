@@ -143,11 +143,18 @@ class DiscoveryExecutorIntegrationTest {
                 .contains("\"version\":0");
         assertThat(jdbc.queryForMap(
                         """
-                        SELECT event_type, resource_type, correlation_id, payload::text AS payload
+                        SELECT event_type, event_version, actor_id, resource_type, correlation_id,
+                               payload::text AS payload
                         FROM identity.outbox_events WHERE resource_id = ?
                         """,
                         executorId))
                 .containsEntry("event_type", "DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED")
+                .containsEntry("event_version", "2.0")
+                .containsEntry(
+                        "actor_id",
+                        jdbc.queryForObject(
+                                "SELECT id FROM identity.human_users WHERE normalized_username = 'executor.admin'",
+                                UUID.class))
                 .containsEntry("resource_type", "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY")
                 .containsEntry("correlation_id", keyCorrelation)
                 .containsEntry("payload", "{}");

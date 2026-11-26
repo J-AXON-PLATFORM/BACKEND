@@ -170,9 +170,18 @@ class IdentityAuditDispatcher {
                     "roles", payload.get("roles").asText());
             }
             if (("HUMAN_LOGIN_SUCCEEDED".equals(event.eventType())
-                            || "HUMAN_LOGOUT_SUCCEEDED".equals(event.eventType()))
+                            || "HUMAN_LOGOUT_SUCCEEDED".equals(event.eventType())
+                            || "AGENT_PUBLIC_KEY_REGISTERED".equals(event.eventType())
+                            || "DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED".equals(event.eventType()))
                     && payload.isEmpty()) {
                 return Map.of();
+            }
+            if ("HUMAN_LOGIN_FAILED".equals(event.eventType())
+                    && payload.size() == 1
+                    && payload.has("reason")
+                    && payload.get("reason").isTextual()
+                    && "INVALID_CREDENTIALS".equals(payload.get("reason").asText())) {
+                return Map.of("reason", "INVALID_CREDENTIALS");
             }
             throw new InvalidAuditPayloadException();
         } catch (InvalidAuditPayloadException exception) {

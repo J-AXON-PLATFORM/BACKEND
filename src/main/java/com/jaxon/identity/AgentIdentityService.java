@@ -82,7 +82,7 @@ class AgentIdentityService implements AgentIdentityRegistry {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, result,
                      correlation_id, payload, next_attempt_at)
-                VALUES (?, 'AGENT_PUBLIC_KEY_REGISTERED', '1.0', ?, 'IDENTITY',
+                VALUES (?, 'AGENT_PUBLIC_KEY_REGISTERED', '2.0', ?, 'IDENTITY',
                         'HUMAN_USER', ?, 'AGENT_TECHNICAL_IDENTITY', ?, 'SUCCESS',
                         ?, '{}'::jsonb, ?)
                 """,

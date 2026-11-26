@@ -195,18 +195,19 @@ class AgentIntegrationTest {
         assertThat(jdbc.queryForMap(
                         """
                         SELECT event_type, event_version, producer_module, actor_type,
-                               resource_type, resource_id, result, payload
+                               resource_type, resource_id, result, payload::text AS payload
                         FROM identity.outbox_events
                         WHERE event_type = 'AGENT_PUBLIC_KEY_REGISTERED' AND resource_id = ?
                         """,
                         agentId))
                 .containsEntry("event_type", "AGENT_PUBLIC_KEY_REGISTERED")
-                .containsEntry("event_version", "1.0")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("producer_module", "IDENTITY")
                 .containsEntry("actor_type", "HUMAN_USER")
                 .containsEntry("resource_type", "AGENT_TECHNICAL_IDENTITY")
                 .containsEntry("resource_id", agentId)
-                .containsEntry("result", "SUCCESS");
+                .containsEntry("result", "SUCCESS")
+                .containsEntry("payload", "{}");
 
         HttpResponse<String> repeated = putKey(session, agentId, key);
         assertThat(repeated.statusCode()).isEqualTo(200);

@@ -33,6 +33,7 @@
 - Los intentos se serializan por clave hash y aplican cinco fallos permitidos en 15 minutos; el sexto se limita.
 - `HUMAN_LOGIN_SUCCEEDED` y `HUMAN_LOGIN_FAILED` se capturan de forma durable en el outbox de Identity conforme a `AC-JAXON-060`.
 - Desde `OLA6-AUD-001c`, los futuros `HUMAN_LOGIN_SUCCEEDED` y `HUMAN_LOGOUT_SUCCEEDED` se emiten como 2.0 y se materializan en Audit con metadata vacía; `HUMAN_LOGIN_FAILED` y los eventos 1.0 no se despachan.
+- Desde `OLA6-AUD-001d`, futuros `HUMAN_LOGIN_FAILED` se emiten como 2.0 con actor nulo solo sin principal y reason cerrado. Se conservan cinco fallos en 15 minutos; el sexto y posteriores `429` no crean estado ni evento. Username, IP y claves de rate limit no llegan a Audit.
 - La evidencia automatizada cubre PostgreSQL/Flyway real, Argon2id, sesión, inactividad/expiración absoluta, cookie, CSRF, default deny, errores genéricos, rate limit y journey Playwright Chromium.
 
 ## Propósito

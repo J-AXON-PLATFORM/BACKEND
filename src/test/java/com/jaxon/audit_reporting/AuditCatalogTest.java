@@ -129,4 +129,63 @@ class AuditCatalogTest {
             assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
         }
     }
+
+    @Test
+    void acceptsOnlyTheClosedDeniedLoginFactWithOptionalVerifiedActor() {
+        UUID actor = UUID.randomUUID();
+        Map<String, String> reason = Map.of("reason", "INVALID_CREDENTIALS");
+        assertThat(AuditCatalog.accepts(fact(
+                        "HUMAN_LOGIN_FAILED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                        "AUTHENTICATION_ATTEMPT", null, "DENIED", reason)))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "HUMAN_LOGIN_FAILED", "2.0", "IDENTITY", "HUMAN_USER", null,
+                        "AUTHENTICATION_ATTEMPT", null, "DENIED", reason)))
+                .isTrue();
+
+        for (AuditFact invalid : new AuditFact[] {
+            fact("HUMAN_LOGIN_FAILED", "1.0", "IDENTITY", "HUMAN_USER", actor,
+                    "AUTHENTICATION_ATTEMPT", null, "DENIED", reason),
+            fact("HUMAN_LOGIN_FAILED", "2.0", "IDENTITY", "SYSTEM", null,
+                    "AUTHENTICATION_ATTEMPT", null, "DENIED", reason),
+            fact("HUMAN_LOGIN_FAILED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                    "AUTHENTICATION_ATTEMPT", null, "SUCCESS", reason),
+            fact("HUMAN_LOGIN_FAILED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                    "AUTHENTICATION_ATTEMPT", null, "DENIED", Map.of()),
+            fact("HUMAN_LOGIN_FAILED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                    "AUTHENTICATION_ATTEMPT", null, "DENIED", Map.of("reason", "RATE_LIMITED")),
+            fact("HUMAN_LOGIN_FAILED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                    "AUTHENTICATION_ATTEMPT", null, "DENIED",
+                    Map.of("reason", "INVALID_CREDENTIALS", "username", "forbidden"))
+        }) {
+            assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
+        }
+    }
+
+    @Test
+    void acceptsOnlyClosedTechnicalIdentityPublicKeyFacts() {
+        UUID actor = UUID.randomUUID();
+        assertThat(AuditCatalog.accepts(fact(
+                        "AGENT_PUBLIC_KEY_REGISTERED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                        "AGENT_TECHNICAL_IDENTITY", null, "SUCCESS", Map.of())))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                        "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY", null, "SUCCESS", Map.of())))
+                .isTrue();
+
+        for (AuditFact invalid : new AuditFact[] {
+            fact("AGENT_PUBLIC_KEY_REGISTERED", "1.0", "IDENTITY", "HUMAN_USER", actor,
+                    "AGENT_TECHNICAL_IDENTITY", null, "SUCCESS", Map.of()),
+            fact("AGENT_PUBLIC_KEY_REGISTERED", "2.0", "IDENTITY", "HUMAN_USER", null,
+                    "AGENT_TECHNICAL_IDENTITY", null, "SUCCESS", Map.of()),
+            fact("AGENT_PUBLIC_KEY_REGISTERED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                    "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY", null, "SUCCESS", Map.of()),
+            fact("DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                    "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY", null, "SUCCESS",
+                    Map.of("fingerprint", "forbidden"))
+        }) {
+            assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
+        }
+    }
 }

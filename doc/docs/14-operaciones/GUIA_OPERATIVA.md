@@ -67,3 +67,5 @@ Después del restore se deben comprobar los ocho schemas, pgvector, historial Fl
 `OLA6-AUD-001b` añade el dispatcher Identity (`JAXON_IDENTITY_AUDIT_DISPATCH_ENABLED`, `JAXON_IDENTITY_AUDIT_DISPATCH_POLL_INTERVAL` 1 s, `JAXON_IDENTITY_AUDIT_DISPATCH_BATCH_SIZE` 50). La métrica `jaxon.identity.audit.dispatch{consumer,outcome}` usa los mismos outcomes. Solo procesa `HUMAN_USER_CREATED` 2.0; una entrega `FAILED` permanece durable y no debe corregirse con SQL manual.
 
 `OLA6-AUD-001c` reutiliza sin nueva configuración ese dispatcher y amplía su allowlist a `HUMAN_USER_CREATED`, `HUMAN_LOGIN_SUCCEEDED` y `HUMAN_LOGOUT_SUCCEEDED`, siempre 2.0. Los 1.0 y `HUMAN_LOGIN_FAILED` no se reclaman; una entrega `FAILED` conserva el mismo tratamiento operativo.
+
+`OLA6-AUD-001d` amplía la misma allowlist a `HUMAN_LOGIN_FAILED`, `AGENT_PUBLIC_KEY_REGISTERED` y `DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED`, siempre 2.0. No existe configuración, scheduler o cola adicional. Los `429`, no-ops y 1.0 no se reclaman; una entrega `FAILED` conserva el tratamiento operativo existente y nunca debe corregirse con SQL manual.

@@ -26,6 +26,8 @@ Reglas Lote 53:
 
 `OLA6-AUD-001c` versiona futuros `HUMAN_LOGIN_SUCCEEDED` y `HUMAN_LOGOUT_SUCCEEDED` a 2.0 sin alterar ni despachar 1.0. Login usa recurso `AUTHENTICATION_ATTEMPT` y el UUIDv4 estable del intento; logout usa `HUMAN_SESSION` y el UUIDv4 de la sesión eliminada. Ambos tienen actor/correlación UUIDv4, `SUCCESS`, `resourceVersion=null` y payload/metadata exactamente `{}`. El dispatcher Identity procesa únicamente esos dos tipos y `HUMAN_USER_CREATED`, siempre 2.0. `HUMAN_LOGIN_FAILED`, username, IP, contraseña, sesión/token, CSRF, hashes, rate-limit keys y metadata adicional quedan excluidos.
 
+`OLA6-AUD-001d` versiona futuros `HUMAN_LOGIN_FAILED`, `AGENT_PUBLIC_KEY_REGISTERED` y `DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED` a 2.0. El fallo usa actor UUIDv4 o nulo solo sin principal, `AUTHENTICATION_ATTEMPT`, `DENIED` y reason exacto; las claves exigen actor humano, recurso técnico exacto, `SUCCESS` y `{}`. El dispatcher procesa los seis tipos Identity allowlisted únicamente 2.0. `429`, no-ops, 1.0 y cualquier dato sensible o identificador de credencial quedan excluidos.
+
 ## Propósito
 
 Definir logging útil para diagnóstico, auditoría técnica y correlación.

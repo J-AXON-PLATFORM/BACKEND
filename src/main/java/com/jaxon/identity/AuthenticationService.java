@@ -221,7 +221,7 @@ class AuthenticationService {
                 timestamp(now));
         insertOutbox(
                 "HUMAN_LOGIN_FAILED",
-                "1.0",
+                "2.0",
                 actorId,
                 attemptId,
                 "DENIED",

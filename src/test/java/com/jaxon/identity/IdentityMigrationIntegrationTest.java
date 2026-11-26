@@ -29,7 +29,7 @@ class IdentityMigrationIntegrationTest {
         Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
                 .locations("classpath:db/migration")
-                .target("20261020010000")
+                .target("20261128010000")
                 .load()
                 .migrate();
         JdbcTemplate jdbc = new JdbcTemplate(
@@ -53,6 +53,14 @@ class IdentityMigrationIntegrationTest {
                 "AGENT_TECHNICAL_IDENTITY",
                 "SUCCESS",
                 "{\"historical\":true}",
+                now);
+        insertHistoricalEvent(
+                jdbc,
+                "DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED",
+                actorId,
+                "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY",
+                "SUCCESS",
+                "{}",
                 now);
         insertHistoricalEvent(
                 jdbc,
@@ -83,7 +91,7 @@ class IdentityMigrationIntegrationTest {
                 .load()
                 .migrate();
 
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM identity.outbox_events", Integer.class)).isEqualTo(5);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM identity.outbox_events", Integer.class)).isEqualTo(6);
         assertThat(jdbc.queryForObject(
                         """
                         SELECT jsonb_agg(to_jsonb(e) ORDER BY event_id)::text
@@ -153,6 +161,51 @@ class IdentityMigrationIntegrationTest {
                             jdbc, UUID.randomUUID(), actorId, eventType, resourceType, "{\"username\":\"forbidden\"}"))
                     .isInstanceOf(DataIntegrityViolationException.class);
         }
+        insertIdentityVersionTwo(
+                jdbc,
+                "HUMAN_LOGIN_FAILED",
+                null,
+                "AUTHENTICATION_ATTEMPT",
+                "DENIED",
+                "{\"reason\":\"INVALID_CREDENTIALS\"}");
+        insertIdentityVersionTwo(
+                jdbc,
+                "AGENT_PUBLIC_KEY_REGISTERED",
+                actorId,
+                "AGENT_TECHNICAL_IDENTITY",
+                "SUCCESS",
+                "{}");
+        insertIdentityVersionTwo(
+                jdbc,
+                "DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED",
+                actorId,
+                "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY",
+                "SUCCESS",
+                "{}");
+        assertThatThrownBy(() -> insertIdentityVersionTwo(
+                        jdbc,
+                        "HUMAN_LOGIN_FAILED",
+                        null,
+                        "AUTHENTICATION_ATTEMPT",
+                        "DENIED",
+                        "{\"reason\":\"RATE_LIMITED\"}"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertIdentityVersionTwo(
+                        jdbc,
+                        "AGENT_PUBLIC_KEY_REGISTERED",
+                        null,
+                        "AGENT_TECHNICAL_IDENTITY",
+                        "SUCCESS",
+                        "{}"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertIdentityVersionTwo(
+                        jdbc,
+                        "DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED",
+                        actorId,
+                        "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY",
+                        "SUCCESS",
+                        "{\"fingerprint\":\"forbidden\"}"))
+                .isInstanceOf(DataIntegrityViolationException.class);
 
         UUID versionTwo = UUID.randomUUID();
         insertVersionTwo(jdbc, versionTwo, actorId, "AUDITOR|END_USER|SYSTEM_ADMIN");
@@ -247,6 +300,35 @@ class IdentityMigrationIntegrationTest {
                 actorId,
                 resourceType,
                 UUID.randomUUID(),
+                UUID.randomUUID(),
+                payload,
+                Timestamp.from(now));
+    }
+
+    private static void insertIdentityVersionTwo(
+            JdbcTemplate jdbc,
+            String eventType,
+            UUID actorId,
+            String resourceType,
+            String result,
+            String payload) {
+        Instant now = Instant.parse("2026-11-29T12:00:00Z");
+        jdbc.update(
+                """
+                INSERT INTO identity.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, result,
+                     correlation_id, payload, next_attempt_at)
+                VALUES (?, ?, '2.0', ?, 'IDENTITY', 'HUMAN_USER', ?, ?, ?, ?, ?,
+                        CAST(? AS jsonb), ?)
+                """,
+                UUID.randomUUID(),
+                eventType,
+                Timestamp.from(now),
+                actorId,
+                resourceType,
+                UUID.randomUUID(),
+                result,
                 UUID.randomUUID(),
                 payload,
                 Timestamp.from(now));

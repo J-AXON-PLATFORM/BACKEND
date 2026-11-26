@@ -139,6 +139,97 @@ class IdentityAuditDispatchIntegrationTest {
     }
 
     @Test
+    void materializesDeniedLoginAndTechnicalPublicKeyRegistrationsWithoutSensitiveMetadata() throws Exception {
+        UUID deniedCorrelation = UUID.randomUUID();
+        HttpResponse<String> denied = http.send(
+                HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/v1/auth/login"))
+                        .header("Content-Type", "application/json")
+                        .header("X-Correlation-ID", deniedCorrelation.toString())
+                        .POST(HttpRequest.BodyPublishers.ofString(
+                                "{\"username\":\"missing-" + UUID.randomUUID()
+                                        + "\",\"password\":\"Wrong passphrase 42!\"}"))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertThat(denied.statusCode()).isEqualTo(401);
+        Map<String, Object> deniedEvent = authenticationEvent("HUMAN_LOGIN_FAILED", deniedCorrelation);
+        assertThat(deniedEvent)
+                .containsEntry("event_version", "2.0")
+                .containsEntry("actor_id", null)
+                .containsEntry("resource_type", "AUTHENTICATION_ATTEMPT")
+                .containsEntry("result", "DENIED")
+                .containsEntry("payload", "{\"reason\": \"INVALID_CREDENTIALS\"}");
+
+        UUID actorId = bootstrapId();
+        UUID agentEvent = insertIdentityEvent(
+                "AGENT_PUBLIC_KEY_REGISTERED",
+                "2.0",
+                actorId,
+                "AGENT_TECHNICAL_IDENTITY",
+                "SUCCESS",
+                "{}");
+        UUID executorEvent = insertIdentityEvent(
+                "DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED",
+                "2.0",
+                actorId,
+                "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY",
+                "SUCCESS",
+                "{}");
+
+        assertThat(dispatcher.dispatchDue(3))
+                .isEqualTo(new IdentityAuditDispatcher.DispatchSummary(3, 0, 0, 0));
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT actor_id, resource_type, result, resource_version,
+                               metadata::text AS metadata
+                        FROM audit_reporting.audit_events
+                        WHERE source_event_id = ?
+                        """,
+                        deniedEvent.get("event_id")))
+                .containsEntry("actor_id", null)
+                .containsEntry("resource_type", "AUTHENTICATION_ATTEMPT")
+                .containsEntry("result", "DENIED")
+                .containsEntry("resource_version", null)
+                .containsEntry("metadata", "{\"reason\": \"INVALID_CREDENTIALS\"}");
+        for (UUID eventId : List.of(agentEvent, executorEvent)) {
+            assertThat(jdbc.queryForMap(
+                            """
+                            SELECT actor_id, resource_version, result, metadata::text AS metadata
+                            FROM audit_reporting.audit_events
+                            WHERE source_event_id = ?
+                            """,
+                            eventId))
+                    .containsEntry("actor_id", actorId)
+                    .containsEntry("resource_version", null)
+                    .containsEntry("result", "SUCCESS")
+                    .containsEntry("metadata", "{}");
+        }
+
+        insertIdentityEvent(
+                "HUMAN_LOGIN_FAILED",
+                "1.0",
+                null,
+                "AUTHENTICATION_ATTEMPT",
+                "DENIED",
+                "{\"reason\":\"INVALID_CREDENTIALS\"}");
+        insertIdentityEvent(
+                "AGENT_PUBLIC_KEY_REGISTERED",
+                "1.0",
+                actorId,
+                "AGENT_TECHNICAL_IDENTITY",
+                "SUCCESS",
+                "{}");
+        insertIdentityEvent(
+                "DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED",
+                "1.0",
+                actorId,
+                "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY",
+                "SUCCESS",
+                "{}");
+        assertThat(dispatcher.dispatchDue(50))
+                .isEqualTo(new IdentityAuditDispatcher.DispatchSummary(0, 0, 0, 0));
+    }
+
+    @Test
     void createsVersionTwoAtomicallyAndMaterializesCompleteCanonicalRoles() throws Exception {
         Session session = login();
         UUID correlationId = UUID.randomUUID();
@@ -332,6 +423,38 @@ class IdentityAuditDispatchIntegrationTest {
                 resourceId,
                 UUID.randomUUID(),
                 roles,
+                Timestamp.from(now));
+        return eventId;
+    }
+
+    private UUID insertIdentityEvent(
+            String eventType,
+            String eventVersion,
+            UUID actorId,
+            String resourceType,
+            String result,
+            String payload) {
+        UUID eventId = UUID.randomUUID();
+        Instant now = Instant.now();
+        jdbc.update(
+                """
+                INSERT INTO identity.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, result,
+                     correlation_id, payload, next_attempt_at)
+                VALUES (?, ?, ?, ?, 'IDENTITY', 'HUMAN_USER', ?, ?, ?, ?, ?,
+                        CAST(? AS jsonb), ?)
+                """,
+                eventId,
+                eventType,
+                eventVersion,
+                Timestamp.from(now),
+                actorId,
+                resourceType,
+                UUID.randomUUID(),
+                result,
+                UUID.randomUUID(),
+                payload,
                 Timestamp.from(now));
         return eventId;
     }

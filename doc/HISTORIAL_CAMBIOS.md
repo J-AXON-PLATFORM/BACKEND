@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Auditoría de login fallido y claves públicas técnicas -- OLA6-AUD-001d, 2026-11-29
+
+`AC-JAXON-096` autoriza exclusivamente en backend futuros `HUMAN_LOGIN_FAILED`, `AGENT_PUBLIC_KEY_REGISTERED` y `DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED` 2.0. El fallo admite actor nulo solo sin principal verificable y metadata cerrada `reason=INVALID_CREDENTIALS`; ambos registros de clave exigen actor humano y metadata `{}`. El sexto y posteriores intentos dentro de la ventana continúan en `429` sin crear intento, outbox ni AuditEvent. Se reutilizan entregas y dispatcher Identity con exactamente dos migraciones, sin OpenAPI, dependencias, workflows, frontend, automation-collector ni Production.
+
+Se sincroniza retrospectivamente el cierre real de `OLA6-AUD-001c`: `BACKEND#63`, squash `f3fed0a567eae8bbddd3b2495eb1b750c5e40bbb`, tuvo runs verdes `45756261224` de PR y `45756542597` post-merge, ambos `APPLICATION`. La rama fue eliminada y los otros dos repositorios permanecieron intactos. `AC-JAXON-095` está cerrado.
+
+---
+
 ## Auditoría de login y logout humanos exitosos -- OLA6-AUD-001c, 2026-11-28
 
 `AC-JAXON-095` autoriza exclusivamente en backend futuros `HUMAN_LOGIN_SUCCEEDED` y `HUMAN_LOGOUT_SUCCEEDED` 2.0 con payload/metadata `{}` exactos, reutilizando entregas, dispatcher y recorder existentes. Se autorizan dos migraciones, pruebas y un único PR; 1.0, login fallido, OpenAPI 8.3, dependencias, workflows, frontend y automation-collector permanecen fuera. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN`; no se anticipa evidencia remota.
