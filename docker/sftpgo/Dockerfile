@@ -19,12 +19,22 @@ RUN curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error \
     && rm /tmp/sftpgo.tar.gz \
     && test "$(sed -n 's/^[[:space:]]*version = "\([^"]*\)"/\1/p' internal/version/version.go)" = "2.7.6"
 
-# These are the only upstream dependency changes. They fix CVE-2026-78669 and CVE-2026-116587.
+# These are the only upstream dependency changes. They fix CVE-2026-78669, CVE-2026-116587
+# and CVE-2026-128085 (GO-2026-6974); go get raises the OpenTelemetry release train together.
 RUN GOFLAGS=-mod=mod go get \
         golang.org/x/net@v0.62.0 \
         github.com/go-jose/go-jose/v4@v4.1.6 \
+        go.opentelemetry.io/otel/sdk@v1.47.0 \
+        go.opentelemetry.io/otel/trace@v1.47.0 \
+        go.opentelemetry.io/otel/log@v1.47.0 \
     && test "$(go list -m -f '{{.Version}}' golang.org/x/net)" = "v0.62.0" \
     && test "$(go list -m -f '{{.Version}}' github.com/go-jose/go-jose/v4)" = "v4.1.6" \
+    && test "$(go list -m -f '{{.Version}}' go.opentelemetry.io/otel)" = "v1.47.0" \
+    && test "$(go list -m -f '{{.Version}}' go.opentelemetry.io/otel/metric)" = "v1.47.0" \
+    && test "$(go list -m -f '{{.Version}}' go.opentelemetry.io/otel/sdk)" = "v1.47.0" \
+    && test "$(go list -m -f '{{.Version}}' go.opentelemetry.io/otel/sdk/metric)" = "v1.47.0" \
+    && test "$(go list -m -f '{{.Version}}' go.opentelemetry.io/otel/trace)" = "v1.47.0" \
+    && test "$(go list -m -f '{{.Version}}' go.opentelemetry.io/otel/log)" = "v1.47.0" \
     && go mod verify
 
 FROM source AS upstream-test-cache

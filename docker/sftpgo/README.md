@@ -8,8 +8,14 @@ The official `v2.7.6` prebuilt images are not used because the blocking Trivy
 scan detected `CVE-2026-78667`, `CVE-2026-78669`, `CVE-2026-97031`, and
 `CVE-2026-116587` after
 their publication. The recipe starts from the exact signed upstream commit,
-uses Go 1.26.11, and pins only `golang.org/x/net` from `v0.59.0` to `v0.62.0`
-and `github.com/go-jose/go-jose/v4` from `v4.1.5` to `v4.1.6`. Minimal version
+uses Go 1.26.11, and pins only `golang.org/x/net` from `v0.59.0` to `v0.62.0`,
+`github.com/go-jose/go-jose/v4` from `v4.1.5` to `v4.1.6`, and
+`go.opentelemetry.io/otel/sdk` plus `go.opentelemetry.io/otel/trace` from
+`v1.46.0` to `v1.47.0` for `CVE-2026-128085` (`GO-2026-6974`), which raises the
+same OpenTelemetry release train (`otel`, `otel/metric` and `otel/sdk/metric`
+to `v1.47.0`; `otel/metric/x` to `v0.69.0` in the module graph). `otel` `v1.47.0`
+imports `go.opentelemetry.io/otel/log`, so `otel/log` `v1.47.0` is added as an
+indirect requirement to complete `go.sum`. Minimal version
 selection for `golang.org/x/net` `v0.62.0` also raises `golang.org/x/crypto`
 to `v0.58.0`, `golang.org/x/sync` to `v0.24.0`, `golang.org/x/sys` to `v0.49.0`,
 `golang.org/x/term` to `v0.47.0` and `golang.org/x/text` to `v0.43.0`; `go mod verify`
