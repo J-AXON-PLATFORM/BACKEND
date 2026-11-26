@@ -39,6 +39,10 @@ jaxon:
       batch-size: ${JAXON_AI_AUDIT_DISPATCH_BATCH_SIZE:50}
   identity:
     frontend-origin: ${JAXON_FRONTEND_ORIGIN:http://localhost:3000}
+    audit-dispatch:
+      enabled: ${JAXON_IDENTITY_AUDIT_DISPATCH_ENABLED:true}
+      poll-interval: ${JAXON_IDENTITY_AUDIT_DISPATCH_POLL_INTERVAL:1s}
+      batch-size: ${JAXON_IDENTITY_AUDIT_DISPATCH_BATCH_SIZE:50}
     bootstrap:
       enabled: ${JAXON_IDENTITY_BOOTSTRAP_ENABLED:false}
       username: ${JAXON_IDENTITY_BOOTSTRAP_USERNAME:}

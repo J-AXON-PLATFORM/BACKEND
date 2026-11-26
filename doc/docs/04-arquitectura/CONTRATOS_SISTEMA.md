@@ -38,6 +38,8 @@
 
 `OLA6-AUD-001a` materializa el primer consumidor durable de outbox: un dispatcher propiedad de AI reclama sus `AI_SOURCE_DISABLED` y, en la misma transacción, invoca el contrato público `AuditFactRecorder` de `audit_reporting`; la entrega se registra por consumidor en `ai.outbox_deliveries` y Audit materializa idempotentemente por `source_event_id`. Ningún módulo lee ni escribe tablas ajenas.
 
+`OLA6-AUD-001b` añade un segundo productor sin consumidor global: Identity emite solo `HUMAN_USER_CREATED` 2.0 futuro y su dispatcher propio usa `identity.outbox_deliveries` para invocar el mismo `AuditFactRecorder`. El payload cerrado es `status=ACTIVE` más roles ordenados canónicamente y separados por `|`; `resourceVersion=null`. 1.0 histórico no se reinterpreta ni despacha.
+
 ## Contrato interno aprobado -- Lote 53
 
 - Command/query solicita una operación o lectura y usa la API pública del módulo proveedor de forma síncrona in-process.

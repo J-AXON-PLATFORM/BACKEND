@@ -306,7 +306,8 @@ class AuthenticationIntegrationTest {
                         SELECT count(*) FROM identity.outbox_events
                         WHERE event_type = 'HUMAN_USER_CREATED'
                           AND actor_id = ? AND resource_id = ?
-                          AND payload = '{"status":"ACTIVE"}'::jsonb
+                          AND event_version = '2.0'
+                          AND payload = '{"status":"ACTIVE","roles":"AUDITOR|SUPPORT_TECHNICIAN"}'::jsonb
                         """,
                         Integer.class,
                         administrator.userId(),

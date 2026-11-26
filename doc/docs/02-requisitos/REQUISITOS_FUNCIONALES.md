@@ -148,6 +148,7 @@
 - **Refinamiento Lote 52:** reportes v1 Assets/Agents/Tickets mediante contratos públicos, con exportación CSV no persistente; sin BI/report builder, PDF/XLSX ni SSE propio v1.
 - **Refinamiento Lote 52:** una mutación `AUDIT_REQUIRED` exitosa exige captura durable de su intención de auditoría antes de responder éxito.
 - **Corte ejecutable OLA6-AUD-001a:** materializa `RF-AUD-001`, `RF-AUD-002`, `RF-AUD-003`, `RF-AUD-004` y `RF-AUD-008` solo para `AI_SOURCE_DISABLED`: la intención durable es la fila del outbox AI; un dispatcher propiedad de AI la entrega por consumidor a `AuditFactRecorder`; Audit la materializa append-only e idempotente; `AUDITOR` la consulta con filtros y paginación. No implementa otros eventos, denegaciones, reportes, CSV ni purga.
+- **Corte ejecutable OLA6-AUD-001b:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para altas administrativas futuras mediante `HUMAN_USER_CREATED` 2.0, roles canónicos completos y dispatcher propiedad de Identity. No altera 1.0 histórico, la consulta, OpenAPI 8.3 ni frontend.
 
 ## Requisitos transversales
 

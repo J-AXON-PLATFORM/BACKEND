@@ -135,6 +135,7 @@ class DatabaseBootstrapIntegrationTest {
                 "identity.human_user_roles",
                 "identity.human_users",
                 "identity.login_attempts",
+                "identity.outbox_deliveries",
                 "identity.outbox_events",
                 "identity.roles",
                 "identity.technical_identities",

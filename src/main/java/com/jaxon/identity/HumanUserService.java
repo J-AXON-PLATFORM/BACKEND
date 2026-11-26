@@ -83,15 +83,16 @@ class HumanUserService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, result,
                      correlation_id, payload, next_attempt_at)
-                VALUES (?, 'HUMAN_USER_CREATED', '1.0', ?, 'IDENTITY',
+                VALUES (?, 'HUMAN_USER_CREATED', '2.0', ?, 'IDENTITY',
                         'HUMAN_USER', ?, 'HUMAN_USER', ?, 'SUCCESS', ?,
-                        '{"status":"ACTIVE"}'::jsonb, ?)
+                        jsonb_build_object('status', 'ACTIVE', 'roles', ?), ?)
                 """,
                 UUID.randomUUID(),
                 Timestamp.from(now),
                 actorId,
                 userId,
                 correlationId,
+                String.join("|", roles),
                 Timestamp.from(now));
         return new HumanUserResponse(
                 userId,

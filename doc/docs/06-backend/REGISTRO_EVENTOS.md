@@ -22,6 +22,8 @@ Reglas Lote 53:
 - SSE es best-effort hacia navegador y REST conserva el estado oficial;
 - n8n no consume directamente el mecanismo interno; pasa por MOD-07 Automation.
 
+`OLA6-AUD-001b` versiona `HUMAN_USER_CREATED` sin reinterpretar el histórico: 1.0 conserva `{"status":"ACTIVE"}` y no tiene consumidor Audit; 2.0 añade exclusivamente `roles` como string canónico separado por `|` y es el único que reclama el dispatcher Identity. Ambos comparten el tipo por continuidad semántica, pero el catálogo Audit solo acepta 2.0.
+
 ## Propósito
 
 Definir logging útil para diagnóstico, auditoría técnica y correlación.

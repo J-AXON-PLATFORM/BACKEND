@@ -29,7 +29,7 @@ class IdentityMigrationIntegrationTest {
         Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
                 .locations("classpath:db/migration")
-                .target("20261020000000")
+                .target("20261020010000")
                 .load()
                 .migrate();
         JdbcTemplate jdbc = new JdbcTemplate(
@@ -54,6 +54,14 @@ class IdentityMigrationIntegrationTest {
                 "SUCCESS",
                 "{\"historical\":true}",
                 now);
+        insertHistoricalEvent(
+                jdbc,
+                "HUMAN_USER_CREATED",
+                actorId,
+                "HUMAN_USER",
+                "SUCCESS",
+                "{\"status\":\"ACTIVE\"}",
+                now);
 
         Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
@@ -61,7 +69,21 @@ class IdentityMigrationIntegrationTest {
                 .load()
                 .migrate();
 
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM identity.outbox_events", Integer.class)).isEqualTo(3);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM identity.outbox_events", Integer.class)).isEqualTo(4);
+        UUID historicalUserEvent = jdbc.queryForObject(
+                """
+                SELECT event_id FROM identity.outbox_events
+                WHERE event_type = 'HUMAN_USER_CREATED'
+                """,
+                UUID.class);
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT event_version, payload::text AS payload
+                        FROM identity.outbox_events WHERE event_id = ?
+                        """,
+                        historicalUserEvent))
+                .containsEntry("event_version", "1.0")
+                .containsEntry("payload", "{\"status\": \"ACTIVE\"}");
         assertThat(jdbc.queryForList(
                         """
                         SELECT conname FROM pg_constraint
@@ -88,6 +110,75 @@ class IdentityMigrationIntegrationTest {
                         UUID.randomUUID(),
                         Timestamp.from(now)))
                 .isInstanceOf(DataIntegrityViolationException.class);
+
+        UUID versionTwo = UUID.randomUUID();
+        insertVersionTwo(jdbc, versionTwo, actorId, "AUDITOR|END_USER|SYSTEM_ADMIN");
+        delivery(jdbc, versionTwo, "DELIVERED", 1, Timestamp.from(now), null);
+        assertThatThrownBy(() -> delivery(jdbc, versionTwo, "PENDING", 1, null, null))
+                .isInstanceOf(org.springframework.dao.DuplicateKeyException.class);
+        jdbc.update("DELETE FROM identity.outbox_deliveries WHERE event_id = ?", versionTwo);
+        for (String invalidRoles : new String[] {
+            "END_USER|AUDITOR",
+            "AUDITOR|AUDITOR",
+            "SUPERUSER",
+            "AUDITOR,END_USER",
+            ""
+        }) {
+            assertThatThrownBy(() -> insertVersionTwo(
+                            jdbc, UUID.randomUUID(), actorId, invalidRoles))
+                    .as(invalidRoles)
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+        assertThatThrownBy(() -> jdbc.update(
+                        """
+                        INSERT INTO identity.outbox_events
+                            (event_id, event_type, event_version, occurred_at, producer_module,
+                             actor_type, actor_id, resource_type, resource_id, result,
+                             correlation_id, payload, next_attempt_at)
+                        VALUES (?, 'HUMAN_USER_CREATED', '2.0', ?, 'IDENTITY',
+                                'HUMAN_USER', ?, 'HUMAN_USER', ?, 'SUCCESS', ?,
+                                '{"status":"ACTIVE","roles":"AUDITOR","extra":"x"}'::jsonb, ?)
+                        """,
+                        UUID.randomUUID(),
+                        Timestamp.from(now),
+                        actorId,
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        Timestamp.from(now)))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    private static void insertVersionTwo(JdbcTemplate jdbc, UUID eventId, UUID actorId, String roles) {
+        Instant now = Instant.parse("2026-11-27T12:00:00Z");
+        jdbc.update(
+                """
+                INSERT INTO identity.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, result,
+                     correlation_id, payload, next_attempt_at)
+                VALUES (?, 'HUMAN_USER_CREATED', '2.0', ?, 'IDENTITY',
+                        'HUMAN_USER', ?, 'HUMAN_USER', ?, 'SUCCESS', ?,
+                        jsonb_build_object('status', 'ACTIVE', 'roles', ?), ?)
+                """,
+                eventId,
+                Timestamp.from(now),
+                actorId,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                roles,
+                Timestamp.from(now));
+    }
+
+    private static void delivery(
+            JdbcTemplate jdbc, UUID eventId, String status, int attempts, Timestamp deliveredAt, String error) {
+        jdbc.update(
+                """
+                INSERT INTO identity.outbox_deliveries
+                    (event_id, consumer, status, attempts, next_attempt_at, delivered_at,
+                     last_error_code, updated_at)
+                VALUES (?, 'AUDIT', ?, ?, now(), ?, ?, now())
+                """,
+                eventId, status, attempts, deliveredAt, error);
     }
 
     private static void insertHistoricalEvent(
