@@ -57,3 +57,10 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: omitir roles sensibles, ambigüedad o formatos alternativos de roles, despacho accidental de 1.0, duplicación/conflicto, bloqueo por evento inválido y SQL cross-module.
 - Mitigaciones: evento 2.0 atómico; catálogo completo y orden canónico fijo con separador `|`; constraints y validación Java cerradas; dispatcher filtra tipo+versión; entrega por consumidor con `SKIP LOCKED`, 10 intentos e idempotencia; Audit permanece append-only y sin SQL ajeno.
 - Riesgos residuales: rol runtime único de base de datos, sin reproceso operativo de `FAILED`, sin tamper-proof criptográfico y sin auditoría de edición posterior de roles.
+
+## OLA6-AUD-001c
+
+- Activos: evidencia de autenticación humana exitosa, identidad de intento/sesión y privacidad de credenciales/contexto.
+- Amenazas: fuga de username, IP, contraseña, token/sesión, CSRF, hashes o rate-limit keys; despacho de fallos o 1.0; metadata arbitraria; duplicación/conflicto.
+- Mitigaciones: eventos 2.0 con payload/metadata exactamente `{}`; allowlist tipo+versión; catálogo Java/SQL cerrado; UUIDv4; dispatcher y entrega existentes; idempotencia y conflicto sin sobrescritura.
+- Riesgos residuales: los fallos/denegaciones no se auditan en este corte; permanecen los riesgos de rol runtime único, `FAILED` sin reproceso y ausencia de tamper-proof criptográfico.

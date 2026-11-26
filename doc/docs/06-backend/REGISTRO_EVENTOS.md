@@ -24,6 +24,8 @@ Reglas Lote 53:
 
 `OLA6-AUD-001b` versiona `HUMAN_USER_CREATED` sin reinterpretar el histórico: 1.0 conserva `{"status":"ACTIVE"}` y no tiene consumidor Audit; 2.0 añade exclusivamente `roles` como una única cadena canónica separada por `|`, con al menos un rol y orden fijo `AUDITOR|END_USER|IT_OPERATOR|SUPPORT_TECHNICIAN|SYSTEM_ADMIN`, y es el único que reclama el dispatcher Identity. Payload y metadata contienen exactamente `status` y `roles`; se rechazan duplicados, desorden, roles desconocidos, otros separadores, claves adicionales y formatos alternativos. `AC-JAXON-094` ratifica retrospectivamente esta representación escalar ya integrada sin reescribir `AC-JAXON-093`. Ambos eventos comparten el tipo por continuidad semántica, pero el catálogo Audit solo acepta 2.0.
 
+`OLA6-AUD-001c` versiona futuros `HUMAN_LOGIN_SUCCEEDED` y `HUMAN_LOGOUT_SUCCEEDED` a 2.0 sin alterar ni despachar 1.0. Login usa recurso `AUTHENTICATION_ATTEMPT` y el UUIDv4 estable del intento; logout usa `HUMAN_SESSION` y el UUIDv4 de la sesión eliminada. Ambos tienen actor/correlación UUIDv4, `SUCCESS`, `resourceVersion=null` y payload/metadata exactamente `{}`. El dispatcher Identity procesa únicamente esos dos tipos y `HUMAN_USER_CREATED`, siempre 2.0. `HUMAN_LOGIN_FAILED`, username, IP, contraseña, sesión/token, CSRF, hashes, rate-limit keys y metadata adicional quedan excluidos.
+
 ## Propósito
 
 Definir logging útil para diagnóstico, auditoría técnica y correlación.

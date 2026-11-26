@@ -104,7 +104,12 @@ class AuthenticationIntegrationTest {
         assertThat(me.body()).contains("\"username\":\"Bootstrap.Admin\"");
         assertThat(jdbc.queryForObject("SELECT count(*) FROM identity.human_sessions", Integer.class)).isPositive();
         assertThat(jdbc.queryForObject(
-                        "SELECT count(*) FROM identity.outbox_events WHERE event_type = 'HUMAN_LOGIN_SUCCEEDED'",
+                        """
+                        SELECT count(*) FROM identity.outbox_events
+                        WHERE event_type = 'HUMAN_LOGIN_SUCCEEDED'
+                          AND event_version = '2.0'
+                          AND payload = '{}'::jsonb
+                        """,
                         Integer.class))
                 .isPositive();
     }
@@ -411,6 +416,7 @@ class AuthenticationIntegrationTest {
                         SELECT count(*) FROM identity.outbox_events
                         WHERE event_type = 'HUMAN_LOGOUT_SUCCEEDED'
                           AND actor_id = ? AND resource_type = 'HUMAN_SESSION'
+                          AND event_version = '2.0'
                           AND payload = '{}'::jsonb
                         """,
                         Integer.class,

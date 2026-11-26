@@ -78,6 +78,8 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 
 `OLA6-AUD-001b` está implementado, integrado y verificado exclusivamente en backend. `BACKEND#61`, squash `118f03c6e59d0191209a5236c1e6267ae83244aa`, tuvo runs verdes `45750761024`/`45751069123` `APPLICATION`; la rama técnica fue eliminada. `AC-JAXON-094` ratifica retrospectivamente `roles` como una única cadena canónica separada por `|` y registra que la implementación precedió a la ratificación formal. 1.0 histórico, OpenAPI 8.3, frontend y `automation-collector` permanecieron intactos. Otros eventos, backfill, reportes, purga, reproceso de `FAILED` y Production siguen pendientes.
 
+Su cierre documental quedó integrado mediante `BACKEND#62`, squash `ad65931b731bc7e610c34de6cdc34f2584cf06d6`, con runs verdes `45752656382`/`45752745809` `DOCS_ONLY`. `OLA6-AUD-001c` está autorizado bajo `AC-JAXON-095` exclusivamente para futuros login/logout humanos exitosos 2.0; su integración remota continúa pendiente.
+
 `SPIKE-AUDIT-001` quedó registrado como análisis previo adoptado por `AC-JAXON-092`.
 
 `SPIKE-AI-GENERATION-001` quedó registrado solo como análisis: comparó generación local, proveedor externo y lifecycle de fuentes; su recomendación de generación local requiere decisiones abiertas de hardware, latencia, pesos, runtime, datos y calidad y no está aprobada.
@@ -141,8 +143,8 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - `TEC-QLT-006a` cerró `BACKEND#41` y no requiere acción remota adicional. La corrección documental retrospectiva queda incluida en el alcance backend de `OLA3-SUP-005a`.
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
-- Siguiente paso remoto pendiente: validar, integrar y verificar el único Pull Request documental de cierre autorizado por `AC-JAXON-094`. El presupuesto vigente de Actions debe comprobarse antes del único push; `frontend` y `automation-collector` permanecen intactos.
-- Próxima acción posterior: emitir el reporte final autorizado de `OLA6-AUD-001b` únicamente tras el cierre post-merge, eliminación de ramas y limpieza de los tres repositorios. No decidir ni iniciar el siguiente incremento.
+- Siguiente paso remoto pendiente: validar, integrar y verificar el único Pull Request backend de `OLA6-AUD-001c`; comprobar presupuesto Actions antes del único push. `frontend` y `automation-collector` permanecen intactos.
+- Próxima acción posterior: emitir el reporte final autorizado de `OLA6-AUD-001c` únicamente tras post-merge, eliminación de ramas y limpieza de los tres repositorios.
 - La primera vertical E2E ya fue alcanzada mediante incrementos autorizados; la continuación mantiene el mismo enfoque incremental y no implementa “todo J-AXON de una vez”.
 
 ## Reglas de continuidad

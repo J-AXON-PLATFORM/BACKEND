@@ -99,4 +99,34 @@ class AuditCatalogTest {
                         Map.of("status", "ACTIVE", "roles", "AUDITOR"))))
                 .isFalse();
     }
+
+    @Test
+    void acceptsOnlyClosedSuccessfulHumanAuthenticationFacts() {
+        UUID actor = UUID.randomUUID();
+        assertThat(AuditCatalog.accepts(fact(
+                        "HUMAN_LOGIN_SUCCEEDED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                        "AUTHENTICATION_ATTEMPT", null, "SUCCESS", Map.of())))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "HUMAN_LOGOUT_SUCCEEDED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                        "HUMAN_SESSION", null, "SUCCESS", Map.of())))
+                .isTrue();
+
+        for (AuditFact invalid : new AuditFact[] {
+            fact("HUMAN_LOGIN_SUCCEEDED", "1.0", "IDENTITY", "HUMAN_USER", actor,
+                    "AUTHENTICATION_ATTEMPT", null, "SUCCESS", Map.of()),
+            fact("HUMAN_LOGIN_FAILED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                    "AUTHENTICATION_ATTEMPT", null, "DENIED", Map.of()),
+            fact("HUMAN_LOGIN_SUCCEEDED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                    "HUMAN_SESSION", null, "SUCCESS", Map.of()),
+            fact("HUMAN_LOGOUT_SUCCEEDED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                    "AUTHENTICATION_ATTEMPT", null, "SUCCESS", Map.of()),
+            fact("HUMAN_LOGOUT_SUCCEEDED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                    "HUMAN_SESSION", 1L, "SUCCESS", Map.of()),
+            fact("HUMAN_LOGIN_SUCCEEDED", "2.0", "IDENTITY", "HUMAN_USER", actor,
+                    "AUTHENTICATION_ATTEMPT", null, "SUCCESS", Map.of("username", "forbidden"))
+        }) {
+            assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
+        }
+    }
 }

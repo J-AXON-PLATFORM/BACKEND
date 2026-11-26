@@ -26,7 +26,9 @@ final class AuditCatalog {
                 || fact.metadata() == null) {
             return false;
         }
-        return acceptsAiSourceDisabled(fact) || acceptsHumanUserCreated(fact);
+        return acceptsAiSourceDisabled(fact)
+                || acceptsHumanUserCreated(fact)
+                || acceptsHumanAuthenticationSucceeded(fact);
     }
 
     private static boolean acceptsAiSourceDisabled(AuditFact fact) {
@@ -52,6 +54,21 @@ final class AuditCatalog {
                 && fact.resourceVersion() == null
                 && "SUCCESS".equals(fact.result())
                 && humanUserMetadata(fact.metadata());
+    }
+
+    private static boolean acceptsHumanAuthenticationSucceeded(AuditFact fact) {
+        boolean login = "HUMAN_LOGIN_SUCCEEDED".equals(fact.eventType())
+                && "AUTHENTICATION_ATTEMPT".equals(fact.resourceType());
+        boolean logout = "HUMAN_LOGOUT_SUCCEEDED".equals(fact.eventType())
+                && "HUMAN_SESSION".equals(fact.resourceType());
+        return (login || logout)
+                && "2.0".equals(fact.eventVersion())
+                && "IDENTITY".equals(fact.producerModule())
+                && "HUMAN_USER".equals(fact.actorType())
+                && uuidV4(fact.actorId())
+                && fact.resourceVersion() == null
+                && "SUCCESS".equals(fact.result())
+                && fact.metadata().isEmpty();
     }
 
     private static boolean disableMetadata(Map<String, String> metadata) {

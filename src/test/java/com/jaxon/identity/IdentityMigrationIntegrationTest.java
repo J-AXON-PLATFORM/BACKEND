@@ -62,6 +62,20 @@ class IdentityMigrationIntegrationTest {
                 "SUCCESS",
                 "{\"status\":\"ACTIVE\"}",
                 now);
+        insertHistoricalEvent(
+                jdbc,
+                "HUMAN_LOGOUT_SUCCEEDED",
+                actorId,
+                "HUMAN_SESSION",
+                "SUCCESS",
+                "{}",
+                now);
+        String historicalRows = jdbc.queryForObject(
+                """
+                SELECT jsonb_agg(to_jsonb(e) ORDER BY event_id)::text
+                FROM identity.outbox_events e
+                """,
+                String.class);
 
         Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
@@ -69,7 +83,24 @@ class IdentityMigrationIntegrationTest {
                 .load()
                 .migrate();
 
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM identity.outbox_events", Integer.class)).isEqualTo(4);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM identity.outbox_events", Integer.class)).isEqualTo(5);
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT jsonb_agg(to_jsonb(e) ORDER BY event_id)::text
+                        FROM identity.outbox_events e
+                        WHERE event_version = '1.0'
+                        """,
+                        String.class))
+                .isEqualTo(historicalRows);
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM identity.outbox_events
+                        WHERE event_version = '1.0'
+                          AND event_type IN ('HUMAN_LOGIN_SUCCEEDED', 'HUMAN_LOGOUT_SUCCEEDED')
+                          AND payload = '{}'::jsonb
+                        """,
+                        Integer.class))
+                .isEqualTo(2);
         UUID historicalUserEvent = jdbc.queryForObject(
                 """
                 SELECT event_id FROM identity.outbox_events
@@ -110,6 +141,18 @@ class IdentityMigrationIntegrationTest {
                         UUID.randomUUID(),
                         Timestamp.from(now)))
                 .isInstanceOf(DataIntegrityViolationException.class);
+
+        for (String eventType : new String[] {"HUMAN_LOGIN_SUCCEEDED", "HUMAN_LOGOUT_SUCCEEDED"}) {
+            String resourceType = eventType.equals("HUMAN_LOGIN_SUCCEEDED")
+                    ? "AUTHENTICATION_ATTEMPT"
+                    : "HUMAN_SESSION";
+            UUID eventId = UUID.randomUUID();
+            insertAuthenticationVersionTwo(jdbc, eventId, actorId, eventType, resourceType, "{}");
+            delivery(jdbc, eventId, "DELIVERED", 1, Timestamp.from(now), null);
+            assertThatThrownBy(() -> insertAuthenticationVersionTwo(
+                            jdbc, UUID.randomUUID(), actorId, eventType, resourceType, "{\"username\":\"forbidden\"}"))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
 
         UUID versionTwo = UUID.randomUUID();
         insertVersionTwo(jdbc, versionTwo, actorId, "AUDITOR|END_USER|SYSTEM_ADMIN");
@@ -179,6 +222,34 @@ class IdentityMigrationIntegrationTest {
                 VALUES (?, 'AUDIT', ?, ?, now(), ?, ?, now())
                 """,
                 eventId, status, attempts, deliveredAt, error);
+    }
+
+    private static void insertAuthenticationVersionTwo(
+            JdbcTemplate jdbc,
+            UUID eventId,
+            UUID actorId,
+            String eventType,
+            String resourceType,
+            String payload) {
+        Instant now = Instant.parse("2026-11-28T12:00:00Z");
+        jdbc.update(
+                """
+                INSERT INTO identity.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, result,
+                     correlation_id, payload, next_attempt_at)
+                VALUES (?, ?, '2.0', ?, 'IDENTITY',
+                        'HUMAN_USER', ?, ?, ?, 'SUCCESS', ?, CAST(? AS jsonb), ?)
+                """,
+                eventId,
+                eventType,
+                Timestamp.from(now),
+                actorId,
+                resourceType,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                payload,
+                Timestamp.from(now));
     }
 
     private static void insertHistoricalEvent(

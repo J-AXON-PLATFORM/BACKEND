@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Auditoría de login y logout humanos exitosos -- OLA6-AUD-001c, 2026-11-28
+
+`AC-JAXON-095` autoriza exclusivamente en backend futuros `HUMAN_LOGIN_SUCCEEDED` y `HUMAN_LOGOUT_SUCCEEDED` 2.0 con payload/metadata `{}` exactos, reutilizando entregas, dispatcher y recorder existentes. Se autorizan dos migraciones, pruebas y un único PR; 1.0, login fallido, OpenAPI 8.3, dependencias, workflows, frontend y automation-collector permanecen fuera. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN`; no se anticipa evidencia remota.
+
+`BACKEND#62`, squash `ad65931b731bc7e610c34de6cdc34f2584cf06d6`, cerró documentalmente `OLA6-AUD-001b` con runs verdes `45752656382`/`45752745809` `DOCS_ONLY`; esta evidencia se sincroniza retrospectivamente sin reescribir la secuencia previa.
+
+---
+
 ## Ratificación de roles y cierre documental -- OLA6-AUD-001b, 2026-11-27
 
 `AC-JAXON-094` ratifica retrospectivamente que `roles` en `HUMAN_USER_CREATED` 2.0 es una única cadena canónica, no un array: contiene al menos un rol, usa exclusivamente `|` y respeta el orden fijo `AUDITOR|END_USER|IT_OPERATOR|SUPPORT_TECHNICIAN|SYSTEM_ADMIN`. Payload y metadata admiten exactamente `status=ACTIVE` y `roles`; duplicados, desorden, roles desconocidos, otros separadores, claves adicionales o formatos alternativos se rechazan.
