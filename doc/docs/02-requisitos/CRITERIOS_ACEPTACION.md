@@ -224,3 +224,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Duplicados, conflictos, rechazos, finales tardíos y reprocesamientos no crean completion adicional. Los eventos 1.0 permanecen byte a byte, sin claim, reinterpretación, replay o backfill.
 - Discovery amplía únicamente la allowlist de su entrega/dispatcher existente; Audit conserva catálogo cerrado, append-only, idempotencia, conflicto sin sobrescritura y regresión de todos los productores previos.
 - Se crean exactamente dos migraciones posteriores a `V20261130040000`. OpenAPI 8.3, endpoints, contratos Job/Result 1.0, frontend, automation-collector, dependencias, workflows, Docker/Compose/SFTPGo, SSE y Production no cambian.
+
+## OLA6-AUD-001h
+
+- Cada transición futura efectiva `UNREVIEWED -> IGNORED` confirma atómicamente `DISCOVERED_DEVICE_IGNORED` 2.0 con actor humano UUIDv4, recurso `DISCOVERED_DEVICE`, versión `1`, `SUCCESS`, correlación original y metadata exacta de ambos estados.
+- Cada transición futura efectiva `UNREVIEWED -> INCORPORATED`, hacia activo `ACTIVE` existente o creado mediante `AssetCreator`, confirma el mismo envelope y metadata exacta con `assetId` UUIDv4 canónico lowercase.
+- Crear el activo conserva la transacción pública cross-module y produce independientemente `ASSET_CREATED` 2.0 e `DISCOVERED_DEVICE_INCORPORATED` 2.0. Un rollback revierte activo, dispositivo y ambos outboxes.
+- No-ops, versiones obsoletas, conflictos, concurrencia perdedora y activos ausentes/inactivos no emiten evento o Audit falso. Los eventos 1.0 permanecen byte a byte, sin claim, reinterpretación, replay o backfill.
+- Discovery amplía de siete a nueve tipos únicamente la allowlist de entrega/dispatcher existente; Java y PostgreSQL rechazan metadata incompleta/adicional, estados alternativos, UUID no canónico y combinaciones inválidas.
+- Se crean exactamente `V20261130070000__discovery_device_audit_events.sql` y `V20261130080000__audit_discovery_device_catalog.sql`. OpenAPI 8.3, contratos históricos, endpoints, otros repositorios, dependencias, workflows, Docker/Compose/SFTPGo, SSE y Production no cambian.

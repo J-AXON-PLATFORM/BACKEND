@@ -92,3 +92,10 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: despacho de 1.0, actor humano/executor falso, correlación sustituida, resultado terminal incorrecto, completion sin transición oficial, duplicación por reingesta o metadata arbitraria.
 - Mitigaciones: productor 2.0 atómico; actor/correlación originales; executor validado contra Job/resultado; mapping cerrado `SUCCEEDED->SUCCESS|FAILED->FAILED`; payload `{}`; allowlists Java/PostgreSQL; idempotencia, conflicto sin sobrescritura y silencio de rechazos/finales tardíos.
 - Riesgos residuales: rol runtime único, `FAILED` de entrega sin reproceso operativo y ausencia de tamper-proof criptográfico.
+
+## OLA6-AUD-001h
+
+- Activos: integridad de la revisión humana de dispositivos, vínculo con Inventory, ambos outboxes cuando se crea activo y evidencia Audit.
+- Amenazas: despacho de 1.0, actor/correlación sustituidos, estado o `assetId` falsos, metadata adicional, evento sin mutación, omisión de uno de los dos hechos al crear activo o duplicación por no-op/concurrencia.
+- Mitigaciones: productor 2.0 atómico; operación pública Inventory; catálogos Java/PostgreSQL cerrados; UUIDv4 canónico lowercase; allowlist exacta de nueve tipos; rollback integral, idempotencia y silencio de caminos no efectivos.
+- Riesgos residuales: rol runtime único, `FAILED` de entrega sin reproceso operativo y ausencia de tamper-proof criptográfico.

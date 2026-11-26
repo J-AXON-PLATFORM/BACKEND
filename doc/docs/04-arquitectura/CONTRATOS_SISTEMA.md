@@ -50,6 +50,8 @@
 
 `OLA6-AUD-001g` amplía únicamente esa allowlist a created/dispatched/completed de Discovery Job 2.0. Created/dispatched conservan actor/correlación humanos; completed usa el executor validado y resultado `SUCCESS|FAILED`. La captura terminal es atómica y no se añaden tablas, dispatchers, schedulers ni SQL cross-module.
 
+`OLA6-AUD-001h` amplía únicamente esa allowlist de siete a nueve tipos con ignored/incorporated de `DiscoveredDevice` 2.0. Ambos usan actor/correlación humanos, versión `1`, `SUCCESS` y metadata cerrada; incorporated acepta el activo `ACTIVE` consultado por contrato público o el creado mediante `AssetCreator`. No se añaden tablas, dispatchers, schedulers ni SQL cross-module.
+
 ## Contrato interno aprobado -- Lote 53
 
 - Command/query solicita una operación o lectura y usa la API pública del módulo proveedor de forma síncrona in-process.

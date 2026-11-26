@@ -1,5 +1,9 @@
 # Historial de cambios
 
+## Auditoría de revisión humana de DiscoveredDevice -- OLA6-AUD-001h, 2026-11-30
+
+`AC-JAXON-100` autoriza exclusivamente en backend futuros `DISCOVERED_DEVICE_IGNORED` y `DISCOVERED_DEVICE_INCORPORATED` 2.0, juntos y con metadata cerrada. Ambos caminos de incorporación comparten contrato; crear un activo produce además `ASSET_CREATED` 2.0 independiente. Discovery amplía solo su dispatcher existente de siete a nueve tipos y se crean exactamente dos migraciones, sin OpenAPI, endpoints, dependencias, workflows, otros repositorios ni Production.
+
 ## Auditoría del lifecycle de Discovery Jobs -- OLA6-AUD-001g, 2026-11-30
 
 `AC-JAXON-099` autoriza exclusivamente en backend futuros `DISCOVERY_JOB_CREATED`, `DISCOVERY_JOB_DISPATCHED` y `DISCOVERY_JOB_COMPLETED` 2.0. Created/dispatched conservan actor humano y correlación originales, versiones `0|1`, `SUCCESS` y `{}`; completed usa actor `DISCOVERY_EXECUTOR`, versión `2`, `{}` y resultado `SUCCESS|FAILED` según `SUCCEEDED|FAILED`. Discovery amplía solo su dispatcher y entrega existentes. Se crean exactamente dos migraciones, sin OpenAPI, endpoints, contratos Job/Result, dependencias, workflows, frontend, automation-collector, Docker/Compose/SFTPGo, SSE ni Production.
