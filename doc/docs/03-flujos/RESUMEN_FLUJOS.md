@@ -129,6 +129,8 @@ Alta manual o incorporación Discovery -> ficha administrativa oficial -> respon
 
 Mutación `AUDIT_REQUIRED` -> cambio de negocio + captura durable `AuditFact` -> commit -> dispatch/retry -> MOD-08 persiste `AuditEvent` append-only. `OLA6-AUD-001a` lo materializa para `AI_SOURCE_DISABLED`: dispatcher AI reclama su outbox con `SKIP LOCKED` -> `AuditFactRecorder` en la misma transacción -> entrega `DELIVERED` por consumidor o reintento/`FAILED` -> `AUDITOR` consulta REST. Reportes Assets/Agents/Tickets consultan contratos públicos del módulo dueño; CSV se genera bajo demanda y no se persiste por defecto.
 
+`OLA6-AUD-001b` aplica el mismo flujo solo a altas administrativas futuras: Identity confirma usuario + `HUMAN_USER_CREATED` 2.0 con roles canónicos -> dispatcher Identity reclama solo 2.0 -> `AuditFactRecorder` materializa con `resourceVersion=null` -> entrega `DELIVERED` o retry/`FAILED`. 1.0 histórico no se despacha y la consulta REST/OpenAPI 8.3 no cambia.
+
 ### FL-AUT-001 / eventos internos
 
 Command/query entre módulos -> API pública in-process. Hecho durable -> outbox del productor -> consumidores idempotentes `at-least-once`. Automation solo procesa eventos elegibles y cualquier mutación vuelve al contrato del módulo dueño. n8n no consume el bus interno directamente. SSE es adaptación best-effort y REST conserva verdad.

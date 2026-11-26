@@ -53,6 +53,8 @@ En `OLA5-AI-006a`, `POST /ai/sources/{sourceId}/disable` requiere exclusivamente
 
 En `OLA6-AUD-001a`, `GET /audit/events` requiere exclusivamente el rol `AUDITOR`; `SYSTEM_ADMIN`, `IT_OPERATOR`, `SUPPORT_TECHNICIAN` y `END_USER` reciben `403` salvo que también posean `AUDITOR`. La materialización no tiene endpoint: se produce in-process mediante `AuditFactRecorder`. Riesgo aceptado: `SYSTEM_ADMIN` puede crear una cuenta `AUDITOR` hasta que `HUMAN_USER_CREATED` con roles sea auditable.
 
+En `OLA6-AUD-001b`, toda alta administrativa futura captura y materializa `HUMAN_USER_CREATED` 2.0 con los roles completos asignados. Esto cierra la falta de trazabilidad señalada en `001a`, sin conceder permisos nuevos ni cambiar endpoints: `SYSTEM_ADMIN` conserva el alta y `AUDITOR` conserva la lectura. La asignación o edición posterior de roles sigue fuera de alcance y deberá auditarse en su corte.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

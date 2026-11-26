@@ -1,8 +1,16 @@
 # Historial de cambios
 
+## Auditoría de alta administrativa -- OLA6-AUD-001b, 2026-11-27
+
+`AC-JAXON-093` autoriza exclusivamente en backend `HUMAN_USER_CREATED` 2.0 para altas futuras, con `status=ACTIVE`, roles completos ordenados canónicamente y separados por `|`, entrega por consumidor propiedad de Identity y ampliación cerrada del catálogo Audit. El histórico 1.0, OpenAPI 8.3, frontend y automation-collector permanecen intactos. Se añaden exactamente dos migraciones (`identity.outbox_deliveries`/constraints 2.0 y catálogo Audit), sin dependencias ni workflows. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local.
+
+Se sincroniza retrospectivamente el cierre real de `OLA6-AUD-001a`: `BACKEND#60` (`39c7e3e8421df5fdf2e9351ece6cc84ea7838e93`, runs `45737955090`/`45738252868`) y `FRONTEND#35` (`258ad71b7231a10c7745dc525d642cab7049ef81`, runs `45738687328`/`45738890038`) quedaron verdes `APPLICATION`. El run frontend `45738637595` fue cancelado para corregir `git diff --check`, no por fallo de pruebas. `AC-JAXON-092` está cerrado.
+
+---
+
 ## Primera vertical de Auditoría -- OLA6-AUD-001a, 2026-11-26
 
-`AC-JAXON-092` autoriza en backend/frontend exclusivamente la auditoría de `AI_SOURCE_DISABLED`: dispatcher propiedad de AI con entrega por consumidor en `ai.outbox_deliveries`, contrato público `AuditFactRecorder`, materialización idempotente append-only en `audit_reporting.audit_events`, retry `AC-JAXON-057`, consulta `GET /audit/events` exclusiva de `AUDITOR`, OpenAPI 8.3 compatible, dos migraciones y vista frontend. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN`. `SPIKE-AUDIT-001` fue el análisis previo.
+`AC-JAXON-092` autorizó en backend/frontend exclusivamente la auditoría de `AI_SOURCE_DISABLED`: dispatcher propiedad de AI con entrega por consumidor en `ai.outbox_deliveries`, contrato público `AuditFactRecorder`, materialización idempotente append-only en `audit_reporting.audit_events`, retry `AC-JAXON-057`, consulta `GET /audit/events` exclusiva de `AUDITOR`, OpenAPI 8.3 compatible, dos migraciones y vista frontend. El incremento quedó implementado, integrado y verificado; `SPIKE-AUDIT-001` fue el análisis previo.
 
 Se sincroniza retrospectivamente el cierre real de `OLA5-AI-006a`: `BACKEND#58` (`023dfb1013fa990503d1391ad8ad4e3eb5fcdcc0`, runs `45716546345`/`45716961280`), `BACKEND#59` (`906ce26402466a92773505c211006b86b6a0474d`, runs `45724721314`/`45726737596`) y `FRONTEND#34` (`22bf56b0c71f1017eb2eda6d06dfa32285c5d3f7`, runs `45728468655`/`45728741818`). `AC-JAXON-091` está cerrado.
 

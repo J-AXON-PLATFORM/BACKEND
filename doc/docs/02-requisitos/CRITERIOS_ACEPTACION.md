@@ -172,3 +172,11 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Audit no lee ni escribe tablas ajenas; AI solo escribe en Audit mediante `AuditFactRecorder`.
 - `GET /audit/events` es exclusivo de `AUDITOR`; sin sesión `401`, `SYSTEM_ADMIN` u otros roles sin `AUDITOR` `403`. Filtros de `AC-JAXON-056`, `size` 50 por defecto y máximo 200, orden estable, `422` sin eco para parámetros desconocidos, repetidos o inválidos.
 - No se almacenan ni exponen datos prohibidos. OpenAPI 8.3 conserva 8.2 byte a byte y es compatible. Frontend muestra la vista solo a `AUDITOR`, con parser cerrado, caché por usuario y errores accesibles.
+
+## OLA6-AUD-001b
+
+- Cada alta administrativa futura confirma atómicamente un único `HUMAN_USER_CREATED` 2.0; el histórico 1.0 permanece intacto y no se despacha.
+- Payload y metadata contienen exactamente `status=ACTIVE` y `roles` completo, no vacío, ordenado según `AUDITOR|END_USER|IT_OPERATOR|SUPPORT_TECHNICIAN|SYSTEM_ADMIN` y separado por `|`. Se rechazan duplicados, desorden, roles desconocidos, separadores alternativos, claves extra y formatos alternativos.
+- Identity controla su entrega `AUDIT`; procesa solo 2.0, usa hasta 10 intentos incluso para errores permanentes, backoff exponencial con jitter y tope de cinco minutos, y deja `FAILED` durable. Un evento defectuoso no bloquea otro.
+- Audit materializa con `resourceVersion=null`, idempotencia por `source_event_id` y conflicto sin sobrescritura. `AI_SOURCE_DISABLED` 1.0, append-only y retención de cinco años permanecen intactos.
+- Se crean exactamente dos migraciones. OpenAPI 8.3, endpoints, frontend, automation-collector, dependencias y workflows no cambian.

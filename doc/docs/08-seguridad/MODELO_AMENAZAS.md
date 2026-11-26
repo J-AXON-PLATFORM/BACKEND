@@ -49,3 +49,11 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: pérdida o duplicación de hechos, sobrescritura o borrado de auditoría, lectura cross-module, exfiltración por metadata, acceso de roles no autorizados y enumeración por filtros.
 - Mitigaciones: intención durable en el outbox del productor; entrega idempotente por `source_event_id`; conflicto sin sobrescritura; trigger append-only; catálogo y metadata cerrados en Java y en la base; prueba estática sin SQL ajeno; `AUDITOR` exclusivo; `422` sin eco; respuesta sin secretos ni contenido.
 - Riesgos residuales: rol único de base de datos; `SYSTEM_ADMIN` puede crear una cuenta `AUDITOR`; sin tamper-proof criptográfico ni alertas individuales de `FAILED` en v1.
+
+## OLA6-AUD-001b
+
+- Activos: roles asignados en altas humanas, integridad del outbox Identity, entrega por consumidor y evidencia Audit.
+- Entradas: alta administrativa existente y dispatcher in-process Identity -> `AuditFactRecorder`.
+- Amenazas: omitir roles sensibles, ambigüedad o formatos alternativos de roles, despacho accidental de 1.0, duplicación/conflicto, bloqueo por evento inválido y SQL cross-module.
+- Mitigaciones: evento 2.0 atómico; catálogo completo y orden canónico fijo con separador `|`; constraints y validación Java cerradas; dispatcher filtra tipo+versión; entrega por consumidor con `SKIP LOCKED`, 10 intentos e idempotencia; Audit permanece append-only y sin SQL ajeno.
+- Riesgos residuales: rol runtime único de base de datos, sin reproceso operativo de `FAILED`, sin tamper-proof criptográfico y sin auditoría de edición posterior de roles.

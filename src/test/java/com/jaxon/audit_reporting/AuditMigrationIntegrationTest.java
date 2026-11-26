@@ -106,7 +106,33 @@ class AuditMigrationIntegrationTest {
                     .as(String.valueOf(invalid[0]) + invalid[1] + invalid[2] + invalid[3] + invalid[5])
                     .isInstanceOf(DataIntegrityViolationException.class);
         }
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_reporting.audit_events", Integer.class)).isEqualTo(1);
+        auditIdentity(jdbc, "2.0", "IDENTITY", "HUMAN_USER", "SUCCESS", null,
+                "{\"status\":\"ACTIVE\",\"roles\":\"AUDITOR|END_USER|IT_OPERATOR|SUPPORT_TECHNICIAN|SYSTEM_ADMIN\"}");
+        for (Object[] invalid : new Object[][] {
+            {"1.0", "IDENTITY", "HUMAN_USER", "SUCCESS", null, "{\"status\":\"ACTIVE\",\"roles\":\"AUDITOR\"}"},
+            {"2.0", "AI", "HUMAN_USER", "SUCCESS", null, "{\"status\":\"ACTIVE\",\"roles\":\"AUDITOR\"}"},
+            {"2.0", "IDENTITY", "AI_SOURCE", "SUCCESS", null, "{\"status\":\"ACTIVE\",\"roles\":\"AUDITOR\"}"},
+            {"2.0", "IDENTITY", "HUMAN_USER", "DENIED", null, "{\"status\":\"ACTIVE\",\"roles\":\"AUDITOR\"}"},
+            {"2.0", "IDENTITY", "HUMAN_USER", "SUCCESS", 1L, "{\"status\":\"ACTIVE\",\"roles\":\"AUDITOR\"}"},
+            {"2.0", "IDENTITY", "HUMAN_USER", "SUCCESS", null, "{\"status\":\"DISABLED\",\"roles\":\"AUDITOR\"}"},
+            {"2.0", "IDENTITY", "HUMAN_USER", "SUCCESS", null, "{\"status\":\"ACTIVE\",\"roles\":\"END_USER|AUDITOR\"}"},
+            {"2.0", "IDENTITY", "HUMAN_USER", "SUCCESS", null, "{\"status\":\"ACTIVE\",\"roles\":\"AUDITOR|AUDITOR\"}"},
+            {"2.0", "IDENTITY", "HUMAN_USER", "SUCCESS", null, "{\"status\":\"ACTIVE\",\"roles\":\"SUPERUSER\"}"},
+            {"2.0", "IDENTITY", "HUMAN_USER", "SUCCESS", null, "{\"status\":\"ACTIVE\",\"roles\":\"AUDITOR,END_USER\"}"},
+            {"2.0", "IDENTITY", "HUMAN_USER", "SUCCESS", null, "{\"status\":\"ACTIVE\",\"roles\":\"AUDITOR\",\"extra\":\"x\"}"}
+        }) {
+            assertThatThrownBy(() -> auditIdentity(
+                            jdbc,
+                            (String) invalid[0],
+                            (String) invalid[1],
+                            (String) invalid[2],
+                            (String) invalid[3],
+                            (Long) invalid[4],
+                            (String) invalid[5]))
+                    .as(java.util.Arrays.toString(invalid))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_reporting.audit_events", Integer.class)).isEqualTo(2);
     }
 
     private void migrate(String target) {
@@ -141,5 +167,29 @@ class AuditMigrationIntegrationTest {
                 """,
                 UUID.randomUUID(), UUID.randomUUID(), type, module, UUID.randomUUID(), resourceType,
                 UUID.randomUUID(), version, result, UUID.randomUUID(), metadata);
+    }
+
+    private static void auditIdentity(
+            JdbcTemplate jdbc, String eventVersion, String module, String resourceType, String result,
+            Long resourceVersion, String metadata) {
+        jdbc.update(
+                """
+                INSERT INTO audit_reporting.audit_events
+                    (audit_event_id, source_event_id, event_type, event_version, producer_module, occurred_at,
+                     actor_type, actor_id, resource_type, resource_id, resource_version, result,
+                     correlation_id, metadata)
+                VALUES (?, ?, 'HUMAN_USER_CREATED', ?, ?, now(), 'HUMAN_USER', ?, ?, ?, ?, ?, ?, ?::jsonb)
+                """,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                eventVersion,
+                module,
+                UUID.randomUUID(),
+                resourceType,
+                UUID.randomUUID(),
+                resourceVersion,
+                result,
+                UUID.randomUUID(),
+                metadata);
     }
 }

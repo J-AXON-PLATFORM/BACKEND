@@ -50,3 +50,10 @@ Automatizar pruebas sin depender de un proveedor de CI específico
 - API: `401`, `403` para `SYSTEM_ADMIN` y otros roles sin `AUDITOR`, filtros, paginación, orden y `422` sin eco.
 - Arquitectura y contrato: `ModularityTests`, prueba estática de ownership SQL y OpenAPI 8.3 con 8.2 congelado.
 - Frontend: Vitest/RTL de visibilidad, parser, filtros, paginación y caché; E2E Chromium multirepo deshabilitar -> materializar -> consultar como `AUDITOR`, con `403` para `SYSTEM_ADMIN`.
+
+## OLA6-AUD-001b
+
+- Unitarias: catálogo `HUMAN_USER_CREATED` 2.0 cerrado, orden/separador/duplicados/roles desconocidos y backoff con jitter/tope.
+- Migración PostgreSQL 18/pgvector: upgrade con 1.0 histórico preservado, constraints 2.0, entrega Identity, cascada y ampliación Audit sin regresión de `AI_SOURCE_DISABLED`.
+- Integración: alta -> outbox 2.0 -> Audit exacto, 1.0 ignorado, redelivery idempotente, conflicto hasta `FAILED` en 10 intentos, indisponibilidad sin revertir usuario, aislamiento de evento defectuoso y tres dispatchers concurrentes.
+- Arquitectura/regresión: ModularityTests, AuditOwnershipTest, suite AI Audit, `clean verify`, OpenAPI 8.3 byte a byte, documentación, Gitleaks, backup/restore y clasificador `APPLICATION`.
