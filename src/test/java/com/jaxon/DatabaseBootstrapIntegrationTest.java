@@ -112,7 +112,9 @@ class DatabaseBootstrapIntegrationTest {
                         "20261130010000",
                         "20261130020000",
                         "20261130030000",
-                        "20261130040000");
+                        "20261130040000",
+                        "20261130050000",
+                        "20261130060000");
         assertThat(modularSchemas).containsExactlyInAnyOrderElementsOf(EXPECTED_SCHEMAS);
         assertThat(modularTables).containsExactly(
                 "ai.document_sources",

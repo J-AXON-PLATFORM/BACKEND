@@ -40,8 +40,9 @@ class DiscoveryAuditDispatchIntegrationTest {
     }
 
     @Test
-    void materializesOnlyTheFourVersionTwoEventsAndRedeliveryIsIdempotent() {
+    void materializesOnlyTheSevenVersionTwoEventTypesAndRedeliveryIsIdempotent() {
         UUID actorId = UUID.randomUUID();
+        UUID executorId = UUID.randomUUID();
         UUID historical = insertEvent(
                 "DISCOVERY_SCOPE_CREATED", "1.0", "AUTHORIZED_SCOPE", 0,
                 "{\"status\":\"ACTIVE\"}", actorId);
@@ -67,16 +68,21 @@ class DiscoveryAuditDispatchIntegrationTest {
                         "DISCOVERY_EXECUTOR",
                         1,
                         "{}",
-                        actorId));
+                        actorId),
+                insertEvent("DISCOVERY_JOB_CREATED", "2.0", "DISCOVERY_JOB", 0, "{}", actorId),
+                insertEvent("DISCOVERY_JOB_DISPATCHED", "2.0", "DISCOVERY_JOB", 1, "{}", actorId),
+                insertEvent(
+                        "DISCOVERY_JOB_COMPLETED", "2.0", "DISCOVERY_EXECUTOR",
+                        executorId, "DISCOVERY_JOB", 2, "SUCCESS", "{}"),
+                insertEvent(
+                        "DISCOVERY_JOB_COMPLETED", "2.0", "DISCOVERY_EXECUTOR",
+                        executorId, "DISCOVERY_JOB", 2, "FAILED", "{}"));
 
-        assertThat(dispatcher.dispatchDue(10))
-                .isEqualTo(new DiscoveryAuditDispatcher.DispatchSummary(4, 0, 0, 0));
+        assertThat(dispatcher.dispatchDue(20))
+                .isEqualTo(new DiscoveryAuditDispatcher.DispatchSummary(8, 0, 0, 0));
         assertThat(future.stream().map(this::audit).toList())
-                .hasSize(4)
+                .hasSize(8)
                 .allSatisfy(row -> {
-                    assertThat(row).containsEntry("resource_version",
-                            "DISCOVERY_SCOPE_STATUS_CHANGED".equals(row.get("event_type")) ? 2L
-                                    : "DISCOVERY_EXECUTOR_ACTIVATED".equals(row.get("event_type")) ? 1L : 0L);
                     if ("DISCOVERY_SCOPE_STATUS_CHANGED".equals(row.get("event_type"))) {
                         assertThat(row).containsEntry(
                                 "metadata", "{\"newStatus\": \"ACTIVE\", \"previousStatus\": \"DISABLED\"}");
@@ -84,6 +90,22 @@ class DiscoveryAuditDispatchIntegrationTest {
                         assertThat(row).containsEntry("metadata", "{}");
                     }
                 });
+        assertThat(audit(future.get(4)))
+                .containsEntry("actor_type", "HUMAN_USER")
+                .containsEntry("resource_version", 0L)
+                .containsEntry("result", "SUCCESS");
+        assertThat(audit(future.get(5)))
+                .containsEntry("actor_type", "HUMAN_USER")
+                .containsEntry("resource_version", 1L)
+                .containsEntry("result", "SUCCESS");
+        assertThat(audit(future.get(6)))
+                .containsEntry("actor_type", "DISCOVERY_EXECUTOR")
+                .containsEntry("resource_version", 2L)
+                .containsEntry("result", "SUCCESS");
+        assertThat(audit(future.get(7)))
+                .containsEntry("actor_type", "DISCOVERY_EXECUTOR")
+                .containsEntry("resource_version", 2L)
+                .containsEntry("result", "FAILED");
         assertThat(jdbc.queryForObject(
                         "SELECT count(*) FROM discovery.outbox_deliveries WHERE event_id = ?",
                         Integer.class,
@@ -175,6 +197,19 @@ class DiscoveryAuditDispatchIntegrationTest {
 
     private UUID insertEvent(
             String type, String version, String resourceType, long resourceVersion, String payload, UUID actorId) {
+        return insertEvent(
+                type, version, "HUMAN_USER", actorId, resourceType, resourceVersion, "SUCCESS", payload);
+    }
+
+    private UUID insertEvent(
+            String type,
+            String version,
+            String actorType,
+            UUID actorId,
+            String resourceType,
+            long resourceVersion,
+            String result,
+            String payload) {
         UUID eventId = UUID.randomUUID();
         Instant now = Instant.now();
         jdbc.update(
@@ -183,17 +218,19 @@ class DiscoveryAuditDispatchIntegrationTest {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, ?, ?, ?, 'DISCOVERY', 'HUMAN_USER', ?, ?, ?, ?,
-                        'SUCCESS', ?, ?::jsonb, ?)
+                VALUES (?, ?, ?, ?, 'DISCOVERY', ?, ?, ?, ?, ?,
+                        ?, ?, ?::jsonb, ?)
                 """,
                 eventId,
                 type,
                 version,
                 Timestamp.from(now),
+                actorType,
                 actorId,
                 resourceType,
                 UUID.randomUUID(),
                 resourceVersion,
+                result,
                 UUID.randomUUID(),
                 payload,
                 Timestamp.from(now));
@@ -209,7 +246,8 @@ class DiscoveryAuditDispatchIntegrationTest {
     private Map<String, Object> audit(UUID eventId) {
         return jdbc.queryForMap(
                 """
-                SELECT event_type, resource_type, resource_version, metadata::text AS metadata
+                SELECT event_type, actor_type, resource_type, resource_version, result,
+                       metadata::text AS metadata
                 FROM audit_reporting.audit_events WHERE source_event_id = ?
                 """,
                 eventId);

@@ -272,4 +272,47 @@ class AuditCatalogTest {
             assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
         }
     }
+
+    @Test
+    void acceptsOnlyClosedDiscoveryJobLifecycleFacts() {
+        UUID human = UUID.randomUUID();
+        UUID executor = UUID.randomUUID();
+        assertThat(AuditCatalog.accepts(fact(
+                        "DISCOVERY_JOB_CREATED", "2.0", "DISCOVERY", "HUMAN_USER", human,
+                        "DISCOVERY_JOB", 0L, "SUCCESS", Map.of())))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "DISCOVERY_JOB_DISPATCHED", "2.0", "DISCOVERY", "HUMAN_USER", human,
+                        "DISCOVERY_JOB", 1L, "SUCCESS", Map.of())))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "DISCOVERY_JOB_COMPLETED", "2.0", "DISCOVERY", "DISCOVERY_EXECUTOR", executor,
+                        "DISCOVERY_JOB", 2L, "SUCCESS", Map.of())))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "DISCOVERY_JOB_COMPLETED", "2.0", "DISCOVERY", "DISCOVERY_EXECUTOR", executor,
+                        "DISCOVERY_JOB", 2L, "FAILED", Map.of())))
+                .isTrue();
+
+        for (AuditFact invalid : new AuditFact[] {
+            fact("DISCOVERY_JOB_CREATED", "1.0", "DISCOVERY", "HUMAN_USER", human,
+                    "DISCOVERY_JOB", 0L, "SUCCESS", Map.of()),
+            fact("DISCOVERY_JOB_CREATED", "2.0", "DISCOVERY", "HUMAN_USER", human,
+                    "DISCOVERY_JOB", 1L, "SUCCESS", Map.of()),
+            fact("DISCOVERY_JOB_DISPATCHED", "2.0", "DISCOVERY", "HUMAN_USER", null,
+                    "DISCOVERY_JOB", 1L, "SUCCESS", Map.of()),
+            fact("DISCOVERY_JOB_DISPATCHED", "2.0", "DISCOVERY", "DISCOVERY_EXECUTOR", executor,
+                    "DISCOVERY_JOB", 1L, "SUCCESS", Map.of()),
+            fact("DISCOVERY_JOB_COMPLETED", "2.0", "DISCOVERY", "HUMAN_USER", human,
+                    "DISCOVERY_JOB", 2L, "SUCCESS", Map.of()),
+            fact("DISCOVERY_JOB_COMPLETED", "2.0", "DISCOVERY", "DISCOVERY_EXECUTOR", executor,
+                    "DISCOVERY_JOB", 1L, "SUCCESS", Map.of()),
+            fact("DISCOVERY_JOB_COMPLETED", "2.0", "DISCOVERY", "DISCOVERY_EXECUTOR", executor,
+                    "DISCOVERY_JOB", 2L, "DENIED", Map.of()),
+            fact("DISCOVERY_JOB_COMPLETED", "2.0", "DISCOVERY", "DISCOVERY_EXECUTOR", executor,
+                    "DISCOVERY_JOB", 2L, "FAILED", Map.of("status", "FAILED"))
+        }) {
+            assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
+        }
+    }
 }
