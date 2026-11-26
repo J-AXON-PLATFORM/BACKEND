@@ -28,6 +28,7 @@ Definir dominios, ownership, almacenamiento, movimiento y ciclo de vida.
 - En `OLA5-AI-001a`, AI posee `document_sources` y `outbox_events`; PostgreSQL conserva metadata, hash, clave opaca y estado `PENDING`, mientras el original permanece fuera de DB bajo `DocumentStorage`. El archivo se publica y verifica antes de la transacción metadata/outbox. Un fallo DB activa retirada compensatoria y nunca publica metadata; una compensación también fallida solo puede dejar un huérfano no publicado, cuya reconciliación queda fuera del corte.
 - En `OLA6-AUD-001b`, Identity posee `identity.outbox_deliveries` y despacha únicamente sus `HUMAN_USER_CREATED` 2.0; Audit posee `audit_reporting.audit_events` y amplía su catálogo mediante `AuditFactRecorder`. No existe SQL cross-schema entre módulos. El usuario y su evento 2.0 se confirman atómicamente; la materialización posterior conserva idempotencia y no altera la operación ya confirmada.
 - En `OLA6-AUD-001c`, el mismo dispatcher y tabla de entregas Identity incluyen solo login/logout exitosos 2.0. La sesión y su evento se confirman atómicamente en login; la eliminación de sesión y su evento se confirman atómicamente en logout. Los eventos 1.0 no se mutan ni reclaman.
+- En `OLA6-AUD-001d`, esa infraestructura incluye solo login fallido y registros efectivos de claves Agent/Executor 2.0. Intento/evento o clave/evento se confirman atómicamente; `429`, no-ops y rechazos no crean hechos adicionales. Los eventos 1.0 no se mutan ni reclaman.
 
 ## Consistencia
 

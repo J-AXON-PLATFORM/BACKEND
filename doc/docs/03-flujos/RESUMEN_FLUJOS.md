@@ -133,6 +133,8 @@ Mutación `AUDIT_REQUIRED` -> cambio de negocio + captura durable `AuditFact` ->
 
 `OLA6-AUD-001c` aplica el mismo flujo a login/logout humanos exitosos futuros: Identity confirma sesión + login 2.0, o elimina sesión + logout 2.0 -> el dispatcher existente reclama solo tipos allowlisted 2.0 -> Audit materializa metadata `{}` -> entrega o retry/`FAILED`. Fallos y 1.0 no se reclaman.
 
+`OLA6-AUD-001d` amplía el flujo a tres hechos futuros: Identity confirma intento denegado + `HUMAN_LOGIN_FAILED` 2.0, o registro efectivo de clave + evento técnico 2.0 -> el mismo dispatcher reclama la allowlist 2.0 -> Audit materializa reason cerrado o metadata `{}` -> entrega o retry/`FAILED`. El camino `429`, no-ops y eventos 1.0 permanecen silenciosos para Audit.
+
 ### FL-AUT-001 / eventos internos
 
 Command/query entre módulos -> API pública in-process. Hecho durable -> outbox del productor -> consumidores idempotentes `at-least-once`. Automation solo procesa eventos elegibles y cualquier mutación vuelve al contrato del módulo dueño. n8n no consume el bus interno directamente. SSE es adaptación best-effort y REST conserva verdad.

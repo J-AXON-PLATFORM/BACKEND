@@ -137,6 +137,13 @@ class AuditMigrationIntegrationTest {
                 "AUTHENTICATION_ATTEMPT", "SUCCESS", null, "{}");
         auditIdentity(jdbc, "HUMAN_LOGOUT_SUCCEEDED", "2.0", "IDENTITY",
                 "HUMAN_SESSION", "SUCCESS", null, "{}");
+        auditIdentityWithActor(jdbc, "HUMAN_LOGIN_FAILED", "2.0", "IDENTITY",
+                null, "AUTHENTICATION_ATTEMPT", "DENIED", null,
+                "{\"reason\":\"INVALID_CREDENTIALS\"}");
+        auditIdentity(jdbc, "AGENT_PUBLIC_KEY_REGISTERED", "2.0", "IDENTITY",
+                "AGENT_TECHNICAL_IDENTITY", "SUCCESS", null, "{}");
+        auditIdentity(jdbc, "DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED", "2.0", "IDENTITY",
+                "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY", "SUCCESS", null, "{}");
         assertThatThrownBy(() -> auditIdentity(
                         jdbc,
                         "HUMAN_LOGIN_SUCCEEDED",
@@ -157,7 +164,39 @@ class AuditMigrationIntegrationTest {
                         null,
                         "{}"))
                 .isInstanceOf(DataIntegrityViolationException.class);
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_reporting.audit_events", Integer.class)).isEqualTo(4);
+        assertThatThrownBy(() -> auditIdentityWithActor(
+                        jdbc,
+                        "HUMAN_LOGIN_FAILED",
+                        "2.0",
+                        "IDENTITY",
+                        null,
+                        "AUTHENTICATION_ATTEMPT",
+                        "DENIED",
+                        null,
+                        "{\"reason\":\"RATE_LIMITED\"}"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> auditIdentityWithActor(
+                        jdbc,
+                        "AGENT_PUBLIC_KEY_REGISTERED",
+                        "2.0",
+                        "IDENTITY",
+                        null,
+                        "AGENT_TECHNICAL_IDENTITY",
+                        "SUCCESS",
+                        null,
+                        "{}"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> auditIdentity(
+                        jdbc,
+                        "DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED",
+                        "2.0",
+                        "IDENTITY",
+                        "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY",
+                        "SUCCESS",
+                        null,
+                        "{\"fingerprint\":\"forbidden\"}"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_reporting.audit_events", Integer.class)).isEqualTo(7);
     }
 
     private void migrate(String target) {
@@ -202,6 +241,28 @@ class AuditMigrationIntegrationTest {
             String resourceType,
             String result,
             Long resourceVersion, String metadata) {
+        auditIdentityWithActor(
+                jdbc,
+                eventType,
+                eventVersion,
+                module,
+                UUID.randomUUID(),
+                resourceType,
+                result,
+                resourceVersion,
+                metadata);
+    }
+
+    private static void auditIdentityWithActor(
+            JdbcTemplate jdbc,
+            String eventType,
+            String eventVersion,
+            String module,
+            UUID actorId,
+            String resourceType,
+            String result,
+            Long resourceVersion,
+            String metadata) {
         jdbc.update(
                 """
                 INSERT INTO audit_reporting.audit_events
@@ -215,7 +276,7 @@ class AuditMigrationIntegrationTest {
                 eventType,
                 eventVersion,
                 module,
-                UUID.randomUUID(),
+                actorId,
                 resourceType,
                 UUID.randomUUID(),
                 resourceVersion,

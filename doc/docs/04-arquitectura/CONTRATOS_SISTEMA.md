@@ -42,6 +42,8 @@
 
 `OLA6-AUD-001c` amplía ese mismo productor/dispatcher a futuros login/logout exitosos 2.0 con payload y metadata `{}` exactos. No añade consumidor, scheduler, tabla, endpoint ni contrato web; 1.0 y login fallido permanecen fuera.
 
+`OLA6-AUD-001d` añade a la allowlist futura 2.0 `HUMAN_LOGIN_FAILED`, `AGENT_PUBLIC_KEY_REGISTERED` y `DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED`. El primero admite actor nulo solo sin principal y reason `INVALID_CREDENTIALS`; los otros exigen actor humano y `{}`. No añade consumidor, scheduler, tabla, endpoint ni contrato web; `429` y 1.0 no se despachan.
+
 ## Contrato interno aprobado -- Lote 53
 
 - Command/query solicita una operación o lectura y usa la API pública del módulo proveedor de forma síncrona in-process.

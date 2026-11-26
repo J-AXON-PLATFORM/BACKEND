@@ -64,3 +64,10 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: fuga de username, IP, contraseña, token/sesión, CSRF, hashes o rate-limit keys; despacho de fallos o 1.0; metadata arbitraria; duplicación/conflicto.
 - Mitigaciones: eventos 2.0 con payload/metadata exactamente `{}`; allowlist tipo+versión; catálogo Java/SQL cerrado; UUIDv4; dispatcher y entrega existentes; idempotencia y conflicto sin sobrescritura.
 - Riesgos residuales: los fallos/denegaciones no se auditan en este corte; permanecen los riesgos de rol runtime único, `FAILED` sin reproceso y ausencia de tamper-proof criptográfico.
+
+## OLA6-AUD-001d
+
+- Activos: evidencia de denegaciones de login y de registro de credenciales técnicas, sin material de credencial ni identificadores de red.
+- Amenazas: amplificación por peticiones `429`, enumeración, fuga de username/IP/hash/clave/fingerprint/comentario, actor anónimo sintético, metadata arbitraria, despacho de 1.0 o duplicación.
+- Mitigaciones: ningún evento por `429`; máximo cinco fallos por clave/ventana; reason único sin distinguir causa; actor nulo solo sin principal; claves con metadata vacía; allowlist 2.0 y catálogos Java/SQL cerrados; idempotencia y conflicto sin sobrescritura.
+- Riesgos residuales: un atacante puede rotar usernames/IP y aumentar volumen antes del umbral; Audit no acredita una respuesta `429` ni agrupa episodios; permanecen rol runtime único, `FAILED` sin reproceso y ausencia de tamper-proof criptográfico.

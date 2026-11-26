@@ -28,7 +28,9 @@ final class AuditCatalog {
         }
         return acceptsAiSourceDisabled(fact)
                 || acceptsHumanUserCreated(fact)
-                || acceptsHumanAuthenticationSucceeded(fact);
+                || acceptsHumanAuthenticationSucceeded(fact)
+                || acceptsHumanLoginFailed(fact)
+                || acceptsTechnicalIdentityPublicKeyRegistered(fact);
     }
 
     private static boolean acceptsAiSourceDisabled(AuditFact fact) {
@@ -62,6 +64,33 @@ final class AuditCatalog {
         boolean logout = "HUMAN_LOGOUT_SUCCEEDED".equals(fact.eventType())
                 && "HUMAN_SESSION".equals(fact.resourceType());
         return (login || logout)
+                && "2.0".equals(fact.eventVersion())
+                && "IDENTITY".equals(fact.producerModule())
+                && "HUMAN_USER".equals(fact.actorType())
+                && uuidV4(fact.actorId())
+                && fact.resourceVersion() == null
+                && "SUCCESS".equals(fact.result())
+                && fact.metadata().isEmpty();
+    }
+
+    private static boolean acceptsHumanLoginFailed(AuditFact fact) {
+        return "HUMAN_LOGIN_FAILED".equals(fact.eventType())
+                && "2.0".equals(fact.eventVersion())
+                && "IDENTITY".equals(fact.producerModule())
+                && "HUMAN_USER".equals(fact.actorType())
+                && (fact.actorId() == null || uuidV4(fact.actorId()))
+                && "AUTHENTICATION_ATTEMPT".equals(fact.resourceType())
+                && fact.resourceVersion() == null
+                && "DENIED".equals(fact.result())
+                && fact.metadata().equals(Map.of("reason", "INVALID_CREDENTIALS"));
+    }
+
+    private static boolean acceptsTechnicalIdentityPublicKeyRegistered(AuditFact fact) {
+        boolean agent = "AGENT_PUBLIC_KEY_REGISTERED".equals(fact.eventType())
+                && "AGENT_TECHNICAL_IDENTITY".equals(fact.resourceType());
+        boolean executor = "DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED".equals(fact.eventType())
+                && "DISCOVERY_EXECUTOR_TECHNICAL_IDENTITY".equals(fact.resourceType());
+        return (agent || executor)
                 && "2.0".equals(fact.eventVersion())
                 && "IDENTITY".equals(fact.producerModule())
                 && "HUMAN_USER".equals(fact.actorType())

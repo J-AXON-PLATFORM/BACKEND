@@ -31,9 +31,12 @@ class IdentityAuditDeliveryPersistence {
                         LEFT JOIN identity.outbox_deliveries d
                             ON d.event_id = e.event_id AND d.consumer = 'AUDIT'
                         WHERE e.event_type IN (
-                              'HUMAN_USER_CREATED',
-                              'HUMAN_LOGIN_SUCCEEDED',
-                              'HUMAN_LOGOUT_SUCCEEDED')
+                               'HUMAN_USER_CREATED',
+                               'HUMAN_LOGIN_FAILED',
+                               'HUMAN_LOGIN_SUCCEEDED',
+                               'HUMAN_LOGOUT_SUCCEEDED',
+                               'AGENT_PUBLIC_KEY_REGISTERED',
+                               'DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED')
                           AND e.event_version = '2.0'
                           AND (d.event_id IS NULL OR (d.status = 'PENDING' AND d.next_attempt_at <= ?))
                         ORDER BY COALESCE(d.next_attempt_at, e.occurred_at), e.event_id

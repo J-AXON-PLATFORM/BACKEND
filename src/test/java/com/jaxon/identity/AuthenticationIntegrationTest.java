@@ -132,35 +132,64 @@ class AuthenticationIntegrationTest {
         assertThat(jdbc.queryForObject(
                         """
                         SELECT count(*) FROM identity.outbox_events
-                        WHERE event_type = 'HUMAN_LOGIN_FAILED' AND result = 'DENIED'
+                        WHERE event_type = 'HUMAN_LOGIN_FAILED'
+                          AND event_version = '2.0'
+                          AND result = 'DENIED'
+                          AND payload = '{"reason":"INVALID_CREDENTIALS"}'::jsonb
                         """,
                         Integer.class))
                 .isGreaterThanOrEqualTo(3);
         assertThat(jdbc.queryForObject(
                         """
                         SELECT count(*) FROM identity.outbox_events
-                        WHERE event_type = 'HUMAN_LOGIN_FAILED' AND actor_id IS NULL
+                        WHERE event_type = 'HUMAN_LOGIN_FAILED'
+                          AND event_version = '2.0'
+                          AND actor_id IS NULL
                         """,
                         Integer.class))
                 .isPositive();
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM identity.outbox_events e
+                        JOIN identity.human_users u ON u.id = e.actor_id
+                        WHERE e.event_type = 'HUMAN_LOGIN_FAILED'
+                          AND e.event_version = '2.0'
+                          AND u.normalized_username = 'bootstrap.admin'
+                        """,
+                        Integer.class))
+                .isGreaterThanOrEqualTo(2);
     }
 
     @Test
     void allowsFiveFailuresThenRateLimitsTheSixthAndSuccessClearsFailures() throws Exception {
         String username = "rate-" + UUID.randomUUID();
         int attemptsBefore = jdbc.queryForObject("SELECT count(*) FROM identity.login_attempts", Integer.class);
+        int deniedBefore = jdbc.queryForObject(
+                "SELECT count(*) FROM identity.outbox_events WHERE event_type = 'HUMAN_LOGIN_FAILED'",
+                Integer.class);
         for (int attempt = 0; attempt < 5; attempt++) {
             assertThat(login(username, "Wrong passphrase 42!").statusCode()).isEqualTo(401);
         }
         int deniedEvents = jdbc.queryForObject(
-                "SELECT count(*) FROM identity.outbox_events WHERE event_type = 'HUMAN_LOGIN_FAILED'",
+                """
+                SELECT count(*) FROM identity.outbox_events
+                WHERE event_type = 'HUMAN_LOGIN_FAILED'
+                  AND event_version = '2.0'
+                  AND payload = '{"reason":"INVALID_CREDENTIALS"}'::jsonb
+                """,
                 Integer.class);
+        assertThat(deniedEvents).isEqualTo(deniedBefore + 5);
         assertThat(login(username, "Wrong passphrase 42!").statusCode()).isEqualTo(429);
         assertThat(login(username, "Wrong passphrase 42!").statusCode()).isEqualTo(429);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM identity.login_attempts", Integer.class))
                 .isEqualTo(attemptsBefore + 5);
         assertThat(jdbc.queryForObject(
-                        "SELECT count(*) FROM identity.outbox_events WHERE event_type = 'HUMAN_LOGIN_FAILED'",
+                        """
+                        SELECT count(*) FROM identity.outbox_events
+                        WHERE event_type = 'HUMAN_LOGIN_FAILED'
+                          AND event_version = '2.0'
+                          AND payload = '{"reason":"INVALID_CREDENTIALS"}'::jsonb
+                        """,
                         Integer.class))
                 .isEqualTo(deniedEvents);
 
