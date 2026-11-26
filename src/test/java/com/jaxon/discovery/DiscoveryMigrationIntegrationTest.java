@@ -136,6 +136,15 @@ class DiscoveryMigrationIntegrationTest {
                 .containsEntry("inventory_asset_id", null);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM discovery.outbox_events", Integer.class))
                 .isEqualTo(7);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM discovery.outbox_deliveries", Integer.class))
+                .isZero();
+        assertThat(jdbc.queryForList(
+                        """
+                        SELECT event_type, event_version, payload::text AS payload
+                        FROM discovery.outbox_events
+                        ORDER BY event_type
+                        """))
+                .allSatisfy(row -> assertThat(row).containsEntry("event_version", "1.0"));
         assertThat(jdbc.queryForList(
                         """
                         SELECT conname FROM pg_constraint

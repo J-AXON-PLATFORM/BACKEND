@@ -137,6 +137,8 @@ Mutación `AUDIT_REQUIRED` -> cambio de negocio + captura durable `AuditFact` ->
 
 `OLA6-AUD-001e` amplía el flujo a alta de activo, pre-registro y activación Agent futuros: Inventory o Collector confirman agregado + evento 2.0 -> su dispatcher y entrega propios reclaman solo la allowlist 2.0 -> `AuditFactRecorder` materializa recurso/versión exactos y metadata `{}` -> entrega o retry/`FAILED`. El no-op de activación y los eventos 1.0 permanecen silenciosos para Audit.
 
+`OLA6-AUD-001f` amplía el flujo al lifecycle administrativo inicial de Discovery: ámbito o executor + evento 2.0 se confirman atómicamente -> la única entrega/dispatcher Discovery reclama solo cuatro tipos allowlisted -> `AuditFactRecorder` materializa recurso, versión y metadata exactos -> entrega o retry/`FAILED`. Los no-ops y todo 1.0 permanecen silenciosos para Audit.
+
 ### FL-AUT-001 / eventos internos
 
 Command/query entre módulos -> API pública in-process. Hecho durable -> outbox del productor -> consumidores idempotentes `at-least-once`. Automation solo procesa eventos elegibles y cualquier mutación vuelve al contrato del módulo dueño. n8n no consume el bus interno directamente. SSE es adaptación best-effort y REST conserva verdad.

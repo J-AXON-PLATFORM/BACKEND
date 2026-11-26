@@ -84,9 +84,9 @@ class DiscoveryExecutorService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'DISCOVERY_EXECUTOR_PRE_REGISTERED', '1.0', ?, 'DISCOVERY',
+                VALUES (?, 'DISCOVERY_EXECUTOR_PRE_REGISTERED', '2.0', ?, 'DISCOVERY',
                         'HUMAN_USER', ?, 'DISCOVERY_EXECUTOR', ?, 0,
-                        'SUCCESS', ?, '{"status":"PENDING"}'::jsonb, ?)
+                        'SUCCESS', ?, '{}'::jsonb, ?)
                 """,
                 UUID.randomUUID(),
                 Timestamp.from(now),
@@ -190,9 +190,9 @@ class DiscoveryExecutorService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'DISCOVERY_EXECUTOR_ACTIVATED', '1.0', ?, 'DISCOVERY',
+                VALUES (?, 'DISCOVERY_EXECUTOR_ACTIVATED', '2.0', ?, 'DISCOVERY',
                         'HUMAN_USER', ?, 'DISCOVERY_EXECUTOR', ?, ?,
-                        'SUCCESS', ?, '{"status":"ACTIVE"}'::jsonb, ?)
+                        'SUCCESS', ?, '{}'::jsonb, ?)
                 """,
                 UUID.randomUUID(),
                 Timestamp.from(occurredAt),

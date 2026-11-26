@@ -152,6 +152,7 @@
 - **Corte ejecutable OLA6-AUD-001c:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para futuros login/logout humanos exitosos 2.0 con payload/metadata `{}`. Excluye fallos, actor anónimo, IP, backfill, OpenAPI y frontend.
 - **Corte ejecutable OLA6-AUD-001d:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para futuros login fallido y registros de clave pública Agent/Discovery Executor 2.0. El fallo usa reason cerrado y actor nulo solo sin principal verificable; las claves usan metadata `{}`. Excluye eventos por `429`, datos de credencial/red, backfill, OpenAPI y frontend.
 - **Corte ejecutable OLA6-AUD-001e:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para futuros `ASSET_CREATED`, `AGENT_PRE_REGISTERED` y `AGENT_ACTIVATED` 2.0, con versiones `0|0|1`, metadata `{}` y entregas propietarias Inventory/Collector. Excluye otros eventos, backfill, OpenAPI y frontend.
+- **Corte ejecutable OLA6-AUD-001f:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para futuros `DISCOVERY_SCOPE_CREATED`, `DISCOVERY_SCOPE_STATUS_CHANGED`, `DISCOVERY_EXECUTOR_PRE_REGISTERED` y `DISCOVERY_EXECUTOR_ACTIVATED` 2.0, con versiones y metadata cerradas y entrega propietaria Discovery. Excluye otros eventos, backfill, OpenAPI y frontend.
 
 ## Requisitos transversales
 

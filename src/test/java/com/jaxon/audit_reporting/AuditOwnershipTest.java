@@ -32,7 +32,7 @@ class AuditOwnershipTest {
     }
 
     @Test
-    void inventoryAndCollectorAuditDeliverySqlReferencesOnlyItsOwnerSchema() throws IOException {
+    void producerAuditDeliverySqlReferencesOnlyItsOwnerSchema() throws IOException {
         assertNoForeignSchema(
                 Path.of("src/main/java/com/jaxon/inventory/InventoryAuditDeliveryPersistence.java"),
                 Pattern.compile(
@@ -42,6 +42,11 @@ class AuditOwnershipTest {
                 Path.of("src/main/java/com/jaxon/collector/CollectorAuditDeliveryPersistence.java"),
                 Pattern.compile(
                         "\\b(inventory|discovery|support|ai|identity|automation|audit_reporting)\\.[a-z_]+",
+                        Pattern.CASE_INSENSITIVE));
+        assertNoForeignSchema(
+                Path.of("src/main/java/com/jaxon/discovery/DiscoveryAuditDeliveryPersistence.java"),
+                Pattern.compile(
+                        "\\b(inventory|collector|support|ai|identity|automation|audit_reporting)\\.[a-z_]+",
                         Pattern.CASE_INSENSITIVE));
     }
 

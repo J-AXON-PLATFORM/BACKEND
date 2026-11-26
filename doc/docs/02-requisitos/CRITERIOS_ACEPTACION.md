@@ -206,3 +206,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Inventory y Collector controlan entregas y dispatchers independientes, reclaman solo su allowlist 2.0 con `SKIP LOCKED`, 10 intentos, backoff+jitter, idempotencia y conflicto sin sobrescritura.
 - Los eventos 1.0 permanecen byte a byte y sin entrega `AUDIT`; Audit conserva catálogo cerrado, append-only y regresión AI/Identity.
 - Se crean exactamente tres migraciones. OpenAPI 8.3, endpoints, frontend, automation-collector, dependencias y workflows no cambian.
+
+## OLA6-AUD-001f
+
+- Cada alta futura de ámbito, cambio efectivo de estado, pre-registro y activación efectiva de executor confirma atómicamente su evento Discovery 2.0 con actor humano UUIDv4, recurso/correlación UUIDv4 y `SUCCESS`.
+- Scope created y executor pre-registered usan versión `0` y `{}`; executor activated usa versión `1` y `{}`; status changed usa nueva versión `>=1`, estados `ACTIVE|DISABLED` distintos y metadata exacta `previousStatus|newStatus`.
+- Los no-ops de estado y activación no duplican evento ni hecho Audit. Los eventos 1.0 permanecen byte a byte, sin entrega, reinterpretación, replay o backfill.
+- Discovery controla una única entrega y dispatcher propios para los cuatro tipos, con `SKIP LOCKED`, 10 intentos, backoff+jitter, errores cerrados, idempotencia, conflicto sin sobrescritura y aislamiento.
+- Audit conserva catálogo cerrado, append-only y regresión AI/Identity/Inventory/Collector. Discovery accede únicamente mediante `AuditFactRecorder`.
+- Se crean exactamente dos migraciones. OpenAPI 8.3, endpoints, frontend, automation-collector, dependencias, workflows, Docker/Compose, SFTPGo, SSE y Production no cambian.

@@ -287,6 +287,90 @@ class AuditMigrationIntegrationTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    @Test
+    void upgradesDiscoveryWithoutChangingHistoricalEventsAndEnforcesDiscoveryCatalogs() {
+        migrate("20261130020000");
+        JdbcTemplate jdbc = new JdbcTemplate(
+                new DriverManagerDataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword()));
+        UUID actorId = UUID.randomUUID();
+        UUID historical = UUID.randomUUID();
+        jdbc.update(
+                """
+                INSERT INTO discovery.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, 'DISCOVERY_SCOPE_CREATED', '1.0', ?, 'DISCOVERY',
+                        'HUMAN_USER', ?, 'AUTHORIZED_SCOPE', ?, 0,
+                        'SUCCESS', ?, '{"status":"ACTIVE"}'::jsonb, ?)
+                """,
+                historical,
+                Timestamp.from(NOW),
+                actorId,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                Timestamp.from(NOW));
+
+        migrate(null);
+
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT event_version, payload::text AS payload, status, attempts
+                        FROM discovery.outbox_events WHERE event_id = ?
+                        """,
+                        historical))
+                .containsEntry("event_version", "1.0")
+                .containsEntry("payload", "{\"status\": \"ACTIVE\"}")
+                .containsEntry("status", "PENDING")
+                .containsEntry("attempts", 0);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM discovery.outbox_deliveries", Integer.class))
+                .isZero();
+
+        insertDiscoveryAuditFact(jdbc, "DISCOVERY_SCOPE_CREATED", "AUTHORIZED_SCOPE", 0, "{}");
+        insertDiscoveryAuditFact(
+                jdbc,
+                "DISCOVERY_SCOPE_STATUS_CHANGED",
+                "AUTHORIZED_SCOPE",
+                3,
+                "{\"previousStatus\":\"ACTIVE\",\"newStatus\":\"DISABLED\"}");
+        insertDiscoveryAuditFact(jdbc, "DISCOVERY_EXECUTOR_PRE_REGISTERED", "DISCOVERY_EXECUTOR", 0, "{}");
+        insertDiscoveryAuditFact(jdbc, "DISCOVERY_EXECUTOR_ACTIVATED", "DISCOVERY_EXECUTOR", 1, "{}");
+        for (Object[] invalid : new Object[][] {
+            {"DISCOVERY_SCOPE_CREATED", "AUTHORIZED_SCOPE", 1L, "{}"},
+            {"DISCOVERY_SCOPE_STATUS_CHANGED", "AUTHORIZED_SCOPE", 0L,
+                    "{\"previousStatus\":\"ACTIVE\",\"newStatus\":\"DISABLED\"}"},
+            {"DISCOVERY_SCOPE_STATUS_CHANGED", "AUTHORIZED_SCOPE", 1L,
+                    "{\"previousStatus\":\"ACTIVE\",\"newStatus\":\"ACTIVE\"}"},
+            {"DISCOVERY_SCOPE_STATUS_CHANGED", "AUTHORIZED_SCOPE", 1L,
+                    "{\"previousStatus\":\"ACTIVE\",\"newStatus\":\"DISABLED\",\"name\":\"forbidden\"}"},
+            {"DISCOVERY_EXECUTOR_PRE_REGISTERED", "DISCOVERY_EXECUTOR", 1L, "{}"},
+            {"DISCOVERY_EXECUTOR_ACTIVATED", "DISCOVERY_EXECUTOR", 0L, "{}"}
+        }) {
+            assertThatThrownBy(() -> insertDiscoveryAuditFact(
+                            jdbc,
+                            (String) invalid[0],
+                            (String) invalid[1],
+                            (Long) invalid[2],
+                            (String) invalid[3]))
+                    .as(java.util.Arrays.toString(invalid))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        UUID future = insertDiscoveryProducerEvent(
+                jdbc, "DISCOVERY_EXECUTOR_ACTIVATED", "DISCOVERY_EXECUTOR", 1, "{}");
+        insertProducerDelivery(jdbc, "discovery", future, "FAILED", 10, null, "AUDIT_REJECTED");
+        assertThatThrownBy(() ->
+                        insertProducerDelivery(jdbc, "discovery", future, "PENDING", 10, null, "AUDIT_UNAVAILABLE"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertDiscoveryProducerEvent(
+                        jdbc, "DISCOVERY_EXECUTOR_ACTIVATED", "DISCOVERY_EXECUTOR", 0, "{}"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertDiscoveryProducerEvent(
+                        jdbc, "DISCOVERY_JOB_CREATED", "DISCOVERY_JOB", 0,
+                        "{\"status\":\"PENDING\",\"profile\":\"BASIC\"}"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
     private void migrate(String target) {
         var configuration = Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
@@ -447,5 +531,53 @@ class AuditMigrationIntegrationTest {
                 UUID.randomUUID(),
                 resourceVersion,
                 UUID.randomUUID());
+    }
+
+    private static UUID insertDiscoveryProducerEvent(
+            JdbcTemplate jdbc, String eventType, String resourceType, long resourceVersion, String payload) {
+        UUID eventId = UUID.randomUUID();
+        jdbc.update(
+                """
+                INSERT INTO discovery.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, ?, '2.0', ?, 'DISCOVERY', 'HUMAN_USER', ?, ?, ?, ?,
+                        'SUCCESS', ?, ?::jsonb, ?)
+                """,
+                eventId,
+                eventType,
+                Timestamp.from(NOW),
+                UUID.randomUUID(),
+                resourceType,
+                UUID.randomUUID(),
+                resourceVersion,
+                UUID.randomUUID(),
+                payload,
+                Timestamp.from(NOW));
+        return eventId;
+    }
+
+    private static void insertDiscoveryAuditFact(
+            JdbcTemplate jdbc, String eventType, String resourceType, long resourceVersion, String metadata) {
+        jdbc.update(
+                """
+                INSERT INTO audit_reporting.audit_events
+                    (audit_event_id, source_event_id, event_type, event_version, producer_module,
+                     occurred_at, actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, metadata)
+                VALUES (?, ?, ?, '2.0', 'DISCOVERY', ?, 'HUMAN_USER', ?, ?, ?, ?,
+                        'SUCCESS', ?, ?::jsonb)
+                """,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                eventType,
+                Timestamp.from(NOW),
+                UUID.randomUUID(),
+                resourceType,
+                UUID.randomUUID(),
+                resourceVersion,
+                UUID.randomUUID(),
+                metadata);
     }
 }

@@ -32,7 +32,8 @@ final class AuditCatalog {
                 || acceptsHumanLoginFailed(fact)
                 || acceptsTechnicalIdentityPublicKeyRegistered(fact)
                 || acceptsAssetCreated(fact)
-                || acceptsAgentLifecycle(fact);
+                || acceptsAgentLifecycle(fact)
+                || acceptsDiscoveryLifecycle(fact);
     }
 
     private static boolean acceptsAiSourceDisabled(AuditFact fact) {
@@ -129,6 +130,32 @@ final class AuditCatalog {
                 && fact.metadata().isEmpty();
     }
 
+    private static boolean acceptsDiscoveryLifecycle(AuditFact fact) {
+        boolean scopeCreated = "DISCOVERY_SCOPE_CREATED".equals(fact.eventType())
+                && "AUTHORIZED_SCOPE".equals(fact.resourceType())
+                && Long.valueOf(0).equals(fact.resourceVersion())
+                && fact.metadata().isEmpty();
+        boolean scopeStatusChanged = "DISCOVERY_SCOPE_STATUS_CHANGED".equals(fact.eventType())
+                && "AUTHORIZED_SCOPE".equals(fact.resourceType())
+                && fact.resourceVersion() != null
+                && fact.resourceVersion() >= 1
+                && statusChangeMetadata(fact.metadata());
+        boolean executorPreRegistered = "DISCOVERY_EXECUTOR_PRE_REGISTERED".equals(fact.eventType())
+                && "DISCOVERY_EXECUTOR".equals(fact.resourceType())
+                && Long.valueOf(0).equals(fact.resourceVersion())
+                && fact.metadata().isEmpty();
+        boolean executorActivated = "DISCOVERY_EXECUTOR_ACTIVATED".equals(fact.eventType())
+                && "DISCOVERY_EXECUTOR".equals(fact.resourceType())
+                && Long.valueOf(1).equals(fact.resourceVersion())
+                && fact.metadata().isEmpty();
+        return (scopeCreated || scopeStatusChanged || executorPreRegistered || executorActivated)
+                && "2.0".equals(fact.eventVersion())
+                && "DISCOVERY".equals(fact.producerModule())
+                && "HUMAN_USER".equals(fact.actorType())
+                && uuidV4(fact.actorId())
+                && "SUCCESS".equals(fact.result());
+    }
+
     private static boolean disableMetadata(Map<String, String> metadata) {
         return metadata.size() == 2
                 && DISABLE_PREVIOUS.contains(metadata.get("previousStatus"))
@@ -140,6 +167,15 @@ final class AuditCatalog {
                 && "ACTIVE".equals(metadata.get("status"))
                 && metadata.get("roles") != null
                 && CANONICAL_ROLES.matcher(metadata.get("roles")).matches();
+    }
+
+    private static boolean statusChangeMetadata(Map<String, String> metadata) {
+        String previous = metadata.get("previousStatus");
+        String next = metadata.get("newStatus");
+        return metadata.size() == 2
+                && Set.of("ACTIVE", "DISABLED").contains(previous)
+                && Set.of("ACTIVE", "DISABLED").contains(next)
+                && !previous.equals(next);
     }
 
     private static boolean uuidV4(java.util.UUID value) {

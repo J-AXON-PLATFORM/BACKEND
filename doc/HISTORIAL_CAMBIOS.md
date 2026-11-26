@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Auditoría del lifecycle administrativo inicial de Discovery -- OLA6-AUD-001f, 2026-11-30
+
+`AC-JAXON-098` autoriza exclusivamente en backend futuros `DISCOVERY_SCOPE_CREATED`, `DISCOVERY_SCOPE_STATUS_CHANGED`, `DISCOVERY_EXECUTOR_PRE_REGISTERED` y `DISCOVERY_EXECUTOR_ACTIVATED` 2.0. Discovery conserva entrega y dispatcher propios; Audit recibe solo mediante `AuditFactRecorder`. Scope created/pre-register usan versión `0`, activated versión `1`, status changed nueva versión `>=1` y metadata exacta de estados distintos. Se crean exactamente dos migraciones, sin OpenAPI, endpoints, dependencias, workflows, frontend, automation-collector, SFTPGo, SSE ni Production.
+
+Se sincroniza retrospectivamente el cierre real de `OLA6-AUD-001e`: `BACKEND#65`, commit técnico `87cb001c8bb593f44eee5811d68804767e17cea7`, squash `79867d7e9272650725f7a88c4378a56630cfd523`, tuvo runs verdes `45803323594`/`45804683210`, ambos `APPLICATION`. La rama fue eliminada y los otros dos repositorios permanecieron intactos. `AC-JAXON-097` está cerrado.
+
+---
+
 ## Auditoría de alta de activo y lifecycle inicial Agent -- OLA6-AUD-001e, 2026-11-30
 
 `AC-JAXON-097` autoriza exclusivamente en backend futuros `ASSET_CREATED`, `AGENT_PRE_REGISTERED` y `AGENT_ACTIVATED` 2.0, con actor humano, recurso/versión exactos y payload/metadata `{}`. Inventory y Collector conservan entregas y dispatchers propios; Audit recibe solo mediante `AuditFactRecorder`. Se crean exactamente tres migraciones, sin OpenAPI, endpoints, dependencias, workflows, frontend, automation-collector ni Production.

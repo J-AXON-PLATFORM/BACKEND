@@ -96,16 +96,17 @@ class DiscoveryExecutorIntegrationTest {
                 .contains("\"version\":0");
         assertThat(jdbc.queryForMap(
                         """
-                        SELECT event_type, resource_type, resource_version, correlation_id,
-                               payload::text AS payload
+                 SELECT event_type, resource_type, resource_version, correlation_id,
+                                event_version, payload::text AS payload
                         FROM discovery.outbox_events WHERE resource_id = ?
                         """,
                         executorId))
                 .containsEntry("event_type", "DISCOVERY_EXECUTOR_PRE_REGISTERED")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("resource_type", "DISCOVERY_EXECUTOR")
                 .containsEntry("resource_version", 0L)
                 .containsEntry("correlation_id", createCorrelation)
-                .containsEntry("payload", "{\"status\": \"PENDING\"}");
+                .containsEntry("payload", "{}");
         assertThat(jdbc.queryForMap(
                         """
                         SELECT identity_type, agent_id, discovery_executor_id, version
@@ -311,11 +312,11 @@ class DiscoveryExecutorIntegrationTest {
                         """,
                         executorId))
                 .containsEntry("event_type", "DISCOVERY_EXECUTOR_ACTIVATED")
-                .containsEntry("event_version", "1.0")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("producer_module", "DISCOVERY")
                 .containsEntry("resource_version", 1L)
                 .containsEntry("correlation_id", correlationId)
-                .containsEntry("payload", "{\"status\": \"ACTIVE\"}");
+                .containsEntry("payload", "{}");
         String updatedAt = jdbc.queryForObject(
                 "SELECT updated_at::text FROM discovery.discovery_executors WHERE id = ?",
                 String.class,

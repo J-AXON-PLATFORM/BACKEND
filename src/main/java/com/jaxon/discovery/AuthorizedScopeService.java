@@ -57,7 +57,7 @@ class AuthorizedScopeService {
                 scopeId,
                 0,
                 correlationId,
-                "jsonb_build_object('status', 'ACTIVE')",
+                "'{}'::jsonb",
                 List.of(),
                 now);
         return find(scopeId, true).orElseThrow();
@@ -151,7 +151,7 @@ class AuthorizedScopeService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, ?, '1.0', ?, 'DISCOVERY', 'HUMAN_USER', ?, 'AUTHORIZED_SCOPE', ?, ?,
+                VALUES (?, ?, '2.0', ?, 'DISCOVERY', 'HUMAN_USER', ?, 'AUTHORIZED_SCOPE', ?, ?,
                         'SUCCESS', ?, %s, ?)
                 """.formatted(payloadExpression);
         java.util.ArrayList<Object> parameters = new java.util.ArrayList<>();

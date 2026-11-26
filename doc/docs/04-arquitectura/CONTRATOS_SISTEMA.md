@@ -46,6 +46,8 @@
 
 `OLA6-AUD-001e` añade productores auditables Inventory y Collector sin consumidor global: cada módulo conserva outbox, entrega, dispatcher y scheduler propios e invoca solo `AuditFactRecorder`. La allowlist 2.0 contiene `ASSET_CREATED` versión `0`, `AGENT_PRE_REGISTERED` versión `0` y `AGENT_ACTIVATED` versión `1`, todos con actor humano y `{}`. 1.0 no se despacha.
 
+`OLA6-AUD-001f` añade Discovery como productor auditable sin consumidor global: conserva outbox, una entrega, dispatcher, scheduler y métricas propios e invoca solo `AuditFactRecorder`. La allowlist 2.0 contiene created/status changed de scope y pre-register/activated de executor con recursos, versiones y metadata cerrados. Los no-ops y 1.0 no se despachan.
+
 ## Contrato interno aprobado -- Lote 53
 
 - Command/query solicita una operación o lectura y usa la API pública del módulo proveedor de forma síncrona in-process.
