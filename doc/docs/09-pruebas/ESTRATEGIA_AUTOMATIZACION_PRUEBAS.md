@@ -41,3 +41,12 @@ Automatizar pruebas sin depender de un proveedor de CI específico
 - Migración: upgrade desde el estado de `OLA5-AI-003a`, eventos históricos preservados y restricciones que aceptan solo el payload cerrado del nuevo evento.
 - Contrato: OpenAPI 8.2 válido, operación única nueva, request cerrado, compatibilidad `oasdiff` y hash congelado de 8.1.
 - Frontend: parser, visibilidad por estado, confirmación, versión enviada, errores, reconsulta, ausencia de acciones en `DISABLED` y E2E Chromium multirepo real registrar-indexar-recuperar-deshabilitar-recuperar.
+
+## OLA6-AUD-001a
+
+- Unitarias: catálogo cerrado de `AuditFact` y backoff exponencial con jitter y tope.
+- Migración: upgrade desde `V20261125000000`, restricciones de entregas por consumidor, cascada y catálogo/metadata de Audit.
+- Integración PostgreSQL 18/pgvector real: entrega exacta, idempotencia, conflicto sin sobrescritura hasta `FAILED`, indisponibilidad sin afectar la deshabilitación y recuperación, aislamiento de un evento defectuoso, concurrencia de tres dispatchers, append-only (`UPDATE`, `DELETE`, `TRUNCATE`) y propagación obligatoria del recorder.
+- API: `401`, `403` para `SYSTEM_ADMIN` y otros roles sin `AUDITOR`, filtros, paginación, orden y `422` sin eco.
+- Arquitectura y contrato: `ModularityTests`, prueba estática de ownership SQL y OpenAPI 8.3 con 8.2 congelado.
+- Frontend: Vitest/RTL de visibilidad, parser, filtros, paginación y caché; E2E Chromium multirepo deshabilitar -> materializar -> consultar como `AUDITOR`, con `403` para `SYSTEM_ADMIN`.

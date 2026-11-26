@@ -6,7 +6,7 @@
 
 ## Punto de reanudación
 
-No reabrir AC-JAXON-001..090 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
+No reabrir AC-JAXON-001..091 ni los Lotes 30--54 salvo instrucción expresa o contradicción documental real.
 
 La baseline técnica de OLA 0 fue completada y verificada. `OLA1-IAM-001a` incorpora la primera funcionalidad: tablas exclusivamente en `identity`, login, `/auth/me`, sesión opaca, bootstrap, límites de intentos, outbox productor, UI mínima y Playwright real. El bloque fue completado, integrado y verificado el 2026-10-11.
 
@@ -72,7 +72,11 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 
 `OLA5-AI-003a` está implementado, integrado y verificado. `BACKEND#56`, squash `a7b0e7b6f4272cc789fa665c82bedcb48d0d3773`, tuvo runs verdes `44970942336`/`44971217429` `APPLICATION`; `BACKEND#57`, squash `d9c683d8cb7cf2bed2c2aaaaf4ca16a8c73dbecd`, tuvo un run inicial fallido no relanzado `45063540936` y runs verdes `45070162465`/`45072019867`; `FRONTEND#33`, squash `7753720ca00c95e752eddc9597b732658721889b`, `45081609985`/`45081921049`, todos los definitivos `PLATFORM_FULL` salvo `BACKEND#56`. `AC-JAXON-090` está cerrado.
 
-`OLA5-AI-006a` es el corte activo `AUTORIZADO` y `EN_IMPLEMENTACIÓN` bajo `AC-JAXON-091`. Añade exclusivamente deshabilitación `READY|FAILED -> DISABLED` por `SYSTEM_ADMIN`, evento `AI_SOURCE_DISABLED` atómico, exclusión inmediata del retrieval sin borrar evidencia, migración mínima del outbox AI, OpenAPI 8.2 compatible y acción frontend explícita. Reactivación, purga, reindexación, generación RAG y Production siguen pendientes. No está integrado ni verificado.
+`OLA5-AI-006a` está implementado, integrado y verificado. `BACKEND#58`, squash `023dfb1013fa990503d1391ad8ad4e3eb5fcdcc0`, runs `45716546345`/`45716961280` `APPLICATION`; `BACKEND#59` (excepción SFTPGo `otel v1.47.0`, `GO-2026-6974`), squash `906ce26402466a92773505c211006b86b6a0474d`, runs `45724721314`/`45726737596` `PLATFORM_FULL`; `FRONTEND#34`, squash `22bf56b0c71f1017eb2eda6d06dfa32285c5d3f7`, runs `45728468655`/`45728741818` `APPLICATION`; todos verdes. `AC-JAXON-091` está cerrado.
+
+`OLA6-AUD-001a` es el corte activo `AUTORIZADO` y `EN_IMPLEMENTACIÓN` bajo `AC-JAXON-092`. Añade exclusivamente la entrega por consumidor de `AI_SOURCE_DISABLED` desde el outbox AI hacia `AuditFactRecorder`, la materialización append-only en `audit_reporting.audit_events`, la consulta `AUDITOR` y OpenAPI 8.3. Otros eventos auditables, denegaciones, reportes, purga, reproceso de `FAILED` y Production siguen pendientes. No está integrado ni verificado.
+
+`SPIKE-AUDIT-001` quedó registrado como análisis previo adoptado por `AC-JAXON-092`.
 
 `SPIKE-AI-GENERATION-001` quedó registrado solo como análisis: comparó generación local, proveedor externo y lifecycle de fuentes; su recomendación de generación local requiere decisiones abiertas de hardware, latencia, pesos, runtime, datos y calidad y no está aprobada.
 
@@ -127,7 +131,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - Estado remoto de health/contenedores verificado el 2026-10-08: `BACKEND#5`, squash `90c550714b861beb7d6388cf571744efcda4af8d`, tuvo runs verdes `37879426717` y `37879749721`; `FRONTEND#2`, squash `94d8ce2e8dd3309b7683f09041785c000f6fe21d`, tuvo runs verdes `37879426584` y `37880065517`. Backend valida health/probes, fixture PostgreSQL/pgvector, build/smoke y scans; frontend valida standalone, runtime sin gestores JavaScript, smoke y scan. No se publicaron imágenes, Packages ni artefactos.
 - Estado Compose Local verificado el 2026-10-09: `compose.yaml`, `.env.example` y `scripts/verify-compose.sh` implementan PostgreSQL/pgvector predeterminado y backend opcional, puertos loopback, volumen/red dedicados, configuración ficticia y smoke aislado. `Backend CI` conserva sus gates y añade validación/smoke Compose sin publicación ni despliegue.
 - Riesgo temporal frontend: las auditorías npm de producción y completa están limpias tras el refresh correctivo autorizado a `undici@8.12.2` y `zod@4.6.6`; el verificador conserva fallo cerrado. ESLint 9.39.5 sigue EOL y debe migrarse cuando la cadena oficial sea compatible con ESLint 10.
-- OpenAPI 8.2 está en implementación para `OLA5-AI-006a`; OpenAPI 1.0--8.1, Discovery Job/Result 1.0 y Agent 1.0 permanecen inmutables. Otras mutaciones de activos, gestión posterior de usuarios, MFA/SSO, reasignación/adjuntos/búsqueda/SSE de Support, generación RAG/chat, reactivación/purga/reindexación de fuentes, otros tipos de tarea, spool general, retries y PyInstaller siguen pendientes.
+- OpenAPI 8.3 está en implementación para `OLA6-AUD-001a`; OpenAPI 1.0--8.2, Discovery Job/Result 1.0 y Agent 1.0 permanecen inmutables. Otras mutaciones de activos, gestión posterior de usuarios, MFA/SSO, reasignación/adjuntos/búsqueda/SSE de Support, generación RAG/chat, reactivación/purga/reindexación de fuentes, otros eventos auditables, reportes/CSV, otros tipos de tarea, spool general, retries y PyInstaller siguen pendientes.
 - La observabilidad base backend produce logs JSON con correlación, métricas Prometheus y trazas W3C/OpenTelemetry opcionales. Continúan pendientes la infraestructura centralizada, dashboards, alertas, validación operativa de SLI/SLO y una estrategia que pueda aproximar la aspiración de conservar trazas de error sin prometerla mediante head sampling.
 - La reconciliación Collector genera un `correlationId` UUIDv4 explícito por candidato, lo instala de forma acotada en MDC y lo transporta al aviso SSE posterior al commit; no reutiliza contexto servlet ni asume propagación implícita entre hilos.
 - La baseline de `TEC-OPS-005a`/`TEC-OPS-006a` crea dumps custom y manifests verificables, restaura únicamente sobre un destino vacío y separado, y prueba escenarios positivos/negativos en recursos efímeros. Backup/DR Production continúa pendiente.
@@ -135,8 +139,8 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - `TEC-QLT-006a` cerró `BACKEND#41` y no requiere acción remota adicional. La corrección documental retrospectiva queda incluida en el alcance backend de `OLA3-SUP-005a`.
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
-- Siguiente paso remoto pendiente: backend funcional integrado mediante `BACKEND#58`, squash `023dfb1013fa990503d1391ad8ad4e3eb5fcdcc0`, runs verdes `45716546345` de PR y `45716961280` post-merge, ambos `APPLICATION`; integrar y verificar el Pull Request correctivo autorizado de SFTPGo Local/Test (`otel v1.47.0`, `GO-2026-6974`) y después `FRONTEND`. `automation-collector` permanece intacto.
-- Próxima acción técnica posterior: emitir el reporte final autorizado de `OLA5-AI-006a` únicamente tras ambos cierres post-merge, eliminación de ramas y limpieza de los tres repositorios. El registro canónico retrospectivo del cierre remoto de `OLA5-AI-006a` requerirá autorización documental independiente.
+- Siguiente paso remoto pendiente: solo después de toda la validación local de `OLA6-AUD-001a` y de comprobar presupuesto vigente de Actions, integrar y verificar `BACKEND`; después implementar, integrar y verificar `FRONTEND`. `automation-collector` permanece intacto.
+- Próxima acción técnica posterior: emitir el reporte final autorizado de `OLA6-AUD-001a` únicamente tras ambos cierres post-merge, eliminación de ramas y limpieza de los tres repositorios. El registro canónico retrospectivo del cierre remoto de `OLA6-AUD-001a` requerirá autorización documental independiente.
 - La primera vertical E2E ya fue alcanzada mediante incrementos autorizados; la continuación mantiene el mismo enfoque incremental y no implementa “todo J-AXON de una vez”.
 
 ## Reglas de continuidad

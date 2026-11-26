@@ -38,11 +38,11 @@ La existencia de una plantilla no obliga a usar la tecnología o patrón asociad
 
 ## Instancia de proyecto J-AXON
 
-Se conserva el framework 1.0.0. CKP-JAXON-005 consolida decisiones de la instancia hasta el Lote 54 y deja el proyecto `DESIGN_READY`, sin cambiar la versión genérica ni autorizar implementación general. La continuidad de la instancia registra después incrementos expresamente autorizados hasta `AC-JAXON-091` sin alterar el framework genérico. Para evitar confundir la plantilla con artefactos conversacionales, `CHECKPOINT_JAXON.md`, `CONTROL_CAMBIOS_CHECKPOINT.md` e `INVENTARIO_ARCHIVOS_CHECKPOINT.json` ya no se incluyen dentro de `doc/`; el checkpoint se distribuye externamente. `docs/16-contexto/` sí se conserva porque es parte del mecanismo reutilizable de contexto dinámico del framework.
+Se conserva el framework 1.0.0. CKP-JAXON-005 consolida decisiones de la instancia hasta el Lote 54 y deja el proyecto `DESIGN_READY`, sin cambiar la versión genérica ni autorizar implementación general. La continuidad de la instancia registra después incrementos expresamente autorizados hasta `AC-JAXON-092` sin alterar el framework genérico. Para evitar confundir la plantilla con artefactos conversacionales, `CHECKPOINT_JAXON.md`, `CONTROL_CAMBIOS_CHECKPOINT.md` e `INVENTARIO_ARCHIVOS_CHECKPOINT.json` ya no se incluyen dentro de `doc/`; el checkpoint se distribuye externamente. `docs/16-contexto/` sí se conserva porque es parte del mecanismo reutilizable de contexto dinámico del framework.
 
 ## Inventario
 
-Total de archivos: **303**
+Total de archivos: **304**
 
 - `.github/ISSUE_TEMPLATE/bug.yml`
 - `.github/ISSUE_TEMPLATE/config.yml`
@@ -143,6 +143,7 @@ Total de archivos: **303**
 - `contracts/openapi/8.0/openapi.yaml`
 - `contracts/openapi/8.1/openapi.yaml`
 - `contracts/openapi/8.2/openapi.yaml`
+- `contracts/openapi/8.3/openapi.yaml`
 - `contracts/openapi/manifest.tsv`
 - `docs/00-gobierno/CONSTITUCION_IA.md`
 - `docs/00-gobierno/CRITERIOS_CALIDAD.md`

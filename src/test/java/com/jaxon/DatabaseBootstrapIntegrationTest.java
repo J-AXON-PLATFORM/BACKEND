@@ -111,9 +111,11 @@ class DatabaseBootstrapIntegrationTest {
         assertThat(modularSchemas).containsExactlyInAnyOrderElementsOf(EXPECTED_SCHEMAS);
         assertThat(modularTables).containsExactly(
                 "ai.document_sources",
+                "ai.outbox_deliveries",
                 "ai.outbox_events",
                 "ai.source_chunks",
                 "ai.source_indexing_jobs",
+                "audit_reporting.audit_events",
                 "collector.accepted_snapshots",
                 "collector.accepted_task_results",
                 "collector.agent_tasks",

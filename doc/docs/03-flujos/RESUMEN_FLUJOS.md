@@ -127,7 +127,7 @@ Alta manual o incorporación Discovery -> ficha administrativa oficial -> respon
 
 ### FL-AUD-001 -- Audit/Reporting
 
-Mutación `AUDIT_REQUIRED` -> cambio de negocio + captura durable `AuditFact` -> commit -> dispatch/retry -> MOD-08 persiste `AuditEvent` append-only. Reportes Assets/Agents/Tickets consultan contratos públicos del módulo dueño; CSV se genera bajo demanda y no se persiste por defecto.
+Mutación `AUDIT_REQUIRED` -> cambio de negocio + captura durable `AuditFact` -> commit -> dispatch/retry -> MOD-08 persiste `AuditEvent` append-only. `OLA6-AUD-001a` lo materializa para `AI_SOURCE_DISABLED`: dispatcher AI reclama su outbox con `SKIP LOCKED` -> `AuditFactRecorder` en la misma transacción -> entrega `DELIVERED` por consumidor o reintento/`FAILED` -> `AUDITOR` consulta REST. Reportes Assets/Agents/Tickets consultan contratos públicos del módulo dueño; CSV se genera bajo demanda y no se persiste por defecto.
 
 ### FL-AUT-001 / eventos internos
 

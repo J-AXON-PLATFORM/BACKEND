@@ -162,3 +162,13 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - La fuente deshabilitada desaparece inmediatamente de `/ai/retrieval` y ya no admite indexación; original, chunks, embeddings, jobs y outbox histórico permanecen intactos.
 - Una única migración amplía solo las restricciones del outbox AI conservando las reglas históricas. OpenAPI 8.2 conserva 8.1 byte a byte y es compatible.
 - Frontend muestra "Deshabilitar" solo para `READY|FAILED`, exige confirmación, envía la versión observada, no reintenta ni anticipa estado, conserva errores accesibles, reconsulta listado y detalle tras éxito o `409` y no ofrece acciones sobre fuentes `DISABLED`.
+
+## OLA6-AUD-001a
+
+- Cada `AI_SOURCE_DISABLED` confirmado produce exactamente un `AuditEvent` append-only con envelope completo y metadata `previousStatus|newStatus`, aun con reintentos, duplicados o varios dispatchers concurrentes.
+- La deshabilitación conserva contrato, atomicidad y respuesta; una indisponibilidad de Auditoría no la revierte ni la hace fallar y solo retrasa la materialización.
+- La entrega por consumidor `AUDIT` sigue el retry de `AC-JAXON-057` y queda `FAILED` tras 10 intentos sin autoborrado; un evento defectuoso no bloquea los siguientes; los demás eventos AI no se tocan.
+- Un duplicado idéntico es no-op; un contenido distinto nunca sobrescribe el evento registrado.
+- Audit no lee ni escribe tablas ajenas; AI solo escribe en Audit mediante `AuditFactRecorder`.
+- `GET /audit/events` es exclusivo de `AUDITOR`; sin sesión `401`, `SYSTEM_ADMIN` u otros roles sin `AUDITOR` `403`. Filtros de `AC-JAXON-056`, `size` 50 por defecto y máximo 200, orden estable, `422` sin eco para parámetros desconocidos, repetidos o inválidos.
+- No se almacenan ni exponen datos prohibidos. OpenAPI 8.3 conserva 8.2 byte a byte y es compatible. Frontend muestra la vista solo a `AUDITOR`, con parser cerrado, caché por usuario y errores accesibles.

@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Primera vertical de Auditoría -- OLA6-AUD-001a, 2026-11-26
+
+`AC-JAXON-092` autoriza en backend/frontend exclusivamente la auditoría de `AI_SOURCE_DISABLED`: dispatcher propiedad de AI con entrega por consumidor en `ai.outbox_deliveries`, contrato público `AuditFactRecorder`, materialización idempotente append-only en `audit_reporting.audit_events`, retry `AC-JAXON-057`, consulta `GET /audit/events` exclusiva de `AUDITOR`, OpenAPI 8.3 compatible, dos migraciones y vista frontend. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN`. `SPIKE-AUDIT-001` fue el análisis previo.
+
+Se sincroniza retrospectivamente el cierre real de `OLA5-AI-006a`: `BACKEND#58` (`023dfb1013fa990503d1391ad8ad4e3eb5fcdcc0`, runs `45716546345`/`45716961280`), `BACKEND#59` (`906ce26402466a92773505c211006b86b6a0474d`, runs `45724721314`/`45726737596`) y `FRONTEND#34` (`22bf56b0c71f1017eb2eda6d06dfa32285c5d3f7`, runs `45728468655`/`45728741818`). `AC-JAXON-091` está cerrado.
+
+---
+
 ## Deshabilitación mínima de fuentes AI -- OLA5-AI-006a, 2026-11-25
 
 `AC-JAXON-091` autoriza en backend/frontend exclusivamente `POST /api/v1/ai/sources/{sourceId}/disable` para `SYSTEM_ADMIN`, con CSRF, body cerrado `expectedVersion`, transiciones `READY|FAILED -> DISABLED`, no-op vigente, `409` para versión obsoleta o `PENDING|INDEXING`, evento `AI_SOURCE_DISABLED` atómico con payload `previousStatus|newStatus`, exclusión inmediata del retrieval sin borrar evidencia, OpenAPI 8.2 compatible y acción frontend explícita. La validación ejecutable confirmó que el outbox AI rechazaba el evento; LUIS autorizó una única migración que amplía solo esas restricciones. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN`. Backend funcional integrado mediante `BACKEND#58`, squash `023dfb1013fa990503d1391ad8ad4e3eb5fcdcc0`, runs verdes `45716546345` de PR y `45716961280` post-merge, ambos `APPLICATION`. Durante la validación E2E local posterior, `govulncheck` bloqueó en la fixture SFTPGo Local/Test `GO-2026-6974` (`CVE-2026-128085`, `GHSA-q7gw-24fr-5p69`, publicada el 2026-11-23) en `go.opentelemetry.io/otel/sdk|trace v1.46.0`. LUIS autorizó una excepción supply-chain mediante un único Pull Request correctivo `fix/sftpgo-otel-1.47.0` que añade al `go get` existente de `docker/sftpgo/Dockerfile` exclusivamente `otel/sdk`, `otel/trace` y `otel/log` `v1.47.0`, con aserciones de versión; MVS eleva además `otel`, `otel/metric` y `otel/sdk/metric` a `v1.47.0` y `otel/metric/x` a `v0.69.0` en el grafo, todos del mismo release. No cambia Go, la base, la imagen runtime, SFTPGo ni dependencias Maven/npm, y clasifica `PLATFORM_FULL`.

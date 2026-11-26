@@ -66,6 +66,8 @@ class SecurityConfiguration {
                         .hasRole("SYSTEM_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/ai/sources/*/disable")
                         .hasRole("SYSTEM_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/audit/events")
+                        .hasRole("AUDITOR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/ai/retrieval")
                         .hasRole("SYSTEM_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/discovery/scopes")

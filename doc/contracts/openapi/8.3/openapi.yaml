@@ -1,0 +1,157 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "8.3"
+  description: >-
+    Versión compatible que conserva byte a byte las operaciones de OpenAPI 8.2 y
+    añade únicamente la consulta paginada de eventos de auditoría para AUDITOR.
+servers:
+  - url: /api/v1
+tags:
+  - { name: Authentication }
+  - { name: Identity }
+  - { name: Assets }
+  - { name: Agents }
+  - { name: Support }
+  - { name: Discovery }
+  - { name: AI }
+  - name: Audit
+paths:
+  /auth/login: { $ref: "../8.2/openapi.yaml#/paths/~1auth~1login" }
+  /auth/me: { $ref: "../8.2/openapi.yaml#/paths/~1auth~1me" }
+  /auth/logout: { $ref: "../8.2/openapi.yaml#/paths/~1auth~1logout" }
+  /users: { $ref: "../8.2/openapi.yaml#/paths/~1users" }
+  /assets: { $ref: "../8.2/openapi.yaml#/paths/~1assets" }
+  /assets/{assetId}: { $ref: "../8.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D" }
+  /assets/{assetId}/technical-state: { $ref: "../8.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state" }
+  /assets/{assetId}/technical-state/events: { $ref: "../8.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events" }
+  /agents: { $ref: "../8.2/openapi.yaml#/paths/~1agents" }
+  /agents/{agentId}: { $ref: "../8.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D" }
+  /agents/{agentId}/ssh-key: { $ref: "../8.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key" }
+  /agents/{agentId}/activate: { $ref: "../8.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate" }
+  /agents/{agentId}/tasks: { $ref: "../8.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks" }
+  /agents/{agentId}/tasks/{taskId}: { $ref: "../8.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D" }
+  /tickets: { $ref: "../8.2/openapi.yaml#/paths/~1tickets" }
+  /tickets/technician-queue: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1technician-queue" }
+  /tickets/technician-queue/{ticketId}: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D" }
+  /tickets/technician-queue/{ticketId}/comments: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1comments" }
+  /tickets/technician-queue/{ticketId}/conversation: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1conversation" }
+  /tickets/technician-queue/{ticketId}/lifecycle: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1lifecycle" }
+  /tickets/{ticketId}: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D" }
+  /tickets/{ticketId}/comments: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1comments" }
+  /tickets/{ticketId}/claim: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1claim" }
+  /tickets/{ticketId}/priority: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1priority" }
+  /tickets/{ticketId}/status: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1status" }
+  /tickets/{ticketId}/resolve: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1resolve" }
+  /tickets/{ticketId}/close: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1close" }
+  /tickets/{ticketId}/reopen: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1reopen" }
+  /tickets/{ticketId}/lifecycle: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1lifecycle" }
+  /discovery/scopes: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1scopes" }
+  /discovery/scopes/{scopeId}: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D" }
+  /discovery/scopes/{scopeId}/status: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D~1status" }
+  /discovery/executors: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1executors" }
+  /discovery/executors/{executorId}: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D" }
+  /discovery/executors/{executorId}/ssh-key: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1ssh-key" }
+  /discovery/executors/{executorId}/activate: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1activate" }
+  /discovery/jobs: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1jobs" }
+  /discovery/jobs/{jobId}: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1jobs~1%7BjobId%7D" }
+  /discovery-jobs/{jobId}/discovered-devices: { $ref: "../8.2/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/ignore: { $ref: "../8.2/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices~1%7BdiscoveredDeviceId%7D~1ignore" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate: { $ref: "../8.2/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices~1%7BdiscoveredDeviceId%7D~1incorporate" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate-new-asset: { $ref: "../8.2/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices~1%7BdiscoveredDeviceId%7D~1incorporate-new-asset" }
+  /ai/sources: { $ref: "../8.2/openapi.yaml#/paths/~1ai~1sources" }
+  /ai/sources/{sourceId}: { $ref: "../8.2/openapi.yaml#/paths/~1ai~1sources~1%7BsourceId%7D" }
+  /ai/sources/{sourceId}/index: { $ref: "../8.2/openapi.yaml#/paths/~1ai~1sources~1%7BsourceId%7D~1index" }
+  /ai/retrieval: { $ref: "../8.2/openapi.yaml#/paths/~1ai~1retrieval" }
+  /ai/sources/{sourceId}/disable: { $ref: "../8.2/openapi.yaml#/paths/~1ai~1sources~1%7BsourceId%7D~1disable" }
+  /audit/events:
+    get:
+      tags: [Audit]
+      operationId: listAuditEvents
+      summary: Consulta paginada de eventos de auditoría
+      description: >-
+        Operación exclusiva de AUDITOR; SYSTEM_ADMIN no obtiene acceso sin ese rol. Devuelve eventos
+        append-only materializados en audit_reporting, ordenados por occurredAt descendente y
+        auditEventId descendente. Todos los filtros son opcionales y se combinan con AND; from/to
+        delimitan occurredAt en el intervalo [from, to). Parámetros desconocidos, repetidos o
+        inválidos devuelven 422 sin reflejar la entrada.
+      parameters:
+        - { name: from, in: query, required: false, schema: { type: string, format: date-time } }
+        - { name: to, in: query, required: false, schema: { type: string, format: date-time } }
+        - { name: module, in: query, required: false, schema: { type: string, enum: [INVENTORY, DISCOVERY, COLLECTOR, SUPPORT, AI, IDENTITY, AUTOMATION, AUDIT_REPORTING] } }
+        - { name: eventType, in: query, required: false, schema: { type: string, pattern: "^[A-Z][A-Z0-9_]{2,63}$" } }
+        - { name: actorId, in: query, required: false, schema: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" } }
+        - { name: resourceType, in: query, required: false, schema: { type: string, pattern: "^[A-Z][A-Z0-9_]{2,63}$" } }
+        - { name: resourceId, in: query, required: false, schema: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" } }
+        - { name: result, in: query, required: false, schema: { type: string, enum: [SUCCESS, DENIED, FAILED] } }
+        - { name: correlationId, in: query, required: false, schema: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" } }
+        - { name: page, in: query, required: false, schema: { type: integer, minimum: 0, maximum: 1000000, default: 0 } }
+        - { name: size, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+      responses:
+        "200":
+          description: Página de eventos de auditoría
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuditEventPage" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+components:
+  securitySchemes:
+    SessionCookie: { $ref: "../8.1/openapi.yaml#/components/securitySchemes/SessionCookie" }
+  schemas:
+    AuditEventPage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
+        items:
+          type: array
+          maxItems: 200
+          items: { $ref: "#/components/schemas/AuditEvent" }
+        page: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 200 }
+        totalElements: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+      additionalProperties: false
+    AuditEvent:
+      type: object
+      required: [auditEventId, sourceEventId, eventType, eventVersion, producerModule, occurredAt,
+                 recordedAt, actorType, actorId, resourceType, resourceId, resourceVersion, result,
+                 correlationId, metadata]
+      properties:
+        auditEventId: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" }
+        sourceEventId: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" }
+        eventType: { type: string, pattern: "^[A-Z][A-Z0-9_]{2,63}$" }
+        eventVersion: { type: string, pattern: "^[0-9]+\\.[0-9]+$" }
+        producerModule: { type: string, enum: [INVENTORY, DISCOVERY, COLLECTOR, SUPPORT, AI, IDENTITY, AUTOMATION, AUDIT_REPORTING] }
+        occurredAt: { type: string, format: date-time }
+        recordedAt: { type: string, format: date-time }
+        actorType: { type: string, enum: [HUMAN_USER, SYSTEM, AGENT, DISCOVERY_EXECUTOR, AUTOMATION] }
+        actorId:
+          oneOf:
+            - { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" }
+            - { type: "null" }
+        resourceType: { type: string, pattern: "^[A-Z][A-Z0-9_]{2,63}$" }
+        resourceId: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" }
+        resourceVersion:
+          oneOf:
+            - { type: integer, minimum: 0 }
+            - { type: "null" }
+        result: { type: string, enum: [SUCCESS, DENIED, FAILED] }
+        correlationId: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" }
+        metadata:
+          type: object
+          description: Metadata pequeña y allowlisted por eventType; nunca secretos ni contenido.
+          maxProperties: 16
+          additionalProperties: { type: string, maxLength: 256 }
+      additionalProperties: false
+  responses:
+    AuthenticationRequired: { $ref: "../8.1/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../8.1/openapi.yaml#/components/responses/Forbidden" }
+    ValidationFailed: { $ref: "../8.1/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../8.1/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../8.1/openapi.yaml#/components/responses/ServiceUnavailable" }
+security:
+  - SessionCookie: []

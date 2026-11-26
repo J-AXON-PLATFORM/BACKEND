@@ -41,3 +41,11 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: desautorización no autorizada, carreras que dupliquen eventos o pierdan versiones, enumeración de fuentes y borrado accidental de evidencia.
 - Mitigaciones: `SYSTEM_ADMIN` + CSRF; `404` uniforme; body cerrado; bloqueo de fila y versión optimista; transacción única para estado y outbox; payload sin nombre, contenido ni rutas; ninguna operación borra datos; la recuperación conserva su filtro `READY` dentro de la sentencia.
 - Riesgos residuales: no hay reactivación ni purga en v1, por lo que un error humano exige un corte futuro; la retención física de fuentes deshabilitadas sigue pendiente de una política de purga aprobada.
+
+## OLA6-AUD-001a
+
+- Activos: integridad y completitud de `audit_reporting.audit_events`, estado de entrega por consumidor y confidencialidad de la consulta.
+- Entradas: dispatcher in-process AI -> `AuditFactRecorder`; `GET /audit/events` autenticado.
+- Amenazas: pérdida o duplicación de hechos, sobrescritura o borrado de auditoría, lectura cross-module, exfiltración por metadata, acceso de roles no autorizados y enumeración por filtros.
+- Mitigaciones: intención durable en el outbox del productor; entrega idempotente por `source_event_id`; conflicto sin sobrescritura; trigger append-only; catálogo y metadata cerrados en Java y en la base; prueba estática sin SQL ajeno; `AUDITOR` exclusivo; `422` sin eco; respuesta sin secretos ni contenido.
+- Riesgos residuales: rol único de base de datos; `SYSTEM_ADMIN` puede crear una cuenta `AUDITOR`; sin tamper-proof criptográfico ni alertas individuales de `FAILED` en v1.

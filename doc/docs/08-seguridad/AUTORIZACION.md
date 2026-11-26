@@ -51,6 +51,8 @@ En `OLA5-AI-003a`, `POST /ai/retrieval` requiere exclusivamente `SYSTEM_ADMIN`, 
 
 En `OLA5-AI-006a`, `POST /ai/sources/{sourceId}/disable` requiere exclusivamente `SYSTEM_ADMIN`, sesión y CSRF. Backend oculta con `404` uniforme UUID inválido o fuente inexistente, obtiene el actor de la sesión, valida versión y estado bajo bloqueo y no expone `storageKey`, rutas ni contenido. Frontend muestra la acción solo como UX y no sustituye `default deny`.
 
+En `OLA6-AUD-001a`, `GET /audit/events` requiere exclusivamente el rol `AUDITOR`; `SYSTEM_ADMIN`, `IT_OPERATOR`, `SUPPORT_TECHNICIAN` y `END_USER` reciben `403` salvo que también posean `AUDITOR`. La materialización no tiene endpoint: se produce in-process mediante `AuditFactRecorder`. Riesgo aceptado: `SYSTEM_ADMIN` puede crear una cuenta `AUDITOR` hasta que `HUMAN_USER_CREATED` con roles sea auditable.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

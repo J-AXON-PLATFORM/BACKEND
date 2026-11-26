@@ -13,7 +13,7 @@ Definir cuánto tiempo se conserva cada categoría de datos, por qué y cómo se
 | Snapshots y observaciones técnicas Collector, incluidos resultados de tareas v1 | 180 días | historia técnica acotada | purga según política; revisar con volumen real | APROBADO L41/L51 |
 | Resultados Discovery no incorporados | 30 días | evidencia temporal de descubrimiento | `UNREVIEWED/IGNORED` elegibles para purga | APROBADO |
 | Tickets cerrados + adjuntos | 3 años desde el último cierre válido | soporte/historial operativo; una reapertura reinicia el punto de cómputo al volver a cerrar | purga según reglas de Support y excepciones legales | APROBADO L41/L49 |
-| Auditoría relevante | 5 años desde `recordedAt` | trazabilidad de seguridad/operación | eliminación controlada; no usar logs técnicos como sustituto | APROBADO L41/L52 |
+| Auditoría relevante | 5 años desde `recordedAt` | trazabilidad de seguridad/operación | eliminación controlada; no usar logs técnicos como sustituto; desde `OLA6-AUD-001a` vive en `audit_reporting.audit_events`, independiente del outbox, y su purga queda bloqueada hasta un corte autorizado | APROBADO L41/L52 |
 | Fuente documental RAG | mientras esté activa/autorizada | propósito documental | al retirar/eliminar, retirar original conforme a política | APROBADO |
 | Chunks/embeddings RAG | mismo ciclo de la fuente | derivados, no fuente de verdad | borrar/deshabilitar junto con fuente | APROBADO |
 | Logs técnicos Production | 30 días | diagnóstico | backend de observabilidad | APROBADO L45 |
