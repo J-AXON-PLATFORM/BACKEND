@@ -102,7 +102,7 @@ class DiscoveredDeviceService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'DISCOVERED_DEVICE_IGNORED', '1.0', ?, 'DISCOVERY',
+                VALUES (?, 'DISCOVERED_DEVICE_IGNORED', '2.0', ?, 'DISCOVERY',
                         'HUMAN_USER', ?, 'DISCOVERED_DEVICE', ?, ?, 'SUCCESS', ?,
                         jsonb_build_object('previousStatus', 'UNREVIEWED', 'newStatus', 'IGNORED'), ?)
                 """,
@@ -181,7 +181,7 @@ class DiscoveredDeviceService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'DISCOVERED_DEVICE_INCORPORATED', '1.0', ?, 'DISCOVERY',
+                VALUES (?, 'DISCOVERED_DEVICE_INCORPORATED', '2.0', ?, 'DISCOVERY',
                         'HUMAN_USER', ?, 'DISCOVERED_DEVICE', ?, ?, 'SUCCESS', ?,
                         jsonb_build_object('previousStatus', 'UNREVIEWED',
                                            'newStatus', 'INCORPORATED',
@@ -251,7 +251,7 @@ class DiscoveredDeviceService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'DISCOVERED_DEVICE_INCORPORATED', '1.0', ?, 'DISCOVERY',
+                VALUES (?, 'DISCOVERED_DEVICE_INCORPORATED', '2.0', ?, 'DISCOVERY',
                         'HUMAN_USER', ?, 'DISCOVERED_DEVICE', ?, ?, 'SUCCESS', ?,
                         jsonb_build_object('previousStatus', 'UNREVIEWED',
                                            'newStatus', 'INCORPORATED',

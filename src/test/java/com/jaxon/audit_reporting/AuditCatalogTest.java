@@ -315,4 +315,56 @@ class AuditCatalogTest {
             assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
         }
     }
+
+    @Test
+    void acceptsOnlyClosedDiscoveredDeviceReviewFacts() {
+        UUID actor = UUID.randomUUID();
+        UUID assetId = UUID.randomUUID();
+        Map<String, String> ignored =
+                Map.of("previousStatus", "UNREVIEWED", "newStatus", "IGNORED");
+        Map<String, String> incorporated = Map.of(
+                "previousStatus", "UNREVIEWED",
+                "newStatus", "INCORPORATED",
+                "assetId", assetId.toString());
+        assertThat(AuditCatalog.accepts(fact(
+                        "DISCOVERED_DEVICE_IGNORED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                        "DISCOVERED_DEVICE", 1L, "SUCCESS", ignored)))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "DISCOVERED_DEVICE_INCORPORATED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                        "DISCOVERED_DEVICE", 1L, "SUCCESS", incorporated)))
+                .isTrue();
+
+        for (AuditFact invalid : new AuditFact[] {
+            fact("DISCOVERED_DEVICE_IGNORED", "1.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "DISCOVERED_DEVICE", 1L, "SUCCESS", ignored),
+            fact("DISCOVERED_DEVICE_IGNORED", "2.0", "DISCOVERY", "HUMAN_USER", null,
+                    "DISCOVERED_DEVICE", 1L, "SUCCESS", ignored),
+            fact("DISCOVERED_DEVICE_IGNORED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "DISCOVERED_DEVICE", 0L, "SUCCESS", ignored),
+            fact("DISCOVERED_DEVICE_IGNORED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "DISCOVERED_DEVICE", 1L, "SUCCESS",
+                    Map.of("previousStatus", "UNREVIEWED", "newStatus", "INCORPORATED")),
+            fact("DISCOVERED_DEVICE_IGNORED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "DISCOVERED_DEVICE", 1L, "SUCCESS",
+                    Map.of("previousStatus", "UNREVIEWED", "newStatus", "IGNORED", "extra", "x")),
+            fact("DISCOVERED_DEVICE_INCORPORATED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "DISCOVERED_DEVICE", 1L, "SUCCESS",
+                    Map.of("previousStatus", "UNREVIEWED", "newStatus", "INCORPORATED")),
+            fact("DISCOVERED_DEVICE_INCORPORATED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "DISCOVERED_DEVICE", 1L, "SUCCESS",
+                    Map.of("previousStatus", "IGNORED", "newStatus", "INCORPORATED",
+                            "assetId", assetId.toString())),
+            fact("DISCOVERED_DEVICE_INCORPORATED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "DISCOVERED_DEVICE", 1L, "SUCCESS",
+                    Map.of("previousStatus", "UNREVIEWED", "newStatus", "INCORPORATED",
+                            "assetId", assetId.toString().toUpperCase(java.util.Locale.ROOT))),
+            fact("DISCOVERED_DEVICE_INCORPORATED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "DISCOVERED_DEVICE", 1L, "SUCCESS",
+                    Map.of("previousStatus", "UNREVIEWED", "newStatus", "INCORPORATED",
+                            "assetId", "34844482-1d29-1d30-87fd-1bb67a22e050"))
+        }) {
+            assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
+        }
+    }
 }

@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ class DiscoveryAuditDispatchIntegrationTest {
     }
 
     @Test
-    void materializesOnlyTheSevenVersionTwoEventTypesAndRedeliveryIsIdempotent() {
+    void materializesOnlyTheNineVersionTwoEventTypesAndRedeliveryIsIdempotent() {
         UUID actorId = UUID.randomUUID();
         UUID executorId = UUID.randomUUID();
         UUID historical = insertEvent(
@@ -76,17 +77,35 @@ class DiscoveryAuditDispatchIntegrationTest {
                         executorId, "DISCOVERY_JOB", 2, "SUCCESS", "{}"),
                 insertEvent(
                         "DISCOVERY_JOB_COMPLETED", "2.0", "DISCOVERY_EXECUTOR",
-                        executorId, "DISCOVERY_JOB", 2, "FAILED", "{}"));
+                        executorId, "DISCOVERY_JOB", 2, "FAILED", "{}"),
+                insertEvent(
+                        "DISCOVERED_DEVICE_IGNORED",
+                        "2.0",
+                        "DISCOVERED_DEVICE",
+                        1,
+                        "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"IGNORED\"}",
+                        actorId),
+                insertEvent(
+                        "DISCOVERED_DEVICE_INCORPORATED",
+                        "2.0",
+                        "DISCOVERED_DEVICE",
+                        1,
+                        "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"INCORPORATED\","
+                                + "\"assetId\":\"" + UUID.randomUUID() + "\"}",
+                        actorId));
 
         assertThat(dispatcher.dispatchDue(20))
-                .isEqualTo(new DiscoveryAuditDispatcher.DispatchSummary(8, 0, 0, 0));
+                .isEqualTo(new DiscoveryAuditDispatcher.DispatchSummary(10, 0, 0, 0));
         assertThat(future.stream().map(this::audit).toList())
-                .hasSize(8)
+                .hasSize(10)
                 .allSatisfy(row -> {
                     if ("DISCOVERY_SCOPE_STATUS_CHANGED".equals(row.get("event_type"))) {
                         assertThat(row).containsEntry(
                                 "metadata", "{\"newStatus\": \"ACTIVE\", \"previousStatus\": \"DISABLED\"}");
-                    } else {
+                    } else if (!Set.of(
+                                    "DISCOVERED_DEVICE_IGNORED",
+                                    "DISCOVERED_DEVICE_INCORPORATED")
+                            .contains(row.get("event_type"))) {
                         assertThat(row).containsEntry("metadata", "{}");
                     }
                 });
@@ -106,6 +125,17 @@ class DiscoveryAuditDispatchIntegrationTest {
                 .containsEntry("actor_type", "DISCOVERY_EXECUTOR")
                 .containsEntry("resource_version", 2L)
                 .containsEntry("result", "FAILED");
+        assertThat(audit(future.get(8)))
+                .containsEntry("actor_type", "HUMAN_USER")
+                .containsEntry("resource_type", "DISCOVERED_DEVICE")
+                .containsEntry("resource_version", 1L)
+                .containsEntry("result", "SUCCESS")
+                .containsEntry("metadata", "{\"newStatus\": \"IGNORED\", "
+                        + "\"previousStatus\": \"UNREVIEWED\"}");
+        assertThat(audit(future.get(9)).get("metadata").toString())
+                .contains("\"newStatus\": \"INCORPORATED\"")
+                .contains("\"previousStatus\": \"UNREVIEWED\"")
+                .contains("\"assetId\": \"");
         assertThat(jdbc.queryForObject(
                         "SELECT count(*) FROM discovery.outbox_deliveries WHERE event_id = ?",
                         Integer.class,

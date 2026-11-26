@@ -34,7 +34,8 @@ final class AuditCatalog {
                 || acceptsAssetCreated(fact)
                 || acceptsAgentLifecycle(fact)
                 || acceptsDiscoveryLifecycle(fact)
-                || acceptsDiscoveryJobLifecycle(fact);
+                || acceptsDiscoveryJobLifecycle(fact)
+                || acceptsDiscoveredDeviceReview(fact);
     }
 
     private static boolean acceptsAiSourceDisabled(AuditFact fact) {
@@ -176,6 +177,27 @@ final class AuditCatalog {
                 && uuidV4(fact.actorId())
                 && "DISCOVERY_JOB".equals(fact.resourceType())
                 && fact.metadata().isEmpty();
+    }
+
+    private static boolean acceptsDiscoveredDeviceReview(AuditFact fact) {
+        boolean ignored = "DISCOVERED_DEVICE_IGNORED".equals(fact.eventType())
+                && fact.metadata().equals(Map.of(
+                        "previousStatus", "UNREVIEWED",
+                        "newStatus", "IGNORED"));
+        boolean incorporated = "DISCOVERED_DEVICE_INCORPORATED".equals(fact.eventType())
+                && fact.metadata().size() == 3
+                && "UNREVIEWED".equals(fact.metadata().get("previousStatus"))
+                && "INCORPORATED".equals(fact.metadata().get("newStatus"))
+                && fact.metadata().get("assetId") != null
+                && UUID_V4.matcher(fact.metadata().get("assetId")).matches();
+        return (ignored || incorporated)
+                && "2.0".equals(fact.eventVersion())
+                && "DISCOVERY".equals(fact.producerModule())
+                && "HUMAN_USER".equals(fact.actorType())
+                && uuidV4(fact.actorId())
+                && "DISCOVERED_DEVICE".equals(fact.resourceType())
+                && Long.valueOf(1).equals(fact.resourceVersion())
+                && "SUCCESS".equals(fact.result());
     }
 
     private static boolean disableMetadata(Map<String, String> metadata) {
