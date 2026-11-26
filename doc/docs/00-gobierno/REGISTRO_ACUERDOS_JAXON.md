@@ -662,6 +662,8 @@ Discovery conserva outbox, tabla de entregas, persistencia, dispatcher, schedule
 
 Se autoriza exclusivamente la rama `feature/ola6-aud-001f`, un único push planificado tras todas las verificaciones locales y un único Pull Request `BACKEND` hacia `develop`; integración squash solo con CI verde `APPLICATION`, verificación post-merge, eliminación de ramas y reporte final externo único en `/home/usuario/Documentos/J-AXON-MDs/REPORTE_OPENCODE_OLA6_AUD_001F_EJECUCION.md`. El mismo PR sincroniza retrospectivamente el cierre verificado de `AC-JAXON-097`/`BACKEND#65`. OpenAPI 8.3, endpoints, `frontend`, `automation-collector`, dependencias, lockfiles, workflows, Docker/Compose, SFTPGo, SSE y Production permanecen byte a byte intactos. No se autorizan otros eventos, backfill, reproceso de `FAILED`, reportes/CSV, infraestructura ni despliegues. A la fecha de este registro está `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local; no está integrado ni verificado remotamente. `PRODUCTION_READY = NO`.
 
+Durante `BACKEND#66`, el run `45866663141` y su primera reejecución fallaron antes de compilar la aplicación porque Alpine 3.24 dejó de publicar el pin preexistente `libxml2=2.13.9-r3` y pasó a ofrecer `r5`. LUIS autorizó una excepción correctiva mínima para cambiar exclusivamente ese pin a `libxml2=2.13.9-r5` en `docker/postgres-pgvector.Dockerfile`, registrar esta continuidad, crear un segundo commit y realizar un segundo push sobre el mismo Pull Request. La clasificación pasa necesariamente a `PLATFORM_FULL`; deben ejecutarse todos sus gates y conservarse sin cambios el resto de la fixture, las imágenes base, PostgreSQL, pgvector, producto, dependencias, lockfiles y workflows.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)
