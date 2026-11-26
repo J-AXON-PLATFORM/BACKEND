@@ -70,20 +70,22 @@ class InventoryIntegrationTest {
                 .isEqualTo(1);
         assertThat(jdbc.queryForMap(
                         """
-                        SELECT event_type, producer_module, actor_type, resource_type,
-                               resource_id, resource_version, result, correlation_id, payload
+                        SELECT event_type, event_version, producer_module, actor_type, resource_type,
+                               resource_id, resource_version, result, correlation_id, payload::text AS payload
                         FROM inventory.outbox_events
                         WHERE resource_id = ?
                         """,
                         assetId))
                 .containsEntry("event_type", "ASSET_CREATED")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("producer_module", "INVENTORY")
                 .containsEntry("actor_type", "HUMAN_USER")
                 .containsEntry("resource_type", "ASSET")
                 .containsEntry("resource_id", assetId)
                 .containsEntry("resource_version", 0L)
                 .containsEntry("result", "SUCCESS")
-                .containsEntry("correlation_id", correlationId);
+                .containsEntry("correlation_id", correlationId)
+                .containsEntry("payload", "{}");
 
         HttpResponse<String> retrieved = getAsset(session.cookie(), assetId);
         assertThat(retrieved.statusCode()).isEqualTo(200);

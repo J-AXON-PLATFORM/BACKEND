@@ -30,7 +30,9 @@ final class AuditCatalog {
                 || acceptsHumanUserCreated(fact)
                 || acceptsHumanAuthenticationSucceeded(fact)
                 || acceptsHumanLoginFailed(fact)
-                || acceptsTechnicalIdentityPublicKeyRegistered(fact);
+                || acceptsTechnicalIdentityPublicKeyRegistered(fact)
+                || acceptsAssetCreated(fact)
+                || acceptsAgentLifecycle(fact);
     }
 
     private static boolean acceptsAiSourceDisabled(AuditFact fact) {
@@ -96,6 +98,33 @@ final class AuditCatalog {
                 && "HUMAN_USER".equals(fact.actorType())
                 && uuidV4(fact.actorId())
                 && fact.resourceVersion() == null
+                && "SUCCESS".equals(fact.result())
+                && fact.metadata().isEmpty();
+    }
+
+    private static boolean acceptsAssetCreated(AuditFact fact) {
+        return "ASSET_CREATED".equals(fact.eventType())
+                && "2.0".equals(fact.eventVersion())
+                && "INVENTORY".equals(fact.producerModule())
+                && "HUMAN_USER".equals(fact.actorType())
+                && uuidV4(fact.actorId())
+                && "ASSET".equals(fact.resourceType())
+                && Long.valueOf(0).equals(fact.resourceVersion())
+                && "SUCCESS".equals(fact.result())
+                && fact.metadata().isEmpty();
+    }
+
+    private static boolean acceptsAgentLifecycle(AuditFact fact) {
+        boolean preRegistered = "AGENT_PRE_REGISTERED".equals(fact.eventType())
+                && Long.valueOf(0).equals(fact.resourceVersion());
+        boolean activated = "AGENT_ACTIVATED".equals(fact.eventType())
+                && Long.valueOf(1).equals(fact.resourceVersion());
+        return (preRegistered || activated)
+                && "2.0".equals(fact.eventVersion())
+                && "COLLECTOR".equals(fact.producerModule())
+                && "HUMAN_USER".equals(fact.actorType())
+                && uuidV4(fact.actorId())
+                && "AGENT".equals(fact.resourceType())
                 && "SUCCESS".equals(fact.result())
                 && fact.metadata().isEmpty();
     }

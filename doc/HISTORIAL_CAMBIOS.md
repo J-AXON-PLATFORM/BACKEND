@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Auditoría de alta de activo y lifecycle inicial Agent -- OLA6-AUD-001e, 2026-11-30
+
+`AC-JAXON-097` autoriza exclusivamente en backend futuros `ASSET_CREATED`, `AGENT_PRE_REGISTERED` y `AGENT_ACTIVATED` 2.0, con actor humano, recurso/versión exactos y payload/metadata `{}`. Inventory y Collector conservan entregas y dispatchers propios; Audit recibe solo mediante `AuditFactRecorder`. Se crean exactamente tres migraciones, sin OpenAPI, endpoints, dependencias, workflows, frontend, automation-collector ni Production.
+
+Se sincroniza retrospectivamente el cierre real de `OLA6-AUD-001d`: `BACKEND#64`, commit técnico `bd284e8ad26cfa62c21369da6550d5be7a33592a`, squash `a5c532da12f9f5944d8c0eda0580f1a196832cc3`, tuvo runs verdes `45761227478`/`45761571238`, ambos `APPLICATION`. La rama fue eliminada y los otros dos repositorios permanecieron intactos. `AC-JAXON-096` está cerrado.
+
+---
+
 ## Auditoría de login fallido y claves públicas técnicas -- OLA6-AUD-001d, 2026-11-29
 
 `AC-JAXON-096` autoriza exclusivamente en backend futuros `HUMAN_LOGIN_FAILED`, `AGENT_PUBLIC_KEY_REGISTERED` y `DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED` 2.0. El fallo admite actor nulo solo sin principal verificable y metadata cerrada `reason=INVALID_CREDENTIALS`; ambos registros de clave exigen actor humano y metadata `{}`. El sexto y posteriores intentos dentro de la ventana continúan en `429` sin crear intento, outbox ni AuditEvent. Se reutilizan entregas y dispatcher Identity con exactamente dos migraciones, sin OpenAPI, dependencias, workflows, frontend, automation-collector ni Production.

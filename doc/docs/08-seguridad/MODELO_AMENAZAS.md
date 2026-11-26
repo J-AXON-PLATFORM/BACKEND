@@ -71,3 +71,10 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: amplificación por peticiones `429`, enumeración, fuga de username/IP/hash/clave/fingerprint/comentario, actor anónimo sintético, metadata arbitraria, despacho de 1.0 o duplicación.
 - Mitigaciones: ningún evento por `429`; máximo cinco fallos por clave/ventana; reason único sin distinguir causa; actor nulo solo sin principal; claves con metadata vacía; allowlist 2.0 y catálogos Java/SQL cerrados; idempotencia y conflicto sin sobrescritura.
 - Riesgos residuales: un atacante puede rotar usernames/IP y aumentar volumen antes del umbral; Audit no acredita una respuesta `429` ni agrupa episodios; permanecen rol runtime único, `FAILED` sin reproceso y ausencia de tamper-proof criptográfico.
+
+## OLA6-AUD-001e
+
+- Activos: integridad de altas de activos, pre-registros/activaciones Agent, outboxes/entregas propietarios y evidencia Audit.
+- Amenazas: despacho accidental de 1.0, versión de recurso falsa, duplicación por activación idempotente, conflicto sobrescrito, evento defectuoso bloqueante o SQL cross-module.
+- Mitigaciones: eventos 2.0 atómicos con versiones `0|0|1`; allowlists Java/SQL; dispatchers separados con `SKIP LOCKED`, 10 intentos e idempotencia; conflicto sin sobrescritura; Audit append-only y acceso solo por `AuditFactRecorder`.
+- Riesgos residuales: rol runtime único, `FAILED` sin reproceso operativo y ausencia de tamper-proof criptográfico.

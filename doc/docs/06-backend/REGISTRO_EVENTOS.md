@@ -28,6 +28,8 @@ Reglas Lote 53:
 
 `OLA6-AUD-001d` versiona futuros `HUMAN_LOGIN_FAILED`, `AGENT_PUBLIC_KEY_REGISTERED` y `DISCOVERY_EXECUTOR_PUBLIC_KEY_REGISTERED` a 2.0. El fallo usa actor UUIDv4 o nulo solo sin principal, `AUTHENTICATION_ATTEMPT`, `DENIED` y reason exacto; las claves exigen actor humano, recurso técnico exacto, `SUCCESS` y `{}`. El dispatcher procesa los seis tipos Identity allowlisted únicamente 2.0. `429`, no-ops, 1.0 y cualquier dato sensible o identificador de credencial quedan excluidos.
 
+`OLA6-AUD-001e` versiona futuros `ASSET_CREATED`, `AGENT_PRE_REGISTERED` y `AGENT_ACTIVATED` a 2.0. Inventory y Collector despachan por separado solo sus tipos allowlisted, con actor humano, recurso `ASSET|AGENT`, versiones `0|0|1`, `SUCCESS` y `{}`. La activación idempotente no duplica evento; 1.0 no se reclama.
+
 ## Propósito
 
 Definir logging útil para diagnóstico, auditoría técnica y correlación.

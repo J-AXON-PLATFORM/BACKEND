@@ -151,6 +151,7 @@
 - **Corte ejecutable OLA6-AUD-001b:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para altas administrativas futuras mediante `HUMAN_USER_CREATED` 2.0, roles canónicos completos y dispatcher propiedad de Identity. No altera 1.0 histórico, la consulta, OpenAPI 8.3 ni frontend.
 - **Corte ejecutable OLA6-AUD-001c:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para futuros login/logout humanos exitosos 2.0 con payload/metadata `{}`. Excluye fallos, actor anónimo, IP, backfill, OpenAPI y frontend.
 - **Corte ejecutable OLA6-AUD-001d:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para futuros login fallido y registros de clave pública Agent/Discovery Executor 2.0. El fallo usa reason cerrado y actor nulo solo sin principal verificable; las claves usan metadata `{}`. Excluye eventos por `429`, datos de credencial/red, backfill, OpenAPI y frontend.
+- **Corte ejecutable OLA6-AUD-001e:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para futuros `ASSET_CREATED`, `AGENT_PRE_REGISTERED` y `AGENT_ACTIVATED` 2.0, con versiones `0|0|1`, metadata `{}` y entregas propietarias Inventory/Collector. Excluye otros eventos, backfill, OpenAPI y frontend.
 
 ## Requisitos transversales
 

@@ -107,7 +107,7 @@ class AgentIntegrationTest {
                         """,
                         agentId))
                 .containsEntry("event_type", "AGENT_PRE_REGISTERED")
-                .containsEntry("event_version", "1.0")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("producer_module", "COLLECTOR")
                 .containsEntry("actor_type", "HUMAN_USER")
                 .containsEntry("resource_type", "AGENT")
@@ -293,6 +293,20 @@ class AgentIntegrationTest {
                         Integer.class,
                         agentId))
                 .isEqualTo(1);
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT event_version, actor_id, resource_version, result, payload::text AS payload
+                        FROM collector.outbox_events
+                        WHERE event_type = 'AGENT_ACTIVATED' AND resource_id = ?
+                        """,
+                        agentId))
+                .containsEntry("event_version", "2.0")
+                .containsEntry("actor_id", jdbc.queryForObject(
+                        "SELECT id FROM identity.human_users WHERE normalized_username = 'agent.operator'",
+                        UUID.class))
+                .containsEntry("resource_version", 1L)
+                .containsEntry("result", "SUCCESS")
+                .containsEntry("payload", "{}");
         assertThat(getAgent(session.cookie(), agentId.toString()).body())
                 .contains("\"status\":\"ACTIVE\"")
                 .contains("\"operationalStatus\":\"UNKNOWN\"")
