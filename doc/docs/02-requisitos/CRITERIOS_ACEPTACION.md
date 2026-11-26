@@ -176,6 +176,14 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 ## OLA6-AUD-001b
 
 - Cada alta administrativa futura confirma atómicamente un único `HUMAN_USER_CREATED` 2.0; el histórico 1.0 permanece intacto y no se despacha.
+
+## OLA6-AUD-001c
+
+- Cada login humano exitoso futuro confirma atómicamente `HUMAN_LOGIN_SUCCEEDED` 2.0 con recurso `AUTHENTICATION_ATTEMPT`, UUIDv4 estable del intento y `{}` exacto.
+- Cada logout humano exitoso futuro confirma atómicamente `HUMAN_LOGOUT_SUCCEEDED` 2.0 con recurso `HUMAN_SESSION`, UUIDv4 de la sesión eliminada y `{}` exacto.
+- Audit materializa ambos con actor/correlación UUIDv4, `SUCCESS`, `resourceVersion=null` y metadata `{}`; username, IP, credenciales, sesión/token, CSRF, hashes, rate-limit keys y claves adicionales se rechazan.
+- Los eventos 1.0 permanecen byte a byte y no se reclaman; `HUMAN_LOGIN_FAILED` queda fuera.
+- Se conservan idempotencia, conflicto sin sobrescritura, `SKIP LOCKED`, 10 intentos, backoff+jitter y aislamiento de eventos defectuosos.
 - Payload y metadata contienen exactamente `status=ACTIVE` y `roles`; `roles` es una única cadena canónica, no un array, con al menos un rol, ordenada según `AUDITOR|END_USER|IT_OPERATOR|SUPPORT_TECHNICIAN|SYSTEM_ADMIN` y separada exclusivamente por `|`. Se rechazan duplicados, desorden, roles desconocidos, separadores alternativos, claves extra y formatos alternativos. `AC-JAXON-094` ratifica retrospectivamente esta representación ya integrada.
 - Identity controla su entrega `AUDIT`; procesa solo 2.0, usa hasta 10 intentos incluso para errores permanentes, backoff exponencial con jitter y tope de cinco minutos, y deja `FAILED` durable. Un evento defectuoso no bloquea otro.
 - Audit materializa con `resourceVersion=null`, idempotencia por `source_event_id` y conflicto sin sobrescritura. `AI_SOURCE_DISABLED` 1.0, append-only y retención de cinco años permanecen intactos.

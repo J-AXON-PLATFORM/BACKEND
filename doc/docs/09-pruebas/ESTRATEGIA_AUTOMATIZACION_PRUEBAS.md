@@ -57,3 +57,10 @@ Automatizar pruebas sin depender de un proveedor de CI específico
 - Migración PostgreSQL 18/pgvector: upgrade con 1.0 histórico preservado, constraints 2.0, entrega Identity, cascada y ampliación Audit sin regresión de `AI_SOURCE_DISABLED`.
 - Integración: alta -> outbox 2.0 -> Audit exacto, 1.0 ignorado, redelivery idempotente, conflicto hasta `FAILED` en 10 intentos, indisponibilidad sin revertir usuario, aislamiento de evento defectuoso y tres dispatchers concurrentes.
 - Arquitectura/regresión: ModularityTests, AuditOwnershipTest, suite AI Audit, `clean verify`, OpenAPI 8.3 byte a byte, documentación, Gitleaks, backup/restore y clasificador `APPLICATION`.
+
+## OLA6-AUD-001c
+
+- Integración: login/logout real -> outbox 2.0 -> Audit exacto `{}`; 1.0 ignorado; `HUMAN_LOGIN_FAILED` excluido; redelivery, conflicto, indisponibilidad, aislamiento y tres dispatchers conservados por la suite compartida.
+- Migración PostgreSQL 18/pgvector: upgrade con eventos 1.0 byte a byte, constraints Identity 2.0 y catálogo Audit ampliado sin regresión de `AI_SOURCE_DISABLED` ni `HUMAN_USER_CREATED`.
+- Catálogo/seguridad: combinaciones cerradas, UUIDv4, `resourceVersion=null`, metadata vacía y rechazo de claves prohibidas/adicionales.
+- Regresión: Identity/Audit dirigidas, `ModularityTests`, `AuditOwnershipTest`, `clean verify` Java 25, OpenAPI 8.3 byte a byte, documentación, whitespace, Gitleaks y clasificador `APPLICATION`.

@@ -92,6 +92,8 @@ En Pull Requests se compara el SHA base/head del evento. En push a `develop`, el
 
 `OLA6-AUD-001b` conserva workflows, clasificadores, dependencias, lockfiles y OpenAPI 8.3 y añade exactamente dos migraciones (`identity`, `audit_reporting`). Backend debe clasificar `APPLICATION`, salvo nivel fail-closed más estricto. `frontend` y `automation-collector` permanecen byte a byte intactos.
 
+`OLA6-AUD-001c` conserva workflows, clasificadores, dependencias, lockfiles y OpenAPI 8.3 y añade exactamente dos migraciones (`identity`, `audit_reporting`). Backend debe clasificar `APPLICATION`, salvo nivel fail-closed más estricto. `frontend` y `automation-collector` permanecen byte a byte intactos.
+
 `OLA4-DIS-008b` conserva workflows y clasificadores, no añade migración ni dependencia y debe clasificar `APPLICATION` en backend y frontend; un nivel fail-closed más estricto también es válido. `automation-collector` permanece byte a byte intacto.
 
 `OLA5-AI-001a` conserva workflows, clasificadores, dependencias y lockfiles. Backend y frontend deben clasificar `APPLICATION`; un nivel fail-closed más estricto también es válido. `automation-collector` permanece byte a byte en `3dac71ca95442e4f50e77dd2a172b561ca49face`.

@@ -614,6 +614,16 @@ El cierre técnico real quedó verificado el 2026-11-26 mediante `BACKEND#61`, c
 
 Se autoriza exclusivamente este cierre documental bajo `backend/doc/`, en la rama `docs/ola6-aud-001b-closure`, con un único push y un único Pull Request `BACKEND` hacia `develop`, clasificación esperada `DOCS_ONLY`, integración squash solo con CI verde, verificación post-merge, eliminación de ramas y reporte final externo. No se autorizan código, pruebas, configuración, migraciones, contratos ejecutables, dependencias, workflows, `frontend`, `automation-collector`, el inicio o decisión del siguiente incremento, infraestructura, Production ni despliegues. `PRODUCTION_READY = NO`.
 
+## AC-JAXON-095 -- Auditoría de login y logout humanos exitosos
+
+LUIS autoriza expresamente `OLA6-AUD-001c` solo en `backend`. Los únicos hechos nuevos auditables son futuros `HUMAN_LOGIN_SUCCEEDED` 2.0 y `HUMAN_LOGOUT_SUCCEEDED` 2.0 exitosos. Login usa `AUTHENTICATION_ATTEMPT` y un UUIDv4 estable del intento como recurso; logout usa `HUMAN_SESSION` y el UUIDv4 de la sesión eliminada. Ambos usan actor humano UUIDv4, correlación UUIDv4, `SUCCESS`, `resourceVersion=null` y payload/metadata exactamente `{}`. Quedan prohibidos username, IP, contraseña, sesión o token de sesión, CSRF, hashes, rate-limit keys y cualquier metadata adicional.
+
+Los eventos 1.0 históricos permanecen byte a byte y no se despachan ni reinterpretan. `HUMAN_LOGIN_FAILED`, actores anónimos, IP y volumen hostil quedan expresamente fuera de alcance. Identity reutiliza exclusivamente `identity.outbox_deliveries`, `IdentityAuditDispatcher` y `AuditFactRecorder`; el dispatcher reclama solo `HUMAN_USER_CREATED`, `HUMAN_LOGIN_SUCCEEDED` y `HUMAN_LOGOUT_SUCCEEDED`, todos 2.0. Se conservan `FOR UPDATE SKIP LOCKED`, entrega `AUDIT` `PENDING|DELIVERED|FAILED`, 10 intentos, backoff exponencial con jitter y tope de cinco minutos, códigos cerrados, idempotencia por `source_event_id`, duplicado idéntico como éxito y conflicto sin sobrescritura.
+
+Audit amplía su catálogo cerrado sin alterar `AI_SOURCE_DISABLED` 1.0 ni `HUMAN_USER_CREATED` 2.0. Se autorizan exactamente dos migraciones nuevas: una Identity para versiones/constraints de login y logout, y otra Audit para ampliar el catálogo. No se crea scheduler, tabla de entregas, endpoint, respuesta ni contrato web. OpenAPI 8.3, dependencias, workflows, `frontend` y `automation-collector` permanecen byte a byte intactos.
+
+Se autoriza exclusivamente la rama `feature/ola6-aud-001c`, un único push planificado después de todas las verificaciones locales y un único Pull Request `BACKEND` hacia `develop`; integración squash solo con CI verde, verificación post-merge, eliminación de ramas y reporte final externo único en `/home/usuario/Documentos/J-AXON-MDs/REPORTE_OPENCODE_OLA6_AUD_001C_EJECUCION.md`. El mismo PR sincroniza retrospectivamente el cierre ya verificado de `AC-JAXON-094`/`BACKEND#62`. No se autorizan fallos/denegaciones, backfill, endpoints, OpenAPI, frontend, dependencias, workflows, reproceso de `FAILED`, purga, reportes, SSE, infraestructura, Production ni despliegues. A la fecha de este registro el incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local; no está integrado ni verificado remotamente. `PRODUCTION_READY = NO`.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)

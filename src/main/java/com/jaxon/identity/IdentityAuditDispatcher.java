@@ -23,7 +23,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/** Identity-owned dispatcher of future {@code HUMAN_USER_CREATED} 2.0 events to Audit/Reporting. */
+/** Identity-owned dispatcher of allowlisted Identity 2.0 events to Audit/Reporting. */
 @Component
 class IdentityAuditDispatcher {
 
@@ -136,25 +136,7 @@ class IdentityAuditDispatcher {
     }
 
     private AuditFact fact(IdentityAuditDeliveryPersistence.DueEvent event) {
-        Map<String, String> metadata;
-        try {
-            JsonNode payload = objectMapper.readTree(event.payload());
-            if (!payload.isObject()
-                    || payload.size() != 2
-                    || !payload.has("status")
-                    || !payload.get("status").isTextual()
-                    || !payload.has("roles")
-                    || !payload.get("roles").isTextual()) {
-                throw new InvalidAuditPayloadException();
-            }
-            metadata = Map.of(
-                    "status", payload.get("status").asText(),
-                    "roles", payload.get("roles").asText());
-        } catch (InvalidAuditPayloadException exception) {
-            throw exception;
-        } catch (RuntimeException exception) {
-            throw new InvalidAuditPayloadException();
-        }
+        Map<String, String> metadata = metadata(event);
         return new AuditFact(
                 event.eventId(),
                 event.eventType(),
@@ -169,6 +151,35 @@ class IdentityAuditDispatcher {
                 event.result(),
                 event.correlationId(),
                 metadata);
+    }
+
+    private Map<String, String> metadata(IdentityAuditDeliveryPersistence.DueEvent event) {
+        try {
+            JsonNode payload = objectMapper.readTree(event.payload());
+            if (!payload.isObject()) {
+                throw new InvalidAuditPayloadException();
+            }
+            if ("HUMAN_USER_CREATED".equals(event.eventType())
+                    && payload.size() == 2
+                    && payload.has("status")
+                    && payload.get("status").isTextual()
+                    && payload.has("roles")
+                    && payload.get("roles").isTextual()) {
+                return Map.of(
+                    "status", payload.get("status").asText(),
+                    "roles", payload.get("roles").asText());
+            }
+            if (("HUMAN_LOGIN_SUCCEEDED".equals(event.eventType())
+                            || "HUMAN_LOGOUT_SUCCEEDED".equals(event.eventType()))
+                    && payload.isEmpty()) {
+                return Map.of();
+            }
+            throw new InvalidAuditPayloadException();
+        } catch (InvalidAuditPayloadException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
+            throw new InvalidAuditPayloadException();
+        }
     }
 
     private void count(String outcome) {

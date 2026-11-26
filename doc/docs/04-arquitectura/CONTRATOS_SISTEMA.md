@@ -40,6 +40,8 @@
 
 `OLA6-AUD-001b` añade un segundo productor sin consumidor global: Identity emite solo `HUMAN_USER_CREATED` 2.0 futuro y su dispatcher propio usa `identity.outbox_deliveries` para invocar el mismo `AuditFactRecorder`. El payload cerrado es `status=ACTIVE` más roles ordenados canónicamente y separados por `|`; `resourceVersion=null`. 1.0 histórico no se reinterpreta ni despacha.
 
+`OLA6-AUD-001c` amplía ese mismo productor/dispatcher a futuros login/logout exitosos 2.0 con payload y metadata `{}` exactos. No añade consumidor, scheduler, tabla, endpoint ni contrato web; 1.0 y login fallido permanecen fuera.
+
 ## Contrato interno aprobado -- Lote 53
 
 - Command/query solicita una operación o lectura y usa la API pública del módulo proveedor de forma síncrona in-process.

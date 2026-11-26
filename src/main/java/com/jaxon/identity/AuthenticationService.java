@@ -91,6 +91,7 @@ class AuthenticationService {
         UUID attemptId = UUID.randomUUID();
         insertOutbox(
                 "HUMAN_LOGIN_SUCCEEDED",
+                "2.0",
                 authenticated.id(),
                 attemptId,
                 "SUCCESS",
@@ -175,7 +176,7 @@ class AuthenticationService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, result,
                      correlation_id, payload, next_attempt_at)
-                VALUES (?, 'HUMAN_LOGOUT_SUCCEEDED', '1.0', ?, 'IDENTITY',
+                VALUES (?, 'HUMAN_LOGOUT_SUCCEEDED', '2.0', ?, 'IDENTITY',
                         'HUMAN_USER', ?, 'HUMAN_SESSION', ?, 'SUCCESS', ?, '{}'::jsonb, ?)
                 """,
                 UUID.randomUUID(),
@@ -218,11 +219,20 @@ class AuthenticationService {
                 attemptId,
                 attemptKey,
                 timestamp(now));
-        insertOutbox("HUMAN_LOGIN_FAILED", actorId, attemptId, "DENIED", correlationId, now, Map.of("reason", reason));
+        insertOutbox(
+                "HUMAN_LOGIN_FAILED",
+                "1.0",
+                actorId,
+                attemptId,
+                "DENIED",
+                correlationId,
+                now,
+                Map.of("reason", reason));
     }
 
     private void insertOutbox(
             String eventType,
+            String eventVersion,
             UUID actorId,
             UUID resourceId,
             String result,
@@ -236,11 +246,12 @@ class AuthenticationService {
                         (event_id, event_type, event_version, occurred_at, producer_module,
                          actor_type, actor_id, resource_type, resource_id, result,
                          correlation_id, payload, next_attempt_at)
-                    VALUES (?, ?, '1.0', ?, 'IDENTITY', 'HUMAN_USER', ?,
+                    VALUES (?, ?, ?, ?, 'IDENTITY', 'HUMAN_USER', ?,
                             'AUTHENTICATION_ATTEMPT', ?, ?, ?, CAST(? AS jsonb), ?)
                     """,
                     UUID.randomUUID(),
                     eventType,
+                    eventVersion,
                     timestamp(now),
                     actorId,
                     resourceId,

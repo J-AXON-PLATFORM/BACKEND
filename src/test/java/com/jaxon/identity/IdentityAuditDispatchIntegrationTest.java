@@ -80,6 +80,65 @@ class IdentityAuditDispatchIntegrationTest {
     }
 
     @Test
+    void materializesFutureSuccessfulLoginAndLogoutWithEmptyMetadata() throws Exception {
+        UUID loginCorrelation = UUID.randomUUID();
+        Session session = performLogin(loginCorrelation);
+        Map<String, Object> loginEvent = authenticationEvent("HUMAN_LOGIN_SUCCEEDED", loginCorrelation);
+        assertThat(loginEvent)
+                .containsEntry("event_version", "2.0")
+                .containsEntry("actor_id", session.userId())
+                .containsEntry("resource_type", "AUTHENTICATION_ATTEMPT")
+                .containsEntry("result", "SUCCESS")
+                .containsEntry("payload", "{}");
+        UUID loginEventId = (UUID) loginEvent.get("event_id");
+
+        assertThat(dispatcher.dispatchDue(1))
+                .isEqualTo(new IdentityAuditDispatcher.DispatchSummary(1, 0, 0, 0));
+        assertAuthenticationAudit(
+                loginEventId,
+                "HUMAN_LOGIN_SUCCEEDED",
+                session.userId(),
+                "AUTHENTICATION_ATTEMPT",
+                (UUID) loginEvent.get("resource_id"),
+                loginCorrelation);
+
+        UUID logoutCorrelation = UUID.randomUUID();
+        HttpResponse<String> logout = http.send(
+                HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/v1/auth/logout"))
+                        .header("Cookie", session.cookie())
+                        .header("X-CSRF-Token", session.csrfToken())
+                        .header("X-Correlation-ID", logoutCorrelation.toString())
+                        .POST(HttpRequest.BodyPublishers.noBody())
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
+        assertThat(logout.statusCode()).isEqualTo(204);
+        Map<String, Object> logoutEvent = authenticationEvent("HUMAN_LOGOUT_SUCCEEDED", logoutCorrelation);
+        assertThat(logoutEvent)
+                .containsEntry("event_version", "2.0")
+                .containsEntry("actor_id", session.userId())
+                .containsEntry("resource_type", "HUMAN_SESSION")
+                .containsEntry("result", "SUCCESS")
+                .containsEntry("payload", "{}");
+        UUID logoutEventId = (UUID) logoutEvent.get("event_id");
+
+        assertThat(dispatcher.dispatchDue(1))
+                .isEqualTo(new IdentityAuditDispatcher.DispatchSummary(1, 0, 0, 0));
+        assertAuthenticationAudit(
+                logoutEventId,
+                "HUMAN_LOGOUT_SUCCEEDED",
+                session.userId(),
+                "HUMAN_SESSION",
+                (UUID) logoutEvent.get("resource_id"),
+                logoutCorrelation);
+
+        insertHistoricalAuthenticationVersionOne(session.userId(), "HUMAN_LOGIN_SUCCEEDED",
+                "AUTHENTICATION_ATTEMPT");
+        insertHistoricalAuthenticationVersionOne(session.userId(), "HUMAN_LOGOUT_SUCCEEDED", "HUMAN_SESSION");
+        assertThat(dispatcher.dispatchDue(50))
+                .isEqualTo(new IdentityAuditDispatcher.DispatchSummary(0, 0, 0, 0));
+    }
+
+    @Test
     void createsVersionTwoAtomicallyAndMaterializesCompleteCanonicalRoles() throws Exception {
         Session session = login();
         UUID correlationId = UUID.randomUUID();
@@ -297,6 +356,27 @@ class IdentityAuditDispatchIntegrationTest {
                 Timestamp.from(now));
     }
 
+    private void insertHistoricalAuthenticationVersionOne(UUID actorId, String eventType, String resourceType) {
+        Instant now = Instant.now();
+        jdbc.update(
+                """
+                INSERT INTO identity.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, result,
+                     correlation_id, payload, next_attempt_at)
+                VALUES (?, ?, '1.0', ?, 'IDENTITY',
+                        'HUMAN_USER', ?, ?, ?, 'SUCCESS', ?, '{}'::jsonb, ?)
+                """,
+                UUID.randomUUID(),
+                eventType,
+                Timestamp.from(now),
+                actorId,
+                resourceType,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                Timestamp.from(now));
+    }
+
     private void insertConflictingAudit(UUID eventId, UUID actorId, UUID resourceId) {
         jdbc.update(
                 """
@@ -360,9 +440,16 @@ class IdentityAuditDispatchIntegrationTest {
     }
 
     private Session login() throws Exception {
+        Session session = performLogin(UUID.randomUUID());
+        jdbc.update("DELETE FROM identity.outbox_events WHERE event_type = 'HUMAN_LOGIN_SUCCEEDED'");
+        return session;
+    }
+
+    private Session performLogin(UUID correlationId) throws Exception {
         HttpResponse<String> response = http.send(
                 HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/v1/auth/login"))
                         .header("Content-Type", "application/json")
+                        .header("X-Correlation-ID", correlationId.toString())
                         .POST(HttpRequest.BodyPublishers.ofString(
                                 "{\"username\":\"" + USERNAME + "\",\"password\":\"" + PASSWORD + "\"}"))
                         .build(),
@@ -376,6 +463,50 @@ class IdentityAuditDispatchIntegrationTest {
                 response.headers().firstValue("set-cookie").orElseThrow().split(";", 2)[0],
                 csrf.group(1),
                 UUID.fromString(userId.group(1)));
+    }
+
+    private Map<String, Object> authenticationEvent(String eventType, UUID correlationId) {
+        return jdbc.queryForMap(
+                """
+                SELECT event_id, event_version, actor_id, resource_type, resource_id,
+                       result, correlation_id, payload::text AS payload
+                FROM identity.outbox_events
+                WHERE event_type = ? AND correlation_id = ?
+                """,
+                eventType,
+                correlationId);
+    }
+
+    private void assertAuthenticationAudit(
+            UUID eventId,
+            String eventType,
+            UUID actorId,
+            String resourceType,
+            UUID resourceId,
+            UUID correlationId) {
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT event_type, event_version, producer_module, actor_type, actor_id,
+                               resource_type, resource_id, resource_version, result, correlation_id,
+                               metadata::text AS metadata
+                        FROM audit_reporting.audit_events
+                        WHERE source_event_id = ?
+                        """,
+                        eventId))
+                .containsEntry("event_type", eventType)
+                .containsEntry("event_version", "2.0")
+                .containsEntry("producer_module", "IDENTITY")
+                .containsEntry("actor_type", "HUMAN_USER")
+                .containsEntry("actor_id", actorId)
+                .containsEntry("resource_type", resourceType)
+                .containsEntry("resource_id", resourceId)
+                .containsEntry("resource_version", null)
+                .containsEntry("result", "SUCCESS")
+                .containsEntry("correlation_id", correlationId)
+                .containsEntry("metadata", "{}");
+        assertThat(delivery(eventId))
+                .containsEntry("status", "DELIVERED")
+                .containsEntry("attempts", 1);
     }
 
     private static UUID locationId(HttpResponse<String> response) {
