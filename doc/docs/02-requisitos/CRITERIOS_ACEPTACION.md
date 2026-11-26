@@ -215,3 +215,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Discovery controla una única entrega y dispatcher propios para los cuatro tipos, con `SKIP LOCKED`, 10 intentos, backoff+jitter, errores cerrados, idempotencia, conflicto sin sobrescritura y aislamiento.
 - Audit conserva catálogo cerrado, append-only y regresión AI/Identity/Inventory/Collector. Discovery accede únicamente mediante `AuditFactRecorder`.
 - Se crean exactamente dos migraciones. OpenAPI 8.3, endpoints, frontend, automation-collector, dependencias, workflows, Docker/Compose, SFTPGo, SSE y Production no cambian.
+
+## OLA6-AUD-001g
+
+- Cada creación futura confirma `DISCOVERY_JOB_CREATED` 2.0 con actor humano UUIDv4, recurso `DISCOVERY_JOB`, versión `0`, `SUCCESS`, correlación original y `{}`.
+- Solo la transición efectiva `PENDING -> DISPATCHED` confirma `DISCOVERY_JOB_DISPATCHED` 2.0 con el actor/correlación humanos originales, versión `1`, `SUCCESS` y `{}`.
+- La aceptación terminal confirma atómicamente Job y `DISCOVERY_JOB_COMPLETED` 2.0: actor `DISCOVERY_EXECUTOR` validado, versión `2`, `{}` y resultado `SUCCESS` para `SUCCEEDED` o `FAILED` para `FAILED`; un fallo del outbox revierte toda la aceptación.
+- Duplicados, conflictos, rechazos, finales tardíos y reprocesamientos no crean completion adicional. Los eventos 1.0 permanecen byte a byte, sin claim, reinterpretación, replay o backfill.
+- Discovery amplía únicamente la allowlist de su entrega/dispatcher existente; Audit conserva catálogo cerrado, append-only, idempotencia, conflicto sin sobrescritura y regresión de todos los productores previos.
+- Se crean exactamente dos migraciones posteriores a `V20261130040000`. OpenAPI 8.3, endpoints, contratos Job/Result 1.0, frontend, automation-collector, dependencias, workflows, Docker/Compose/SFTPGo, SSE y Production no cambian.

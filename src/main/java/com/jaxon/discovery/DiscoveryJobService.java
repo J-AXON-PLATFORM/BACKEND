@@ -153,8 +153,7 @@ class DiscoveryJobService {
                 Timestamp.from(now),
                 Timestamp.from(expiresAt),
                 Timestamp.from(now));
-        outbox(jobId, 0, actorId, correlationId, now,
-                "DISCOVERY_JOB_CREATED", "{\"status\":\"PENDING\",\"profile\":\"BASIC\"}");
+        outbox(jobId, 0, actorId, correlationId, now, "DISCOVERY_JOB_CREATED");
         JobRow row = findRow(jobId, false).orElseThrow();
         return row.withScopeCidr(scopeCidr);
     }
@@ -204,7 +203,7 @@ class DiscoveryJobService {
                     Timestamp.from(dispatchedAt), Timestamp.from(dispatchedAt), job.jobId());
             if (updated != 1) throw new IllegalStateException("Job changed concurrently");
             outbox(job.jobId(), 1, job.actorId(), job.correlationId(), dispatchedAt,
-                    "DISCOVERY_JOB_DISPATCHED", "{\"status\":\"DISPATCHED\"}");
+                    "DISCOVERY_JOB_DISPATCHED");
             return true;
         });
         return Boolean.TRUE.equals(dispatched);
@@ -303,18 +302,18 @@ class DiscoveryJobService {
     }
 
     private void outbox(UUID jobId, long version, UUID actorId, UUID correlationId,
-            Instant now, String eventType, String payload) {
+            Instant now, String eventType) {
         jdbc.update(
                 """
                 INSERT INTO discovery.outbox_events
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, ?, '1.0', ?, 'DISCOVERY', 'HUMAN_USER', ?, 'DISCOVERY_JOB', ?, ?,
-                        'SUCCESS', ?, ?::jsonb, ?)
+                VALUES (?, ?, '2.0', ?, 'DISCOVERY', 'HUMAN_USER', ?, 'DISCOVERY_JOB', ?, ?,
+                        'SUCCESS', ?, '{}'::jsonb, ?)
                 """,
                 UUID.randomUUID(), eventType, Timestamp.from(now), actorId, jobId, version,
-                correlationId, payload, Timestamp.from(now));
+                correlationId, Timestamp.from(now));
     }
 
     private Optional<JobRow> findRow(UUID jobId, boolean lock) {

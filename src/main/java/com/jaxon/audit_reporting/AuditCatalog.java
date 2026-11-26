@@ -33,7 +33,8 @@ final class AuditCatalog {
                 || acceptsTechnicalIdentityPublicKeyRegistered(fact)
                 || acceptsAssetCreated(fact)
                 || acceptsAgentLifecycle(fact)
-                || acceptsDiscoveryLifecycle(fact);
+                || acceptsDiscoveryLifecycle(fact)
+                || acceptsDiscoveryJobLifecycle(fact);
     }
 
     private static boolean acceptsAiSourceDisabled(AuditFact fact) {
@@ -154,6 +155,27 @@ final class AuditCatalog {
                 && "HUMAN_USER".equals(fact.actorType())
                 && uuidV4(fact.actorId())
                 && "SUCCESS".equals(fact.result());
+    }
+
+    private static boolean acceptsDiscoveryJobLifecycle(AuditFact fact) {
+        boolean created = "DISCOVERY_JOB_CREATED".equals(fact.eventType())
+                && "HUMAN_USER".equals(fact.actorType())
+                && Long.valueOf(0).equals(fact.resourceVersion())
+                && "SUCCESS".equals(fact.result());
+        boolean dispatched = "DISCOVERY_JOB_DISPATCHED".equals(fact.eventType())
+                && "HUMAN_USER".equals(fact.actorType())
+                && Long.valueOf(1).equals(fact.resourceVersion())
+                && "SUCCESS".equals(fact.result());
+        boolean completed = "DISCOVERY_JOB_COMPLETED".equals(fact.eventType())
+                && "DISCOVERY_EXECUTOR".equals(fact.actorType())
+                && Long.valueOf(2).equals(fact.resourceVersion())
+                && Set.of("SUCCESS", "FAILED").contains(fact.result());
+        return (created || dispatched || completed)
+                && "2.0".equals(fact.eventVersion())
+                && "DISCOVERY".equals(fact.producerModule())
+                && uuidV4(fact.actorId())
+                && "DISCOVERY_JOB".equals(fact.resourceType())
+                && fact.metadata().isEmpty();
     }
 
     private static boolean disableMetadata(Map<String, String> metadata) {

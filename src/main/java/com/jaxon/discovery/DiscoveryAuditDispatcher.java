@@ -35,7 +35,10 @@ class DiscoveryAuditDispatcher {
     private static final Set<String> EMPTY_METADATA_EVENTS = Set.of(
             "DISCOVERY_SCOPE_CREATED",
             "DISCOVERY_EXECUTOR_PRE_REGISTERED",
-            "DISCOVERY_EXECUTOR_ACTIVATED");
+            "DISCOVERY_EXECUTOR_ACTIVATED",
+            "DISCOVERY_JOB_CREATED",
+            "DISCOVERY_JOB_DISPATCHED",
+            "DISCOVERY_JOB_COMPLETED");
     private static final Set<String> SCOPE_STATUSES = Set.of("ACTIVE", "DISABLED");
 
     private final DiscoveryAuditDeliveryPersistence persistence;

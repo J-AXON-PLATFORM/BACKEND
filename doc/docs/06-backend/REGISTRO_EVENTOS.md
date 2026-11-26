@@ -32,6 +32,8 @@ Reglas Lote 53:
 
 `OLA6-AUD-001f` versiona a 2.0 solo futuros `DISCOVERY_SCOPE_CREATED`, `DISCOVERY_SCOPE_STATUS_CHANGED`, `DISCOVERY_EXECUTOR_PRE_REGISTERED` y `DISCOVERY_EXECUTOR_ACTIVATED`. Discovery despacha su allowlist con actor humano, recursos `AUTHORIZED_SCOPE|DISCOVERY_EXECUTOR`, versiones `0|>=1|0|1`, `SUCCESS` y metadata cerrada. No-ops y 1.0 no se reclaman.
 
+`OLA6-AUD-001g` versiona a 2.0 solo futuros `DISCOVERY_JOB_CREATED`, `DISCOVERY_JOB_DISPATCHED` y `DISCOVERY_JOB_COMPLETED`. Created/dispatched usan actor humano original, versiones `0|1`, `SUCCESS` y `{}`; completed usa actor `DISCOVERY_EXECUTOR`, versión `2`, `{}` y `SUCCESS|FAILED` según el estado oficial. Solo transiciones confirmadas emiten; duplicados, conflictos, rechazos, finales tardíos, reprocesamientos y 1.0 no se reclaman.
+
 ## Propósito
 
 Definir logging útil para diagnóstico, auditoría técnica y correlación.

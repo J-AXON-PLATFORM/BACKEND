@@ -1,6 +1,7 @@
 package com.jaxon.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -17,6 +18,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -137,11 +139,37 @@ class DiscoveryJobIntegrationTest {
         assertThat(document.path("schemaVersion").asText()).isEqualTo("1.0");
         assertThat(document.path("messageType").asText()).isEqualTo("DISCOVERY_JOB");
         assertThat(document.path("scopeCidr").asText()).isEqualTo("192.0.2.0/24");
+        UUID actorId = jdbc.queryForObject(
+                "SELECT id FROM identity.human_users WHERE normalized_username = 'job.operator'",
+                UUID.class);
         assertThat(jdbc.queryForList(
-                        "SELECT event_type FROM discovery.outbox_events WHERE resource_id = ? ORDER BY resource_version",
-                        String.class,
+                        """
+                        SELECT event_type, event_version, actor_type, actor_id, resource_version,
+                               result, correlation_id, payload::text AS payload
+                        FROM discovery.outbox_events
+                        WHERE resource_id = ?
+                        ORDER BY resource_version
+                        """,
                         jobId))
-                .containsExactly("DISCOVERY_JOB_CREATED", "DISCOVERY_JOB_DISPATCHED");
+                .containsExactly(
+                        Map.of(
+                                "event_type", "DISCOVERY_JOB_CREATED",
+                                "event_version", "2.0",
+                                "actor_type", "HUMAN_USER",
+                                "actor_id", actorId,
+                                "resource_version", 0L,
+                                "result", "SUCCESS",
+                                "correlation_id", correlationId,
+                                "payload", "{}"),
+                        Map.of(
+                                "event_type", "DISCOVERY_JOB_DISPATCHED",
+                                "event_version", "2.0",
+                                "actor_type", "HUMAN_USER",
+                                "actor_id", actorId,
+                                "resource_version", 1L,
+                                "result", "SUCCESS",
+                                "correlation_id", correlationId,
+                                "payload", "{}"));
         assertThat(getJob(session, jobId).body()).isEqualTo(created.body());
         assertThat(postJob(session, seed, UUID.randomUUID()).statusCode()).isEqualTo(409);
     }
@@ -285,6 +313,20 @@ class DiscoveryJobIntegrationTest {
                         "SELECT event_type FROM discovery.outbox_events WHERE resource_id = ? ORDER BY resource_version",
                         String.class, jobId))
                 .containsExactly("DISCOVERY_JOB_CREATED", "DISCOVERY_JOB_DISPATCHED", "DISCOVERY_JOB_COMPLETED");
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT event_version, actor_type, actor_id, resource_version, result,
+                               payload::text AS payload
+                        FROM discovery.outbox_events
+                        WHERE resource_id = ? AND event_type = 'DISCOVERY_JOB_COMPLETED'
+                        """,
+                        jobId))
+                .containsEntry("event_version", "2.0")
+                .containsEntry("actor_type", "DISCOVERY_EXECUTOR")
+                .containsEntry("actor_id", seed.executorId())
+                .containsEntry("resource_version", 2L)
+                .containsEntry("result", "SUCCESS")
+                .containsEntry("payload", "{}");
         assertThat(getJob(session, jobId).body())
                 .contains("\"status\":\"SUCCEEDED\"")
                 .contains("\"observationsFound\":1")
@@ -496,7 +538,6 @@ class DiscoveryJobIntegrationTest {
                 .containsEntry("correlation_id", correlationId);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory.outbox_events", Integer.class))
                 .isZero();
-
         HttpResponse<String> noOp = incorporateDevice(
                 session, device.jobId(), device.discoveredDeviceId(), assetId, 1, UUID.randomUUID());
         assertThat(noOp.statusCode()).isEqualTo(200);
@@ -861,6 +902,20 @@ class DiscoveryJobIntegrationTest {
                         "SELECT count(*) FROM discovery.discovered_devices WHERE job_id = ?",
                         Integer.class, jobId))
                 .isZero();
+        assertThat(jdbc.queryForMap(
+                        """
+                        SELECT event_version, actor_type, actor_id, resource_version, result,
+                               payload::text AS payload
+                        FROM discovery.outbox_events
+                        WHERE resource_id = ? AND event_type = 'DISCOVERY_JOB_COMPLETED'
+                        """,
+                        jobId))
+                .containsEntry("event_version", "2.0")
+                .containsEntry("actor_type", "DISCOVERY_EXECUTOR")
+                .containsEntry("actor_id", seed.executorId())
+                .containsEntry("resource_version", 2L)
+                .containsEntry("result", "FAILED")
+                .containsEntry("payload", "{}");
     }
 
     @Test
@@ -963,6 +1018,12 @@ class DiscoveryJobIntegrationTest {
                                 + "WHERE path_job_id = ?", jobId))
                 .containsEntry("status", "REJECTED")
                 .containsEntry("reason_code", "JOB_TERMINAL_OR_NOT_DISPATCHED");
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM discovery.outbox_events "
+                                + "WHERE resource_id = ? AND event_type = 'DISCOVERY_JOB_COMPLETED'",
+                        Integer.class,
+                        jobId))
+                .isZero();
     }
 
     @Test
@@ -1004,6 +1065,71 @@ class DiscoveryJobIntegrationTest {
                         "SELECT count(*) FROM discovery.accepted_discovery_results WHERE job_id = ?",
                         Integer.class, jobId))
                 .isEqualTo(1);
+    }
+
+    @Test
+    void rollsBackOfficialCompletionWhenItsVersionTwoOutboxCannotBeCaptured() throws Exception {
+        Session session = login();
+        Seed seed = seedActiveExecutor(true);
+        UUID jobId = UUID.fromString(extract(
+                postJob(session, seed, UUID.randomUUID()).body(), "jobId"));
+        Instant dispatchedAt = jdbc.queryForObject(
+                "SELECT dispatched_at FROM discovery.discovery_jobs WHERE job_id = ?",
+                java.sql.Timestamp.class,
+                jobId).toInstant();
+        DiscoveryResultMessage message = resultMessage(UUID.randomUUID(), jobId, seed, dispatchedAt);
+        jdbc.execute(
+                """
+                CREATE FUNCTION discovery.reject_test_job_completion_outbox()
+                RETURNS trigger LANGUAGE plpgsql AS $$
+                BEGIN
+                    IF NEW.event_type = 'DISCOVERY_JOB_COMPLETED' THEN
+                        RAISE EXCEPTION 'forced job completion outbox failure';
+                    END IF;
+                    RETURN NEW;
+                END $$
+                """);
+        jdbc.execute(
+                """
+                CREATE TRIGGER reject_test_job_completion_outbox
+                BEFORE INSERT ON discovery.outbox_events
+                FOR EACH ROW EXECUTE FUNCTION discovery.reject_test_job_completion_outbox()
+                """);
+        try {
+            assertThatThrownBy(() -> ingestion.ingest(
+                            seed.executorId(),
+                            jobId,
+                            "mailbox/" + jobId + ".json",
+                            "c".repeat(64),
+                            100,
+                            message))
+                    .isInstanceOf(RuntimeException.class);
+        } finally {
+            jdbc.execute("DROP TRIGGER IF EXISTS reject_test_job_completion_outbox "
+                    + "ON discovery.outbox_events");
+            jdbc.execute("DROP FUNCTION IF EXISTS discovery.reject_test_job_completion_outbox()");
+        }
+        assertThat(jdbc.queryForMap(
+                        "SELECT status, version FROM discovery.discovery_jobs WHERE job_id = ?",
+                        jobId))
+                .containsEntry("status", "DISPATCHED")
+                .containsEntry("version", 1L);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM discovery.accepted_discovery_results WHERE job_id = ?",
+                        Integer.class,
+                        jobId))
+                .isZero();
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM discovery.discovery_result_ingestions WHERE path_job_id = ?",
+                        Integer.class,
+                        jobId))
+                .isZero();
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM discovery.outbox_events "
+                                + "WHERE resource_id = ? AND event_type = 'DISCOVERY_JOB_COMPLETED'",
+                        Integer.class,
+                        jobId))
+                .isZero();
     }
 
     private Seed seedActiveExecutor(boolean createDirectory) throws IOException {
