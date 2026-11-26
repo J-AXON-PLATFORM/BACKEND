@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Auditoría del lifecycle de Discovery Jobs -- OLA6-AUD-001g, 2026-11-30
+
+`AC-JAXON-099` autoriza exclusivamente en backend futuros `DISCOVERY_JOB_CREATED`, `DISCOVERY_JOB_DISPATCHED` y `DISCOVERY_JOB_COMPLETED` 2.0. Created/dispatched conservan actor humano y correlación originales, versiones `0|1`, `SUCCESS` y `{}`; completed usa actor `DISCOVERY_EXECUTOR`, versión `2`, `{}` y resultado `SUCCESS|FAILED` según `SUCCEEDED|FAILED`. Discovery amplía solo su dispatcher y entrega existentes. Se crean exactamente dos migraciones, sin OpenAPI, endpoints, contratos Job/Result, dependencias, workflows, frontend, automation-collector, Docker/Compose/SFTPGo, SSE ni Production.
+
+Se sincroniza retrospectivamente el cierre real de `OLA6-AUD-001f`: `BACKEND#66`, commits `b618f77761505df58e850333c7826a017d7e717e` y `b70a14afc81380635274f8581678cfd356e918b8`, squash `d718645c5ca9f09f476d70cb680936ac74912937`, tuvo runs verdes `45870778249`/`45874219088`, ambos `PLATFORM_FULL`. La excepción correctiva cambió solo `libxml2=2.13.9-r3` a `r5`; la rama fue eliminada y los otros dos repositorios permanecieron intactos. `AC-JAXON-098` está cerrado.
+
+---
+
 ## Auditoría del lifecycle administrativo inicial de Discovery -- OLA6-AUD-001f, 2026-11-30
 
 `AC-JAXON-098` autoriza exclusivamente en backend futuros `DISCOVERY_SCOPE_CREATED`, `DISCOVERY_SCOPE_STATUS_CHANGED`, `DISCOVERY_EXECUTOR_PRE_REGISTERED` y `DISCOVERY_EXECUTOR_ACTIVATED` 2.0. Discovery conserva entrega y dispatcher propios; Audit recibe solo mediante `AuditFactRecorder`. Scope created/pre-register usan versión `0`, activated versión `1`, status changed nueva versión `>=1` y metadata exacta de estados distintos. Se crean exactamente dos migraciones, sin OpenAPI, endpoints, dependencias, workflows, frontend, automation-collector, SFTPGo, SSE ni Production.

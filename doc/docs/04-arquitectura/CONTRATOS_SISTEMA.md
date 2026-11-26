@@ -48,6 +48,8 @@
 
 `OLA6-AUD-001f` añade Discovery como productor auditable sin consumidor global: conserva outbox, una entrega, dispatcher, scheduler y métricas propios e invoca solo `AuditFactRecorder`. La allowlist 2.0 contiene created/status changed de scope y pre-register/activated de executor con recursos, versiones y metadata cerrados. Los no-ops y 1.0 no se despachan.
 
+`OLA6-AUD-001g` amplía únicamente esa allowlist a created/dispatched/completed de Discovery Job 2.0. Created/dispatched conservan actor/correlación humanos; completed usa el executor validado y resultado `SUCCESS|FAILED`. La captura terminal es atómica y no se añaden tablas, dispatchers, schedulers ni SQL cross-module.
+
 ## Contrato interno aprobado -- Lote 53
 
 - Command/query solicita una operación o lectura y usa la API pública del módulo proveedor de forma síncrona in-process.

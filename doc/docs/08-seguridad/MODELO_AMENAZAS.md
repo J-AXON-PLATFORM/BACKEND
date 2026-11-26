@@ -85,3 +85,10 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: despacho de 1.0 o tipos no autorizados, actor/recurso/versión falsos, metadata adicional, duplicación por no-op, conflicto sobrescrito, evento defectuoso bloqueante o SQL cross-module.
 - Mitigaciones: allowlist 2.0 y catálogos Java/PostgreSQL cerrados; UUIDv4; metadata mínima; `SKIP LOCKED`, 10 intentos y aislamiento; idempotencia y conflicto sin sobrescritura; Audit append-only accesible solo mediante `AuditFactRecorder`.
 - Riesgos residuales: rol runtime único, `FAILED` sin reproceso operativo y ausencia de tamper-proof criptográfico.
+
+## OLA6-AUD-001g
+
+- Activos: integridad de creación, despacho y finalización oficial de Discovery Jobs, identidad del executor, outbox/entrega Discovery y evidencia Audit.
+- Amenazas: despacho de 1.0, actor humano/executor falso, correlación sustituida, resultado terminal incorrecto, completion sin transición oficial, duplicación por reingesta o metadata arbitraria.
+- Mitigaciones: productor 2.0 atómico; actor/correlación originales; executor validado contra Job/resultado; mapping cerrado `SUCCEEDED->SUCCESS|FAILED->FAILED`; payload `{}`; allowlists Java/PostgreSQL; idempotencia, conflicto sin sobrescritura y silencio de rechazos/finales tardíos.
+- Riesgos residuales: rol runtime único, `FAILED` de entrega sin reproceso operativo y ausencia de tamper-proof criptográfico.

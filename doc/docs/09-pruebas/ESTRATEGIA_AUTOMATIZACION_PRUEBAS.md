@@ -85,3 +85,11 @@ Automatizar pruebas sin depender de un proveedor de CI específico
 - Dispatcher/Audit: entrega Discovery única, 1.0 ignorado, redelivery, conflicto hasta 10 intentos, indisponibilidad, aislamiento, `SKIP LOCKED`, metadata cerrada y regresión de productores previos.
 - Migración PostgreSQL 18/pgvector: upgrade desde `20261130020000`, filas 1.0 byte a byte, tabla de entrega propia y catálogo Audit ampliado mediante exactamente dos migraciones.
 - Regresión: Discovery, AI, Identity, Inventory, Collector y Audit dirigidas, `ModularityTests`, `AuditOwnershipTest`, `clean verify` Java 25, OpenAPI 8.3 byte a byte, documentación, whitespace, Gitleaks y clasificador `APPLICATION`.
+
+## OLA6-AUD-001g
+
+- Productores: creación/despacho real emiten 2.0 con actor/correlación humanos originales; completion `SUCCEEDED|FAILED` emite actor executor, versión `2`, resultado `SUCCESS|FAILED` y `{}`.
+- Atomicidad/silencio: fallo forzado del outbox revierte aceptación terminal; duplicados, conflictos, rechazos, finales tardíos y reprocesamientos no emiten otro completion.
+- Dispatcher/Audit: la entrega Discovery existente reclama solo siete tipos 2.0, materializa metadata cerrada, conserva redelivery, conflicto, 10 intentos, indisponibilidad, aislamiento y `SKIP LOCKED`; 1.0 queda excluido.
+- Migración PostgreSQL 18/pgvector: upgrade desde `20261130040000`, filas Job 1.0 comparadas antes/después sin mutación y catálogos Discovery/Audit ampliados mediante exactamente dos migraciones.
+- Regresión: Discovery/Audit dirigidas, `ModularityTests`, `AuditOwnershipTest`, `DatabaseBootstrapIntegrationTest`, `clean verify` Java 25, OpenAPI 8.3 y Job/Result 1.0 byte a byte, documentación normal/estricta, whitespace, Gitleaks y clasificador `APPLICATION`.
