@@ -224,4 +224,52 @@ class AuditCatalogTest {
             assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
         }
     }
+
+    @Test
+    void acceptsOnlyClosedDiscoveryLifecycleFacts() {
+        UUID actor = UUID.randomUUID();
+        assertThat(AuditCatalog.accepts(fact(
+                        "DISCOVERY_SCOPE_CREATED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                        "AUTHORIZED_SCOPE", 0L, "SUCCESS", Map.of())))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "DISCOVERY_SCOPE_STATUS_CHANGED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                        "AUTHORIZED_SCOPE", 2L, "SUCCESS",
+                        Map.of("previousStatus", "DISABLED", "newStatus", "ACTIVE"))))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "DISCOVERY_EXECUTOR_PRE_REGISTERED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                        "DISCOVERY_EXECUTOR", 0L, "SUCCESS", Map.of())))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(fact(
+                        "DISCOVERY_EXECUTOR_ACTIVATED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                        "DISCOVERY_EXECUTOR", 1L, "SUCCESS", Map.of())))
+                .isTrue();
+
+        for (AuditFact invalid : new AuditFact[] {
+            fact("DISCOVERY_SCOPE_CREATED", "1.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "AUTHORIZED_SCOPE", 0L, "SUCCESS", Map.of()),
+            fact("DISCOVERY_SCOPE_CREATED", "2.0", "DISCOVERY", "HUMAN_USER", null,
+                    "AUTHORIZED_SCOPE", 0L, "SUCCESS", Map.of()),
+            fact("DISCOVERY_SCOPE_CREATED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "AUTHORIZED_SCOPE", 1L, "SUCCESS", Map.of()),
+            fact("DISCOVERY_SCOPE_STATUS_CHANGED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "AUTHORIZED_SCOPE", 0L, "SUCCESS",
+                    Map.of("previousStatus", "ACTIVE", "newStatus", "DISABLED")),
+            fact("DISCOVERY_SCOPE_STATUS_CHANGED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "AUTHORIZED_SCOPE", 1L, "SUCCESS",
+                    Map.of("previousStatus", "ACTIVE", "newStatus", "ACTIVE")),
+            fact("DISCOVERY_SCOPE_STATUS_CHANGED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "AUTHORIZED_SCOPE", 1L, "SUCCESS",
+                    Map.of("previousStatus", "ACTIVE", "newStatus", "DISABLED", "name", "forbidden")),
+            fact("DISCOVERY_EXECUTOR_PRE_REGISTERED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "DISCOVERY_EXECUTOR", 1L, "SUCCESS", Map.of()),
+            fact("DISCOVERY_EXECUTOR_ACTIVATED", "2.0", "DISCOVERY", "HUMAN_USER", actor,
+                    "DISCOVERY_EXECUTOR", 0L, "SUCCESS", Map.of()),
+            fact("DISCOVERY_EXECUTOR_ACTIVATED", "2.0", "COLLECTOR", "HUMAN_USER", actor,
+                    "DISCOVERY_EXECUTOR", 1L, "SUCCESS", Map.of())
+        }) {
+            assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
+        }
+    }
 }

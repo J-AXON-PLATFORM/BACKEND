@@ -30,6 +30,8 @@ Reglas Lote 53:
 
 `OLA6-AUD-001e` versiona futuros `ASSET_CREATED`, `AGENT_PRE_REGISTERED` y `AGENT_ACTIVATED` a 2.0. Inventory y Collector despachan por separado solo sus tipos allowlisted, con actor humano, recurso `ASSET|AGENT`, versiones `0|0|1`, `SUCCESS` y `{}`. La activación idempotente no duplica evento; 1.0 no se reclama.
 
+`OLA6-AUD-001f` versiona a 2.0 solo futuros `DISCOVERY_SCOPE_CREATED`, `DISCOVERY_SCOPE_STATUS_CHANGED`, `DISCOVERY_EXECUTOR_PRE_REGISTERED` y `DISCOVERY_EXECUTOR_ACTIVATED`. Discovery despacha su allowlist con actor humano, recursos `AUTHORIZED_SCOPE|DISCOVERY_EXECUTOR`, versiones `0|>=1|0|1`, `SUCCESS` y metadata cerrada. No-ops y 1.0 no se reclaman.
+
 ## Propósito
 
 Definir logging útil para diagnóstico, auditoría técnica y correlación.

@@ -78,3 +78,10 @@ Automatizar pruebas sin depender de un proveedor de CI específico
 - Dispatcher/Audit: entregas Inventory y Collector separadas, 1.0 ignorado, redelivery, conflicto hasta 10 intentos, indisponibilidad, concurrencia `SKIP LOCKED`, payload vacío y catálogo cerrado.
 - Migración PostgreSQL 18/pgvector: upgrade desde `20261129010000`, filas 1.0 byte a byte, tablas de entrega propias y catálogo Audit ampliado sin regresión AI/Identity ni append-only.
 - Regresión: Inventory, Agent, AI, Identity y Audit dirigidas, `ModularityTests`, `AuditOwnershipTest`, `clean verify` Java 25, OpenAPI 8.3 byte a byte, documentación, whitespace, Gitleaks y clasificador `APPLICATION`.
+
+## OLA6-AUD-001f
+
+- Productores: scope created/status changed y executor pre-registered/activated emiten 2.0 atómico con recurso, versión, actor, correlación y payload exactos; no-ops no duplican.
+- Dispatcher/Audit: entrega Discovery única, 1.0 ignorado, redelivery, conflicto hasta 10 intentos, indisponibilidad, aislamiento, `SKIP LOCKED`, metadata cerrada y regresión de productores previos.
+- Migración PostgreSQL 18/pgvector: upgrade desde `20261130020000`, filas 1.0 byte a byte, tabla de entrega propia y catálogo Audit ampliado mediante exactamente dos migraciones.
+- Regresión: Discovery, AI, Identity, Inventory, Collector y Audit dirigidas, `ModularityTests`, `AuditOwnershipTest`, `clean verify` Java 25, OpenAPI 8.3 byte a byte, documentación, whitespace, Gitleaks y clasificador `APPLICATION`.

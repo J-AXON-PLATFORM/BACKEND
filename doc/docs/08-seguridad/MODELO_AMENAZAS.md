@@ -78,3 +78,10 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: despacho accidental de 1.0, versión de recurso falsa, duplicación por activación idempotente, conflicto sobrescrito, evento defectuoso bloqueante o SQL cross-module.
 - Mitigaciones: eventos 2.0 atómicos con versiones `0|0|1`; allowlists Java/SQL; dispatchers separados con `SKIP LOCKED`, 10 intentos e idempotencia; conflicto sin sobrescritura; Audit append-only y acceso solo por `AuditFactRecorder`.
 - Riesgos residuales: rol runtime único, `FAILED` sin reproceso operativo y ausencia de tamper-proof criptográfico.
+
+## OLA6-AUD-001f
+
+- Activos: integridad del lifecycle administrativo inicial de scopes/executors, outbox/entrega Discovery y evidencia Audit.
+- Amenazas: despacho de 1.0 o tipos no autorizados, actor/recurso/versión falsos, metadata adicional, duplicación por no-op, conflicto sobrescrito, evento defectuoso bloqueante o SQL cross-module.
+- Mitigaciones: allowlist 2.0 y catálogos Java/PostgreSQL cerrados; UUIDv4; metadata mínima; `SKIP LOCKED`, 10 intentos y aislamiento; idempotencia y conflicto sin sobrescritura; Audit append-only accesible solo mediante `AuditFactRecorder`.
+- Riesgos residuales: rol runtime único, `FAILED` sin reproceso operativo y ausencia de tamper-proof criptográfico.

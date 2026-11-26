@@ -58,6 +58,10 @@ jaxon:
     connect-timeout: ${JAXON_SFTPGO_CONNECT_TIMEOUT:5s}
     request-timeout: ${JAXON_SFTPGO_REQUEST_TIMEOUT:10s}
   discovery:
+    audit-dispatch:
+      enabled: ${JAXON_DISCOVERY_AUDIT_DISPATCH_ENABLED:true}
+      poll-interval: ${JAXON_DISCOVERY_AUDIT_DISPATCH_POLL_INTERVAL:1s}
+      batch-size: ${JAXON_DISCOVERY_AUDIT_DISPATCH_BATCH_SIZE:50}
     jobs:
       publication-root: ${JAXON_DISCOVERY_JOB_PUBLICATION_ROOT:}
       reconciliation-interval: ${JAXON_DISCOVERY_JOB_RECONCILIATION_INTERVAL:5m}

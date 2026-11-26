@@ -91,11 +91,11 @@ class AuthorizedScopeIntegrationTest {
                         """,
                         scopeId))
                 .containsEntry("event_type", "DISCOVERY_SCOPE_CREATED")
-                .containsEntry("event_version", "1.0")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("producer_module", "DISCOVERY")
                 .containsEntry("resource_version", 0L)
                 .containsEntry("correlation_id", createCorrelation)
-                .containsEntry("payload", "{\"status\": \"ACTIVE\"}");
+                .containsEntry("payload", "{}");
 
         assertThat(send("GET", "/api/v1/discovery/scopes/" + scopeId, session, null, null).body())
                 .isEqualTo(created.body());
