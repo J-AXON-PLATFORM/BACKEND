@@ -1,8 +1,16 @@
 # Historial de cambios
 
+## Ratificación de roles y cierre documental -- OLA6-AUD-001b, 2026-11-27
+
+`AC-JAXON-094` ratifica retrospectivamente que `roles` en `HUMAN_USER_CREATED` 2.0 es una única cadena canónica, no un array: contiene al menos un rol, usa exclusivamente `|` y respeta el orden fijo `AUDITOR|END_USER|IT_OPERATOR|SUPPORT_TECHNICIAN|SYSTEM_ADMIN`. Payload y metadata admiten exactamente `status=ACTIVE` y `roles`; duplicados, desorden, roles desconocidos, otros separadores, claves adicionales o formatos alternativos se rechazan.
+
+La implementación precedió a esta ratificación formal: `AC-JAXON-093` fijó contenido, orden, separador y rechazos, pero dejó ambiguo el tipo escalar al usar `<lista canónica>`. No se reescribe ese acuerdo. `BACKEND#61`, commit técnico `db89928ecf7a9b66aa76e7151020f2856bb1ad27`, quedó integrado mediante squash `118f03c6e59d0191209a5236c1e6267ae83244aa`; los runs `45750761024` de PR y `45751069123` post-merge quedaron verdes `APPLICATION`. La rama técnica fue eliminada. OpenAPI 8.3, frontend y automation-collector permanecieron byte a byte intactos. `OLA6-AUD-001b` está implementado, integrado y verificado; `PRODUCTION_READY = NO`.
+
+---
+
 ## Auditoría de alta administrativa -- OLA6-AUD-001b, 2026-11-27
 
-`AC-JAXON-093` autoriza exclusivamente en backend `HUMAN_USER_CREATED` 2.0 para altas futuras, con `status=ACTIVE`, roles completos ordenados canónicamente y separados por `|`, entrega por consumidor propiedad de Identity y ampliación cerrada del catálogo Audit. El histórico 1.0, OpenAPI 8.3, frontend y automation-collector permanecen intactos. Se añaden exactamente dos migraciones (`identity.outbox_deliveries`/constraints 2.0 y catálogo Audit), sin dependencias ni workflows. El incremento está `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local.
+En este registro previo, `AC-JAXON-093` autorizó exclusivamente en backend `HUMAN_USER_CREATED` 2.0 para altas futuras, con `status=ACTIVE`, roles completos ordenados canónicamente y separados por `|`, entrega por consumidor propiedad de Identity y ampliación cerrada del catálogo Audit. El histórico 1.0, OpenAPI 8.3, frontend y automation-collector permanecían intactos. Se autorizaron exactamente dos migraciones (`identity.outbox_deliveries`/constraints 2.0 y catálogo Audit), sin dependencias ni workflows. En ese momento el incremento estaba `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local; su cierre real se registra arriba sin reescribir esta secuencia histórica.
 
 Se sincroniza retrospectivamente el cierre real de `OLA6-AUD-001a`: `BACKEND#60` (`39c7e3e8421df5fdf2e9351ece6cc84ea7838e93`, runs `45737955090`/`45738252868`) y `FRONTEND#35` (`258ad71b7231a10c7745dc525d642cab7049ef81`, runs `45738687328`/`45738890038`) quedaron verdes `APPLICATION`. El run frontend `45738637595` fue cancelado para corregir `git diff --check`, no por fallo de pruebas. `AC-JAXON-092` está cerrado.
 

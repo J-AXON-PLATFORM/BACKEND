@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA6-AUD-001b`: auditoría de alta administrativa en implementación controlada, 2026-11-27
-> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 5 y `OLA6-AUD-001a` verificadas; segundo corte de Auditoría autorizado/en implementación solo en backend; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA6-AUD-001b`: cierre técnico verificado y ratificación documental retrospectiva, 2026-11-27
+> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 5 y `OLA6-AUD-001a`/`001b` verificadas; cierre documental de `001b` bajo `AC-JAXON-094`; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-11-27.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, Discovery hasta creación/vínculo `INCORPORATED`, OLA 5 y `OLA6-AUD-001a` están integrados y verificados. `OLA6-AUD-001b` añade solo `HUMAN_USER_CREATED` 2.0 futuro y su entrega Identity -> Audit; otros eventos, backfill, reportes, purga y Production quedan fuera del corte.
+- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, Discovery hasta creación/vínculo `INCORPORATED`, OLA 5 y `OLA6-AUD-001a`/`001b` están integrados y verificados. `OLA6-AUD-001b` añadió solo `HUMAN_USER_CREATED` 2.0 futuro y su entrega Identity -> Audit; `AC-JAXON-094` ratifica retrospectivamente `roles` como cadena canónica separada por `|`. Otros eventos, backfill, reportes, purga y Production quedan fuera del corte.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 5 verificada mediante `BACKEND#54..59` y `FRONTEND#29..34`, y `OLA6-AUD-001a` implementada, integrada y verificada mediante `BACKEND#60` y `FRONTEND#35`. `OLA6-AUD-001b`, bajo `AC-JAXON-093`, es el incremento activo `AUTORIZADO` y `EN_IMPLEMENTACIÓN` solo en backend: `HUMAN_USER_CREATED` 2.0 con roles canónicos, entrega por consumidor propiedad de Identity y ampliación cerrada del catálogo Audit; OpenAPI 8.3, frontend y automation-collector permanecen intactos. No autoriza otros eventos auditables, backfill, consumidor global, reportes, purga, generación RAG, dependencias, workflows, infraestructura ni Production. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con OLA 5 verificada mediante `BACKEND#54..59` y `FRONTEND#29..34`, `OLA6-AUD-001a` mediante `BACKEND#60`/`FRONTEND#35` y `OLA6-AUD-001b` mediante `BACKEND#61`. Este último quedó integrado en `118f03c6e59d0191209a5236c1e6267ae83244aa`, con runs verdes `45750761024`/`45751069123` `APPLICATION`; OpenAPI 8.3, frontend y automation-collector permanecieron intactos. `AC-JAXON-094` ratifica retrospectivamente `roles` como cadena canónica y autoriza solo el cierre documental. No existe siguiente incremento decidido o autorizado. `PRODUCTION_READY = NO`.

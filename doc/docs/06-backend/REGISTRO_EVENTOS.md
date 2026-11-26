@@ -22,7 +22,7 @@ Reglas Lote 53:
 - SSE es best-effort hacia navegador y REST conserva el estado oficial;
 - n8n no consume directamente el mecanismo interno; pasa por MOD-07 Automation.
 
-`OLA6-AUD-001b` versiona `HUMAN_USER_CREATED` sin reinterpretar el histórico: 1.0 conserva `{"status":"ACTIVE"}` y no tiene consumidor Audit; 2.0 añade exclusivamente `roles` como string canónico separado por `|` y es el único que reclama el dispatcher Identity. Ambos comparten el tipo por continuidad semántica, pero el catálogo Audit solo acepta 2.0.
+`OLA6-AUD-001b` versiona `HUMAN_USER_CREATED` sin reinterpretar el histórico: 1.0 conserva `{"status":"ACTIVE"}` y no tiene consumidor Audit; 2.0 añade exclusivamente `roles` como una única cadena canónica separada por `|`, con al menos un rol y orden fijo `AUDITOR|END_USER|IT_OPERATOR|SUPPORT_TECHNICIAN|SYSTEM_ADMIN`, y es el único que reclama el dispatcher Identity. Payload y metadata contienen exactamente `status` y `roles`; se rechazan duplicados, desorden, roles desconocidos, otros separadores, claves adicionales y formatos alternativos. `AC-JAXON-094` ratifica retrospectivamente esta representación escalar ya integrada sin reescribir `AC-JAXON-093`. Ambos eventos comparten el tipo por continuidad semántica, pero el catálogo Audit solo acepta 2.0.
 
 ## Propósito
 

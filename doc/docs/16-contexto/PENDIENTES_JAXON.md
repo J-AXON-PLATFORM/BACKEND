@@ -76,7 +76,7 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 
 `OLA6-AUD-001a` está implementado, integrado y verificado. `BACKEND#60`, squash `39c7e3e8421df5fdf2e9351ece6cc84ea7838e93`, tuvo runs verdes `45737955090`/`45738252868`; `FRONTEND#35`, squash `258ad71b7231a10c7745dc525d642cab7049ef81`, tuvo runs verdes `45738687328`/`45738890038`, todos `APPLICATION`. El run frontend `45738637595` fue cancelado deliberadamente para corregir `git diff --check`, no por fallo de pruebas. `AC-JAXON-092` está cerrado.
 
-`OLA6-AUD-001b` es el corte activo `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local bajo `AC-JAXON-093`, exclusivamente en backend. Añade `HUMAN_USER_CREATED` 2.0 futuro con roles canónicos completos, entrega por consumidor propiedad de Identity y expansión cerrada del catálogo Audit. 1.0 histórico, OpenAPI 8.3, frontend y `automation-collector` permanecen intactos. Otros eventos, backfill, reportes, purga, reproceso de `FAILED` y Production siguen pendientes.
+`OLA6-AUD-001b` está implementado, integrado y verificado exclusivamente en backend. `BACKEND#61`, squash `118f03c6e59d0191209a5236c1e6267ae83244aa`, tuvo runs verdes `45750761024`/`45751069123` `APPLICATION`; la rama técnica fue eliminada. `AC-JAXON-094` ratifica retrospectivamente `roles` como una única cadena canónica separada por `|` y registra que la implementación precedió a la ratificación formal. 1.0 histórico, OpenAPI 8.3, frontend y `automation-collector` permanecieron intactos. Otros eventos, backfill, reportes, purga, reproceso de `FAILED` y Production siguen pendientes.
 
 `SPIKE-AUDIT-001` quedó registrado como análisis previo adoptado por `AC-JAXON-092`.
 
@@ -141,8 +141,8 @@ La baseline técnica planificada para OLA 0 queda cerrada. `OLA1-INV-001a` compl
 - `TEC-QLT-006a` cerró `BACKEND#41` y no requiere acción remota adicional. La corrección documental retrospectiva queda incluida en el alcance backend de `OLA3-SUP-005a`.
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad y backup/restore lógico fueron consumidas. La excepción posterior cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
-- Siguiente paso remoto pendiente: solo después de toda la validación local de `OLA6-AUD-001b` y de comprobar presupuesto vigente de Actions, realizar el único push planificado, integrar y verificar `BACKEND`. `frontend` y `automation-collector` permanecen intactos.
-- Próxima acción técnica posterior: emitir el reporte final autorizado de `OLA6-AUD-001b` únicamente tras el cierre post-merge, eliminación de ramas y limpieza de los tres repositorios.
+- Siguiente paso remoto pendiente: validar, integrar y verificar el único Pull Request documental de cierre autorizado por `AC-JAXON-094`. El presupuesto vigente de Actions debe comprobarse antes del único push; `frontend` y `automation-collector` permanecen intactos.
+- Próxima acción posterior: emitir el reporte final autorizado de `OLA6-AUD-001b` únicamente tras el cierre post-merge, eliminación de ramas y limpieza de los tres repositorios. No decidir ni iniciar el siguiente incremento.
 - La primera vertical E2E ya fue alcanzada mediante incrementos autorizados; la continuación mantiene el mismo enfoque incremental y no implementa “todo J-AXON de una vez”.
 
 ## Reglas de continuidad

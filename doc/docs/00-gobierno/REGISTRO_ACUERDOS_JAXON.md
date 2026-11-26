@@ -604,6 +604,16 @@ Audit amplía su catálogo cerrado sin alterar `AI_SOURCE_DISABLED`: admite `(ID
 
 Se autoriza exclusivamente la rama `feature/ola6-aud-001b`, un único Pull Request `BACKEND` hacia `develop`, un único push planificado después de todas las verificaciones locales, integración squash solo con CI verde `APPLICATION`, verificación post-merge, eliminación de ramas y reporte final externo. `frontend` y `automation-collector` deben permanecer byte a byte intactos. No se autorizan otros eventos Identity, backfill de 1.0, endpoints, OpenAPI nuevo, frontend, dependencias, workflows, reproceso de `FAILED`, purga, reportes, SSE, infraestructura, Production ni despliegues. A la fecha de este registro `OLA6-AUD-001b` está `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local; no está integrado ni verificado remotamente. `PRODUCTION_READY = NO`.
 
+## AC-JAXON-094 -- Ratificación del formato de roles y cierre de OLA6-AUD-001b
+
+LUIS ratifica retrospectivamente la representación ya implementada para `roles` en `HUMAN_USER_CREATED` 2.0: es una única cadena canónica, no un array ni otra estructura, formada por uno o más roles separados exclusivamente por `|`. Los valores se ordenan por la secuencia fija `AUDITOR|END_USER|IT_OPERATOR|SUPPORT_TECHNICIAN|SYSTEM_ADMIN`, conservando solo los roles efectivamente asignados. El payload Identity y la metadata Audit contienen exactamente las claves `status` y `roles`, con `status=ACTIVE`; se rechazan lista vacía, duplicados, orden alternativo, roles desconocidos, cualquier otro separador, claves adicionales y formatos alternativos.
+
+Esta ratificación es posterior a la integración de `BACKEND#61`. `AC-JAXON-093` describió `roles=<lista canónica>` y fijó orden, separador y rechazos, pero no declaró de forma inequívoca el tipo escalar de la representación; no se reescribe ese acuerdo ni se oculta la diferencia temporal. La implementación integrada ya usa la cadena ahora ratificada y no requiere cambios de código, migraciones, pruebas, configuración ni contratos. `HUMAN_USER_CREATED` 1.0 histórico y OpenAPI 8.3 permanecen byte a byte intactos.
+
+El cierre técnico real quedó verificado el 2026-11-26 mediante `BACKEND#61`, commit técnico `db89928ecf7a9b66aa76e7151020f2856bb1ad27`, squash `118f03c6e59d0191209a5236c1e6267ae83244aa` y runs verdes `45750761024` de PR y `45751069123` post-merge, ambos `APPLICATION`. La rama técnica fue eliminada; `frontend` permaneció en `258ad71b7231a10c7745dc525d642cab7049ef81` y `automation-collector` en `3dac71ca95442e4f50e77dd2a172b561ca49face`, ambos byte a byte intactos. `OLA6-AUD-001b` está implementado, integrado y verificado; `AC-JAXON-093` está consumido y cerrado.
+
+Se autoriza exclusivamente este cierre documental bajo `backend/doc/`, en la rama `docs/ola6-aud-001b-closure`, con un único push y un único Pull Request `BACKEND` hacia `develop`, clasificación esperada `DOCS_ONLY`, integración squash solo con CI verde, verificación post-merge, eliminación de ramas y reporte final externo. No se autorizan código, pruebas, configuración, migraciones, contratos ejecutables, dependencias, workflows, `frontend`, `automation-collector`, el inicio o decisión del siguiente incremento, infraestructura, Production ni despliegues. `PRODUCTION_READY = NO`.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)

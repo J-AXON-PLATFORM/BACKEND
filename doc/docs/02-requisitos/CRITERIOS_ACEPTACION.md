@@ -176,7 +176,7 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 ## OLA6-AUD-001b
 
 - Cada alta administrativa futura confirma atómicamente un único `HUMAN_USER_CREATED` 2.0; el histórico 1.0 permanece intacto y no se despacha.
-- Payload y metadata contienen exactamente `status=ACTIVE` y `roles` completo, no vacío, ordenado según `AUDITOR|END_USER|IT_OPERATOR|SUPPORT_TECHNICIAN|SYSTEM_ADMIN` y separado por `|`. Se rechazan duplicados, desorden, roles desconocidos, separadores alternativos, claves extra y formatos alternativos.
+- Payload y metadata contienen exactamente `status=ACTIVE` y `roles`; `roles` es una única cadena canónica, no un array, con al menos un rol, ordenada según `AUDITOR|END_USER|IT_OPERATOR|SUPPORT_TECHNICIAN|SYSTEM_ADMIN` y separada exclusivamente por `|`. Se rechazan duplicados, desorden, roles desconocidos, separadores alternativos, claves extra y formatos alternativos. `AC-JAXON-094` ratifica retrospectivamente esta representación ya integrada.
 - Identity controla su entrega `AUDIT`; procesa solo 2.0, usa hasta 10 intentos incluso para errores permanentes, backoff exponencial con jitter y tope de cinco minutos, y deja `FAILED` durable. Un evento defectuoso no bloquea otro.
 - Audit materializa con `resourceVersion=null`, idempotencia por `source_event_id` y conflicto sin sobrescritura. `AI_SOURCE_DISABLED` 1.0, append-only y retención de cinco años permanecen intactos.
 - Se crean exactamente dos migraciones. OpenAPI 8.3, endpoints, frontend, automation-collector, dependencias y workflows no cambian.
