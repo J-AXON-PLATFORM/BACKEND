@@ -33,6 +33,10 @@ jaxon:
       poll-interval: ${JAXON_AI_INDEXING_POLL_INTERVAL:1s}
       claim-timeout: ${JAXON_AI_INDEXING_CLAIM_TIMEOUT:10m}
       batch-size: ${JAXON_AI_INDEXING_BATCH_SIZE:16}
+    audit-dispatch:
+      enabled: ${JAXON_AI_AUDIT_DISPATCH_ENABLED:true}
+      poll-interval: ${JAXON_AI_AUDIT_DISPATCH_POLL_INTERVAL:1s}
+      batch-size: ${JAXON_AI_AUDIT_DISPATCH_BATCH_SIZE:50}
   identity:
     frontend-origin: ${JAXON_FRONTEND_ORIGIN:http://localhost:3000}
     bootstrap:

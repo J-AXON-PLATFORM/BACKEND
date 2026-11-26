@@ -86,7 +86,9 @@ En Pull Requests se compara el SHA base/head del evento. En push a `develop`, el
 
 `OLA4-DIS-007a` conserva workflows y clasificadores. Backend y frontend clasifican `APPLICATION` por modificar exclusivamente aplicación, migración, contratos, documentación y pruebas; una clasificación fail-closed más estricta también sería válida. No se autorizan cambios de workflow, dependencias, lockfiles, Compose o infraestructura.
 
-`OLA4-DIS-008a` conserva igualmente workflows y clasificadores. Backend y frontend deben clasificar `APPLICATION`; una clasificación fail-closed más estricta es aceptable. `automation-collector` permanece byte a byte intacto. `BACKEND#58` clasificó `APPLICATION`; el Pull Request correctivo autorizado de la fixture SFTPGo (`otel v1.47.0`, `GO-2026-6974`) modifica `docker/sftpgo/*` y debe clasificar `PLATFORM_FULL`.
+`OLA4-DIS-008a` conserva igualmente workflows y clasificadores. Backend y frontend deben clasificar `APPLICATION`; una clasificación fail-closed más estricta es aceptable. `automation-collector` permanece byte a byte intacto. `BACKEND#58` clasificó `APPLICATION`; el Pull Request correctivo autorizado de la fixture SFTPGo (`otel v1.47.0`, `GO-2026-6974`) modifica `docker/sftpgo/*` y debe clasificar `PLATFORM_FULL`. El cierre real confirmó `BACKEND#59` `PLATFORM_FULL` y `FRONTEND#34` `APPLICATION`.
+
+`OLA6-AUD-001a` conserva workflows, clasificadores, dependencias y lockfiles y añade dos migraciones (`ai`, `audit_reporting`). Backend y frontend deben clasificar `APPLICATION`, salvo nivel fail-closed más estricto. `automation-collector` permanece byte a byte intacto.
 
 `OLA4-DIS-008b` conserva workflows y clasificadores, no añade migración ni dependencia y debe clasificar `APPLICATION` en backend y frontend; un nivel fail-closed más estricto también es válido. `automation-collector` permanece byte a byte intacto.
 

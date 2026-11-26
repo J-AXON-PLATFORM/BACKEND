@@ -147,6 +147,7 @@
 - **Refinamiento Lote 52:** raw Audit es consulta de `AUDITOR`; retención 5 años desde `recordedAt`; filtros por tiempo/módulo/evento/actor/recurso/resultado/correlationId, page size 50 y máximo 200 como defaults.
 - **Refinamiento Lote 52:** reportes v1 Assets/Agents/Tickets mediante contratos públicos, con exportación CSV no persistente; sin BI/report builder, PDF/XLSX ni SSE propio v1.
 - **Refinamiento Lote 52:** una mutación `AUDIT_REQUIRED` exitosa exige captura durable de su intención de auditoría antes de responder éxito.
+- **Corte ejecutable OLA6-AUD-001a:** materializa `RF-AUD-001`, `RF-AUD-002`, `RF-AUD-003`, `RF-AUD-004` y `RF-AUD-008` solo para `AI_SOURCE_DISABLED`: la intención durable es la fila del outbox AI; un dispatcher propiedad de AI la entrega por consumidor a `AuditFactRecorder`; Audit la materializa append-only e idempotente; `AUDITOR` la consulta con filtros y paginación. No implementa otros eventos, denegaciones, reportes, CSV ni purga.
 
 ## Requisitos transversales
 

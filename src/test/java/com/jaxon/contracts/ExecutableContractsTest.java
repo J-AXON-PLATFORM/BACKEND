@@ -63,6 +63,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V80_ROOT = Path.of("doc/contracts/openapi/8.0");
     private static final Path OPENAPI_V81_ROOT = Path.of("doc/contracts/openapi/8.1");
     private static final Path OPENAPI_V82_ROOT = Path.of("doc/contracts/openapi/8.2");
+    private static final Path OPENAPI_V83_ROOT = Path.of("doc/contracts/openapi/8.3");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DISCOVERY_SCHEMA_BASE =
             "https://schemas.j-axon.invalid/discovery/1.0/";
@@ -504,6 +505,56 @@ class ExecutableContractsTest {
         assertThat(request.path("additionalProperties").asBoolean()).isFalse();
         assertThat(request.path("properties").size()).isEqualTo(1);
         assertThat(request.at("/properties/expectedVersion/minimum").asInt()).isZero();
+    }
+
+    @Test
+    void openApi83Preserves82AndAddsOnlyAuditorEventQuery() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V83_ROOT.resolve("openapi.yaml").toString(), null, options);
+        OpenAPI api = result.getOpenAPI();
+        OpenAPI previous = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V82_ROOT.resolve("openapi.yaml").toString(), null, options)
+                .getOpenAPI();
+
+        assertThat(result.getMessages()).isEmpty();
+        assertThat(api).isNotNull();
+        assertThat(previous).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("8.3");
+        assertThat(api.getPaths().keySet())
+                .containsAll(previous.getPaths().keySet())
+                .hasSize(previous.getPaths().size() + 1)
+                .contains("/audit/events");
+
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_V83_ROOT.resolve("openapi.yaml").toFile());
+        JsonNode path = root.at("/paths/~1audit~1events");
+        assertThat(path.fieldNames()).toIterable().containsExactly("get");
+        JsonNode operation = path.path("get");
+        assertThat(operation.path("operationId").asText()).isEqualTo("listAuditEvents");
+        List<String> parameters = new ArrayList<>();
+        operation.path("parameters").forEach(parameter -> {
+            assertThat(parameter.path("in").asText()).isEqualTo("query");
+            assertThat(parameter.path("required").asBoolean()).isFalse();
+            parameters.add(parameter.path("name").asText());
+        });
+        assertThat(parameters).containsExactly(
+                "from", "to", "module", "eventType", "actorId", "resourceType", "resourceId", "result",
+                "correlationId", "page", "size");
+        assertThat(operation.at("/parameters/10/schema/default").asInt()).isEqualTo(50);
+        assertThat(operation.at("/parameters/10/schema/maximum").asInt()).isEqualTo(200);
+        assertThat(operation.path("responses").fieldNames())
+                .toIterable()
+                .containsExactlyInAnyOrder("200", "401", "403", "422", "500", "503");
+        JsonNode event = root.at("/components/schemas/AuditEvent");
+        assertThat(event.path("additionalProperties").asBoolean()).isFalse();
+        assertThat(textValues(event.path("required"))).containsExactlyInAnyOrder(
+                "auditEventId", "sourceEventId", "eventType", "eventVersion", "producerModule", "occurredAt",
+                "recordedAt", "actorType", "actorId", "resourceType", "resourceId", "resourceVersion",
+                "result", "correlationId", "metadata");
+        assertThat(event.path("properties").size()).isEqualTo(15);
+        assertThat(root.at("/components/schemas/AuditEventPage/additionalProperties").asBoolean()).isFalse();
     }
 
     @Test
@@ -1266,6 +1317,8 @@ class ExecutableContractsTest {
                 .isEqualTo("c9072e6f0d317450bfc51c8939ca4755bf68808a005d86c8c4750c2a9c6de14b");
         assertThat(sha256(Files.readAllBytes(OPENAPI_V81_ROOT.resolve("openapi.yaml"))))
                 .isEqualTo("227c9062ad876514c7f0f26ff5f241de4400b9712e711d02641eb6e4fa2e85fe");
+        assertThat(sha256(Files.readAllBytes(OPENAPI_V82_ROOT.resolve("openapi.yaml"))))
+                .isEqualTo("d92325d2330289a1346b034853c3bac47018cf8bb63216f9bde5cf7d9da450c3");
     }
 
     @Test

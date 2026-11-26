@@ -28,6 +28,7 @@ Esta carpeta es la fuente canónica de los contratos externos de J-AXON.
 - `openapi/8.0/openapi.yaml`: major que amplía estados de fuentes y añade solicitud manual de indexación asíncrona.
 - `openapi/8.1/openapi.yaml`: minor compatible que añade recuperación vectorial autorizada de fragmentos de fuentes `READY`.
 - `openapi/8.2/openapi.yaml`: minor compatible que añade deshabilitación explícita de fuentes AI `READY|FAILED`.
+- `openapi/8.3/openapi.yaml`: minor compatible que añade la consulta de eventos de auditoría para `AUDITOR`.
 - `openapi/manifest.tsv`: inventario declarativo fail-closed de integridad y compatibilidad OpenAPI.
 - `agent/1.0/`: contratos JSON Schema Draft 2020-12 para snapshot, Task y Result Agent.
 - `discovery/1.0/`: contrato JSON Schema Draft 2020-12 para Discovery Job.
@@ -81,6 +82,8 @@ OpenAPI 7.2 permanece byte a byte inmutable. OpenAPI 8.0 amplía de forma breaki
 OpenAPI 8.0 permanece byte a byte inmutable. OpenAPI 8.1 añade únicamente `POST /ai/retrieval` para `SYSTEM_ADMIN`, con CSRF, request cerrado `query|limit` y respuesta cerrada de fragmentos trazables ordenados por similitud, `sourceId` y ordinal. No añade generación, chat, persistencia de consultas, eventos ni SSE.
 
 OpenAPI 8.1 permanece byte a byte inmutable. OpenAPI 8.2 añade únicamente `POST /ai/sources/{sourceId}/disable` para `SYSTEM_ADMIN`, con CSRF y request cerrado `expectedVersion`; responde la fuente `DISABLED` y no añade reactivación, purga, borrado ni reindexación.
+
+OpenAPI 8.2 permanece byte a byte inmutable. OpenAPI 8.3 añade únicamente `GET /audit/events` exclusivo de `AUDITOR`, con filtros cerrados y paginación 50/200; no añade mutaciones, exportación ni SSE.
 
 Agent 1.0, incluidos `task.schema.json`, `result.schema.json`, manifest y copia vendorizada, permanece byte a byte inmutable. Backend empaqueta los cuatro schemas existentes para validación runtime.
 

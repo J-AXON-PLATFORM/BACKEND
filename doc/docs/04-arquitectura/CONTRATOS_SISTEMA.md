@@ -36,6 +36,8 @@
 
 `OLA2-AGT-001a` materializa `CTR-JAXON-INTERNAL` mediante `AssetLookup` de Inventory y `AgentIdentityRegistry` de Identity. Collector genera/vincula el Agent y emite `AGENT_PRE_REGISTERED`; Identity crea su identidad técnica, normaliza/valida la public key y emite `AGENT_PUBLIC_KEY_REGISTERED`. La transacción puede ser común, pero ningún módulo lee o escribe tablas ajenas y no existen FKs cross-schema.
 
+`OLA6-AUD-001a` materializa el primer consumidor durable de outbox: un dispatcher propiedad de AI reclama sus `AI_SOURCE_DISABLED` y, en la misma transacción, invoca el contrato público `AuditFactRecorder` de `audit_reporting`; la entrega se registra por consumidor en `ai.outbox_deliveries` y Audit materializa idempotentemente por `source_event_id`. Ningún módulo lee ni escribe tablas ajenas.
+
 ## Contrato interno aprobado -- Lote 53
 
 - Command/query solicita una operación o lectura y usa la API pública del módulo proveedor de forma síncrona in-process.

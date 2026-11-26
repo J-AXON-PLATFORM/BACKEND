@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA5-AI-006a`: deshabilitación mínima de fuentes AI en implementación controlada, 2026-11-25
-> **Estado documental:** baseline v1 `DESIGN_READY`; `OLA5-AI-001a`, `OLA5-AI-002a` y `OLA5-AI-003a` verificados y nuevo corte AI autorizado/en implementación; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA6-AUD-001a`: primera vertical de Auditoría en implementación controlada, 2026-11-26
+> **Estado documental:** baseline v1 `DESIGN_READY`; `OLA5-AI-001a`, `OLA5-AI-002a`, `OLA5-AI-003a` y `OLA5-AI-006a` verificados y primer corte de Auditoría autorizado/en implementación; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -22,9 +22,9 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Ubicación de documentación general: `backend/doc/`.
 - Perfil documental: `ESTANDAR`.
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
-- Fecha de última revisión: 2026-11-25.
+- Fecha de última revisión: 2026-11-26.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, Discovery hasta creación/vínculo `INCORPORATED`, `OLA5-AI-001a`, `OLA5-AI-002a` y `OLA5-AI-003a` están integrados y verificados. `OLA5-AI-006a` implementa solo deshabilitación explícita `READY|FAILED -> DISABLED` con exclusión inmediata del retrieval y sin borrar evidencia; generación, reactivación, purga, reindexación y Production quedan fuera del corte.
+- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, Discovery hasta creación/vínculo `INCORPORATED`, `OLA5-AI-001a`, `OLA5-AI-002a`, `OLA5-AI-003a` y `OLA5-AI-006a` están integrados y verificados. `OLA6-AUD-001a` implementa solo la entrega por consumidor de `AI_SOURCE_DISABLED` a Auditoría, su materialización append-only y la consulta `AUDITOR`; otros eventos, reportes, purga y Production quedan fuera del corte.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con `OLA5-AI-001a` implementado, integrado y verificado mediante `BACKEND#54`, `FRONTEND#29` y el correctivo `FRONTEND#30`, `OLA5-AI-002a` mediante `BACKEND#55` y `FRONTEND#31`, y `OLA5-AI-003a` mediante `BACKEND#56`, `BACKEND#57` y `FRONTEND#33`. `OLA5-AI-006a`, bajo `AC-JAXON-091`, es el incremento activo `AUTORIZADO` y `EN_IMPLEMENTACIÓN`: añade exclusivamente `POST /ai/sources/{sourceId}/disable` para `SYSTEM_ADMIN`, transiciones `READY|FAILED -> DISABLED` con versión optimista y no-op, evento `AI_SOURCE_DISABLED` atómico, migración mínima del outbox AI, OpenAPI 8.2 compatible y acción frontend explícita. `SPIKE-AI-GENERATION-001` es análisis, no aprobación de generación. No autoriza generación RAG, modelos, proveedores, reactivación, purga, reindexación, dependencias, workflows, infraestructura ni Production. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con `OLA5-AI-001a` implementado, integrado y verificado mediante `BACKEND#54`, `FRONTEND#29` y el correctivo `FRONTEND#30`, `OLA5-AI-002a` mediante `BACKEND#55` y `FRONTEND#31`, `OLA5-AI-003a` mediante `BACKEND#56`, `BACKEND#57` y `FRONTEND#33`, y `OLA5-AI-006a` mediante `BACKEND#58`, el correctivo `BACKEND#59` y `FRONTEND#34`. `OLA6-AUD-001a`, bajo `AC-JAXON-092`, es el incremento activo `AUTORIZADO` y `EN_IMPLEMENTACIÓN`: dispatcher AI con entrega por consumidor hacia `AuditFactRecorder`, `audit_reporting.audit_events` append-only, `GET /audit/events` exclusivo de `AUDITOR`, OpenAPI 8.3 compatible y vista frontend. No autoriza otros eventos auditables, consumidor global, reportes, purga, generación RAG, dependencias, workflows, infraestructura ni Production. `PRODUCTION_READY = NO`.

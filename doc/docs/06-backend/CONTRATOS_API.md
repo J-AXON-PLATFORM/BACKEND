@@ -122,6 +122,10 @@ El salto major fue autorizado tras confirmar ejecutablemente que el `const: UNRE
 
 `doc/contracts/openapi/8.2/openapi.yaml` conserva todas las operaciones de 8.1 y añade únicamente `POST /ai/sources/{sourceId}/disable` (`disableAiSource`) para `SYSTEM_ADMIN`, con CSRF y request cerrado `AiSourceDisableRequest` (`expectedVersion` entero >= 0). Responde `200` con `AiSource` `DISABLED` tras la transición o como no-op vigente, y `400`, `401`, `403`, `404`, `409`, `422`, `500` o `503`. No añade reactivación, purga, borrado, reindexación ni eventos visibles en la API. OpenAPI 8.1 queda congelado con SHA-256 `227c9062ad876514c7f0f26ff5f241de4400b9712e711d02641eb6e4fa2e85fe`; `oasdiff` no reporta cambios incompatibles 8.1 -> 8.2.
 
+## Contrato compatible 8.3 -- OLA6-AUD-001a
+
+`doc/contracts/openapi/8.3/openapi.yaml` conserva todas las operaciones de 8.2 y añade únicamente `GET /audit/events` (`listAuditEvents`), exclusivo de `AUDITOR`. Filtros opcionales `from`, `to`, `module`, `eventType`, `actorId`, `resourceType`, `resourceId`, `result` y `correlationId`; `page` (0) y `size` (50, máximo 200). Responde `AuditEventPage` cerrada con `AuditEvent` de 15 propiedades y `401`, `403`, `422`, `500` o `503`. OpenAPI 8.2 queda congelado con SHA-256 `d92325d2330289a1346b034853c3bac47018cf8bb63216f9bde5cf7d9da450c3`; `oasdiff` no reporta cambios incompatibles 8.2 -> 8.3.
+
 La respuesta contiene exclusivamente `jobId`, `executorId`, `scopeId`, `profile`, `status`, `createdAt`, `expiresAt`, `dispatchedAt` y `version`. `409` cubre combinación inválida o job no terminal y `503` conserva el job `PENDING` cuando falla la publicación, devolviendo en `Location` la URI exacta para consultarlo. OpenAPI 5.0 permanece byte a byte inmutable; REST sigue siendo fuente oficial y el canal del ejecutable continúa siendo SFTP/JSON Schema Discovery 1.0.
 
 ## Pendiente de diseño detallado
