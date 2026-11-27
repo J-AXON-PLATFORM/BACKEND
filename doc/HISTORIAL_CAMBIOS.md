@@ -1,5 +1,11 @@
 # Historial de cambios
 
+## Auditoría agrupada del lifecycle de fuentes AI -- OLA6-AUD-001j, 2026-11-30
+
+`AC-JAXON-102` autoriza exclusivamente en backend las futuras emisiones 2.0 de los cuatro eventos existentes del lifecycle de fuentes AI. Se reutiliza la entrega Audit propia de AI, con actor humano en registered/requested y actor `SYSTEM` sin ID en terminales, correlación humana original y metadata de estado cerrada. Se autorizan exactamente dos migraciones; OpenAPI, endpoints, dependencias, workflows, otros repositorios y Production permanecen fuera.
+
+`BACKEND#69`, squash `9ce6129d1d69bfa4599c596d24acf08d7563742f`, cerró `OLA6-AUD-001i` con runs verdes `45943516576`/`45944695407`, ambos `APPLICATION` y `run_attempt=1`.
+
 ## Auditoría agrupada del agregado Ticket -- OLA6-AUD-001i, 2026-11-30
 
 `AC-JAXON-101` autoriza exclusivamente en backend las futuras emisiones 2.0 de los ocho eventos existentes de Ticket. Support incorpora entrega, dispatcher y scheduler propios, contratos Java/PostgreSQL cerrados y exactamente dos migraciones. No cambian funcionalidad Support, OpenAPI, endpoints, dependencias, workflows, otros repositorios ni Production.

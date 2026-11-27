@@ -27,6 +27,7 @@ final class AuditCatalog {
             return false;
         }
         return acceptsAiSourceDisabled(fact)
+                || acceptsAiSourceLifecycle(fact)
                 || acceptsHumanUserCreated(fact)
                 || acceptsHumanAuthenticationSucceeded(fact)
                 || acceptsHumanLoginFailed(fact)
@@ -37,6 +38,37 @@ final class AuditCatalog {
                 || acceptsDiscoveryJobLifecycle(fact)
                 || acceptsDiscoveredDeviceReview(fact)
                 || acceptsSupportTicket(fact);
+    }
+
+    private static boolean acceptsAiSourceLifecycle(AuditFact fact) {
+        boolean registered = "AI_SOURCE_REGISTERED".equals(fact.eventType())
+                && "HUMAN_USER".equals(fact.actorType())
+                && uuidV4(fact.actorId())
+                && Long.valueOf(0).equals(fact.resourceVersion())
+                && "SUCCESS".equals(fact.result())
+                && fact.metadata().equals(Map.of("status", "PENDING"));
+        boolean requested = "AI_SOURCE_INDEXING_REQUESTED".equals(fact.eventType())
+                && "HUMAN_USER".equals(fact.actorType())
+                && uuidV4(fact.actorId())
+                && Long.valueOf(1).equals(fact.resourceVersion())
+                && "SUCCESS".equals(fact.result())
+                && fact.metadata().equals(Map.of("status", "INDEXING"));
+        boolean indexed = "AI_SOURCE_INDEXED".equals(fact.eventType())
+                && "SYSTEM".equals(fact.actorType())
+                && fact.actorId() == null
+                && Long.valueOf(2).equals(fact.resourceVersion())
+                && "SUCCESS".equals(fact.result())
+                && fact.metadata().equals(Map.of("status", "READY"));
+        boolean failed = "AI_SOURCE_INDEXING_FAILED".equals(fact.eventType())
+                && "SYSTEM".equals(fact.actorType())
+                && fact.actorId() == null
+                && Long.valueOf(2).equals(fact.resourceVersion())
+                && "FAILED".equals(fact.result())
+                && fact.metadata().equals(Map.of("status", "FAILED"));
+        return (registered || requested || indexed || failed)
+                && "2.0".equals(fact.eventVersion())
+                && "AI".equals(fact.producerModule())
+                && "AI_SOURCE".equals(fact.resourceType());
     }
 
     private static boolean acceptsAiSourceDisabled(AuditFact fact) {

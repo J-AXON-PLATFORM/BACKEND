@@ -145,6 +145,8 @@ Mutación `AUDIT_REQUIRED` -> cambio de negocio + captura durable `AuditFact` ->
 
 `OLA6-AUD-001i` aplica el flujo a los ocho hechos existentes de Ticket: Support confirma mutación + evento 2.0 -> su dispatcher reclama exclusivamente la allowlist 2.0 -> `AuditFactRecorder` materializa envelope y metadata cerrados -> entrega o retry/`FAILED`. No-ops, errores de autorización/versión/transición, rollbacks y todo 1.0 permanecen silenciosos para Audit.
 
+`OLA6-AUD-001j` completa el lifecycle existente de fuentes AI: registro/solicitud humanos emiten 2.0 -> el worker terminaliza con `SYSTEM`, actor nulo y correlación humana original -> el dispatcher AI existente reclama esos cuatro tipos 2.0 además de disabled 1.0 -> `AuditFactRecorder` materializa metadata exclusiva de estado. Históricos 1.0, resultados tardíos, provider unavailable, conflictos y rollbacks permanecen sin claim o sin emisión.
+
 ### FL-AUT-001 / eventos internos
 
 Command/query entre módulos -> API pública in-process. Hecho durable -> outbox del productor -> consumidores idempotentes `at-least-once`. Automation solo procesa eventos elegibles y cualquier mutación vuelve al contrato del módulo dueño. n8n no consume el bus interno directamente. SSE es adaptación best-effort y REST conserva verdad.

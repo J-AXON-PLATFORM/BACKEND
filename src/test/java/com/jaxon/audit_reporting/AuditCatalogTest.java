@@ -59,6 +59,42 @@ class AuditCatalogTest {
     }
 
     @Test
+    void acceptsOnlyTheClosedAiSourceLifecycleFacts() {
+        UUID actor = UUID.randomUUID();
+        List<AuditFact> valid = List.of(
+                fact("AI_SOURCE_REGISTERED", "2.0", "AI", "HUMAN_USER", actor,
+                        "AI_SOURCE", 0L, "SUCCESS", Map.of("status", "PENDING")),
+                fact("AI_SOURCE_INDEXING_REQUESTED", "2.0", "AI", "HUMAN_USER", actor,
+                        "AI_SOURCE", 1L, "SUCCESS", Map.of("status", "INDEXING")),
+                fact("AI_SOURCE_INDEXED", "2.0", "AI", "SYSTEM", null,
+                        "AI_SOURCE", 2L, "SUCCESS", Map.of("status", "READY")),
+                fact("AI_SOURCE_INDEXING_FAILED", "2.0", "AI", "SYSTEM", null,
+                        "AI_SOURCE", 2L, "FAILED", Map.of("status", "FAILED")));
+        assertThat(valid).allSatisfy(value -> assertThat(AuditCatalog.accepts(value)).isTrue());
+
+        for (AuditFact invalid : new AuditFact[] {
+            fact("AI_SOURCE_REGISTERED", "1.0", "AI", "HUMAN_USER", actor,
+                    "AI_SOURCE", 0L, "SUCCESS", Map.of("status", "PENDING")),
+            fact("AI_SOURCE_REGISTERED", "2.0", "AI", "SYSTEM", null,
+                    "AI_SOURCE", 0L, "SUCCESS", Map.of("status", "PENDING")),
+            fact("AI_SOURCE_INDEXING_REQUESTED", "2.0", "AI", "HUMAN_USER", actor,
+                    "AI_SOURCE", 0L, "SUCCESS", Map.of("status", "INDEXING")),
+            fact("AI_SOURCE_INDEXED", "2.0", "AI", "SYSTEM", actor,
+                    "AI_SOURCE", 2L, "SUCCESS", Map.of("status", "READY")),
+            fact("AI_SOURCE_INDEXED", "2.0", "AI", "HUMAN_USER", actor,
+                    "AI_SOURCE", 2L, "SUCCESS", Map.of("status", "READY")),
+            fact("AI_SOURCE_INDEXING_FAILED", "2.0", "AI", "SYSTEM", null,
+                    "AI_SOURCE", 2L, "SUCCESS", Map.of("status", "FAILED")),
+            fact("AI_SOURCE_INDEXING_FAILED", "2.0", "AI", "SYSTEM", null,
+                    "AI_SOURCE", 2L, "FAILED", Map.of("status", "FAILED", "error", "forbidden")),
+            fact("AI_SOURCE_INDEXED", "2.0", "AI", "SYSTEM", null,
+                    "AI_SOURCE", 2L, "SUCCESS", Map.of("status", "READY", "model", "forbidden"))
+        }) {
+            assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
+        }
+    }
+
+    @Test
     void acceptsOnlyCanonicalHumanUserCreatedFacts() {
         UUID actor = UUID.randomUUID();
         assertThat(AuditCatalog.accepts(fact(

@@ -65,7 +65,15 @@ class AiIndexingPersistence {
                 Timestamp.from(now),
                 sourceId).getFirst();
         addEvent(
-                "AI_SOURCE_INDEXING_REQUESTED", sourceId, 1, actorId, correlationId, "INDEXING", now);
+                "AI_SOURCE_INDEXING_REQUESTED",
+                sourceId,
+                1,
+                "HUMAN_USER",
+                actorId,
+                "SUCCESS",
+                correlationId,
+                "INDEXING",
+                now);
         return response;
     }
 
@@ -165,7 +173,9 @@ class AiIndexingPersistence {
                 "AI_SOURCE_INDEXED",
                 job.sourceId(),
                 2,
-                job.actorId(),
+                "SYSTEM",
+                null,
+                "SUCCESS",
                 job.correlationId(),
                 "READY",
                 now);
@@ -201,7 +211,9 @@ class AiIndexingPersistence {
                 "AI_SOURCE_INDEXING_FAILED",
                 job.sourceId(),
                 2,
-                job.actorId(),
+                "SYSTEM",
+                null,
+                "FAILED",
                 job.correlationId(),
                 "FAILED",
                 now);
@@ -231,7 +243,9 @@ class AiIndexingPersistence {
             String eventType,
             UUID sourceId,
             long resourceVersion,
+            String actorType,
             UUID actorId,
+            String result,
             UUID correlationId,
             String status,
             Instant now) {
@@ -241,15 +255,17 @@ class AiIndexingPersistence {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, ?, '1.0', ?, 'AI', 'HUMAN_USER', ?, 'AI_SOURCE', ?, ?,
-                        'SUCCESS', ?, jsonb_build_object('status', ?), ?)
+                VALUES (?, ?, '2.0', ?, 'AI', ?, ?, 'AI_SOURCE', ?, ?,
+                        ?, ?, jsonb_build_object('status', ?), ?)
                 """,
                 UUID.randomUUID(),
                 eventType,
                 Timestamp.from(now),
+                actorType,
                 actorId,
                 sourceId,
                 resourceVersion,
+                result,
                 correlationId,
                 status,
                 Timestamp.from(now));

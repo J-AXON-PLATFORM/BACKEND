@@ -50,7 +50,7 @@ class AiSourcePersistence {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'AI_SOURCE_REGISTERED', '1.0', ?, 'AI',
+                VALUES (?, 'AI_SOURCE_REGISTERED', '2.0', ?, 'AI',
                         'HUMAN_USER', ?, 'AI_SOURCE', ?, 0,
                         'SUCCESS', ?, '{"status":"PENDING"}'::jsonb, ?)
                 """,

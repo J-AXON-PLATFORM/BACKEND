@@ -147,6 +147,51 @@ class AiAuditDispatchIntegrationTest {
     }
 
     @Test
+    void deliversOnlyTheFourVersionTwoLifecycleEventsAndIgnoresHistoricalLifecycle() {
+        UUID sourceId = readySource("READY");
+        UUID human = UUID.randomUUID();
+        UUID correlationId = UUID.randomUUID();
+        insertLifecycleEvent(sourceId, "AI_SOURCE_REGISTERED", "2.0", "HUMAN_USER", human,
+                0, "SUCCESS", "PENDING", correlationId);
+        insertLifecycleEvent(sourceId, "AI_SOURCE_INDEXING_REQUESTED", "2.0", "HUMAN_USER", human,
+                1, "SUCCESS", "INDEXING", correlationId);
+        insertLifecycleEvent(sourceId, "AI_SOURCE_INDEXED", "2.0", "SYSTEM", null,
+                2, "SUCCESS", "READY", correlationId);
+        insertLifecycleEvent(sourceId, "AI_SOURCE_INDEXING_FAILED", "2.0", "SYSTEM", null,
+                2, "FAILED", "FAILED", correlationId);
+        insertLifecycleEvent(sourceId, "AI_SOURCE_REGISTERED", "1.0", "HUMAN_USER", human,
+                0, "SUCCESS", "PENDING", correlationId);
+
+        assertThat(dispatcher.dispatchDue(50))
+                .isEqualTo(new AiAuditDispatcher.DispatchSummary(4, 0, 0, 0));
+
+        assertThat(jdbc.queryForList(
+                        """
+                        SELECT event_type, actor_type, actor_id, resource_version, result,
+                               correlation_id, metadata::text AS metadata
+                        FROM audit_reporting.audit_events
+                        WHERE resource_id = ?
+                        ORDER BY resource_version, event_type
+                        """,
+                        sourceId))
+                .hasSize(4)
+                .allSatisfy(event -> {
+                    assertThat(event).containsEntry("correlation_id", correlationId);
+                    assertThat(event.get("metadata").toString())
+                            .doesNotContain("name", "content", "storage", "embedding", "model", "error");
+                });
+        assertThat(jdbc.queryForObject(
+                        """
+                        SELECT count(*) FROM ai.outbox_deliveries d
+                        JOIN ai.outbox_events e USING (event_id)
+                        WHERE e.resource_id = ? AND e.event_version = '1.0'
+                        """,
+                        Integer.class,
+                        sourceId))
+                .isZero();
+    }
+
+    @Test
     void redeliveryOfTheSameEventIsIdempotent() throws Exception {
         Session session = login();
         UUID sourceId = readySource("READY");
@@ -316,6 +361,37 @@ class AiAuditDispatchIntegrationTest {
                         'SUCCESS', ?, '{"status":"READY"}'::jsonb, now())
                 """,
                 UUID.randomUUID(), UUID.randomUUID(), sourceId, UUID.randomUUID());
+    }
+
+    private void insertLifecycleEvent(
+            UUID sourceId,
+            String eventType,
+            String eventVersion,
+            String actorType,
+            UUID actorId,
+            long resourceVersion,
+            String result,
+            String status,
+            UUID correlationId) {
+        jdbc.update(
+                """
+                INSERT INTO ai.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, ?, ?, now(), 'AI', ?, ?, 'AI_SOURCE', ?, ?, ?, ?,
+                        jsonb_build_object('status', ?::text), now())
+                """,
+                UUID.randomUUID(),
+                eventType,
+                eventVersion,
+                actorType,
+                actorId,
+                sourceId,
+                resourceVersion,
+                result,
+                correlationId,
+                status);
     }
 
     private UUID disabledEventId(UUID sourceId) {

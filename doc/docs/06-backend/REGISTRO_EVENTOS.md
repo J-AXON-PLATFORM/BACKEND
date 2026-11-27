@@ -38,6 +38,8 @@ Reglas Lote 53:
 
 `OLA6-AUD-001i` versiona juntos a 2.0 solo futuras emisiones de `TICKET_CREATED`, `TICKET_COMMENT_ADDED`, `TICKET_ASSIGNED`, `TICKET_PRIORITY_CHANGED`, `TICKET_STATUS_CHANGED`, `TICKET_RESOLVED`, `TICKET_CLOSED` y `TICKET_REOPENED`. Conservan productor/actor/recurso/resultado/correlación y el payload mínimo vigente como metadata. Solo mutaciones efectivas emiten; 1.0, no-ops, conflictos, denegaciones, transiciones inválidas y rollbacks no se reclaman.
 
+`OLA6-AUD-001j` versiona juntos a 2.0 solo futuras emisiones de `AI_SOURCE_REGISTERED`, `AI_SOURCE_INDEXING_REQUESTED`, `AI_SOURCE_INDEXED` y `AI_SOURCE_INDEXING_FAILED`. Los dos primeros conservan actor humano; los terminales usan `SYSTEM` sin actor y correlación humana original. Payload/metadata contienen únicamente `status`; los cuatro 1.0 y `AI_SOURCE_DISABLED` 1.0 permanecen intactos.
+
 ## Propósito
 
 Definir logging útil para diagnóstico, auditoría técnica y correlación.
