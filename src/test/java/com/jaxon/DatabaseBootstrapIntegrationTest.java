@@ -114,7 +114,11 @@ class DatabaseBootstrapIntegrationTest {
                         "20261130030000",
                         "20261130040000",
                         "20261130050000",
-                        "20261130060000");
+                        "20261130060000",
+                        "20261130070000",
+                        "20261130080000",
+                        "20261130090000",
+                        "20261130100000");
         assertThat(modularSchemas).containsExactlyInAnyOrderElementsOf(EXPECTED_SCHEMAS);
         assertThat(modularTables).containsExactly(
                 "ai.document_sources",
@@ -152,6 +156,7 @@ class DatabaseBootstrapIntegrationTest {
                 "inventory.assets",
                 "inventory.outbox_deliveries",
                 "inventory.outbox_events",
+                "support.outbox_deliveries",
                 "support.outbox_events",
                 "support.ticket_comments",
                 "support.ticket_lifecycle_events",

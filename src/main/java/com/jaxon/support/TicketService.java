@@ -60,7 +60,7 @@ class TicketService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'TICKET_CREATED', '1.0', ?, 'SUPPORT',
+                VALUES (?, 'TICKET_CREATED', '2.0', ?, 'SUPPORT',
                         'HUMAN_USER', ?, 'TICKET', ?, 0,
                         'SUCCESS', ?, jsonb_build_object(
                             'type', ?::text,
@@ -322,7 +322,7 @@ class TicketService {
                         (event_id, event_type, event_version, occurred_at, producer_module,
                          actor_type, actor_id, resource_type, resource_id, resource_version,
                          result, correlation_id, payload, next_attempt_at)
-                    VALUES (?, 'TICKET_ASSIGNED', '1.0', ?, 'SUPPORT',
+                    VALUES (?, 'TICKET_ASSIGNED', '2.0', ?, 'SUPPORT',
                             'HUMAN_USER', ?, 'TICKET', ?, ?,
                             'SUCCESS', ?, jsonb_build_object('assigneeUserId', ?::text), ?)
                     """,
@@ -543,7 +543,7 @@ class TicketService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'TICKET_COMMENT_ADDED', '1.0', ?, 'SUPPORT',
+                VALUES (?, 'TICKET_COMMENT_ADDED', '2.0', ?, 'SUPPORT',
                         'HUMAN_USER', ?, 'TICKET', ?, ?,
                         'SUCCESS', ?, jsonb_build_object(
                             'commentId', ?::text,
@@ -611,7 +611,7 @@ class TicketService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, 'TICKET_COMMENT_ADDED', '1.0', ?, 'SUPPORT',
+                VALUES (?, 'TICKET_COMMENT_ADDED', '2.0', ?, 'SUPPORT',
                         'HUMAN_USER', ?, 'TICKET', ?, ?,
                         'SUCCESS', ?, jsonb_build_object(
                             'commentId', ?::text,
@@ -815,7 +815,7 @@ class TicketService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, ?, '1.0', ?, 'SUPPORT',
+                VALUES (?, ?, '2.0', ?, 'SUPPORT',
                         'HUMAN_USER', ?, 'TICKET', ?, ?,
                         'SUCCESS', ?, jsonb_build_object(?::text, ?::text, ?::text, ?::text), ?)
                 """,
@@ -902,7 +902,7 @@ class TicketService {
                     (event_id, event_type, event_version, occurred_at, producer_module,
                      actor_type, actor_id, resource_type, resource_id, resource_version,
                      result, correlation_id, payload, next_attempt_at)
-                VALUES (?, ?, '1.0', ?, 'SUPPORT', 'HUMAN_USER', ?, 'TICKET', ?, ?,
+                VALUES (?, ?, '2.0', ?, 'SUPPORT', 'HUMAN_USER', ?, 'TICKET', ?, ?,
                         'SUCCESS', ?, %s, ?)
                 """.formatted(payloadExpression);
         if (closeReason == null) {

@@ -692,6 +692,20 @@ Se autorizan exactamente `V20261130070000__discovery_device_audit_events.sql` y 
 
 OpenAPI 8.3, contratos históricos, endpoints, `frontend`, `automation-collector`, dependencias, lockfiles, workflows, Docker/Compose/SFTPGo, SSE, otros eventos, `main`, infraestructura Production y despliegues permanecen fuera. A la fecha de este registro `OLA6-AUD-001h` está `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local; no está integrado ni verificado remotamente. `PRODUCTION_READY = NO`.
 
+El cierre real quedó verificado mediante `BACKEND#68`, squash `7149e4979549c838fb2913c52d9508770490f91d`, y runs verdes `45913673483` de PR y `45914637104` post-merge, ambos `APPLICATION` y `run_attempt=1`. La rama fue eliminada; `OLA6-AUD-001h` está implementado, integrado y verificado y `AC-JAXON-100` está consumido y cerrado.
+
+## AC-JAXON-101 -- Auditoría agrupada del agregado Ticket de Support
+
+LUIS autoriza expresamente `OLA6-AUD-001i` solo en `backend` y exige versionar juntos a 2.0 las futuras emisiones de `TICKET_CREATED`, `TICKET_COMMENT_ADDED`, `TICKET_ASSIGNED`, `TICKET_PRIORITY_CHANGED`, `TICKET_STATUS_CHANGED`, `TICKET_RESOLVED`, `TICKET_CLOSED` y `TICKET_REOPENED`. Los eventos 1.0 históricos permanecen byte a byte, no se reclaman, reinterpretan, reproducen ni reciben backfill. Todos conservan productor `SUPPORT`, actor `HUMAN_USER` UUIDv4, recurso `TICKET`, resultado `SUCCESS` y correlación original.
+
+La metadata 2.0 es exactamente el payload mínimo vigente: created conserva `type|status=OPEN|priority=NORMAL|source=WEB`; comment `commentId|visibility`; assigned `assigneeUserId` igual al actor; priority `previousPriority|newPriority`; status `previousStatus|newStatus`; resolved/reopened `lifecycleEventId|fromStatus|toStatus`; closed añade `closeReason`. Versiones y transiciones deben corresponder al agregado real. Java y PostgreSQL rechazan propiedades adicionales, metadata incompleta, UUID no canónico, transiciones imposibles y combinaciones inválidas.
+
+Support crea y controla exclusivamente `support.outbox_deliveries`, `SupportAuditDeliveryPersistence`, dispatcher, scheduler y métricas. El claim se limita a los ocho tipos 2.0 y entrega solo mediante `AuditFactRecorder`, sin SQL cross-module. Se conservan `FOR UPDATE SKIP LOCKED`, máximo 10 intentos, exponential backoff con jitter y tope de cinco minutos, errores cerrados, `FAILED`, idempotencia por `source_event_id`, duplicado idéntico como éxito, conflicto sin sobrescritura y aislamiento transaccional. No-op, conflicto, versión obsoleta, autorización denegada, transición inválida y rollback no emiten.
+
+Se autorizan exactamente `V20261130090000__support_ticket_audit_delivery.sql` y `V20261130100000__audit_support_ticket_catalog.sql`; ninguna migración aplicada se modifica. Se autoriza exclusivamente `feature/ola6-aud-001i`, un único push tras verificaciones locales y un único Pull Request `BACKEND` hacia `develop`; squash solo con CI verde, post-merge verde, eliminación de ramas y reporte final único en `/home/usuario/Documentos/J-AXON-MDs/REPORTE_OPENCODE_OLA6_AUD_001I_EJECUCION.md`. El mismo PR sincroniza retrospectivamente el cierre real de `AC-JAXON-100`/`BACKEND#68`. Clasificación esperada `APPLICATION`; debe comprobarse el presupuesto Actions antes del push y no se relanzan runs sin diagnóstico.
+
+OpenAPI 8.3, contratos Agent/Discovery, endpoints, UI, `frontend`, `automation-collector`, dependencias, lockfiles, workflows, contenedores, brokers, SSE, otros eventos, `main`, Production y despliegues permanecen fuera. A la fecha de este registro `OLA6-AUD-001i` está `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local; no está integrado ni verificado remotamente. `PRODUCTION_READY = NO`.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)

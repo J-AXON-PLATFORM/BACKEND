@@ -35,7 +35,8 @@ final class AuditCatalog {
                 || acceptsAgentLifecycle(fact)
                 || acceptsDiscoveryLifecycle(fact)
                 || acceptsDiscoveryJobLifecycle(fact)
-                || acceptsDiscoveredDeviceReview(fact);
+                || acceptsDiscoveredDeviceReview(fact)
+                || acceptsSupportTicket(fact);
     }
 
     private static boolean acceptsAiSourceDisabled(AuditFact fact) {
@@ -198,6 +199,104 @@ final class AuditCatalog {
                 && "DISCOVERED_DEVICE".equals(fact.resourceType())
                 && Long.valueOf(1).equals(fact.resourceVersion())
                 && "SUCCESS".equals(fact.result());
+    }
+
+    private static boolean acceptsSupportTicket(AuditFact fact) {
+        boolean created = "TICKET_CREATED".equals(fact.eventType())
+                && Long.valueOf(0).equals(fact.resourceVersion())
+                && fact.metadata().size() == 4
+                && Set.of("INCIDENT", "SERVICE_REQUEST", "QUESTION", "OTHER")
+                        .contains(fact.metadata().get("type"))
+                && "OPEN".equals(fact.metadata().get("status"))
+                && "NORMAL".equals(fact.metadata().get("priority"))
+                && "WEB".equals(fact.metadata().get("source"));
+        boolean commentAdded = "TICKET_COMMENT_ADDED".equals(fact.eventType())
+                && nonNegativeVersion(fact)
+                && fact.metadata().size() == 2
+                && canonicalUuid(fact.metadata().get("commentId"))
+                && Set.of("PUBLIC", "INTERNAL").contains(fact.metadata().get("visibility"));
+        boolean assigned = "TICKET_ASSIGNED".equals(fact.eventType())
+                && positiveVersion(fact)
+                && uuidV4(fact.actorId())
+                && fact.metadata().equals(Map.of("assigneeUserId", fact.actorId().toString()));
+        boolean priorityChanged = "TICKET_PRIORITY_CHANGED".equals(fact.eventType())
+                && positiveVersion(fact)
+                && ticketPriorityMetadata(fact.metadata());
+        boolean statusChanged = "TICKET_STATUS_CHANGED".equals(fact.eventType())
+                && positiveVersion(fact)
+                && operationalStatusMetadata(fact.metadata());
+        boolean resolved = "TICKET_RESOLVED".equals(fact.eventType())
+                && positiveVersion(fact)
+                && lifecycleMetadata(fact.metadata(), 3)
+                && Set.of("IN_PROGRESS", "WAITING_FOR_REQUESTER")
+                        .contains(fact.metadata().get("fromStatus"))
+                && "RESOLVED".equals(fact.metadata().get("toStatus"));
+        boolean closed = "TICKET_CLOSED".equals(fact.eventType())
+                && positiveVersion(fact)
+                && lifecycleMetadata(fact.metadata(), 4)
+                && "CLOSED".equals(fact.metadata().get("toStatus"))
+                && closureMetadata(fact.metadata());
+        boolean reopened = "TICKET_REOPENED".equals(fact.eventType())
+                && positiveVersion(fact)
+                && lifecycleMetadata(fact.metadata(), 3)
+                && Set.of("RESOLVED", "CLOSED").contains(fact.metadata().get("fromStatus"))
+                && "OPEN".equals(fact.metadata().get("toStatus"));
+        return (created || commentAdded || assigned || priorityChanged
+                        || statusChanged || resolved || closed || reopened)
+                && "2.0".equals(fact.eventVersion())
+                && "SUPPORT".equals(fact.producerModule())
+                && "HUMAN_USER".equals(fact.actorType())
+                && uuidV4(fact.actorId())
+                && "TICKET".equals(fact.resourceType())
+                && "SUCCESS".equals(fact.result());
+    }
+
+    private static boolean ticketPriorityMetadata(Map<String, String> metadata) {
+        String previous = metadata.get("previousPriority");
+        String next = metadata.get("newPriority");
+        Set<String> priorities = Set.of("LOW", "NORMAL", "HIGH", "URGENT");
+        return metadata.size() == 2
+                && priorities.contains(previous)
+                && priorities.contains(next)
+                && !previous.equals(next);
+    }
+
+    private static boolean operationalStatusMetadata(Map<String, String> metadata) {
+        String previous = metadata.get("previousStatus");
+        String next = metadata.get("newStatus");
+        return metadata.size() == 2
+                && (("OPEN".equals(previous) && "IN_PROGRESS".equals(next))
+                        || ("IN_PROGRESS".equals(previous)
+                                && "WAITING_FOR_REQUESTER".equals(next))
+                        || ("WAITING_FOR_REQUESTER".equals(previous)
+                                && "IN_PROGRESS".equals(next)));
+    }
+
+    private static boolean lifecycleMetadata(Map<String, String> metadata, int size) {
+        return metadata.size() == size
+                && canonicalUuid(metadata.get("lifecycleEventId"))
+                && metadata.get("fromStatus") != null
+                && metadata.get("toStatus") != null;
+    }
+
+    private static boolean closureMetadata(Map<String, String> metadata) {
+        String previous = metadata.get("fromStatus");
+        String reason = metadata.get("closeReason");
+        return ("RESOLVED".equals(previous) && "RESOLVED".equals(reason))
+                || (Set.of("OPEN", "IN_PROGRESS", "WAITING_FOR_REQUESTER").contains(previous)
+                        && Set.of("CANCELLED", "DUPLICATE", "NOT_APPLICABLE").contains(reason));
+    }
+
+    private static boolean positiveVersion(AuditFact fact) {
+        return fact.resourceVersion() != null && fact.resourceVersion() >= 1;
+    }
+
+    private static boolean nonNegativeVersion(AuditFact fact) {
+        return fact.resourceVersion() != null && fact.resourceVersion() >= 0;
+    }
+
+    private static boolean canonicalUuid(String value) {
+        return value != null && UUID_V4.matcher(value).matches();
     }
 
     private static boolean disableMetadata(Map<String, String> metadata) {

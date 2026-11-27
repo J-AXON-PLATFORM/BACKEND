@@ -233,3 +233,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - No-ops, versiones obsoletas, conflictos, concurrencia perdedora y activos ausentes/inactivos no emiten evento o Audit falso. Los eventos 1.0 permanecen byte a byte, sin claim, reinterpretación, replay o backfill.
 - Discovery amplía de siete a nueve tipos únicamente la allowlist de entrega/dispatcher existente; Java y PostgreSQL rechazan metadata incompleta/adicional, estados alternativos, UUID no canónico y combinaciones inválidas.
 - Se crean exactamente `V20261130070000__discovery_device_audit_events.sql` y `V20261130080000__audit_discovery_device_catalog.sql`. OpenAPI 8.3, contratos históricos, endpoints, otros repositorios, dependencias, workflows, Docker/Compose/SFTPGo, SSE y Production no cambian.
+
+## OLA6-AUD-001i
+
+- Las futuras emisiones de los ocho eventos existentes del agregado Ticket usan 2.0 con productor `SUPPORT`, actor humano UUIDv4, recurso `TICKET`, `SUCCESS`, correlación original y versión real del agregado.
+- Metadata exacta: created `type|status|priority|source`; comment `commentId|visibility`; assigned `assigneeUserId`; priority/status valores anterior/nuevo; lifecycle `lifecycleEventId|fromStatus|toStatus`, y closed añade `closeReason`.
+- Java y PostgreSQL rechazan extras, metadata incompleta, UUID no canónico, transiciones imposibles y combinaciones inválidas. Los eventos 1.0 históricos no se reclaman, reproducen ni reinterpretan.
+- Cada mutación efectiva y su 2.0 se confirman atómicamente. No-op, conflicto, versión obsoleta, autorización denegada, transición inválida y rollback no emiten.
+- Support posee entrega, persistencia, dispatcher, scheduler, retry/backoff, métricas y `FAILED`; Audit recibe solo `AuditFactRecorder`, con idempotencia y conflicto sin sobrescritura.
+- Se crean exactamente `V20261130090000__support_ticket_audit_delivery.sql` y `V20261130100000__audit_support_ticket_catalog.sql`. OpenAPI 8.3, Agent/Discovery, endpoints, otros repositorios, dependencias, workflows, contenedores y Production no cambian.

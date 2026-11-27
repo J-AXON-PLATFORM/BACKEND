@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Auditoría agrupada del agregado Ticket -- OLA6-AUD-001i, 2026-11-30
+
+`AC-JAXON-101` autoriza exclusivamente en backend las futuras emisiones 2.0 de los ocho eventos existentes de Ticket. Support incorpora entrega, dispatcher y scheduler propios, contratos Java/PostgreSQL cerrados y exactamente dos migraciones. No cambian funcionalidad Support, OpenAPI, endpoints, dependencias, workflows, otros repositorios ni Production.
+
+Se sincroniza retrospectivamente el cierre real de `OLA6-AUD-001h`: `BACKEND#68`, squash `7149e4979549c838fb2913c52d9508770490f91d`, tuvo runs verdes `45913673483`/`45914637104`, ambos `APPLICATION` y `run_attempt=1`; la rama fue eliminada y `AC-JAXON-100` está cerrado.
+
+---
+
 ## Auditoría de revisión humana de DiscoveredDevice -- OLA6-AUD-001h, 2026-11-30
 
 `AC-JAXON-100` autoriza exclusivamente en backend futuros `DISCOVERED_DEVICE_IGNORED` y `DISCOVERED_DEVICE_INCORPORATED` 2.0, juntos y con metadata cerrada. Ambos caminos de incorporación comparten contrato; crear un activo produce además `ASSET_CREATED` 2.0 independiente. Discovery amplía solo su dispatcher existente de siete a nueve tipos y se crean exactamente dos migraciones, sin OpenAPI, endpoints, dependencias, workflows, otros repositorios ni Production.

@@ -213,6 +213,132 @@ class SupportMigrationIntegrationTest {
                 .isOne();
     }
 
+    @Test
+    void enforcesClosedVersionTwoAuditContractsAndDeliveryState() {
+        Flyway.configure()
+                .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
+                .locations("classpath:db/migration")
+                .load()
+                .migrate();
+        JdbcTemplate jdbc = new JdbcTemplate(
+                new DriverManagerDataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword()));
+        UUID ticketId = UUID.randomUUID();
+        UUID actorId = UUID.randomUUID();
+        Instant now = Instant.parse("2026-11-30T09:00:00Z");
+        jdbc.update(
+                """
+                INSERT INTO support.tickets
+                    (id, type, summary, description, requester_user_id, created_by_user_id,
+                     created_at, updated_at)
+                VALUES (?, 'INCIDENT', 'Audit contract', 'Audit contract validation', ?, ?, ?, ?)
+                """,
+                ticketId,
+                actorId,
+                actorId,
+                Timestamp.from(now),
+                Timestamp.from(now));
+
+        UUID eventId = insertV2Event(
+                jdbc,
+                ticketId,
+                actorId,
+                "TICKET_CREATED",
+                0,
+                "{\"type\":\"INCIDENT\",\"status\":\"OPEN\",\"priority\":\"NORMAL\",\"source\":\"WEB\"}",
+                now);
+        assertThatThrownBy(() -> insertV2Event(
+                        jdbc,
+                        ticketId,
+                        actorId,
+                        "TICKET_CREATED",
+                        0,
+                        "{\"type\":\"INCIDENT\",\"status\":\"OPEN\",\"priority\":\"NORMAL\","
+                                + "\"source\":\"WEB\",\"extra\":\"forbidden\"}",
+                        now))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertV2Event(
+                        jdbc,
+                        ticketId,
+                        actorId,
+                        "TICKET_COMMENT_ADDED",
+                        0,
+                        "{\"commentId\":\"" + UUID.randomUUID().toString().toUpperCase()
+                                + "\",\"visibility\":\"PUBLIC\"}",
+                        now))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertV2Event(
+                        jdbc,
+                        ticketId,
+                        actorId,
+                        "TICKET_PRIORITY_CHANGED",
+                        1,
+                        "{\"previousPriority\":\"HIGH\",\"newPriority\":\"HIGH\"}",
+                        now))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertV2Event(
+                        jdbc,
+                        ticketId,
+                        actorId,
+                        "TICKET_STATUS_CHANGED",
+                        1,
+                        "{\"previousStatus\":\"OPEN\",\"newStatus\":\"WAITING_FOR_REQUESTER\"}",
+                        now))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertV2Event(
+                        jdbc,
+                        ticketId,
+                        actorId,
+                        "TICKET_CLOSED",
+                        1,
+                        "{\"lifecycleEventId\":\"" + UUID.randomUUID()
+                                + "\",\"fromStatus\":\"RESOLVED\",\"toStatus\":\"CLOSED\","
+                                + "\"closeReason\":\"DUPLICATE\"}",
+                        now))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+        jdbc.update(
+                """
+                INSERT INTO support.outbox_deliveries
+                    (event_id, consumer, status, attempts, next_attempt_at, delivered_at,
+                     last_error_code, updated_at)
+                VALUES (?, 'AUDIT', 'FAILED', 10, ?, NULL, 'AUDIT_REJECTED', ?)
+                """,
+                eventId,
+                Timestamp.from(now),
+                Timestamp.from(now));
+        UUID invalidDeliveryEvent = insertV2Event(
+                jdbc,
+                ticketId,
+                actorId,
+                "TICKET_CREATED",
+                0,
+                "{\"type\":\"OTHER\",\"status\":\"OPEN\",\"priority\":\"NORMAL\",\"source\":\"WEB\"}",
+                now);
+        assertThatThrownBy(() -> jdbc.update(
+                        """
+                        INSERT INTO support.outbox_deliveries
+                            (event_id, consumer, status, attempts, next_attempt_at, delivered_at,
+                             last_error_code, updated_at)
+                        VALUES (?, 'AUDIT', 'PENDING', 10, ?, NULL, 'AUDIT_REJECTED', ?)
+                        """,
+                        invalidDeliveryEvent,
+                        Timestamp.from(now),
+                        Timestamp.from(now)))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(jdbc.queryForList(
+                        """
+                        SELECT conname FROM pg_constraint
+                        WHERE conrelid IN (
+                            'support.outbox_events'::regclass,
+                            'support.outbox_deliveries'::regclass)
+                          AND convalidated
+                        """,
+                        String.class))
+                .contains(
+                        "outbox_events_audit_v2_check",
+                        "support_outbox_deliveries_state_check");
+    }
+
     private static void insertEvent(
             JdbcTemplate jdbc,
             UUID ticketId,
@@ -237,5 +363,35 @@ class SupportMigrationIntegrationTest {
                 UUID.randomUUID(),
                 payload,
                 Timestamp.from(now));
+    }
+
+    private static UUID insertV2Event(
+            JdbcTemplate jdbc,
+            UUID ticketId,
+            UUID actorId,
+            String eventType,
+            long resourceVersion,
+            String payload,
+            Instant now) {
+        UUID eventId = UUID.randomUUID();
+        jdbc.update(
+                """
+                INSERT INTO support.outbox_events
+                    (event_id, event_type, event_version, occurred_at, producer_module,
+                     actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, payload, next_attempt_at)
+                VALUES (?, ?, '2.0', ?, 'SUPPORT', 'HUMAN_USER', ?, 'TICKET', ?, ?,
+                        'SUCCESS', ?, CAST(? AS jsonb), ?)
+                """,
+                eventId,
+                eventType,
+                Timestamp.from(now),
+                actorId,
+                ticketId,
+                resourceVersion,
+                UUID.randomUUID(),
+                payload,
+                Timestamp.from(now));
+        return eventId;
     }
 }

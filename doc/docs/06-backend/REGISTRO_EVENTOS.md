@@ -36,6 +36,8 @@ Reglas Lote 53:
 
 `OLA6-AUD-001h` versiona juntos a 2.0 solo futuros `DISCOVERED_DEVICE_IGNORED` y `DISCOVERED_DEVICE_INCORPORATED`. Ambos usan actor/correlación humanos originales, recurso `DISCOVERED_DEVICE`, versión `1` y `SUCCESS`; ignored conserva los dos estados exactos e incorporated añade `assetId` UUIDv4 canónico. Solo transiciones confirmadas emiten; no-ops, conflictos, activos inválidos, concurrencia perdedora, rollbacks y 1.0 no se reclaman.
 
+`OLA6-AUD-001i` versiona juntos a 2.0 solo futuras emisiones de `TICKET_CREATED`, `TICKET_COMMENT_ADDED`, `TICKET_ASSIGNED`, `TICKET_PRIORITY_CHANGED`, `TICKET_STATUS_CHANGED`, `TICKET_RESOLVED`, `TICKET_CLOSED` y `TICKET_REOPENED`. Conservan productor/actor/recurso/resultado/correlación y el payload mínimo vigente como metadata. Solo mutaciones efectivas emiten; 1.0, no-ops, conflictos, denegaciones, transiciones inválidas y rollbacks no se reclaman.
+
 ## Propósito
 
 Definir logging útil para diagnóstico, auditoría técnica y correlación.
