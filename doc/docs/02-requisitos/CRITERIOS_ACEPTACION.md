@@ -251,3 +251,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Mutaciones y eventos son atómicos; provider unavailable, conflicto, rollback, claim expirado ya terminalizado y resultado tardío no producen hechos falsos.
 - AI amplía solo la allowlist de su entrega existente y conserva idempotencia, retries, `FAILED`, aislamiento y `SKIP LOCKED`; no crea infraestructura adicional.
 - Se crean exactamente `V20261130110000__ai_source_lifecycle_audit_events.sql` y `V20261130120000__audit_ai_source_lifecycle_catalog.sql`. OpenAPI 8.3, Agent/Discovery, endpoints, otros módulos/repositorios, dependencias, workflows, contenedores y Production no cambian.
+
+## OLA6-RPT-001a
+
+- Assets, Agents y Tickets exponen JSON paginado y CSV únicamente con campos allowlisted, filtros cerrados y orden `createdAt DESC, id DESC`; parámetros desconocidos, repetidos, vacíos o inválidos devuelven `422` sin eco.
+- Roles exactos: `AUDITOR` los tres, `IT_OPERATOR` Assets/Agents y `SUPPORT_TECHNICIAN` Tickets agregado; `SYSTEM_ADMIN` sin otro rol no accede.
+- Cada módulo dueño ejecuta solo SQL propio mediante contrato público read-only y `REPEATABLE_READ`; `audit_reporting` no usa SQL ajeno. Spring Modulith conserva ocho módulos y cero ciclos tras la relocalización neutral de los cuatro tipos Audit.
+- CSV es UTF-8 sin BOM, CRLF, quoting total, protegido ante fórmulas, completo antes de responder y limitado a 10.000 filas y 10 MiB. Un exceso devuelve `422 REPORT_EXPORT_LIMIT_EXCEEDED`, sin body parcial ni auditoría positiva.
+- Cada `200` CSV confirma previamente un único `REPORT_EXPORTED` 1.0 durable y cerrado. Un fallo de generación, proveedor o Audit no devuelve éxito.
+- OpenAPI 8.4 añade solo seis operaciones compatibles; 1.0--8.3 permanecen byte a byte. Existe exactamente una migración nueva de catálogo `audit_reporting`; no hay tablas, proyecciones, índices preventivos, outbox, scheduler ni almacenamiento de CSV.

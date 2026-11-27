@@ -42,7 +42,7 @@ Se conserva el framework 1.0.0. CKP-JAXON-005 consolida decisiones de la instanc
 
 ## Inventario
 
-Total de archivos: **304**
+Total de archivos: **305**
 
 - `.github/ISSUE_TEMPLATE/bug.yml`
 - `.github/ISSUE_TEMPLATE/config.yml`

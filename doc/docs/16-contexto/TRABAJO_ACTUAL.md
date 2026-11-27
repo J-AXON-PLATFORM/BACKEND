@@ -8,20 +8,20 @@ Mantener este archivo corto: orienta a una IA sin sustituir el Registro de Acuer
 - Estado actual: baseline documental v1 `DESIGN_READY`; implementación iniciada de forma acotada; `PRODUCTION_READY = NO`.
 - Descubrimiento inicial: cerrado.
 - Refinamiento/diseño v1: **Lotes 30--54 aprobados y consolidados**.
-- Trabajo activo: `OLA6-AUD-001j` bajo `AC-JAXON-102`, exclusivamente en `backend`, para auditar juntos los cuatro hechos existentes del lifecycle de fuentes AI 2.0. `BACKEND#69`, squash `9ce6129d1d69bfa4599c596d24acf08d7563742f`, cerró `OLA6-AUD-001i` con runs verdes `45943516576`/`45944695407` `APPLICATION`, ambos `run_attempt=1`.
-- Alcance activo: cuatro productores AI 2.0, entrega/dispatcher/scheduler AI existentes, `AuditFactRecorder`, actores/versiones/resultados/metadata cerrados y exactamente dos migraciones.
-- No implementado en este corte: otros eventos, backfill/replay 1.0, generación/RAG, retrieval/embeddings nuevos, reindexación, reproceso operativo de `FAILED`, purga, reportes/CSV, endpoints/OpenAPI, dependencias, workflows, Docker/Compose, SFTPGo o infraestructura Production.
+- Trabajo activo: `OLA6-RPT-001a` bajo `AC-JAXON-103`, exclusivamente en `backend`, para reportes JSON/CSV de Assets, Agents y Tickets. `BACKEND#70`, squash `abafd2accecdbf6d232a5e435e5a529819e5e7a4`, cerró `OLA6-AUD-001j` con runs verdes `45952762447`/`45953995149` `APPLICATION`, ambos `run_attempt=1`.
+- Alcance activo: seis endpoints, tres contratos públicos read-only de módulos dueños, relocalización neutral de cuatro tipos Audit, CSV acotado, `REPORT_EXPORTED`, OpenAPI 8.4 y exactamente una migración `audit_reporting`.
+- No implementado en este corte: frontend Reporting, PDF/XLSX, BI/report builder, programación, exports asíncronos, proyecciones/warehouse, índices preventivos, búsqueda global, SSE, nuevos roles, otros eventos, dependencias, workflows, Docker/Compose, SFTPGo o infraestructura Production.
 - Estado remoto histórico verificado el 2026-10-07: existe la organización `J-AXON-PLATFORM` con los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos `backend`, `frontend` y `automation-collector`; `backend` fue publicado inicialmente mediante `TEC-GIT-001C`.
 - Estado remoto de contenedores verificado el 2026-10-08: `BACKEND#5` fue integrado en `develop` con squash `90c550714b861beb7d6388cf571744efcda4af8d`; los runs `37879426717` de PR y `37879749721` post-merge quedaron verdes. `FRONTEND#2` fue integrado con squash `94d8ce2e8dd3309b7683f09041785c000f6fe21d`; los runs `37879426584` de PR y `37880065517` post-merge quedaron verdes. No se publicaron imágenes ni artefactos.
 - Estado remoto Python verificado el 2026-10-08: `AUTOMATION-COLLECTOR` es privado; `main` apunta a `a1079d8d5bac0d0436daae844e0b1ba9e42a9d12`; `Python CI` fue integrado en `develop` mediante el Pull Request `#1` y squash `a040c5fba34fae22903088b82191e8355deaab26`; los runs `37852626079` de PR y `37852683236` post-merge quedaron verdes. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues.
 - Organización histórica: `j-axon` es distinta, contiene repositorios preexistentes ajenos al nuevo inicio controlado, no fue modificada y no debe confundirse con `J-AXON-PLATFORM`. La diferencia depende del identificador de organización, no solo de mayúsculas, que GitHub trata sin distinción efectiva.
 - Autorización general para implementar/modificar GitHub/desplegar: **NO EXISTE**.
-- Sprint actual: `OLA6-AUD-001j`, delimitado y autorizado por `AC-JAXON-102`.
+- Sprint actual: `OLA6-RPT-001a`, delimitado y autorizado por `AC-JAXON-103`.
 - Backlog: inicial aprobado; no publicado en GitHub.
 - Primera vertical: login/logout, alta administrativa de usuarios, activo, Agent/Collector hasta Result resiliente y los cortes Support hasta prioridad/ciclo no terminal están integrados. El lifecycle terminal y su timeline están implementados localmente en ambos repositorios. REST continúa como fuente oficial.
 - Dominios refinados: Identity, Discovery, Support, Inventory, Collector tasks, AI/RAG, Automation, Audit/Reporting.
 - Contratos internos: commands/queries in-process; eventos durables por Transactional Outbox PostgreSQL `at-least-once`; SSE best-effort y REST fuente de verdad.
-- CI backend/frontend local: clasificación determinista por riesgo, fallback `PLATFORM_FULL`, procedencia read-only para push y todos los gates previos intactos en completo. OpenAPI 8.3 es el contrato web actual y permanece byte a byte inmutable en `OLA6-AUD-001j`; OpenAPI 1.0--8.2, Discovery Job/Result 1.0 y Agent 1.0 permanecen históricos e inmutables.
+- CI backend/frontend local: clasificación determinista por riesgo, fallback `PLATFORM_FULL`, procedencia read-only para push y todos los gates previos intactos en completo. OpenAPI 8.4 es el contrato web candidato actual de `OLA6-RPT-001a`; OpenAPI 1.0--8.3, Discovery Job/Result 1.0 y Agent 1.0 permanecen históricos e inmutables.
 - CI frontend completo conserva Node.js 24.21.0, `npm ci`, lint, typecheck, Vitest/RTL, build, auditorías, standalone, smoke y Trivy. Tras el refresh puntual a `undici@8.12.2` y `zod@4.6.6`, las auditorías npm de producción y completa están limpias.
 - CI Python: conserva sync/lock, Ruff, pytest, bundle, build, auditoría y entrypoints sin cambiar el workflow; el corte activo añade pruebas de Result, ledger, runner, filesystem, SFTP y probes loopback.
 - Riesgos frontend abiertos: ESLint 9.39.5 está EOL y debe migrarse cuando la cadena oficial soporte ESLint 10; Dependabot confirma como única alerta inicial `GHSA-vfj7-8cjw-p6xm` / `CVE-2026-93687` en `braces@3.0.3`, y la excepción debe retirarse cuando exista corrección oficial o desaparezca la cadena.
@@ -49,7 +49,8 @@ Mantener este archivo corto: orienta a una IA sin sustituir el Registro de Acuer
 - Cierre verificado de `OLA6-AUD-001g`: `BACKEND#67`, commits `7f227182f0d93c15941dda83337218352c33b98b` y `5bd305e2103eb206cef2b06969eb4c819dfc00d5`, squash `fce921ca8a5a70661f4bfb0f9a5b325240ed7fc3`, runs `45884366247`/`45885563240`, ambos verdes `APPLICATION` y `run_attempt=1`; rama eliminada y otros repositorios intactos.
 - Cierre verificado de `OLA6-AUD-001h`: `BACKEND#68`, squash `7149e4979549c838fb2913c52d9508770490f91d`, runs `45913673483`/`45914637104`, ambos verdes `APPLICATION` y `run_attempt=1`; rama eliminada y otros repositorios intactos.
 - Cierre verificado de `OLA6-AUD-001i`: `BACKEND#69`, squash `9ce6129d1d69bfa4599c596d24acf08d7563742f`, runs `45943516576`/`45944695407`, ambos verdes `APPLICATION` y `run_attempt=1`; rama eliminada y otros repositorios intactos.
-- Próxima acción: completar validación local, único push/PR backend, integración squash con CI verde, post-merge, limpieza y reporte final único de `OLA6-AUD-001j`.
+- Cierre verificado de `OLA6-AUD-001j`: `BACKEND#70`, squash `abafd2accecdbf6d232a5e435e5a529819e5e7a4`, runs `45952762447`/`45953995149`, ambos verdes `APPLICATION` y `run_attempt=1`; rama eliminada y otros repositorios intactos.
+- Próxima acción: completar validación local, único push/PR backend, integración squash con CI verde, post-merge, limpieza y reporte final único de `OLA6-RPT-001a`.
 - Evidencia remota verificada: `AUTOMATION-COLLECTOR#6`, squash `5bec06539b7fa3014e8231cde84b960bf4f74a50`, tuvo runs verdes `38935923442` y `38935999273`; `BACKEND#18`, squash `12c877b9f890e48e47bc338dcee024b155b92e09`, tuvo runs verdes `38936213131` y `38941377804`.
 - Evidencia remota de `OLA2-TSK-001a`: `AUTOMATION-COLLECTOR#7`, squash `cb324b498b7e0f13324c7485a167c2999cac9683`, tuvo runs verdes `39192254745` y `39192308664`; `FRONTEND#11`, squash `a173c0816a104851561635831235c08d4bf8f4b7`, tuvo runs verdes `39192380140` y `39192566258`; `BACKEND#23`, squash `478d5cae56c73a28c88783e123b8e635d6c1ff12`, tuvo runs verdes `39192945194` y `39194236599`.
 - Evidencia remota de `OLA2-RSL-001a`: `AUTOMATION-COLLECTOR#8`, squash `bc508336af7c2082a2a36e20c1dd180d4507c169`, tuvo runs verdes `39254574671` de PR y `39254685186` post-merge.
@@ -89,9 +90,9 @@ Antes de proponer una acción o implementación:
 
 ## Regla de continuidad
 
-- No reabrir AC-JAXON-001..101 salvo contradicción documental real o instrucción expresa; el trabajo actual está delimitado por `AC-JAXON-102`.
+- No reabrir AC-JAXON-001..102 salvo contradicción documental real o instrucción expresa; el trabajo actual está delimitado por `AC-JAXON-103`.
 - `DESIGN_READY` != `IMPLEMENTATION_READY` != `PRODUCTION_READY`.
-- `IMPLEMENTATION_READY` se evalúa por alcance concreto; `OLA6-AUD-001j` está autorizado solo para los cuatro tipos del lifecycle AI 2.0 y entrega AI descritos por `AC-JAXON-102`.
+- `IMPLEMENTATION_READY` se evalúa por alcance concreto; `OLA6-RPT-001a` está autorizado solo para el backend Reporting descrito por `AC-JAXON-103`.
 - Decidido/documentado != implementado != verificado.
 - Los `POR_DECIDIR` restantes son deliberados y están ligados a Production, organización, evidencia o scope futuro; no rellenarlos artificialmente.
 - No asumir autorización de código, Git, GitHub, despliegues o infraestructura Production a partir de la aprobación de los Lotes 49--54 ni de la finalización de los incrementos backend/frontend ya verificados.

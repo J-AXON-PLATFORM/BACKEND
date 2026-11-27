@@ -64,6 +64,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V81_ROOT = Path.of("doc/contracts/openapi/8.1");
     private static final Path OPENAPI_V82_ROOT = Path.of("doc/contracts/openapi/8.2");
     private static final Path OPENAPI_V83_ROOT = Path.of("doc/contracts/openapi/8.3");
+    private static final Path OPENAPI_V84_ROOT = Path.of("doc/contracts/openapi/8.4");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DISCOVERY_SCHEMA_BASE =
             "https://schemas.j-axon.invalid/discovery/1.0/";
@@ -555,6 +556,50 @@ class ExecutableContractsTest {
                 "result", "correlationId", "metadata");
         assertThat(event.path("properties").size()).isEqualTo(15);
         assertThat(root.at("/components/schemas/AuditEventPage/additionalProperties").asBoolean()).isFalse();
+    }
+
+    @Test
+    void openApi84Preserves83AndAddsOnlyTheSixReportingOperations() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V84_ROOT.resolve("openapi.yaml").toString(), null, options);
+        OpenAPI api = result.getOpenAPI();
+        OpenAPI previous = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V83_ROOT.resolve("openapi.yaml").toString(), null, options)
+                .getOpenAPI();
+
+        assertThat(result.getMessages()).isEmpty();
+        assertThat(api).isNotNull();
+        assertThat(previous).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("8.4");
+        assertThat(api.getPaths().keySet())
+                .containsAll(previous.getPaths().keySet())
+                .hasSize(previous.getPaths().size() + 6)
+                .contains(
+                        "/reports/assets", "/reports/assets/export",
+                        "/reports/agents", "/reports/agents/export",
+                        "/reports/tickets", "/reports/tickets/export");
+
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_V84_ROOT.resolve("openapi.yaml").toFile());
+        assertThat(List.of(
+                        root.at("/paths/~1reports~1assets/get/operationId").asText(),
+                        root.at("/paths/~1reports~1assets~1export/get/operationId").asText(),
+                        root.at("/paths/~1reports~1agents/get/operationId").asText(),
+                        root.at("/paths/~1reports~1agents~1export/get/operationId").asText(),
+                        root.at("/paths/~1reports~1tickets/get/operationId").asText(),
+                        root.at("/paths/~1reports~1tickets~1export/get/operationId").asText()))
+                .containsExactly(
+                        "listAssetReport", "exportAssetReportCsv",
+                        "listAgentReport", "exportAgentReportCsv",
+                        "listTicketReport", "exportTicketReportCsv");
+        for (String schema : List.of("AssetReportPage", "AssetReportRow", "AgentReportPage",
+                "AgentReportRow", "TicketReportPage", "TicketReportRow")) {
+            assertThat(root.at("/components/schemas/" + schema + "/additionalProperties").asBoolean())
+                    .as(schema)
+                    .isFalse();
+        }
     }
 
     @Test

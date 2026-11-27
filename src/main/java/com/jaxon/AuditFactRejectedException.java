@@ -1,4 +1,4 @@
-package com.jaxon.audit_reporting;
+package com.jaxon;
 
 /** Raised when an audit fact violates the closed catalog or conflicts with a recorded event. */
 public final class AuditFactRejectedException extends RuntimeException {

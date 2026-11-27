@@ -1,4 +1,4 @@
-package com.jaxon.audit_reporting;
+package com.jaxon;
 
 public enum AuditRecordOutcome {
     RECORDED,

@@ -40,6 +40,8 @@ Reglas Lote 53:
 
 `OLA6-AUD-001j` versiona juntos a 2.0 solo futuras emisiones de `AI_SOURCE_REGISTERED`, `AI_SOURCE_INDEXING_REQUESTED`, `AI_SOURCE_INDEXED` y `AI_SOURCE_INDEXING_FAILED`. Los dos primeros conservan actor humano; los terminales usan `SYSTEM` sin actor y correlación humana original. Payload/metadata contienen únicamente `status`; los cuatro 1.0 y `AI_SOURCE_DISABLED` 1.0 permanecen intactos.
 
+`OLA6-RPT-001a` incorpora `REPORT_EXPORTED` 1.0 producido y consumido dentro de `AUDIT_REPORTING`: actor `HUMAN_USER`, recurso `REPORT_EXPORT`, `resourceId=sourceEventId`, resultado `SUCCESS`, versión nula y metadata exacta `format=CSV`, `reportType=ASSETS|AGENTS|TICKETS`, `rowCount=0..10000`. Se confirma antes del `200` y no usa outbox.
+
 ## Propósito
 
 Definir logging útil para diagnóstico, auditoría técnica y correlación.

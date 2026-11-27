@@ -57,6 +57,25 @@ class AuditOwnershipTest {
                 Path.of("src/main/java/com/jaxon/ai/AiAuditDeliveryPersistence.java"),
                 Pattern.compile(
                         "\\b(inventory|discovery|collector|support|identity|automation|audit_reporting)\\.[a-z_]+",
+                Pattern.CASE_INSENSITIVE));
+    }
+
+    @Test
+    void reportQueriesReferenceOnlyTheirOwnerSchema() throws IOException {
+        assertNoForeignSchema(
+                Path.of("src/main/java/com/jaxon/inventory/JdbcAssetReportQuery.java"),
+                Pattern.compile(
+                        "\\b(discovery|collector|support|ai|identity|automation|audit_reporting)\\.[a-z_]+",
+                        Pattern.CASE_INSENSITIVE));
+        assertNoForeignSchema(
+                Path.of("src/main/java/com/jaxon/collector/JdbcAgentReportQuery.java"),
+                Pattern.compile(
+                        "\\b(inventory|discovery|support|ai|identity|automation|audit_reporting)\\.[a-z_]+",
+                        Pattern.CASE_INSENSITIVE));
+        assertNoForeignSchema(
+                Path.of("src/main/java/com/jaxon/support/JdbcTicketReportQuery.java"),
+                Pattern.compile(
+                        "\\b(inventory|discovery|collector|ai|identity|automation|audit_reporting)\\.[a-z_]+",
                         Pattern.CASE_INSENSITIVE));
     }
 

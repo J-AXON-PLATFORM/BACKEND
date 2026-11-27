@@ -35,6 +35,7 @@ Definir dominios, ownership, almacenamiento, movimiento y ciclo de vida.
 - En `OLA6-AUD-001h`, esa infraestructura incluye dos hechos futuros 2.0 de revisión humana. Dispositivo y evento se confirman atómicamente; la incorporación con activo nuevo conserva también activo + `ASSET_CREATED` 2.0 mediante la operación pública Inventory dentro de la misma transacción. No-ops, conflictos, activos inválidos y rollbacks no emiten; 1.0 permanece byte a byte y sin claim.
 - En `OLA6-AUD-001i`, Support posee `support.outbox_deliveries` y su dispatcher para ocho hechos futuros 2.0 de Ticket. Cada mutación y evento se confirma atómicamente; Audit recibe solo `AuditFactRecorder`, sin SQL cross-module. Rechazos, no-ops y rollbacks no emiten; 1.0 permanece byte a byte y sin claim.
 - En `OLA6-AUD-001j`, AI reutiliza `ai.outbox_deliveries` y su dispatcher para cuatro hechos futuros 2.0 del lifecycle de fuentes, además del disabled 1.0 ya auditable. Terminales usan actor `SYSTEM` nulo y correlación humana original; 1.0 histórico permanece byte a byte y sin nuevo claim.
+- En `OLA6-RPT-001a`, cada provider Reporting consulta exclusivamente su schema owner y no persiste proyecciones. `REPORT_EXPORTED` se inserta directamente en `audit_reporting.audit_events` antes del éxito HTTP porque productor y consumidor son el mismo módulo; no existe outbox ni almacenamiento CSV adicional.
 
 ## Consistencia
 

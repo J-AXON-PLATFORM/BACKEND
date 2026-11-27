@@ -720,6 +720,22 @@ Se autorizan exactamente `V20261130110000__ai_source_lifecycle_audit_events.sql`
 
 OpenAPI 8.3, contratos Agent/Discovery, endpoints, generación/RAG, retrieval/embeddings, reindexación, purga, reportes, otros módulos, `frontend`, `automation-collector`, dependencias, lockfiles, workflows, contenedores, `main`, Production y despliegues permanecen fuera. A la fecha de este registro `OLA6-AUD-001j` está `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local; no está integrado ni verificado remotamente. `PRODUCTION_READY = NO`.
 
+El cierre real quedó verificado mediante `BACKEND#70`, squash `abafd2accecdbf6d232a5e435e5a529819e5e7a4`, y runs verdes `45952762447` de PR y `45953995149` post-merge, ambos `APPLICATION` y `run_attempt=1`. La rama fue eliminada; `OLA6-AUD-001j` está implementado, integrado y verificado y `AC-JAXON-102` está consumido y cerrado.
+
+## AC-JAXON-103 -- Arquitectura y primer incremento de Reporting v1
+
+LUIS aprueba `OLA6-RPT-001a` exclusivamente en `backend`. `audit_reporting` posee los seis endpoints JSON/CSV, validación, composición, formato CSV y captura síncrona de `REPORT_EXPORTED`; `inventory`, `collector` y `support` conservan ownership y exponen contratos públicos read-only cerrados. Quedan prohibidos SQL, repositories, entidades o internals cross-module.
+
+Para eliminar ciclos sin crear un noveno módulo, `AuditFactRecorder`, `AuditFact`, `AuditRecordOutcome` y `AuditFactRejectedException` se relocalizan mecánicamente a la raíz neutral `com.jaxon`. `JdbcAuditFactRecorder`, catálogo, persistencia y ownership permanecen en `audit_reporting`; no cambian semántica, transacciones, idempotencia, retries, outboxes, dispatchers, schedulers ni eventos ya integrados. Spring Modulith debe conservar exactamente ocho módulos y cero ciclos.
+
+Se autorizan `GET /api/v1/reports/{assets|agents|tickets}` y sus tres recursos `/export`. JSON usa página inicial 0, size default 50, máximo 200, rango `[createdFrom,createdTo)` y orden estable descendente por creación e ID. Assets filtra por estado, tipo y creación; Agents por estado administrativo, operativo, activo y creación; Tickets por tipo, estado, prioridad, requester, assignee, activo y creación. `AUDITOR` accede a los tres; `IT_OPERATOR` a Assets/Agents; `SUPPORT_TECHNICIAN` al reporte agregado completo de Tickets; `SYSTEM_ADMIN` no obtiene acceso implícito.
+
+CSV se genera completo en memoria, UTF-8 sin BOM, CRLF, quoting total, cabecera estable, null como celda vacía y protección ante CSV injection. Los límites son 10.000 filas y 10 MiB; el exceso devuelve `422 REPORT_EXPORT_LIMIT_EXCEEDED`, sin body parcial ni hecho de éxito. Cada CSV exitoso confirma antes del `200` exactamente un `REPORT_EXPORTED` 1.0 durable, con productor `AUDIT_REPORTING`, actor humano, recurso `REPORT_EXPORT`, UUIDv4 nuevo y metadata cerrada `format|reportType|rowCount`. No se almacenan filtros, IDs de filas ni bytes.
+
+Se autoriza OpenAPI 8.4 compatible, manteniendo 1.0--8.3 byte a byte, y exactamente `V20261201000000__audit_report_export_catalog.sql`, append-only sobre `audit_reporting`. No se autorizan tablas/proyecciones de reporting, índices preventivos, outbox, dispatcher, scheduler, archivos persistidos, streaming parcial, workflows, dependencias, lockfiles, Docker/Compose/SFTPGo, `frontend`, `automation-collector`, `main`, Production o despliegues.
+
+La ejecución queda limitada a `feature/ola6-rpt-001a`, un único push y un único Pull Request `BACKEND` hacia `develop`, squash solo con CI verde, verificación post-merge, eliminación de ramas y reporte final externo posterior. El mismo PR sincroniza retrospectivamente el cierre real de `OLA6-AUD-001j`. Clasificación esperada `APPLICATION`, salvo fallback fail-closed más estricto. A la fecha de este registro `OLA6-RPT-001a` está autorizado y en implementación local; todavía no está integrado ni verificado remotamente. `PRODUCTION_READY = NO`.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)

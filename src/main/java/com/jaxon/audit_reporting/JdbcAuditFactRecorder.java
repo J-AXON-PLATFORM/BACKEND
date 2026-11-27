@@ -1,5 +1,10 @@
 package com.jaxon.audit_reporting;
 
+import com.jaxon.AuditFact;
+import com.jaxon.AuditFactRecorder;
+import com.jaxon.AuditFactRejectedException;
+import com.jaxon.AuditRecordOutcome;
+
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;

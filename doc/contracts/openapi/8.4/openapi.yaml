@@ -1,0 +1,334 @@
+openapi: 3.1.2
+info:
+  title: J-AXON API
+  version: "8.4"
+  description: >-
+    Versión compatible que conserva las operaciones de OpenAPI 8.3 y añade únicamente los
+    reportes paginados y exportaciones CSV bajo demanda de Assets, Agents y Tickets.
+servers:
+  - url: /api/v1
+tags:
+  - { name: Authentication }
+  - { name: Identity }
+  - { name: Assets }
+  - { name: Agents }
+  - { name: Support }
+  - { name: Discovery }
+  - { name: AI }
+  - name: Audit
+  - name: Reporting
+paths:
+  /auth/login: { $ref: "../8.2/openapi.yaml#/paths/~1auth~1login" }
+  /auth/me: { $ref: "../8.2/openapi.yaml#/paths/~1auth~1me" }
+  /auth/logout: { $ref: "../8.2/openapi.yaml#/paths/~1auth~1logout" }
+  /users: { $ref: "../8.2/openapi.yaml#/paths/~1users" }
+  /assets: { $ref: "../8.2/openapi.yaml#/paths/~1assets" }
+  /assets/{assetId}: { $ref: "../8.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D" }
+  /assets/{assetId}/technical-state: { $ref: "../8.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state" }
+  /assets/{assetId}/technical-state/events: { $ref: "../8.2/openapi.yaml#/paths/~1assets~1%7BassetId%7D~1technical-state~1events" }
+  /agents: { $ref: "../8.2/openapi.yaml#/paths/~1agents" }
+  /agents/{agentId}: { $ref: "../8.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D" }
+  /agents/{agentId}/ssh-key: { $ref: "../8.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1ssh-key" }
+  /agents/{agentId}/activate: { $ref: "../8.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1activate" }
+  /agents/{agentId}/tasks: { $ref: "../8.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks" }
+  /agents/{agentId}/tasks/{taskId}: { $ref: "../8.2/openapi.yaml#/paths/~1agents~1%7BagentId%7D~1tasks~1%7BtaskId%7D" }
+  /tickets: { $ref: "../8.2/openapi.yaml#/paths/~1tickets" }
+  /tickets/technician-queue: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1technician-queue" }
+  /tickets/technician-queue/{ticketId}: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D" }
+  /tickets/technician-queue/{ticketId}/comments: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1comments" }
+  /tickets/technician-queue/{ticketId}/conversation: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1conversation" }
+  /tickets/technician-queue/{ticketId}/lifecycle: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1technician-queue~1%7BticketId%7D~1lifecycle" }
+  /tickets/{ticketId}: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D" }
+  /tickets/{ticketId}/comments: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1comments" }
+  /tickets/{ticketId}/claim: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1claim" }
+  /tickets/{ticketId}/priority: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1priority" }
+  /tickets/{ticketId}/status: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1status" }
+  /tickets/{ticketId}/resolve: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1resolve" }
+  /tickets/{ticketId}/close: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1close" }
+  /tickets/{ticketId}/reopen: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1reopen" }
+  /tickets/{ticketId}/lifecycle: { $ref: "../8.2/openapi.yaml#/paths/~1tickets~1%7BticketId%7D~1lifecycle" }
+  /discovery/scopes: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1scopes" }
+  /discovery/scopes/{scopeId}: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D" }
+  /discovery/scopes/{scopeId}/status: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1scopes~1%7BscopeId%7D~1status" }
+  /discovery/executors: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1executors" }
+  /discovery/executors/{executorId}: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D" }
+  /discovery/executors/{executorId}/ssh-key: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1ssh-key" }
+  /discovery/executors/{executorId}/activate: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1executors~1%7BexecutorId%7D~1activate" }
+  /discovery/jobs: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1jobs" }
+  /discovery/jobs/{jobId}: { $ref: "../8.2/openapi.yaml#/paths/~1discovery~1jobs~1%7BjobId%7D" }
+  /discovery-jobs/{jobId}/discovered-devices: { $ref: "../8.2/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/ignore: { $ref: "../8.2/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices~1%7BdiscoveredDeviceId%7D~1ignore" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate: { $ref: "../8.2/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices~1%7BdiscoveredDeviceId%7D~1incorporate" }
+  /discovery-jobs/{jobId}/discovered-devices/{discoveredDeviceId}/incorporate-new-asset: { $ref: "../8.2/openapi.yaml#/paths/~1discovery-jobs~1%7BjobId%7D~1discovered-devices~1%7BdiscoveredDeviceId%7D~1incorporate-new-asset" }
+  /ai/sources: { $ref: "../8.2/openapi.yaml#/paths/~1ai~1sources" }
+  /ai/sources/{sourceId}: { $ref: "../8.2/openapi.yaml#/paths/~1ai~1sources~1%7BsourceId%7D" }
+  /ai/sources/{sourceId}/index: { $ref: "../8.2/openapi.yaml#/paths/~1ai~1sources~1%7BsourceId%7D~1index" }
+  /ai/retrieval: { $ref: "../8.2/openapi.yaml#/paths/~1ai~1retrieval" }
+  /ai/sources/{sourceId}/disable: { $ref: "../8.2/openapi.yaml#/paths/~1ai~1sources~1%7BsourceId%7D~1disable" }
+  /audit/events:
+    get:
+      tags: [Audit]
+      operationId: listAuditEvents
+      summary: Consulta paginada de eventos de auditoría
+      description: >-
+        Operación exclusiva de AUDITOR; SYSTEM_ADMIN no obtiene acceso sin ese rol. Devuelve eventos
+        append-only materializados en audit_reporting, ordenados por occurredAt descendente y
+        auditEventId descendente. Todos los filtros son opcionales y se combinan con AND; from/to
+        delimitan occurredAt en el intervalo [from, to). Parámetros desconocidos, repetidos o
+        inválidos devuelven 422 sin reflejar la entrada.
+      parameters:
+        - { name: from, in: query, required: false, schema: { type: string, format: date-time } }
+        - { name: to, in: query, required: false, schema: { type: string, format: date-time } }
+        - { name: module, in: query, required: false, schema: { type: string, enum: [INVENTORY, DISCOVERY, COLLECTOR, SUPPORT, AI, IDENTITY, AUTOMATION, AUDIT_REPORTING] } }
+        - { name: eventType, in: query, required: false, schema: { type: string, pattern: "^[A-Z][A-Z0-9_]{2,63}$" } }
+        - { name: actorId, in: query, required: false, schema: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" } }
+        - { name: resourceType, in: query, required: false, schema: { type: string, pattern: "^[A-Z][A-Z0-9_]{2,63}$" } }
+        - { name: resourceId, in: query, required: false, schema: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" } }
+        - { name: result, in: query, required: false, schema: { type: string, enum: [SUCCESS, DENIED, FAILED] } }
+        - { name: correlationId, in: query, required: false, schema: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" } }
+        - { name: page, in: query, required: false, schema: { type: integer, minimum: 0, maximum: 1000000, default: 0 } }
+        - { name: size, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+      responses:
+        "200":
+          description: Página de eventos de auditoría
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuditEventPage" }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /reports/assets:
+    get:
+      tags: [Reporting]
+      operationId: listAssetReport
+      summary: Consulta paginada del reporte de Assets
+      description: Operación para AUDITOR o IT_OPERATOR; orden createdAt DESC, assetId DESC.
+      parameters:
+        - { name: status, in: query, required: false, schema: { type: string, enum: [ACTIVE, INACTIVE] } }
+        - { name: assetType, in: query, required: false, schema: { type: string, pattern: "^[A-Z][A-Z0-9_]{0,63}$" } }
+        - { $ref: "#/components/parameters/CreatedFrom" }
+        - { $ref: "#/components/parameters/CreatedTo" }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200": { description: Página del reporte, content: { application/json: { schema: { $ref: "#/components/schemas/AssetReportPage" } } } }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ReportUnavailable" }
+  /reports/assets/export:
+    get:
+      tags: [Reporting]
+      operationId: exportAssetReportCsv
+      summary: Exporta el reporte de Assets como CSV
+      parameters:
+        - { name: status, in: query, required: false, schema: { type: string, enum: [ACTIVE, INACTIVE] } }
+        - { name: assetType, in: query, required: false, schema: { type: string, pattern: "^[A-Z][A-Z0-9_]{0,63}$" } }
+        - { $ref: "#/components/parameters/CreatedFrom" }
+        - { $ref: "#/components/parameters/CreatedTo" }
+      responses: { "200": { $ref: "#/components/responses/AssetCsv" }, "401": { $ref: "#/components/responses/AuthenticationRequired" }, "403": { $ref: "#/components/responses/Forbidden" }, "422": { $ref: "#/components/responses/ValidationFailed" }, "500": { $ref: "#/components/responses/InternalError" }, "503": { $ref: "#/components/responses/ReportUnavailable" } }
+  /reports/agents:
+    get:
+      tags: [Reporting]
+      operationId: listAgentReport
+      summary: Consulta paginada del reporte de Agents
+      description: Operación para AUDITOR o IT_OPERATOR; orden createdAt DESC, agentId DESC.
+      parameters:
+        - { name: status, in: query, required: false, schema: { type: string, enum: [PENDING, ACTIVE] } }
+        - { name: operationalStatus, in: query, required: false, schema: { type: string, enum: [UNKNOWN, ONLINE, OFFLINE] } }
+        - { name: assetId, in: query, required: false, schema: { $ref: "#/components/schemas/UuidV4" } }
+        - { $ref: "#/components/parameters/CreatedFrom" }
+        - { $ref: "#/components/parameters/CreatedTo" }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200": { description: Página del reporte, content: { application/json: { schema: { $ref: "#/components/schemas/AgentReportPage" } } } }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ReportUnavailable" }
+  /reports/agents/export:
+    get:
+      tags: [Reporting]
+      operationId: exportAgentReportCsv
+      summary: Exporta el reporte de Agents como CSV
+      parameters:
+        - { name: status, in: query, required: false, schema: { type: string, enum: [PENDING, ACTIVE] } }
+        - { name: operationalStatus, in: query, required: false, schema: { type: string, enum: [UNKNOWN, ONLINE, OFFLINE] } }
+        - { name: assetId, in: query, required: false, schema: { $ref: "#/components/schemas/UuidV4" } }
+        - { $ref: "#/components/parameters/CreatedFrom" }
+        - { $ref: "#/components/parameters/CreatedTo" }
+      responses: { "200": { $ref: "#/components/responses/AgentCsv" }, "401": { $ref: "#/components/responses/AuthenticationRequired" }, "403": { $ref: "#/components/responses/Forbidden" }, "422": { $ref: "#/components/responses/ValidationFailed" }, "500": { $ref: "#/components/responses/InternalError" }, "503": { $ref: "#/components/responses/ReportUnavailable" } }
+  /reports/tickets:
+    get:
+      tags: [Reporting]
+      operationId: listTicketReport
+      summary: Consulta paginada del reporte agregado de Tickets
+      description: Operación para AUDITOR o SUPPORT_TECHNICIAN; orden createdAt DESC, ticketId DESC.
+      parameters:
+        - { name: type, in: query, required: false, schema: { type: string, enum: [INCIDENT, SERVICE_REQUEST, QUESTION, OTHER] } }
+        - { name: status, in: query, required: false, schema: { type: string, enum: [OPEN, IN_PROGRESS, WAITING_FOR_REQUESTER, RESOLVED, CLOSED] } }
+        - { name: priority, in: query, required: false, schema: { type: string, enum: [LOW, NORMAL, HIGH, URGENT] } }
+        - { name: requesterUserId, in: query, required: false, schema: { $ref: "#/components/schemas/UuidV4" } }
+        - { name: assigneeUserId, in: query, required: false, schema: { $ref: "#/components/schemas/UuidV4" } }
+        - { name: assetId, in: query, required: false, schema: { $ref: "#/components/schemas/UuidV4" } }
+        - { $ref: "#/components/parameters/CreatedFrom" }
+        - { $ref: "#/components/parameters/CreatedTo" }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200": { description: Página del reporte, content: { application/json: { schema: { $ref: "#/components/schemas/TicketReportPage" } } } }
+        "401": { $ref: "#/components/responses/AuthenticationRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationFailed" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ReportUnavailable" }
+  /reports/tickets/export:
+    get:
+      tags: [Reporting]
+      operationId: exportTicketReportCsv
+      summary: Exporta el reporte agregado de Tickets como CSV
+      parameters:
+        - { name: type, in: query, required: false, schema: { type: string, enum: [INCIDENT, SERVICE_REQUEST, QUESTION, OTHER] } }
+        - { name: status, in: query, required: false, schema: { type: string, enum: [OPEN, IN_PROGRESS, WAITING_FOR_REQUESTER, RESOLVED, CLOSED] } }
+        - { name: priority, in: query, required: false, schema: { type: string, enum: [LOW, NORMAL, HIGH, URGENT] } }
+        - { name: requesterUserId, in: query, required: false, schema: { $ref: "#/components/schemas/UuidV4" } }
+        - { name: assigneeUserId, in: query, required: false, schema: { $ref: "#/components/schemas/UuidV4" } }
+        - { name: assetId, in: query, required: false, schema: { $ref: "#/components/schemas/UuidV4" } }
+        - { $ref: "#/components/parameters/CreatedFrom" }
+        - { $ref: "#/components/parameters/CreatedTo" }
+      responses: { "200": { $ref: "#/components/responses/TicketCsv" }, "401": { $ref: "#/components/responses/AuthenticationRequired" }, "403": { $ref: "#/components/responses/Forbidden" }, "422": { $ref: "#/components/responses/ValidationFailed" }, "500": { $ref: "#/components/responses/InternalError" }, "503": { $ref: "#/components/responses/ReportUnavailable" } }
+components:
+  securitySchemes:
+    SessionCookie: { $ref: "../8.1/openapi.yaml#/components/securitySchemes/SessionCookie" }
+  parameters:
+    CreatedFrom: { name: createdFrom, in: query, required: false, schema: { type: string, format: date-time } }
+    CreatedTo: { name: createdTo, in: query, required: false, schema: { type: string, format: date-time } }
+    Page: { name: page, in: query, required: false, schema: { type: integer, minimum: 0, maximum: 1000000, default: 0 } }
+    Size: { name: size, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+  schemas:
+    UuidV4: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" }
+    AssetReportPage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties: { items: { type: array, maxItems: 200, items: { $ref: "#/components/schemas/AssetReportRow" } }, page: { type: integer, minimum: 0 }, size: { type: integer, minimum: 1, maximum: 200 }, totalElements: { type: integer, minimum: 0 }, totalPages: { type: integer, minimum: 0 } }
+      additionalProperties: false
+    AssetReportRow:
+      type: object
+      required: [assetId, name, assetType, status, createdAt, updatedAt]
+      properties: { assetId: { $ref: "#/components/schemas/UuidV4" }, name: { type: string, minLength: 1, maxLength: 256 }, assetType: { type: string, pattern: "^[A-Z][A-Z0-9_]{0,63}$" }, status: { type: string, enum: [ACTIVE, INACTIVE] }, createdAt: { type: string, format: date-time }, updatedAt: { type: string, format: date-time } }
+      additionalProperties: false
+    AgentReportPage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties: { items: { type: array, maxItems: 200, items: { $ref: "#/components/schemas/AgentReportRow" } }, page: { type: integer, minimum: 0 }, size: { type: integer, minimum: 1, maximum: 200 }, totalElements: { type: integer, minimum: 0 }, totalPages: { type: integer, minimum: 0 } }
+      additionalProperties: false
+    AgentReportRow:
+      type: object
+      required: [agentId, assetId, status, operationalStatus, lastSeenAt, lastSnapshotAt, createdAt, updatedAt]
+      properties:
+        agentId: { $ref: "#/components/schemas/UuidV4" }
+        assetId: { $ref: "#/components/schemas/UuidV4" }
+        status: { type: string, enum: [PENDING, ACTIVE] }
+        operationalStatus: { type: string, enum: [UNKNOWN, ONLINE, OFFLINE] }
+        lastSeenAt: { oneOf: [{ type: string, format: date-time }, { type: "null" }] }
+        lastSnapshotAt: { oneOf: [{ type: string, format: date-time }, { type: "null" }] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      additionalProperties: false
+    TicketReportPage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties: { items: { type: array, maxItems: 200, items: { $ref: "#/components/schemas/TicketReportRow" } }, page: { type: integer, minimum: 0 }, size: { type: integer, minimum: 1, maximum: 200 }, totalElements: { type: integer, minimum: 0 }, totalPages: { type: integer, minimum: 0 } }
+      additionalProperties: false
+    TicketReportRow:
+      type: object
+      required: [ticketId, type, summary, status, priority, source, requesterUserId, createdByUserId, assigneeUserId, assetId, createdAt, updatedAt]
+      properties:
+        ticketId: { $ref: "#/components/schemas/UuidV4" }
+        type: { type: string, enum: [INCIDENT, SERVICE_REQUEST, QUESTION, OTHER] }
+        summary: { type: string, minLength: 1, maxLength: 256 }
+        status: { type: string, enum: [OPEN, IN_PROGRESS, WAITING_FOR_REQUESTER, RESOLVED, CLOSED] }
+        priority: { type: string, enum: [LOW, NORMAL, HIGH, URGENT] }
+        source: { type: string, enum: [WEB] }
+        requesterUserId: { $ref: "#/components/schemas/UuidV4" }
+        createdByUserId: { $ref: "#/components/schemas/UuidV4" }
+        assigneeUserId: { oneOf: [{ $ref: "#/components/schemas/UuidV4" }, { type: "null" }] }
+        assetId: { oneOf: [{ $ref: "#/components/schemas/UuidV4" }, { type: "null" }] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      additionalProperties: false
+    AuditEventPage:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
+        items:
+          type: array
+          maxItems: 200
+          items: { $ref: "#/components/schemas/AuditEvent" }
+        page: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 200 }
+        totalElements: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+      additionalProperties: false
+    AuditEvent:
+      type: object
+      required: [auditEventId, sourceEventId, eventType, eventVersion, producerModule, occurredAt,
+                 recordedAt, actorType, actorId, resourceType, resourceId, resourceVersion, result,
+                 correlationId, metadata]
+      properties:
+        auditEventId: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" }
+        sourceEventId: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" }
+        eventType: { type: string, pattern: "^[A-Z][A-Z0-9_]{2,63}$" }
+        eventVersion: { type: string, pattern: "^[0-9]+\\.[0-9]+$" }
+        producerModule: { type: string, enum: [INVENTORY, DISCOVERY, COLLECTOR, SUPPORT, AI, IDENTITY, AUTOMATION, AUDIT_REPORTING] }
+        occurredAt: { type: string, format: date-time }
+        recordedAt: { type: string, format: date-time }
+        actorType: { type: string, enum: [HUMAN_USER, SYSTEM, AGENT, DISCOVERY_EXECUTOR, AUTOMATION] }
+        actorId:
+          oneOf:
+            - { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" }
+            - { type: "null" }
+        resourceType: { type: string, pattern: "^[A-Z][A-Z0-9_]{2,63}$" }
+        resourceId: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" }
+        resourceVersion:
+          oneOf:
+            - { type: integer, minimum: 0 }
+            - { type: "null" }
+        result: { type: string, enum: [SUCCESS, DENIED, FAILED] }
+        correlationId: { type: string, format: uuid, pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" }
+        metadata:
+          type: object
+          description: Metadata pequeña y allowlisted por eventType; nunca secretos ni contenido.
+          maxProperties: 16
+          additionalProperties: { type: string, maxLength: 256 }
+      additionalProperties: false
+  responses:
+    AssetCsv:
+      description: CSV UTF-8 completo; máximo 10000 filas y 10 MiB
+      headers: { Content-Disposition: { schema: { type: string }, example: 'attachment; filename="assets-report.csv"' } }
+      content: { 'text/csv; charset=UTF-8': { schema: { type: string } } }
+    AgentCsv:
+      description: CSV UTF-8 completo; máximo 10000 filas y 10 MiB
+      headers: { Content-Disposition: { schema: { type: string }, example: 'attachment; filename="agents-report.csv"' } }
+      content: { 'text/csv; charset=UTF-8': { schema: { type: string } } }
+    TicketCsv:
+      description: CSV UTF-8 completo; máximo 10000 filas y 10 MiB
+      headers: { Content-Disposition: { schema: { type: string }, example: 'attachment; filename="tickets-report.csv"' } }
+      content: { 'text/csv; charset=UTF-8': { schema: { type: string } } }
+    ReportUnavailable:
+      description: Proveedor o persistencia de Reporting no disponible; code REPORT_UNAVAILABLE
+      content:
+        application/problem+json:
+          schema: { $ref: "../1.1/openapi.yaml#/components/schemas/Problem" }
+    AuthenticationRequired: { $ref: "../8.1/openapi.yaml#/components/responses/AuthenticationRequired" }
+    Forbidden: { $ref: "../8.1/openapi.yaml#/components/responses/Forbidden" }
+    ValidationFailed: { $ref: "../8.1/openapi.yaml#/components/responses/ValidationFailed" }
+    InternalError: { $ref: "../8.1/openapi.yaml#/components/responses/InternalError" }
+    ServiceUnavailable: { $ref: "../8.1/openapi.yaml#/components/responses/ServiceUnavailable" }
+security:
+  - SessionCookie: []
