@@ -736,6 +736,20 @@ Se autoriza OpenAPI 8.4 compatible, manteniendo 1.0--8.3 byte a byte, y exactame
 
 La ejecución queda limitada a `feature/ola6-rpt-001a`, un único push y un único Pull Request `BACKEND` hacia `develop`, squash solo con CI verde, verificación post-merge, eliminación de ramas y reporte final externo posterior. El mismo PR sincroniza retrospectivamente el cierre real de `OLA6-AUD-001j`. Clasificación esperada `APPLICATION`, salvo fallback fail-closed más estricto. A la fecha de este registro `OLA6-RPT-001a` está autorizado y en implementación local; todavía no está integrado ni verificado remotamente. `PRODUCTION_READY = NO`.
 
+## AC-JAXON-104 -- Workspace frontend y cierre de Reporting v1
+
+LUIS aprueba `OLA6-RPT-001b` exclusivamente en `frontend`, consumiendo sin cambios los seis endpoints de OpenAPI 8.4. Existe un único workspace para Assets, Agents y Tickets con parsers estrictos, filtros cerrados, paginación, URL compartible mediante parámetros prefijados, caché TanStack Query segmentada por usuario/reporte/filtros y estados accesibles de carga, vacío, error y resultados.
+
+La navegación y las consultas respetan la unión exacta de roles: `AUDITOR` accede a los tres reportes; `IT_OPERATOR` a Assets/Agents; `SUPPORT_TECHNICIAN` a Tickets; `SYSTEM_ADMIN` no obtiene acceso implícito. Ocultar navegación no sustituye la autorización backend. Los problemas RFC 9457 distinguen autenticación, autorización, validación, límite de exportación, indisponibilidad y error general.
+
+CSV reutiliza exactamente los filtros JSON sin `page|size`, no reintenta, bloquea descargas duplicadas, conserva el `Blob` sin leer o transformar bytes, usa nombres estáticos y revoca siempre el object URL. Valida `Content-Type`; valida `Content-Disposition` cuando CORS lo expone y falla si difiere. El header puede no ser visible porque el backend vigente solo expone `X-Correlation-ID`; ello no habilita nombres dinámicos ni relaja el contrato estático.
+
+La verificación exige Vitest/RTL y E2E Chromium multirepo real contra backend/PostgreSQL, incluyendo roles, URL/filtros, paridad JSON/CSV, descarga y evidencia `REPORT_EXPORTED`. Las aserciones históricas del journey se sincronizan con los productores outbox 2.0 ya vigentes sin cambiar backend.
+
+La ejecución queda limitada a `feature/ola6-rpt-001b`, un único push y `FRONTEND#36` hacia `develop`, squash solo con CI verde, verificación post-merge y eliminación de rama. El cierre documental posterior queda limitado a `docs/ola6-rpt-001b-closure`, un único push y un único Pull Request `BACKEND` `DOCS_ONLY`, sin cambios funcionales. Dependencias, lockfiles, workflows, backend funcional, OpenAPI, migraciones, `automation-collector`, Docker/Compose/SFTPGo, SSE/polling y Production quedan fuera.
+
+La autorización funcional fue consumida: `BACKEND#71`, squash `609dc8d79ba269223cfbf1c181e2edc571934f69`, tuvo runs verdes `46026385315`/`46027850765`; `FRONTEND#36`, squash `3901ca74c9dad4d0084cabcea29b7b548df6f89e`, tuvo runs verdes `46066833059`/`46067103819`. Todos clasificaron `APPLICATION`, finalizaron en `run_attempt=1` y las ramas remotas fueron eliminadas. No existe autorización implícita para el siguiente incremento. `PRODUCTION_READY = NO`.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)
