@@ -154,6 +154,7 @@
 - **Corte ejecutable OLA6-AUD-001e:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para futuros `ASSET_CREATED`, `AGENT_PRE_REGISTERED` y `AGENT_ACTIVATED` 2.0, con versiones `0|0|1`, metadata `{}` y entregas propietarias Inventory/Collector. Excluye otros eventos, backfill, OpenAPI y frontend.
 - **Corte ejecutable OLA6-AUD-001f:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para futuros `DISCOVERY_SCOPE_CREATED`, `DISCOVERY_SCOPE_STATUS_CHANGED`, `DISCOVERY_EXECUTOR_PRE_REGISTERED` y `DISCOVERY_EXECUTOR_ACTIVATED` 2.0, con versiones y metadata cerradas y entrega propietaria Discovery. Excluye otros eventos, backfill, OpenAPI y frontend.
 - **Corte ejecutable OLA6-AUD-001g:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para futuros `DISCOVERY_JOB_CREATED`, `DISCOVERY_JOB_DISPATCHED` y `DISCOVERY_JOB_COMPLETED` 2.0, con actor, versión, resultado y metadata cerrados y entrega Discovery existente. Excluye otros eventos, backfill, OpenAPI, contratos Job/Result y frontend.
+- **Corte ejecutable OLA6-AUD-001h:** amplía `RF-AUD-001`, `RF-AUD-002` y `RF-AUD-003` solo para futuros `DISCOVERED_DEVICE_IGNORED` y `DISCOVERED_DEVICE_INCORPORATED` 2.0, con actor humano, versión `1`, `SUCCESS`, correlación original y metadata cerrada; cubre vínculo a activo existente y creación mediante operación pública Inventory. Excluye otros eventos, backfill, OpenAPI, endpoints y otros repositorios.
 
 ## Requisitos transversales
 

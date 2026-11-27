@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.LongUnaryOperator;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,8 @@ class DiscoveryAuditDispatcher {
             "DISCOVERY_JOB_DISPATCHED",
             "DISCOVERY_JOB_COMPLETED");
     private static final Set<String> SCOPE_STATUSES = Set.of("ACTIVE", "DISABLED");
+    private static final Pattern UUID_V4 = Pattern.compile(
+            "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$");
 
     private final DiscoveryAuditDeliveryPersistence persistence;
     private final AuditFactRecorder recorder;
@@ -173,6 +176,20 @@ class DiscoveryAuditDispatcher {
                     && SCOPE_STATUSES.contains(metadata.get("previousStatus"))
                     && SCOPE_STATUSES.contains(metadata.get("newStatus"))
                     && !metadata.get("previousStatus").equals(metadata.get("newStatus"))) {
+                return metadata;
+            }
+            if ("DISCOVERED_DEVICE_IGNORED".equals(event.eventType())
+                    && metadata.equals(Map.of(
+                            "previousStatus", "UNREVIEWED",
+                            "newStatus", "IGNORED"))) {
+                return metadata;
+            }
+            if ("DISCOVERED_DEVICE_INCORPORATED".equals(event.eventType())
+                    && metadata.size() == 3
+                    && "UNREVIEWED".equals(metadata.get("previousStatus"))
+                    && "INCORPORATED".equals(metadata.get("newStatus"))
+                    && metadata.get("assetId") != null
+                    && UUID_V4.matcher(metadata.get("assetId")).matches()) {
                 return metadata;
             }
             throw new InvalidAuditPayloadException();

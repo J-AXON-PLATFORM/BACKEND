@@ -141,6 +141,8 @@ Mutación `AUDIT_REQUIRED` -> cambio de negocio + captura durable `AuditFact` ->
 
 `OLA6-AUD-001g` amplía la misma entrega al lifecycle de Discovery Jobs: creación y despacho efectivo emiten 2.0 con actor/correlación humanos originales; la aceptación terminal confirma atómicamente Job y completion 2.0 con actor executor y resultado `SUCCESS|FAILED`. Duplicados, conflictos, rechazos, finales tardíos, reprocesamientos y todo 1.0 permanecen silenciosos para Audit.
 
+`OLA6-AUD-001h` amplía la misma entrega a la revisión humana de dispositivos: ignore e incorporación efectivos confirman dispositivo + evento 2.0; el camino de activo nuevo conserva además `ASSET_CREATED` 2.0 de Inventory en la misma transacción pública. No-ops, conflictos, activos inválidos, concurrencia perdedora, rollbacks y todo 1.0 permanecen silenciosos para Audit.
+
 ### FL-AUT-001 / eventos internos
 
 Command/query entre módulos -> API pública in-process. Hecho durable -> outbox del productor -> consumidores idempotentes `at-least-once`. Automation solo procesa eventos elegibles y cualquier mutación vuelve al contrato del módulo dueño. n8n no consume el bus interno directamente. SSE es adaptación best-effort y REST conserva verdad.

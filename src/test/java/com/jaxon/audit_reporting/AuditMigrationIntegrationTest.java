@@ -334,18 +334,40 @@ class AuditMigrationIntegrationTest {
                 2,
                 "SUCCESS",
                 "{\"status\":\"SUCCEEDED\",\"observationsFound\":1}");
-        String historicalJobSql =
+        UUID historicalIgnored = insertHistoricalDiscoveryEvent(
+                jdbc,
+                "DISCOVERED_DEVICE_IGNORED",
+                "HUMAN_USER",
+                "DISCOVERED_DEVICE",
+                1,
+                "SUCCESS",
+                "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"IGNORED\"}");
+        UUID historicalIncorporated = insertHistoricalDiscoveryEvent(
+                jdbc,
+                "DISCOVERED_DEVICE_INCORPORATED",
+                "HUMAN_USER",
+                "DISCOVERED_DEVICE",
+                1,
+                "SUCCESS",
+                "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"INCORPORATED\","
+                        + "\"assetId\":\"" + UUID.randomUUID() + "\"}");
+        String historicalDiscoverySql =
                 """
                 SELECT event_id, event_type, event_version, occurred_at, producer_module,
                        actor_type, actor_id, resource_type, resource_id, resource_version,
                        result, correlation_id, payload::text AS payload, status, attempts,
                        next_attempt_at
                 FROM discovery.outbox_events
-                WHERE event_id IN (?, ?, ?)
-                ORDER BY resource_version
+                WHERE event_id IN (?, ?, ?, ?, ?)
+                ORDER BY event_type, resource_version
                 """;
-        var historicalJobsBefore = jdbc.queryForList(
-                historicalJobSql, historicalCreated, historicalDispatched, historicalCompleted);
+        var historicalDiscoveryBefore = jdbc.queryForList(
+                historicalDiscoverySql,
+                historicalCreated,
+                historicalDispatched,
+                historicalCompleted,
+                historicalIgnored,
+                historicalIncorporated);
 
         migrate(null);
 
@@ -362,11 +384,13 @@ class AuditMigrationIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM discovery.outbox_deliveries", Integer.class))
                 .isZero();
         assertThat(jdbc.queryForList(
-                        historicalJobSql,
+                        historicalDiscoverySql,
                         historicalCreated,
                         historicalDispatched,
-                        historicalCompleted))
-                .isEqualTo(historicalJobsBefore);
+                        historicalCompleted,
+                        historicalIgnored,
+                        historicalIncorporated))
+                .isEqualTo(historicalDiscoveryBefore);
 
         insertDiscoveryAuditFact(jdbc, "DISCOVERY_SCOPE_CREATED", "AUTHORIZED_SCOPE", 0, "{}");
         insertDiscoveryAuditFact(
@@ -385,6 +409,20 @@ class AuditMigrationIntegrationTest {
                 "DISCOVERY_JOB", 2, "SUCCESS", "{}");
         insertDiscoveryAuditFact(jdbc, "DISCOVERY_JOB_COMPLETED", "DISCOVERY_EXECUTOR",
                 "DISCOVERY_JOB", 2, "FAILED", "{}");
+        UUID assetId = UUID.randomUUID();
+        insertDiscoveryAuditFact(
+                jdbc,
+                "DISCOVERED_DEVICE_IGNORED",
+                "DISCOVERED_DEVICE",
+                1,
+                "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"IGNORED\"}");
+        insertDiscoveryAuditFact(
+                jdbc,
+                "DISCOVERED_DEVICE_INCORPORATED",
+                "DISCOVERED_DEVICE",
+                1,
+                "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"INCORPORATED\","
+                        + "\"assetId\":\"" + assetId + "\"}");
         for (Object[] invalid : new Object[][] {
             {"DISCOVERY_SCOPE_CREATED", "AUTHORIZED_SCOPE", 1L, "{}"},
             {"DISCOVERY_SCOPE_STATUS_CHANGED", "AUTHORIZED_SCOPE", 0L,
@@ -425,6 +463,19 @@ class AuditMigrationIntegrationTest {
                 2,
                 "FAILED",
                 "{}");
+        insertDiscoveryProducerEvent(
+                jdbc,
+                "DISCOVERED_DEVICE_IGNORED",
+                "DISCOVERED_DEVICE",
+                1,
+                "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"IGNORED\"}");
+        insertDiscoveryProducerEvent(
+                jdbc,
+                "DISCOVERED_DEVICE_INCORPORATED",
+                "DISCOVERED_DEVICE",
+                1,
+                "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"INCORPORATED\","
+                        + "\"assetId\":\"" + assetId + "\"}");
         assertThatThrownBy(() -> insertDiscoveryProducerEvent(
                         jdbc, "DISCOVERY_JOB_CREATED", "DISCOVERY_JOB", 0,
                         "{\"status\":\"PENDING\",\"profile\":\"BASIC\"}"))
@@ -437,6 +488,21 @@ class AuditMigrationIntegrationTest {
                         2,
                         "SUCCESS",
                         "{}"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertDiscoveryProducerEvent(
+                        jdbc,
+                        "DISCOVERED_DEVICE_INCORPORATED",
+                        "DISCOVERED_DEVICE",
+                        1,
+                        "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"INCORPORATED\"}"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertDiscoveryAuditFact(
+                        jdbc,
+                        "DISCOVERED_DEVICE_INCORPORATED",
+                        "DISCOVERED_DEVICE",
+                        1,
+                        "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"INCORPORATED\","
+                                + "\"assetId\":\"" + assetId.toString().toUpperCase(java.util.Locale.ROOT) + "\"}"))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

@@ -44,9 +44,10 @@ import tools.jackson.databind.ObjectMapper;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
-            "jaxon.identity.bootstrap.enabled=true",
-            "jaxon.identity.bootstrap.username=Job.Operator",
-            "jaxon.identity.bootstrap.password=Job integration passphrase 42!"
+             "jaxon.identity.bootstrap.enabled=true",
+             "jaxon.identity.bootstrap.username=Job.Operator",
+             "jaxon.identity.bootstrap.password=Job integration passphrase 42!",
+             "jaxon.discovery.audit-dispatch.enabled=false"
         })
 class DiscoveryJobIntegrationTest {
 
@@ -79,6 +80,7 @@ class DiscoveryJobIntegrationTest {
     @Autowired DiscoveryJobService jobs;
     @Autowired DiscoveryResultReconciler results;
     @Autowired DiscoveryResultIngestionService ingestion;
+    @Autowired DiscoveryAuditDispatcher auditDispatcher;
     @MockitoBean DiscoverySftpGoProvisioner provisioner;
 
     @BeforeEach
@@ -355,6 +357,7 @@ class DiscoveryJobIntegrationTest {
     void ignoresADeviceOnceAndReturnsCurrentStateForTheNoOp() throws Exception {
         Session session = login();
         DeviceSeed device = seedSucceededDevice(session);
+        jdbc.update("DELETE FROM discovery.outbox_events");
         UUID correlationId = UUID.randomUUID();
 
         HttpResponse<String> ignored = ignoreDevice(
@@ -381,13 +384,30 @@ class DiscoveryJobIntegrationTest {
                                 + "resource_version, correlation_id, payload FROM discovery.outbox_events "
                                 + "WHERE event_type = 'DISCOVERED_DEVICE_IGNORED' AND resource_id = ?",
                         device.discoveredDeviceId()))
-                .containsEntry("event_version", "1.0")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("producer_module", "DISCOVERY")
                 .containsEntry("actor_type", "HUMAN_USER")
                 .containsEntry("actor_id", actorId)
                 .containsEntry("resource_type", "DISCOVERED_DEVICE")
                 .containsEntry("resource_version", 1L)
                 .containsEntry("correlation_id", correlationId);
+        UUID eventId = jdbc.queryForObject(
+                "SELECT event_id FROM discovery.outbox_events "
+                        + "WHERE event_type = 'DISCOVERED_DEVICE_IGNORED' AND resource_id = ?",
+                UUID.class,
+                device.discoveredDeviceId());
+        assertThat(auditDispatcher.dispatchDue(1))
+                .isEqualTo(new DiscoveryAuditDispatcher.DispatchSummary(1, 0, 0, 0));
+        assertThat(jdbc.queryForMap(
+                        "SELECT actor_id, resource_version, result, correlation_id, metadata::text AS metadata "
+                                + "FROM audit_reporting.audit_events WHERE source_event_id = ?",
+                        eventId))
+                .containsEntry("actor_id", actorId)
+                .containsEntry("resource_version", 1L)
+                .containsEntry("result", "SUCCESS")
+                .containsEntry("correlation_id", correlationId)
+                .containsEntry("metadata", "{\"newStatus\": \"IGNORED\", "
+                        + "\"previousStatus\": \"UNREVIEWED\"}");
 
         HttpResponse<String> noOp = ignoreDevice(
                 session, device.jobId(), device.discoveredDeviceId(), 1, UUID.randomUUID());
@@ -500,6 +520,7 @@ class DiscoveryJobIntegrationTest {
     void incorporatesADeviceOnceIntoTheSameActiveAsset() throws Exception {
         Session session = login();
         DeviceSeed device = seedSucceededDevice(session);
+        jdbc.update("DELETE FROM discovery.outbox_events");
         UUID assetId = seedAsset("ACTIVE");
         UUID correlationId = UUID.randomUUID();
 
@@ -529,13 +550,30 @@ class DiscoveryJobIntegrationTest {
                                 + "resource_version, correlation_id, payload FROM discovery.outbox_events "
                                 + "WHERE event_type = 'DISCOVERED_DEVICE_INCORPORATED' AND resource_id = ?",
                         device.discoveredDeviceId()))
-                .containsEntry("event_version", "1.0")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("producer_module", "DISCOVERY")
                 .containsEntry("actor_type", "HUMAN_USER")
                 .containsEntry("actor_id", actorId)
                 .containsEntry("resource_type", "DISCOVERED_DEVICE")
                 .containsEntry("resource_version", 1L)
                 .containsEntry("correlation_id", correlationId);
+        UUID eventId = jdbc.queryForObject(
+                "SELECT event_id FROM discovery.outbox_events "
+                        + "WHERE event_type = 'DISCOVERED_DEVICE_INCORPORATED' AND resource_id = ?",
+                UUID.class,
+                device.discoveredDeviceId());
+        assertThat(auditDispatcher.dispatchDue(1))
+                .isEqualTo(new DiscoveryAuditDispatcher.DispatchSummary(1, 0, 0, 0));
+        assertThat(jdbc.queryForMap(
+                        "SELECT actor_id, resource_version, result, correlation_id, metadata::text AS metadata "
+                                + "FROM audit_reporting.audit_events WHERE source_event_id = ?",
+                        eventId))
+                .containsEntry("actor_id", actorId)
+                .containsEntry("resource_version", 1L)
+                .containsEntry("result", "SUCCESS")
+                .containsEntry("correlation_id", correlationId)
+                .containsEntry("metadata", "{\"assetId\": \"" + assetId
+                        + "\", \"newStatus\": \"INCORPORATED\", \"previousStatus\": \"UNREVIEWED\"}");
         assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory.outbox_events", Integer.class))
                 .isZero();
         HttpResponse<String> noOp = incorporateDevice(
@@ -669,19 +707,25 @@ class DiscoveryJobIntegrationTest {
                 .containsEntry("status", "ACTIVE")
                 .containsEntry("version", 0L);
         assertThat(jdbc.queryForMap(
-                        "SELECT event_type, resource_id, correlation_id FROM inventory.outbox_events "
+                        "SELECT event_type, event_version, resource_id, correlation_id "
+                                + "FROM inventory.outbox_events "
                                 + "WHERE resource_id = ?",
                         assetId))
                 .containsEntry("event_type", "ASSET_CREATED")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("resource_id", assetId)
                 .containsEntry("correlation_id", correlationId);
         assertThat(jdbc.queryForMap(
-                        "SELECT event_type, resource_id, correlation_id FROM discovery.outbox_events "
+                        "SELECT event_type, event_version, resource_id, correlation_id, payload::text AS payload "
+                                + "FROM discovery.outbox_events "
                                 + "WHERE resource_id = ? AND event_type = 'DISCOVERED_DEVICE_INCORPORATED'",
                         device.discoveredDeviceId()))
                 .containsEntry("event_type", "DISCOVERED_DEVICE_INCORPORATED")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("resource_id", device.discoveredDeviceId())
-                .containsEntry("correlation_id", correlationId);
+                .containsEntry("correlation_id", correlationId)
+                .containsEntry("payload", "{\"assetId\": \"" + assetId
+                        + "\", \"newStatus\": \"INCORPORATED\", \"previousStatus\": \"UNREVIEWED\"}");
 
         assertThat(incorporateDeviceWithNewAsset(
                         session, device.jobId(), device.discoveredDeviceId(), "Another server",

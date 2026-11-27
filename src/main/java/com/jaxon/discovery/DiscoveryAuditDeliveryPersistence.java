@@ -35,9 +35,11 @@ class DiscoveryAuditDeliveryPersistence {
                                'DISCOVERY_SCOPE_STATUS_CHANGED',
                                'DISCOVERY_EXECUTOR_PRE_REGISTERED',
                                'DISCOVERY_EXECUTOR_ACTIVATED',
-                               'DISCOVERY_JOB_CREATED',
-                               'DISCOVERY_JOB_DISPATCHED',
-                               'DISCOVERY_JOB_COMPLETED')
+                                'DISCOVERY_JOB_CREATED',
+                                'DISCOVERY_JOB_DISPATCHED',
+                                'DISCOVERY_JOB_COMPLETED',
+                                'DISCOVERED_DEVICE_IGNORED',
+                                'DISCOVERED_DEVICE_INCORPORATED')
                           AND e.event_version = '2.0'
                           AND (d.event_id IS NULL OR (d.status = 'PENDING' AND d.next_attempt_at <= ?))
                         ORDER BY COALESCE(d.next_attempt_at, e.occurred_at), e.event_id

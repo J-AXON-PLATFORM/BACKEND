@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA6-AUD-001g`: activo y lifecycle Discovery Jobs, 2026-11-30
-> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 5 y `OLA6-AUD-001a`--`001f` verificadas; `001g` autorizado bajo `AC-JAXON-099`; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA6-AUD-001h`: revisión humana de DiscoveredDevice, 2026-11-30
+> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 5 y `OLA6-AUD-001a`--`001g` verificadas; `001h` autorizado bajo `AC-JAXON-100`; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-11-30.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, Discovery hasta creación/vínculo `INCORPORATED`, OLA 5 y `OLA6-AUD-001a`--`001f` están integrados y verificados. `OLA6-AUD-001g` está autorizado para tres tipos futuros 2.0 del lifecycle Discovery Jobs; backfill, otros eventos, reportes, purga y Production quedan fuera.
+- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, Discovery hasta creación/vínculo `INCORPORATED`, OLA 5 y `OLA6-AUD-001a`--`001g` están integrados y verificados. `OLA6-AUD-001h` está autorizado para los dos hechos futuros 2.0 de revisión humana de `DiscoveredDevice`; backfill, otros eventos, reportes, purga y Production quedan fuera.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 5 verificada mediante `BACKEND#54..59` y `FRONTEND#29..34`, `OLA6-AUD-001a` mediante `BACKEND#60`/`FRONTEND#35`, `001b` mediante `BACKEND#61`/`#62`, `001c` mediante `BACKEND#63`, `001d` mediante `BACKEND#64`, `001e` mediante `BACKEND#65` y `001f` mediante `BACKEND#66`, squash `d718645c5ca9f09f476d70cb680936ac74912937`, runs verdes `45870778249`/`45874219088`. `AC-JAXON-099` autoriza `OLA6-AUD-001g` solo para el lifecycle Discovery Jobs 2.0 en backend. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con OLA 5 verificada mediante `BACKEND#54..59` y `FRONTEND#29..34`, `OLA6-AUD-001a` mediante `BACKEND#60`/`FRONTEND#35`, `001b` mediante `BACKEND#61`/`#62`, `001c` mediante `BACKEND#63`, `001d` mediante `BACKEND#64`, `001e` mediante `BACKEND#65`, `001f` mediante `BACKEND#66` y `001g` mediante `BACKEND#67`, squash `fce921ca8a5a70661f4bfb0f9a5b325240ed7fc3`, runs verdes `45884366247`/`45885563240` `APPLICATION` con `run_attempt=1`. `AC-JAXON-100` autoriza `OLA6-AUD-001h` solo para revisión humana de `DiscoveredDevice` 2.0 en backend. `PRODUCTION_READY = NO`.

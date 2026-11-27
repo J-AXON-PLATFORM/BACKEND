@@ -34,6 +34,8 @@ Reglas Lote 53:
 
 `OLA6-AUD-001g` versiona a 2.0 solo futuros `DISCOVERY_JOB_CREATED`, `DISCOVERY_JOB_DISPATCHED` y `DISCOVERY_JOB_COMPLETED`. Created/dispatched usan actor humano original, versiones `0|1`, `SUCCESS` y `{}`; completed usa actor `DISCOVERY_EXECUTOR`, versión `2`, `{}` y `SUCCESS|FAILED` según el estado oficial. Solo transiciones confirmadas emiten; duplicados, conflictos, rechazos, finales tardíos, reprocesamientos y 1.0 no se reclaman.
 
+`OLA6-AUD-001h` versiona juntos a 2.0 solo futuros `DISCOVERED_DEVICE_IGNORED` y `DISCOVERED_DEVICE_INCORPORATED`. Ambos usan actor/correlación humanos originales, recurso `DISCOVERED_DEVICE`, versión `1` y `SUCCESS`; ignored conserva los dos estados exactos e incorporated añade `assetId` UUIDv4 canónico. Solo transiciones confirmadas emiten; no-ops, conflictos, activos inválidos, concurrencia perdedora, rollbacks y 1.0 no se reclaman.
+
 ## Propósito
 
 Definir logging útil para diagnóstico, auditoría técnica y correlación.
