@@ -180,7 +180,7 @@ class AiSourceIntegrationTest {
                 sourceId);
         assertThat(event)
                 .containsEntry("event_type", "AI_SOURCE_REGISTERED")
-                .containsEntry("event_version", "1.0")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("producer_module", "AI")
                 .containsEntry("resource_type", "AI_SOURCE")
                 .containsEntry("resource_version", 0L)
@@ -372,7 +372,8 @@ class AiSourceIntegrationTest {
                         UUID.randomUUID())
                 .body(), "sourceId"));
 
-        HttpResponse<String> accepted = index(session, sourceId, 0, UUID.randomUUID());
+        UUID correlationId = UUID.randomUUID();
+        HttpResponse<String> accepted = index(session, sourceId, 0, correlationId);
         HttpResponse<String> duplicate = index(session, sourceId, 0, UUID.randomUUID());
 
         assertThat(accepted.statusCode()).isEqualTo(202);
@@ -416,6 +417,7 @@ class AiSourceIntegrationTest {
                         sourceId))
                 .containsExactly(
                         "AI_SOURCE_REGISTERED", "AI_SOURCE_INDEXING_REQUESTED", "AI_SOURCE_INDEXED");
+        assertLifecycleEvents(sourceId, correlationId, "AI_SOURCE_INDEXED", "SUCCESS", "READY");
         assertThat(jdbc.queryForObject(
                         """
                         SELECT count(*) FROM pg_indexes
@@ -479,7 +481,8 @@ class AiSourceIntegrationTest {
                 FOR EACH ROW EXECUTE FUNCTION ai.reject_second_chunk()
                 """);
 
-        assertThat(index(session, sourceId, 0, UUID.randomUUID()).statusCode()).isEqualTo(202);
+        UUID correlationId = UUID.randomUUID();
+        assertThat(index(session, sourceId, 0, correlationId).statusCode()).isEqualTo(202);
         indexingWorker.poll();
         awaitStatus(sourceId, "FAILED");
 
@@ -496,6 +499,7 @@ class AiSourceIntegrationTest {
                         sourceId))
                 .containsExactly(
                         "AI_SOURCE_REGISTERED", "AI_SOURCE_INDEXING_REQUESTED", "AI_SOURCE_INDEXING_FAILED");
+        assertLifecycleEvents(sourceId, correlationId, "AI_SOURCE_INDEXING_FAILED", "FAILED", "FAILED");
     }
 
     @Test
@@ -546,6 +550,22 @@ class AiSourceIntegrationTest {
                         Integer.class,
                         sourceId))
                 .isEqualTo(1);
+        Map<String, Object> failed = jdbc.queryForMap(
+                """
+                SELECT event_version, actor_type, actor_id, resource_version, result,
+                       correlation_id, payload::text AS payload
+                FROM ai.outbox_events
+                WHERE resource_id = ? AND event_type = 'AI_SOURCE_INDEXING_FAILED'
+                """,
+                sourceId);
+        assertThat(failed)
+                .containsEntry("event_version", "2.0")
+                .containsEntry("actor_type", "SYSTEM")
+                .containsEntry("actor_id", null)
+                .containsEntry("resource_version", 2L)
+                .containsEntry("result", "FAILED")
+                .containsEntry("correlation_id", correlationId)
+                .containsEntry("payload", "{\"status\": \"FAILED\"}");
     }
 
     @Test
@@ -697,6 +717,38 @@ class AiSourceIntegrationTest {
             Thread.sleep(50);
         }
         throw new AssertionError("Source did not reach " + expectedStatus);
+    }
+
+    private void assertLifecycleEvents(
+            UUID sourceId, UUID correlationId, String terminalType, String terminalResult, String terminalStatus) {
+        List<Map<String, Object>> lifecycle = jdbc.queryForList(
+                """
+                SELECT event_type, event_version, actor_type, actor_id, resource_version,
+                       result, correlation_id, payload::text AS payload
+                FROM ai.outbox_events
+                WHERE resource_id = ? AND event_type <> 'AI_SOURCE_REGISTERED'
+                ORDER BY occurred_at, event_type
+                """,
+                sourceId);
+        assertThat(lifecycle).hasSize(2);
+        assertThat(lifecycle.getFirst())
+                .containsEntry("event_type", "AI_SOURCE_INDEXING_REQUESTED")
+                .containsEntry("event_version", "2.0")
+                .containsEntry("actor_type", "HUMAN_USER")
+                .doesNotContainEntry("actor_id", null)
+                .containsEntry("resource_version", 1L)
+                .containsEntry("result", "SUCCESS")
+                .containsEntry("correlation_id", correlationId)
+                .containsEntry("payload", "{\"status\": \"INDEXING\"}");
+        assertThat(lifecycle.getLast())
+                .containsEntry("event_type", terminalType)
+                .containsEntry("event_version", "2.0")
+                .containsEntry("actor_type", "SYSTEM")
+                .containsEntry("actor_id", null)
+                .containsEntry("resource_version", 2L)
+                .containsEntry("result", terminalResult)
+                .containsEntry("correlation_id", correlationId)
+                .containsEntry("payload", "{\"status\": \"" + terminalStatus + "\"}");
     }
 
     private static EmbeddingProvider.TokenSequence tokenize(String content) {

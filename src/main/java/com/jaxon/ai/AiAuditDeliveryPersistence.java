@@ -29,7 +29,17 @@ class AiAuditDeliveryPersistence {
                         FROM ai.outbox_events e
                         LEFT JOIN ai.outbox_deliveries d
                             ON d.event_id = e.event_id AND d.consumer = 'AUDIT'
-                        WHERE e.event_type = 'AI_SOURCE_DISABLED'
+                        WHERE (
+                              (e.event_type = 'AI_SOURCE_DISABLED' AND e.event_version = '1.0')
+                              OR (
+                                  e.event_type IN (
+                                      'AI_SOURCE_REGISTERED',
+                                      'AI_SOURCE_INDEXING_REQUESTED',
+                                      'AI_SOURCE_INDEXED',
+                                      'AI_SOURCE_INDEXING_FAILED')
+                                  AND e.event_version = '2.0'
+                              )
+                          )
                           AND (d.event_id IS NULL OR (d.status = 'PENDING' AND d.next_attempt_at <= ?))
                         ORDER BY COALESCE(d.next_attempt_at, e.occurred_at), e.event_id
                         FOR UPDATE OF e SKIP LOCKED

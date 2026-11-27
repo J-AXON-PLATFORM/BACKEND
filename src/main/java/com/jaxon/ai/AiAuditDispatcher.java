@@ -24,7 +24,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * AI-owned dispatcher of its {@code AI_SOURCE_DISABLED} outbox events to Audit/Reporting.
+ * AI-owned dispatcher of its allowlisted source lifecycle outbox events to Audit/Reporting.
  * Delivery is at-least-once, idempotent by the stable producer event id, and tracked per consumer.
  */
 @Component

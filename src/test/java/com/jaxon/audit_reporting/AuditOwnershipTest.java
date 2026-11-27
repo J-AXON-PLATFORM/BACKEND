@@ -53,6 +53,11 @@ class AuditOwnershipTest {
                 Pattern.compile(
                         "\\b(inventory|discovery|collector|ai|identity|automation|audit_reporting)\\.[a-z_]+",
                         Pattern.CASE_INSENSITIVE));
+        assertNoForeignSchema(
+                Path.of("src/main/java/com/jaxon/ai/AiAuditDeliveryPersistence.java"),
+                Pattern.compile(
+                        "\\b(inventory|discovery|collector|support|identity|automation|audit_reporting)\\.[a-z_]+",
+                        Pattern.CASE_INSENSITIVE));
     }
 
     private static void assertNoForeignSchema(Path source, Pattern foreignSchema) throws IOException {
