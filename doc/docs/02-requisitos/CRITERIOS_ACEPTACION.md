@@ -242,3 +242,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - Cada mutación efectiva y su 2.0 se confirman atómicamente. No-op, conflicto, versión obsoleta, autorización denegada, transición inválida y rollback no emiten.
 - Support posee entrega, persistencia, dispatcher, scheduler, retry/backoff, métricas y `FAILED`; Audit recibe solo `AuditFactRecorder`, con idempotencia y conflicto sin sobrescritura.
 - Se crean exactamente `V20261130090000__support_ticket_audit_delivery.sql` y `V20261130100000__audit_support_ticket_catalog.sql`. OpenAPI 8.3, Agent/Discovery, endpoints, otros repositorios, dependencias, workflows, contenedores y Production no cambian.
+
+## OLA6-AUD-001j
+
+- Las futuras emisiones de registered/requested/indexed/failed usan 2.0 con productor `AI`, recurso `AI_SOURCE`, versiones `0|1|2|2` y metadata exacta `status=PENDING|INDEXING|READY|FAILED`.
+- Registered/requested usan actor humano UUIDv4 y `SUCCESS`; indexed/failed usan `SYSTEM`, actor nulo y resultado `SUCCESS|FAILED`. Los terminales conservan la correlación humana original.
+- Los cuatro tipos 1.0 y `AI_SOURCE_DISABLED` 1.0 permanecen byte a byte y sin nuevo claim. Java/PostgreSQL rechazan combinaciones alternativas, propiedades adicionales y datos de fuente, contenido, almacenamiento, embeddings, modelo, error o texto libre.
+- Mutaciones y eventos son atómicos; provider unavailable, conflicto, rollback, claim expirado ya terminalizado y resultado tardío no producen hechos falsos.
+- AI amplía solo la allowlist de su entrega existente y conserva idempotencia, retries, `FAILED`, aislamiento y `SKIP LOCKED`; no crea infraestructura adicional.
+- Se crean exactamente `V20261130110000__ai_source_lifecycle_audit_events.sql` y `V20261130120000__audit_ai_source_lifecycle_catalog.sql`. OpenAPI 8.3, Agent/Discovery, endpoints, otros módulos/repositorios, dependencias, workflows, contenedores y Production no cambian.

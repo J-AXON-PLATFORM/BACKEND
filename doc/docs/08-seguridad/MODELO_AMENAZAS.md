@@ -106,3 +106,10 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: despacho de 1.0, actor/correlación sustituidos, estado o `assetId` falsos, metadata adicional, evento sin mutación, omisión de uno de los dos hechos al crear activo o duplicación por no-op/concurrencia.
 - Mitigaciones: productor 2.0 atómico; operación pública Inventory; catálogos Java/PostgreSQL cerrados; UUIDv4 canónico lowercase; allowlist exacta de nueve tipos; rollback integral, idempotencia y silencio de caminos no efectivos.
 - Riesgos residuales: rol runtime único, `FAILED` de entrega sin reproceso operativo y ausencia de tamper-proof criptográfico.
+
+## OLA6-AUD-001j
+
+- Activos: integridad del lifecycle de fuentes AI, identidad humana de registro/solicitud, atribución del worker, correlación, outbox/entrega AI y evidencia Audit.
+- Amenazas: despacho de 1.0, atribuir terminales al humano o inventar un actor, sustituir correlación/versión/resultado, filtrar nombre/contenido/storage/chunks/embeddings/modelo/error o materializar resultados tardíos.
+- Mitigaciones: combinaciones 2.0 cerradas en Java/PostgreSQL; `SYSTEM` con actor nulo solo en terminales; correlación original; metadata exclusiva de estado; allowlist tipo+versión; atomicidad, silencio de caminos no efectivos, idempotencia y conflicto sin sobrescritura.
+- Riesgos residuales: rol runtime único, `FAILED` sin reproceso operativo y ausencia de tamper-proof criptográfico.

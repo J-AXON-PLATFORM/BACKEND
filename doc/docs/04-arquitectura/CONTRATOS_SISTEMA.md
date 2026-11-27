@@ -54,6 +54,8 @@
 
 `OLA6-AUD-001i` añade Support como productor auditable sin consumidor global: conserva su outbox y posee `support.outbox_deliveries`, persistencia, dispatcher, scheduler y métricas. Reclama únicamente los ocho tipos Ticket 2.0 y entrega por `AuditFactRecorder`; 1.0 histórico no se reclama y ningún componente usa SQL cross-module.
 
+`OLA6-AUD-001j` amplía exclusivamente la allowlist del productor AI existente: su dispatcher reclama `AI_SOURCE_DISABLED` 1.0 y los cuatro hechos del lifecycle de fuentes 2.0, y entrega por el mismo `AuditFactRecorder`. No añade tabla, dispatcher, scheduler ni dependencia; los cuatro tipos históricos 1.0 quedan fuera.
+
 ## Contrato interno aprobado -- Lote 53
 
 - Command/query solicita una operación o lectura y usa la API pública del módulo proveedor de forma síncrona in-process.

@@ -107,3 +107,10 @@ Automatizar pruebas sin depender de un proveedor de CI específico
 - Dispatcher/Audit: Support reclama solo ocho tipos 2.0 y cubre redelivery idempotente, conflicto, 10 intentos, `FAILED`, indisponibilidad, rollback, aislamiento y `SKIP LOCKED`; 1.0 queda excluido.
 - Migración PostgreSQL 18/pgvector: upgrade con filas Ticket 1.0 intactas; constraints rechazan extras, metadata incompleta, UUID no canónico y transiciones/combinaciones inválidas; instalación limpia y bootstrap incluyen `support.outbox_deliveries`.
 - Regresión: Support/Audit dirigidas, ownership, modularidad, `clean verify` Java 25, OpenAPI 8.3 y Agent/Discovery byte a byte, documentación, whitespace, Gitleaks y clasificador `APPLICATION`.
+
+## OLA6-AUD-001j
+
+- Productores: registro, solicitud, éxito y fallo reales emiten 2.0 con actor, versión, resultado, correlación y estado exactos; provider unavailable, conflicto, rollback, recuperación de claim y resultado tardío permanecen silenciosos cuando corresponde.
+- Dispatcher/Audit: AI reclama disabled 1.0 y solo cuatro tipos 2.0, con materialización exacta, redelivery idempotente, conflicto, 10 intentos, `FAILED`, indisponibilidad, aislamiento y `SKIP LOCKED`; los cuatro tipos históricos 1.0 quedan excluidos.
+- Migración PostgreSQL 18/pgvector: upgrade desde `V20261130100000`, comparación byte a byte de los cinco eventos AI 1.0, constraints cerrados de productor/Audit e instalación limpia mediante exactamente dos migraciones.
+- Regresión: AI/Audit dirigidas, ownership, modularidad, `DatabaseBootstrapIntegrationTest`, `clean verify` Java 25, OpenAPI 8.3 y Agent/Discovery byte a byte, documentación, whitespace, Gitleaks y clasificador `APPLICATION`.

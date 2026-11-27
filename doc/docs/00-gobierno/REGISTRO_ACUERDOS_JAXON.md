@@ -706,6 +706,20 @@ Se autorizan exactamente `V20261130090000__support_ticket_audit_delivery.sql` y 
 
 OpenAPI 8.3, contratos Agent/Discovery, endpoints, UI, `frontend`, `automation-collector`, dependencias, lockfiles, workflows, contenedores, brokers, SSE, otros eventos, `main`, Production y despliegues permanecen fuera. A la fecha de este registro `OLA6-AUD-001i` está `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local; no está integrado ni verificado remotamente. `PRODUCTION_READY = NO`.
 
+El cierre real quedó verificado mediante `BACKEND#69`, squash `9ce6129d1d69bfa4599c596d24acf08d7563742f`, y runs verdes `45943516576` de PR y `45944695407` post-merge, ambos `APPLICATION` y `run_attempt=1`. La rama fue eliminada; `OLA6-AUD-001i` está implementado, integrado y verificado y `AC-JAXON-101` está consumido y cerrado.
+
+## AC-JAXON-102 -- Auditoría agrupada del lifecycle de fuentes AI
+
+LUIS autoriza expresamente `OLA6-AUD-001j` solo en `backend` y exige versionar juntos a 2.0 las futuras emisiones de `AI_SOURCE_REGISTERED`, `AI_SOURCE_INDEXING_REQUESTED`, `AI_SOURCE_INDEXED` y `AI_SOURCE_INDEXING_FAILED`. Los cuatro tipos históricos 1.0 y `AI_SOURCE_DISABLED` 1.0 permanecen byte a byte, no se reclaman, reinterpretan, reproducen ni reciben backfill.
+
+Registered usa actor `HUMAN_USER` UUIDv4, versión `0`, resultado `SUCCESS` y metadata exacta `status=PENDING`; requested usa el mismo actor humano, versión `1`, `SUCCESS` y `status=INDEXING`. Indexed y failed representan al worker con actor `SYSTEM`, `actorId=null`, versión `2`, metadata exacta `status=READY|FAILED` y resultado `SUCCESS|FAILED`, respectivamente. Ambos terminales conservan la correlación de la solicitud humana original. Quedan prohibidos nombre, contenido, almacenamiento, hashes, chunks, embeddings, modelo, errores, códigos de fallo y texto libre.
+
+AI reutiliza exclusivamente `ai.outbox_deliveries`, `AiAuditDeliveryPersistence`, `AiAuditDispatcher`, su scheduler, métricas, backoff y `AuditFactRecorder`. El dispatcher reclama `AI_SOURCE_DISABLED` 1.0 y solo los cuatro tipos anteriores 2.0. Conserva `FOR UPDATE SKIP LOCKED`, máximo 10 intentos, errores cerrados, `FAILED`, idempotencia por `source_event_id`, duplicado idéntico como éxito, conflicto sin sobrescritura y aislamiento. No se crean tablas, dispatchers ni schedulers. Resultados tardíos, provider unavailable, conflictos, rollbacks y caminos no efectivos permanecen silenciosos.
+
+Se autorizan exactamente `V20261130110000__ai_source_lifecycle_audit_events.sql` y `V20261130120000__audit_ai_source_lifecycle_catalog.sql`; ninguna migración aplicada se modifica. Se autoriza exclusivamente `feature/ola6-aud-001j`, un único push tras verificaciones locales y un único Pull Request `BACKEND` hacia `develop`; squash solo con CI verde, post-merge verde, eliminación de ramas y reporte final único en `/home/usuario/Documentos/J-AXON-MDs/REPORTE_OPENCODE_OLA6_AUD_001J_EJECUCION.md`. El mismo PR sincroniza retrospectivamente el cierre real de `AC-JAXON-101`/`BACKEND#69`. Clasificación esperada `APPLICATION`; debe comprobarse el presupuesto Actions antes del push y no se relanzan runs sin diagnóstico.
+
+OpenAPI 8.3, contratos Agent/Discovery, endpoints, generación/RAG, retrieval/embeddings, reindexación, purga, reportes, otros módulos, `frontend`, `automation-collector`, dependencias, lockfiles, workflows, contenedores, `main`, Production y despliegues permanecen fuera. A la fecha de este registro `OLA6-AUD-001j` está `AUTORIZADO` y `EN_IMPLEMENTACIÓN` local; no está integrado ni verificado remotamente. `PRODUCTION_READY = NO`.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)
