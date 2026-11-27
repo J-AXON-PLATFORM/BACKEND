@@ -367,4 +367,75 @@ class AuditCatalogTest {
             assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
         }
     }
+
+    @Test
+    void acceptsOnlyClosedSupportTicketFacts() {
+        UUID actor = UUID.randomUUID();
+        UUID comment = UUID.randomUUID();
+        UUID lifecycle = UUID.randomUUID();
+        List<AuditFact> valid = List.of(
+                fact("TICKET_CREATED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 0L,
+                        "SUCCESS", Map.of(
+                                "type", "INCIDENT", "status", "OPEN",
+                                "priority", "NORMAL", "source", "WEB")),
+                fact("TICKET_COMMENT_ADDED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 0L,
+                        "SUCCESS", Map.of("commentId", comment.toString(), "visibility", "PUBLIC")),
+                fact("TICKET_ASSIGNED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 1L,
+                        "SUCCESS", Map.of("assigneeUserId", actor.toString())),
+                fact("TICKET_PRIORITY_CHANGED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 2L,
+                        "SUCCESS", Map.of("previousPriority", "NORMAL", "newPriority", "URGENT")),
+                fact("TICKET_STATUS_CHANGED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 3L,
+                        "SUCCESS", Map.of("previousStatus", "OPEN", "newStatus", "IN_PROGRESS")),
+                fact("TICKET_RESOLVED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 4L,
+                        "SUCCESS", Map.of(
+                                "lifecycleEventId", lifecycle.toString(),
+                                "fromStatus", "IN_PROGRESS",
+                                "toStatus", "RESOLVED")),
+                fact("TICKET_CLOSED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 5L,
+                        "SUCCESS", Map.of(
+                                "lifecycleEventId", lifecycle.toString(),
+                                "fromStatus", "RESOLVED",
+                                "toStatus", "CLOSED",
+                                "closeReason", "RESOLVED")),
+                fact("TICKET_REOPENED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 6L,
+                        "SUCCESS", Map.of(
+                                "lifecycleEventId", lifecycle.toString(),
+                                "fromStatus", "CLOSED",
+                                "toStatus", "OPEN")));
+        assertThat(valid).allSatisfy(value -> assertThat(AuditCatalog.accepts(value)).isTrue());
+
+        for (AuditFact invalid : new AuditFact[] {
+            fact("TICKET_CREATED", "1.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 0L,
+                    "SUCCESS", valid.getFirst().metadata()),
+            fact("TICKET_CREATED", "2.0", "DISCOVERY", "HUMAN_USER", actor, "TICKET", 0L,
+                    "SUCCESS", valid.getFirst().metadata()),
+            fact("TICKET_CREATED", "2.0", "SUPPORT", "HUMAN_USER", null, "TICKET", 0L,
+                    "SUCCESS", valid.getFirst().metadata()),
+            fact("TICKET_COMMENT_ADDED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 0L,
+                    "SUCCESS", Map.of(
+                            "commentId", comment.toString().toUpperCase(java.util.Locale.ROOT),
+                            "visibility", "PUBLIC")),
+            fact("TICKET_ASSIGNED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 1L,
+                    "SUCCESS", Map.of("assigneeUserId", UUID.randomUUID().toString())),
+            fact("TICKET_PRIORITY_CHANGED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 2L,
+                    "SUCCESS", Map.of("previousPriority", "HIGH", "newPriority", "HIGH")),
+            fact("TICKET_STATUS_CHANGED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 3L,
+                    "SUCCESS", Map.of(
+                            "previousStatus", "OPEN", "newStatus", "WAITING_FOR_REQUESTER")),
+            fact("TICKET_CLOSED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 5L,
+                    "SUCCESS", Map.of(
+                            "lifecycleEventId", lifecycle.toString(),
+                            "fromStatus", "RESOLVED",
+                            "toStatus", "CLOSED",
+                            "closeReason", "DUPLICATE")),
+            fact("TICKET_REOPENED", "2.0", "SUPPORT", "HUMAN_USER", actor, "TICKET", 6L,
+                    "SUCCESS", Map.of(
+                            "lifecycleEventId", lifecycle.toString(),
+                            "fromStatus", "CLOSED",
+                            "toStatus", "OPEN",
+                            "extra", "forbidden"))
+        }) {
+            assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
+        }
+    }
 }

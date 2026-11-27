@@ -92,12 +92,13 @@ class SupportIntegrationTest {
                 .containsEntry("asset_id", null);
         assertThat(jdbc.queryForMap(
                         """
-                        SELECT event_type, producer_module, actor_id, resource_id, correlation_id,
-                               payload, status, attempts
+                        SELECT event_type, event_version, producer_module, actor_id, resource_id,
+                               correlation_id, payload, status, attempts
                         FROM support.outbox_events WHERE resource_id = ?
                         """,
                         ticketId))
                 .containsEntry("event_type", "TICKET_CREATED")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("producer_module", "SUPPORT")
                 .containsEntry("actor_id", requesterId)
                 .containsEntry("resource_id", ticketId)
@@ -298,11 +299,13 @@ class SupportIntegrationTest {
                 .containsEntry("body", "Public update");
         assertThat(jdbc.queryForMap(
                         """
-                        SELECT event_type, resource_type, resource_id, resource_version, correlation_id, payload
+                        SELECT event_type, event_version, resource_type, resource_id,
+                               resource_version, correlation_id, payload
                         FROM support.outbox_events WHERE event_type = 'TICKET_COMMENT_ADDED' AND resource_id = ?
                         """,
                         ticketId))
                 .containsEntry("event_type", "TICKET_COMMENT_ADDED")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("resource_type", "TICKET")
                 .containsEntry("resource_id", ticketId)
                 .containsEntry("resource_version", 0L)
@@ -561,11 +564,12 @@ class SupportIntegrationTest {
                 .isOne();
         assertThat(jdbc.queryForMap(
                         """
-                        SELECT actor_id, resource_version, correlation_id, payload
+                        SELECT event_version, actor_id, resource_version, correlation_id, payload
                         FROM support.outbox_events
                         WHERE resource_id = ? AND event_type = 'TICKET_ASSIGNED'
                         """,
                         ticketId))
+                .containsEntry("event_version", "2.0")
                 .containsEntry("actor_id", winnerId)
                 .containsEntry("resource_version", 1L)
                 .containsEntry(
@@ -714,7 +718,7 @@ class SupportIntegrationTest {
                           AND payload->>'commentId' = ?
                         """,
                         internalId.toString()))
-                .containsEntry("event_version", "1.0")
+                .containsEntry("event_version", "2.0")
                 .containsEntry("producer_module", "SUPPORT")
                 .containsEntry("actor_type", "HUMAN_USER")
                 .containsEntry("actor_id", technicianId)
@@ -878,11 +882,12 @@ class SupportIntegrationTest {
         assertThat(priority.body()).contains("\"priority\":\"URGENT\"", "\"version\":2");
         assertThat(jdbc.queryForMap(
                         """
-                        SELECT actor_id, resource_version, correlation_id, payload
+                        SELECT event_version, actor_id, resource_version, correlation_id, payload
                         FROM support.outbox_events
                         WHERE event_type = 'TICKET_PRIORITY_CHANGED' AND resource_id = ?
                         """,
                         ticketId))
+                .containsEntry("event_version", "2.0")
                 .containsEntry("actor_id", technicianId)
                 .containsEntry("resource_version", 2L)
                 .containsEntry("correlation_id", priorityCorrelation);
@@ -1180,7 +1185,8 @@ class SupportIntegrationTest {
 
         assertThat(jdbc.queryForList(
                         """
-                        SELECT event_type, resource_version, correlation_id, payload::text AS payload
+                        SELECT event_type, event_version, resource_version, correlation_id,
+                               payload::text AS payload
                         FROM support.outbox_events
                         WHERE resource_id = ? AND event_type IN
                             ('TICKET_RESOLVED', 'TICKET_CLOSED', 'TICKET_REOPENED')
@@ -1188,8 +1194,12 @@ class SupportIntegrationTest {
                         """,
                         ticketId))
                 .hasSize(3)
-                .allSatisfy(event -> assertThat(event.get("payload").toString())
-                        .doesNotContain(resolutionSummary, reopenReason, "resolutionSummary", "reopenReason"))
+                .allSatisfy(event -> {
+                    assertThat(event).containsEntry("event_version", "2.0");
+                    assertThat(event.get("payload").toString())
+                            .doesNotContain(
+                                    resolutionSummary, reopenReason, "resolutionSummary", "reopenReason");
+                })
                 .satisfies(events -> {
                     assertThat(events.get(0))
                             .containsEntry("event_type", "TICKET_RESOLVED")
@@ -1440,7 +1450,7 @@ class SupportIntegrationTest {
                 .contains("\"version\":" + resultingVersion);
         assertThat(jdbc.queryForMap(
                         """
-                        SELECT resource_version, correlation_id, payload
+                        SELECT event_version, resource_version, correlation_id, payload
                         FROM support.outbox_events
                         WHERE event_type = 'TICKET_STATUS_CHANGED'
                           AND resource_id = ?
@@ -1448,6 +1458,7 @@ class SupportIntegrationTest {
                         """,
                         ticketId,
                         resultingVersion))
+                .containsEntry("event_version", "2.0")
                 .containsEntry("resource_version", resultingVersion)
                 .containsEntry("correlation_id", correlationId)
                 .satisfies(row -> assertThat(row.get("payload").toString())

@@ -423,6 +423,35 @@ class AuditMigrationIntegrationTest {
                 1,
                 "{\"previousStatus\":\"UNREVIEWED\",\"newStatus\":\"INCORPORATED\","
                         + "\"assetId\":\"" + assetId + "\"}");
+        UUID supportActor = UUID.randomUUID();
+        UUID lifecycleId = UUID.randomUUID();
+        insertSupportAuditFact(jdbc, supportActor, "TICKET_CREATED", 0,
+                "{\"type\":\"INCIDENT\",\"status\":\"OPEN\",\"priority\":\"NORMAL\",\"source\":\"WEB\"}");
+        insertSupportAuditFact(jdbc, supportActor, "TICKET_COMMENT_ADDED", 0,
+                "{\"commentId\":\"" + UUID.randomUUID() + "\",\"visibility\":\"INTERNAL\"}");
+        insertSupportAuditFact(jdbc, supportActor, "TICKET_ASSIGNED", 1,
+                "{\"assigneeUserId\":\"" + supportActor + "\"}");
+        insertSupportAuditFact(jdbc, supportActor, "TICKET_PRIORITY_CHANGED", 2,
+                "{\"previousPriority\":\"NORMAL\",\"newPriority\":\"URGENT\"}");
+        insertSupportAuditFact(jdbc, supportActor, "TICKET_STATUS_CHANGED", 3,
+                "{\"previousStatus\":\"OPEN\",\"newStatus\":\"IN_PROGRESS\"}");
+        insertSupportAuditFact(jdbc, supportActor, "TICKET_RESOLVED", 4,
+                "{\"lifecycleEventId\":\"" + lifecycleId
+                        + "\",\"fromStatus\":\"IN_PROGRESS\",\"toStatus\":\"RESOLVED\"}");
+        insertSupportAuditFact(jdbc, supportActor, "TICKET_CLOSED", 5,
+                "{\"lifecycleEventId\":\"" + lifecycleId
+                        + "\",\"fromStatus\":\"RESOLVED\",\"toStatus\":\"CLOSED\","
+                        + "\"closeReason\":\"RESOLVED\"}");
+        insertSupportAuditFact(jdbc, supportActor, "TICKET_REOPENED", 6,
+                "{\"lifecycleEventId\":\"" + lifecycleId
+                        + "\",\"fromStatus\":\"CLOSED\",\"toStatus\":\"OPEN\"}");
+        assertThatThrownBy(() -> insertSupportAuditFact(
+                        jdbc,
+                        supportActor,
+                        "TICKET_STATUS_CHANGED",
+                        7,
+                        "{\"previousStatus\":\"OPEN\",\"newStatus\":\"WAITING_FOR_REQUESTER\"}"))
+                .isInstanceOf(DataIntegrityViolationException.class);
         for (Object[] invalid : new Object[][] {
             {"DISCOVERY_SCOPE_CREATED", "AUTHORIZED_SCOPE", 1L, "{}"},
             {"DISCOVERY_SCOPE_STATUS_CHANGED", "AUTHORIZED_SCOPE", 0L,
@@ -786,5 +815,31 @@ class AuditMigrationIntegrationTest {
                 payload,
                 Timestamp.from(NOW));
         return eventId;
+    }
+
+    private static void insertSupportAuditFact(
+            JdbcTemplate jdbc,
+            UUID actorId,
+            String eventType,
+            long resourceVersion,
+            String metadata) {
+        jdbc.update(
+                """
+                INSERT INTO audit_reporting.audit_events
+                    (audit_event_id, source_event_id, event_type, event_version, producer_module,
+                     occurred_at, actor_type, actor_id, resource_type, resource_id, resource_version,
+                     result, correlation_id, metadata)
+                VALUES (?, ?, ?, '2.0', 'SUPPORT', ?, 'HUMAN_USER', ?, 'TICKET', ?, ?,
+                        'SUCCESS', ?, ?::jsonb)
+                """,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                eventType,
+                Timestamp.from(NOW),
+                actorId,
+                UUID.randomUUID(),
+                resourceVersion,
+                UUID.randomUUID(),
+                metadata);
     }
 }
