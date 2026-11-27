@@ -33,6 +33,7 @@ Definir dominios, ownership, almacenamiento, movimiento y ciclo de vida.
 - En `OLA6-AUD-001f`, Discovery posee una tabla de entrega y un dispatcher para cuatro hechos futuros 2.0 del lifecycle administrativo inicial. Cada agregado y evento se confirma atómicamente; Audit recibe solo `AuditFactRecorder`, sin SQL cross-module. Los no-ops no emiten y 1.0 permanece byte a byte y sin claim.
 - En `OLA6-AUD-001g`, la infraestructura Discovery existente incluye tres hechos futuros 2.0 del Job. Created/dispatched conservan actor y correlación humanos; la transición terminal y completion con actor executor se confirman en una transacción y mapean `SUCCEEDED|FAILED` a `SUCCESS|FAILED`. Duplicados, conflictos, rechazos y finales tardíos no emiten; 1.0 permanece byte a byte y sin claim.
 - En `OLA6-AUD-001h`, esa infraestructura incluye dos hechos futuros 2.0 de revisión humana. Dispositivo y evento se confirman atómicamente; la incorporación con activo nuevo conserva también activo + `ASSET_CREATED` 2.0 mediante la operación pública Inventory dentro de la misma transacción. No-ops, conflictos, activos inválidos y rollbacks no emiten; 1.0 permanece byte a byte y sin claim.
+- En `OLA6-AUD-001i`, Support posee `support.outbox_deliveries` y su dispatcher para ocho hechos futuros 2.0 de Ticket. Cada mutación y evento se confirma atómicamente; Audit recibe solo `AuditFactRecorder`, sin SQL cross-module. Rechazos, no-ops y rollbacks no emiten; 1.0 permanece byte a byte y sin claim.
 
 ## Consistencia
 

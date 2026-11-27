@@ -52,6 +52,8 @@
 
 `OLA6-AUD-001h` amplía únicamente esa allowlist de siete a nueve tipos con ignored/incorporated de `DiscoveredDevice` 2.0. Ambos usan actor/correlación humanos, versión `1`, `SUCCESS` y metadata cerrada; incorporated acepta el activo `ACTIVE` consultado por contrato público o el creado mediante `AssetCreator`. No se añaden tablas, dispatchers, schedulers ni SQL cross-module.
 
+`OLA6-AUD-001i` añade Support como productor auditable sin consumidor global: conserva su outbox y posee `support.outbox_deliveries`, persistencia, dispatcher, scheduler y métricas. Reclama únicamente los ocho tipos Ticket 2.0 y entrega por `AuditFactRecorder`; 1.0 histórico no se reclama y ningún componente usa SQL cross-module.
+
 ## Contrato interno aprobado -- Lote 53
 
 - Command/query solicita una operación o lectura y usa la API pública del módulo proveedor de forma síncrona in-process.

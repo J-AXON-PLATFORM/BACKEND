@@ -143,6 +143,8 @@ Mutación `AUDIT_REQUIRED` -> cambio de negocio + captura durable `AuditFact` ->
 
 `OLA6-AUD-001h` amplía la misma entrega a la revisión humana de dispositivos: ignore e incorporación efectivos confirman dispositivo + evento 2.0; el camino de activo nuevo conserva además `ASSET_CREATED` 2.0 de Inventory en la misma transacción pública. No-ops, conflictos, activos inválidos, concurrencia perdedora, rollbacks y todo 1.0 permanecen silenciosos para Audit.
 
+`OLA6-AUD-001i` aplica el flujo a los ocho hechos existentes de Ticket: Support confirma mutación + evento 2.0 -> su dispatcher reclama exclusivamente la allowlist 2.0 -> `AuditFactRecorder` materializa envelope y metadata cerrados -> entrega o retry/`FAILED`. No-ops, errores de autorización/versión/transición, rollbacks y todo 1.0 permanecen silenciosos para Audit.
+
 ### FL-AUT-001 / eventos internos
 
 Command/query entre módulos -> API pública in-process. Hecho durable -> outbox del productor -> consumidores idempotentes `at-least-once`. Automation solo procesa eventos elegibles y cualquier mutación vuelve al contrato del módulo dueño. n8n no consume el bus interno directamente. SSE es adaptación best-effort y REST conserva verdad.
