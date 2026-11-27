@@ -260,3 +260,12 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - CSV es UTF-8 sin BOM, CRLF, quoting total, protegido ante fórmulas, completo antes de responder y limitado a 10.000 filas y 10 MiB. Un exceso devuelve `422 REPORT_EXPORT_LIMIT_EXCEEDED`, sin body parcial ni auditoría positiva.
 - Cada `200` CSV confirma previamente un único `REPORT_EXPORTED` 1.0 durable y cerrado. Un fallo de generación, proveedor o Audit no devuelve éxito.
 - OpenAPI 8.4 añade solo seis operaciones compatibles; 1.0--8.3 permanecen byte a byte. Existe exactamente una migración nueva de catálogo `audit_reporting`; no hay tablas, proyecciones, índices preventivos, outbox, scheduler ni almacenamiento de CSV.
+
+## OLA6-RPT-001b
+
+- Un workspace único ofrece solo los reportes autorizados por la unión de roles: `AUDITOR` todos, `IT_OPERATOR` Assets/Agents, `SUPPORT_TECHNICIAN` Tickets y ningún acceso implícito para `SYSTEM_ADMIN`.
+- Cada respuesta JSON se valida mediante parser cerrado; filtros, reporte y página quedan reflejados en parámetros URL prefijados y la caché se segmenta por usuario, reporte y filtros.
+- La UI presenta estados accesibles de carga, vacío, error y resultados, diferencia los problemas RFC 9457 relevantes y no sustituye la autorización backend por visibilidad de navegación.
+- CSV usa los mismos filtros que JSON sin `page|size`, cero retries, bloqueo de duplicados, nombre estático, `Blob` intacto y revocación del object URL incluso ante error.
+- Vitest/RTL cubre contratos, roles, URL/caché, UX y exportación; Playwright Chromium multirepo real verifica roles, filtros, paridad JSON/CSV, descarga y persistencia PostgreSQL de `REPORT_EXPORTED`.
+- No cambian dependencias, lockfiles, workflows, backend funcional, OpenAPI, migraciones, `automation-collector`, Docker/Compose/SFTPGo, SSE/polling ni Production.

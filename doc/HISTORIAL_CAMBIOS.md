@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Workspace frontend de Reporting v1 -- OLA6-RPT-001b, 2026-12-01
+
+`AC-JAXON-104` cierra el frontend Reporting v1 sobre OpenAPI 8.4: workspace único de Assets, Agents y Tickets, roles por unión exacta, parsers cerrados, filtros/paginación en URL, caché segmentada y exportación CSV byte a byte sin retry. `BACKEND#71`, squash `609dc8d79ba269223cfbf1c181e2edc571934f69`, quedó verde en `46026385315`/`46027850765`; `FRONTEND#36`, squash `3901ca74c9dad4d0084cabcea29b7b548df6f89e`, quedó verde en `46066833059`/`46067103819`. Los cuatro runs clasificaron `APPLICATION`, fueron exitosos en `run_attempt=1` y las ramas remotas fueron eliminadas.
+
+No se modificaron dependencias, lockfiles, workflows, backend funcional, OpenAPI, migraciones, `automation-collector`, Docker/Compose/SFTPGo, SSE/polling ni Production.
+
+---
+
 ## Reporting backend Assets, Agents y Tickets -- OLA6-RPT-001a, 2026-12-01
 
 `AC-JAXON-103` autoriza exclusivamente en backend seis endpoints JSON/CSV, contratos públicos read-only de los tres módulos dueños, CSV acotado y captura síncrona durable `REPORT_EXPORTED`. La frontera Audit se relocaliza mecánicamente a `com.jaxon` para conservar ocho módulos sin ciclos; OpenAPI avanza de 8.3 a 8.4 y se crea una única migración de catálogo Audit.

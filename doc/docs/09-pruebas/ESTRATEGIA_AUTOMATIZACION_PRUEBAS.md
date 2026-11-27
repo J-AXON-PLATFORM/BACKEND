@@ -121,3 +121,11 @@ Automatizar pruebas sin depender de un proveedor de CI específico
 - Providers: filtros, nullables, count/página bajo `REPEATABLE_READ`, export equivalente, estado Agent `UNKNOWN|ONLINE|OFFLINE` con un único corte temporal y ownership SQL por módulo.
 - CSV/Audit: UTF-8/CRLF/quoting/injection, cero y 10.000 filas, rechazo de 10.001, frontera exacta 10 MiB, sin parcial, y exactamente un `REPORT_EXPORTED` previo por éxito.
 - Arquitectura/contratos: ocho módulos sin ciclos, frontera neutral, OpenAPI 8.3 byte a byte, parse/compatibilidad 8.4, migración vacía/upgrade y regresión completa de catálogo.
+
+## OLA6-RPT-001b
+
+- Unitarias/API: parsers cerrados de páginas y filas, filtros exactos, errores RFC 9457, un retry JSON solo transitorio y cero retries CSV.
+- Componentes: unión de roles, ausencia de acceso implícito `SYSTEM_ADMIN`, URL prefijada, segmentación de caché, carga/vacío/error/resultados, paginación y bloqueo de exportación duplicada.
+- CSV: paridad de filtros sin `page|size`, `Content-Type`, validación condicional del header no expuesto por CORS, filename estático, bytes sin lectura/transformación y revocación del object URL.
+- E2E Chromium multirepo: backend/PostgreSQL reales, todos los roles, filtros y URL, paridad JSON/CSV, descarga efectiva y fila `REPORT_EXPORTED`; el journey completo conserva regresión de Identity, Inventory, Agent, Discovery, Support y AI.
+- Cierre real local frontend: 20 archivos/188 pruebas Vitest, lint, typecheck, build, auditorías y 1/1 Playwright verdes; SFTPGo upstream, govulncheck y Trivy también verdes.

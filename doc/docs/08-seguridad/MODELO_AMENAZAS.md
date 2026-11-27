@@ -120,3 +120,10 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: acceso por rol implícito, lectura cross-module, exposición de descripción/comentarios/claves SFTP, parámetros no allowlisted, CSV injection, agotamiento de memoria, body parcial y `200` sin auditoría durable.
 - Mitigaciones: matriz exacta/default deny, DTOs cerrados y providers owner, validación sin eco, quoting y prefijo protector, límites 10.000/10 MiB antes de responder y captura Audit síncrona previa al éxito.
 - Riesgos residuales: UUID internos visibles a roles aprobados, generación en memoria dentro de límites y ausencia de confirmación de guardado/apertura en navegador.
+
+## OLA6-RPT-001b
+
+- Activos: aislamiento entre usuarios/roles, filtros compartibles, bytes CSV y evidencia de exportación.
+- Amenazas: acceso implícito por navegación, contaminación de caché entre sesiones, parámetros URL ambiguos, retry o descarga duplicada, transformación de bytes, filename controlado por servidor y object URLs retenidos.
+- Mitigaciones: unión cerrada de roles y autorización backend, claves por usuario/reporte/filtros, parámetros prefijados y parsers estrictos, cero retries CSV, bloqueo de duplicados, filename estático, `Blob` intacto y revocación en `finally`.
+- Riesgos residuales: `Content-Disposition` no visible bajo CORS vigente y object URL existente solo durante la activación síncrona de descarga; el nombre continúa fijado localmente.
