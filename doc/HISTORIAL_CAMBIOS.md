@@ -1,5 +1,13 @@
 # Historial de cambios
 
+## Reporting backend Assets, Agents y Tickets -- OLA6-RPT-001a, 2026-12-01
+
+`AC-JAXON-103` autoriza exclusivamente en backend seis endpoints JSON/CSV, contratos públicos read-only de los tres módulos dueños, CSV acotado y captura síncrona durable `REPORT_EXPORTED`. La frontera Audit se relocaliza mecánicamente a `com.jaxon` para conservar ocho módulos sin ciclos; OpenAPI avanza de 8.3 a 8.4 y se crea una única migración de catálogo Audit.
+
+Se sincroniza retrospectivamente el cierre real de `OLA6-AUD-001j`: `BACKEND#70`, squash `abafd2accecdbf6d232a5e435e5a529819e5e7a4`, tuvo runs verdes `45952762447`/`45953995149`, ambos `APPLICATION` y `run_attempt=1`; la rama fue eliminada y `AC-JAXON-102` está cerrado.
+
+---
+
 ## Auditoría agrupada del lifecycle de fuentes AI -- OLA6-AUD-001j, 2026-11-30
 
 `AC-JAXON-102` autoriza exclusivamente en backend las futuras emisiones 2.0 de los cuatro eventos existentes del lifecycle de fuentes AI. Se reutiliza la entrega Audit propia de AI, con actor humano en registered/requested y actor `SYSTEM` sin ID en terminales, correlación humana original y metadata de estado cerrada. Se autorizan exactamente dos migraciones; OpenAPI, endpoints, dependencias, workflows, otros repositorios y Production permanecen fuera.

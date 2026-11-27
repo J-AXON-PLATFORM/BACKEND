@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA6-AUD-001j`: lifecycle de fuentes AI auditable, 2026-11-30
-> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 5 y `OLA6-AUD-001a`--`001i` verificadas; `001j` autorizado bajo `AC-JAXON-102`; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA6-RPT-001a`: Reporting backend Assets/Agents/Tickets, 2026-12-01
+> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 5 y `OLA6-AUD-001a`--`001j` verificadas; `OLA6-RPT-001a` autorizado bajo `AC-JAXON-103`; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-11-30.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, Discovery hasta creación/vínculo `INCORPORATED`, OLA 5 y `OLA6-AUD-001a`--`001i` están integrados y verificados. `OLA6-AUD-001j` está autorizado para los cuatro hechos futuros 2.0 del lifecycle de fuentes AI mediante la entrega AI existente; backfill, otros eventos, generación, reportes, purga y Production quedan fuera.
+- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, Discovery hasta creación/vínculo `INCORPORATED`, OLA 5 y `OLA6-AUD-001a`--`001j` están integrados y verificados. `OLA6-RPT-001a` implementa localmente el backend JSON/CSV de Assets, Agents y Tickets bajo `AC-JAXON-103`; frontend Reporting, otros formatos, programación, proyecciones y Production quedan fuera.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 5 verificada mediante `BACKEND#54..59` y `FRONTEND#29..34`, y `OLA6-AUD-001a`--`001i` verificadas hasta `BACKEND#69`, squash `9ce6129d1d69bfa4599c596d24acf08d7563742f`, runs verdes `45943516576`/`45944695407` `APPLICATION` con `run_attempt=1`. `AC-JAXON-102` autoriza `OLA6-AUD-001j` solo para los cuatro hechos del lifecycle de fuentes AI 2.0 y la entrega AI existente en backend. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con OLA 5 verificada mediante `BACKEND#54..59` y `FRONTEND#29..34`, y `OLA6-AUD-001a`--`001j` verificadas hasta `BACKEND#70`, squash `abafd2accecdbf6d232a5e435e5a529819e5e7a4`, runs verdes `45952762447`/`45953995149` `APPLICATION` con `run_attempt=1`. `AC-JAXON-103` autoriza `OLA6-RPT-001a` exclusivamente para Reporting backend Assets/Agents/Tickets, OpenAPI 8.4 y una migración Audit. `PRODUCTION_READY = NO`.

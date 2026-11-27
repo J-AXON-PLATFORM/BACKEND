@@ -113,3 +113,10 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: despacho de 1.0, atribuir terminales al humano o inventar un actor, sustituir correlación/versión/resultado, filtrar nombre/contenido/storage/chunks/embeddings/modelo/error o materializar resultados tardíos.
 - Mitigaciones: combinaciones 2.0 cerradas en Java/PostgreSQL; `SYSTEM` con actor nulo solo en terminales; correlación original; metadata exclusiva de estado; allowlist tipo+versión; atomicidad, silencio de caminos no efectivos, idempotencia y conflicto sin sobrescritura.
 - Riesgos residuales: rol runtime único, `FAILED` sin reproceso operativo y ausencia de tamper-proof criptográfico.
+
+## OLA6-RPT-001a
+
+- Activos: datos administrativos/operativos reportados, UUID internos, privacidad de Tickets, bytes CSV y evidencia `REPORT_EXPORTED`.
+- Amenazas: acceso por rol implícito, lectura cross-module, exposición de descripción/comentarios/claves SFTP, parámetros no allowlisted, CSV injection, agotamiento de memoria, body parcial y `200` sin auditoría durable.
+- Mitigaciones: matriz exacta/default deny, DTOs cerrados y providers owner, validación sin eco, quoting y prefijo protector, límites 10.000/10 MiB antes de responder y captura Audit síncrona previa al éxito.
+- Riesgos residuales: UUID internos visibles a roles aprobados, generación en memoria dentro de límites y ausencia de confirmación de guardado/apertura en navegador.

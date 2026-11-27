@@ -1,5 +1,7 @@
 package com.jaxon.audit_reporting;
 
+import com.jaxon.AuditFact;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -27,6 +29,7 @@ final class AuditCatalog {
             return false;
         }
         return acceptsAiSourceDisabled(fact)
+                || acceptsReportExported(fact)
                 || acceptsAiSourceLifecycle(fact)
                 || acceptsHumanUserCreated(fact)
                 || acceptsHumanAuthenticationSucceeded(fact)
@@ -38,6 +41,25 @@ final class AuditCatalog {
                 || acceptsDiscoveryJobLifecycle(fact)
                 || acceptsDiscoveredDeviceReview(fact)
                 || acceptsSupportTicket(fact);
+    }
+
+    private static boolean acceptsReportExported(AuditFact fact) {
+        String rowCount = fact.metadata().get("rowCount");
+        return "REPORT_EXPORTED".equals(fact.eventType())
+                && "1.0".equals(fact.eventVersion())
+                && "AUDIT_REPORTING".equals(fact.producerModule())
+                && "HUMAN_USER".equals(fact.actorType())
+                && uuidV4(fact.actorId())
+                && "REPORT_EXPORT".equals(fact.resourceType())
+                && fact.sourceEventId().equals(fact.resourceId())
+                && fact.resourceVersion() == null
+                && "SUCCESS".equals(fact.result())
+                && fact.metadata().size() == 3
+                && "CSV".equals(fact.metadata().get("format"))
+                && Set.of("ASSETS", "AGENTS", "TICKETS").contains(fact.metadata().get("reportType"))
+                && rowCount != null
+                && rowCount.matches("^(0|[1-9]\\d{0,4})$")
+                && Integer.parseInt(rowCount) <= 10_000;
     }
 
     private static boolean acceptsAiSourceLifecycle(AuditFact fact) {

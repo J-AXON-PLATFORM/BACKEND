@@ -114,3 +114,10 @@ Automatizar pruebas sin depender de un proveedor de CI específico
 - Dispatcher/Audit: AI reclama disabled 1.0 y solo cuatro tipos 2.0, con materialización exacta, redelivery idempotente, conflicto, 10 intentos, `FAILED`, indisponibilidad, aislamiento y `SKIP LOCKED`; los cuatro tipos históricos 1.0 quedan excluidos.
 - Migración PostgreSQL 18/pgvector: upgrade desde `V20261130100000`, comparación byte a byte de los cinco eventos AI 1.0, constraints cerrados de productor/Audit e instalación limpia mediante exactamente dos migraciones.
 - Regresión: AI/Audit dirigidas, ownership, modularidad, `DatabaseBootstrapIntegrationTest`, `clean verify` Java 25, OpenAPI 8.3 y Agent/Discovery byte a byte, documentación, whitespace, Gitleaks y clasificador `APPLICATION`.
+
+## OLA6-RPT-001a
+
+- API/seguridad: seis operaciones, schemas cerrados, filtros/rangos/paginación/orden, `401|403|422|503`, matriz exacta y ausencia de acceso implícito `SYSTEM_ADMIN`.
+- Providers: filtros, nullables, count/página bajo `REPEATABLE_READ`, export equivalente, estado Agent `UNKNOWN|ONLINE|OFFLINE` con un único corte temporal y ownership SQL por módulo.
+- CSV/Audit: UTF-8/CRLF/quoting/injection, cero y 10.000 filas, rechazo de 10.001, frontera exacta 10 MiB, sin parcial, y exactamente un `REPORT_EXPORTED` previo por éxito.
+- Arquitectura/contratos: ocho módulos sin ciclos, frontera neutral, OpenAPI 8.3 byte a byte, parse/compatibilidad 8.4, migración vacía/upgrade y regresión completa de catálogo.

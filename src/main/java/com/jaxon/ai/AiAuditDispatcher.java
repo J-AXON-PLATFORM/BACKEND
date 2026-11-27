@@ -1,9 +1,9 @@
 package com.jaxon.ai;
 
-import com.jaxon.audit_reporting.AuditFact;
-import com.jaxon.audit_reporting.AuditFactRecorder;
-import com.jaxon.audit_reporting.AuditFactRejectedException;
-import com.jaxon.audit_reporting.AuditRecordOutcome;
+import com.jaxon.AuditFact;
+import com.jaxon.AuditFactRecorder;
+import com.jaxon.AuditFactRejectedException;
+import com.jaxon.AuditRecordOutcome;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;

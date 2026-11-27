@@ -1,4 +1,4 @@
-package com.jaxon.audit_reporting;
+package com.jaxon;
 
 /**
  * Public in-process contract owned by Audit/Reporting. It must be invoked inside the caller's

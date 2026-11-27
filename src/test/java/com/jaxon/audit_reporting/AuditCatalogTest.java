@@ -1,4 +1,5 @@
 package com.jaxon.audit_reporting;
+import com.jaxon.AuditFact;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
