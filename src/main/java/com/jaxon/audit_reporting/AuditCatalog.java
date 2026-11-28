@@ -40,7 +40,8 @@ final class AuditCatalog {
                 || acceptsDiscoveryLifecycle(fact)
                 || acceptsDiscoveryJobLifecycle(fact)
                 || acceptsDiscoveredDeviceReview(fact)
-                || acceptsSupportTicket(fact);
+                || acceptsSupportTicket(fact)
+                || acceptsAutomationExecution(fact);
     }
 
     private static boolean acceptsReportExported(AuditFact fact) {
@@ -303,6 +304,28 @@ final class AuditCatalog {
                 && uuidV4(fact.actorId())
                 && "TICKET".equals(fact.resourceType())
                 && "SUCCESS".equals(fact.result());
+    }
+
+    private static boolean acceptsAutomationExecution(AuditFact fact) {
+        boolean succeeded = "AUTOMATION_EXECUTION_SUCCEEDED".equals(fact.eventType())
+                && "SUCCESS".equals(fact.result())
+                && fact.metadata().equals(Map.of(
+                        "ruleCode", "SUPPORT_WAITING_FOR_REQUESTER_NOTIFY_REQUESTER",
+                        "actionType", "IN_APP_NOTIFICATION"));
+        boolean failed = "AUTOMATION_EXECUTION_FAILED".equals(fact.eventType())
+                && "FAILED".equals(fact.result())
+                && fact.metadata().equals(Map.of(
+                        "ruleCode", "SUPPORT_WAITING_FOR_REQUESTER_NOTIFY_REQUESTER",
+                        "actionType", "IN_APP_NOTIFICATION",
+                        "failureCode", "NOTIFICATION_PERSISTENCE_FAILED"));
+        return (succeeded || failed)
+                && "1.0".equals(fact.eventVersion())
+                && "AUTOMATION".equals(fact.producerModule())
+                && "AUTOMATION".equals(fact.actorType())
+                && uuidV4(fact.actorId())
+                && "AUTOMATION_EXECUTION".equals(fact.resourceType())
+                && fact.actorId().equals(fact.resourceId())
+                && Long.valueOf(1).equals(fact.resourceVersion());
     }
 
     private static boolean ticketPriorityMetadata(Map<String, String> metadata) {

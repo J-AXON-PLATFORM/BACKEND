@@ -42,6 +42,8 @@ Reglas Lote 53:
 
 `OLA6-RPT-001a` incorpora `REPORT_EXPORTED` 1.0 producido y consumido dentro de `AUDIT_REPORTING`: actor `HUMAN_USER`, recurso `REPORT_EXPORT`, `resourceId=sourceEventId`, resultado `SUCCESS`, versión nula y metadata exacta `format=CSV`, `reportType=ASSETS|AGENTS|TICKETS`, `rowCount=0..10000`. Se confirma antes del `200` y no usa outbox.
 
+`OLA6-AUT-001a` conserva `TICKET_STATUS_CHANGED` 2.0 byte a byte. Support entrega a Automation únicamente la transición `IN_PROGRESS -> WAITING_FOR_REQUESTER`, con `eventId` estable y requester resuelto desde su agregado. Automation deduplica por regla+evento y emite solo `AUTOMATION_EXECUTION_SUCCEEDED|AUTOMATION_EXECUTION_FAILED` 1.0: productor/actor `AUTOMATION`, recurso e actor ID iguales al `executionId`, versión `1`, resultado `SUCCESS|FAILED` y metadata cerrada de regla/acción; failure añade solo `NOTIFICATION_PERSISTENCE_FAILED`.
+
 ## Propósito
 
 Definir logging útil para diagnóstico, auditoría técnica y correlación.

@@ -112,6 +112,8 @@ En Pull Requests se compara el SHA base/head del evento. En push a `develop`, el
 
 `OLA6-RPT-001b` conserva workflows, dependencias, lockfiles, backend funcional, OpenAPI 8.4, migraciones, Docker/Compose/SFTPGo y `automation-collector`. El cambio frontend debe clasificar `APPLICATION`; el cierre canónico backend posterior debe clasificar `DOCS_ONLY`. El cierre real funcional fue `APPLICATION` en `BACKEND#71` y `FRONTEND#36`, con runs verdes de PR/post-merge en primer intento.
 
+`OLA6-AUT-001a` conserva workflows, dependencias, lockfiles, Docker/Compose/SFTPGo y contratos Agent/Discovery. Backend añade OpenAPI 8.5, exactamente tres migraciones y código/pruebas/documentación, por lo que debe clasificar `APPLICATION` salvo fallback más estricto. Frontend posterior debe clasificar `APPLICATION`; el cierre canónico final, `DOCS_ONLY`. `automation-collector` permanece byte a byte intacto.
+
 `OLA4-DIS-008b` conserva workflows y clasificadores, no añade migración ni dependencia y debe clasificar `APPLICATION` en backend y frontend; un nivel fail-closed más estricto también es válido. `automation-collector` permanece byte a byte intacto.
 
 `OLA5-AI-001a` conserva workflows, clasificadores, dependencias y lockfiles. Backend y frontend deben clasificar `APPLICATION`; un nivel fail-closed más estricto también es válido. `automation-collector` permanece byte a byte en `3dac71ca95442e4f50e77dd2a172b561ca49face`.

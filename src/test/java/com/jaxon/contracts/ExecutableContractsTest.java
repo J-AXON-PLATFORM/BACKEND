@@ -65,6 +65,7 @@ class ExecutableContractsTest {
     private static final Path OPENAPI_V82_ROOT = Path.of("doc/contracts/openapi/8.2");
     private static final Path OPENAPI_V83_ROOT = Path.of("doc/contracts/openapi/8.3");
     private static final Path OPENAPI_V84_ROOT = Path.of("doc/contracts/openapi/8.4");
+    private static final Path OPENAPI_V85_ROOT = Path.of("doc/contracts/openapi/8.5");
     private static final String SCHEMA_BASE = "https://schemas.j-axon.invalid/agent/1.0/";
     private static final String DISCOVERY_SCHEMA_BASE =
             "https://schemas.j-axon.invalid/discovery/1.0/";
@@ -596,6 +597,41 @@ class ExecutableContractsTest {
                         "listTicketReport", "exportTicketReportCsv");
         for (String schema : List.of("AssetReportPage", "AssetReportRow", "AgentReportPage",
                 "AgentReportRow", "TicketReportPage", "TicketReportRow")) {
+            assertThat(root.at("/components/schemas/" + schema + "/additionalProperties").asBoolean())
+                    .as(schema)
+                    .isFalse();
+        }
+    }
+
+    @Test
+    void openApi85Preserves84AndAddsOnlyNotificationOperations() throws IOException {
+        ParseOptions options = new ParseOptions();
+        options.setResolve(false);
+        options.setResolveFully(false);
+        SwaggerParseResult result = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V85_ROOT.resolve("openapi.yaml").toString(), null, options);
+        OpenAPI api = result.getOpenAPI();
+        OpenAPI previous = new OpenAPIV3Parser()
+                .readLocation(OPENAPI_V84_ROOT.resolve("openapi.yaml").toString(), null, options)
+                .getOpenAPI();
+
+        assertThat(result.getMessages()).isEmpty();
+        assertThat(api).isNotNull();
+        assertThat(previous).isNotNull();
+        assertThat(api.getInfo().getVersion()).isEqualTo("8.5");
+        assertThat(api.getPaths().keySet())
+                .containsAll(previous.getPaths().keySet())
+                .hasSize(previous.getPaths().size() + 2)
+                .contains("/notifications", "/notifications/{notificationId}/read");
+
+        JsonNode root = Yaml31.mapper().readTree(OPENAPI_V85_ROOT.resolve("openapi.yaml").toFile());
+        assertThat(root.at("/paths/~1notifications/get/operationId").asText())
+                .isEqualTo("listOwnNotifications");
+        assertThat(root.at("/paths/~1notifications~1{notificationId}~1read/post/operationId").asText())
+                .isEqualTo("markOwnNotificationRead");
+        assertThat(textValues(root.at("/components/schemas/NotificationReadRequest/required")))
+                .containsExactly("expectedVersion");
+        for (String schema : List.of("NotificationPage", "Notification", "NotificationReadRequest")) {
             assertThat(root.at("/components/schemas/" + schema + "/additionalProperties").asBoolean())
                     .as(schema)
                     .isFalse();

@@ -127,3 +127,10 @@ Identificar activos, límites de confianza, amenazas y mitigaciones
 - Amenazas: acceso implícito por navegación, contaminación de caché entre sesiones, parámetros URL ambiguos, retry o descarga duplicada, transformación de bytes, filename controlado por servidor y object URLs retenidos.
 - Mitigaciones: unión cerrada de roles y autorización backend, claves por usuario/reporte/filtros, parámetros prefijados y parsers estrictos, cero retries CSV, bloqueo de duplicados, filename estático, `Blob` intacto y revocación en `finally`.
 - Riesgos residuales: `Content-Disposition` no visible bajo CORS vigente y object URL existente solo durante la activación síncrona de descarga; el nombre continúa fijado localmente.
+
+## OLA6-AUT-001a
+
+- Activos: integridad de la regla/ejecución, destinatario requester, aislamiento de notificaciones, estado de lectura y evidencia Audit terminal.
+- Amenazas: trigger/payload no allowlisted, duplicación o conflicto silencioso, destinatario sustituido, notificación parcial, enumeración cross-user, CSRF, lost update y retry ilimitado.
+- Mitigaciones: catálogo cerrado Java/PostgreSQL, deduplicación regla+evento, destinatario resuelto por Support, transacciones atómicas, ownership desde sesión, `404` uniforme, CSRF, `expectedVersion`, diez intentos y backoff acotado.
+- Riesgos residuales: rol runtime de base de datos único, `FAILED` sin reproceso operativo y ausencia deliberada de SSE/polling en este corte.

@@ -55,6 +55,8 @@ En `OLA6-AUD-001a`, `GET /audit/events` requiere exclusivamente el rol `AUDITOR`
 
 En `OLA6-AUD-001b`, toda alta administrativa futura captura y materializa `HUMAN_USER_CREATED` 2.0 con los roles completos asignados. Esto cierra la falta de trazabilidad señalada en `001a`, sin conceder permisos nuevos ni cambiar endpoints: `SYSTEM_ADMIN` conserva el alta y `AUDITOR` conserva la lectura. La asignación o edición posterior de roles sigue fuera de alcance y deberá auditarse en su corte.
 
+En `OLA6-AUT-001a`, ambas operaciones `/notifications` requieren una sesión humana válida, sin rol adicional. La autorización es por ownership estricto del destinatario obtenido de la sesión; no existe lectura administrativa. La mutación `READ` exige CSRF y concurrencia optimista, y responde `404` uniforme para UUID inexistente o notificación ajena.
+
 La matriz permiso->operación se completa en contratos/HU ejecutables durante implementación, manteniendo `default deny`, checks contextuales y ownership por módulo.
 <!-- JAXON-CKP005:END -->
 

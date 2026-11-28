@@ -58,6 +58,16 @@ class AuditOwnershipTest {
                 Pattern.compile(
                         "\\b(inventory|discovery|collector|support|identity|automation|audit_reporting)\\.[a-z_]+",
                 Pattern.CASE_INSENSITIVE));
+        assertNoForeignSchema(
+                Path.of("src/main/java/com/jaxon/automation/AutomationAuditDeliveryPersistence.java"),
+                Pattern.compile(
+                        "\\b(inventory|discovery|collector|support|ai|identity|audit_reporting)\\.[a-z_]+",
+                        Pattern.CASE_INSENSITIVE));
+        assertNoForeignSchema(
+                Path.of("src/main/java/com/jaxon/support/SupportAutomationDeliveryPersistence.java"),
+                Pattern.compile(
+                        "\\b(inventory|discovery|collector|ai|identity|automation|audit_reporting)\\.[a-z_]+",
+                        Pattern.CASE_INSENSITIVE));
     }
 
     @Test

@@ -269,3 +269,11 @@ Evitar criterios que describan implementación interna salvo que sea un requisit
 - CSV usa los mismos filtros que JSON sin `page|size`, cero retries, bloqueo de duplicados, nombre estático, `Blob` intacto y revocación del object URL incluso ante error.
 - Vitest/RTL cubre contratos, roles, URL/caché, UX y exportación; Playwright Chromium multirepo real verifica roles, filtros, paridad JSON/CSV, descarga y persistencia PostgreSQL de `REPORT_EXPORTED`.
 - No cambian dependencias, lockfiles, workflows, backend funcional, OpenAPI, migraciones, `automation-collector`, Docker/Compose/SFTPGo, SSE/polling ni Production.
+
+## OLA6-AUT-001a
+
+- Solo el trigger Support `TICKET_STATUS_CHANGED` 2.0 con `IN_PROGRESS -> WAITING_FOR_REQUESTER` crea una ejecución para la regla y destinatario requester; duplicados byte a byte no crean otra ejecución y conflictos fallan cerrados.
+- La notificación `TICKET_WAITING_FOR_REQUESTER`, la terminalización `SUCCEEDED` y su outbox se confirman atómicamente. Un fallo conserva `PENDING` con backoff y, tras diez intentos, confirma `FAILED` y su evento terminal sin notificación parcial.
+- `GET /notifications` requiere autenticación, lista solo notificaciones propias con filtro/paginación cerrados y orden estable. `POST /notifications/{id}/read` requiere CSRF y versión; ownership ajeno devuelve `404`, versión obsoleta `409` y repetición vigente es no-op.
+- Audit acepta únicamente `AUTOMATION_EXECUTION_SUCCEEDED|FAILED` 1.0 con actor/recurso/metadata exactos. Spring Modulith conserva ocho módulos y el código de cada owner usa solo SQL de su schema.
+- OpenAPI 8.5 conserva 8.4 y añade solo dos operaciones. Existen exactamente las tres migraciones autorizadas; dependencias, workflows, `automation-collector`, n8n, SSE/polling y Production no cambian.

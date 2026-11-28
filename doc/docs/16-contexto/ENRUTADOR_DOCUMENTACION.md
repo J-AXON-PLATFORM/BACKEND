@@ -46,7 +46,7 @@ Si la respuesta es no, no cargarlo.
 
 ## Instancia J-AXON -- ruta inmediata CKP-JAXON-005
 
-Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..104 aprobados; OLA 3 está integrada y verificada hasta `OLA3-SUP-006a`, OLA 4 hasta `OLA4-DIS-008b`, OLA 5 hasta `OLA5-AI-006a`, `OLA6-AUD-001a`--`001j` y `OLA6-RPT-001a/001b` están integradas y verificadas. No existe siguiente incremento autorizado; `PRODUCTION_READY = NO`.
+Estado: baseline `DESIGN_READY`; Lotes 30--54 y AC-JAXON-059..105 aprobados; OLA 3 está integrada y verificada hasta `OLA3-SUP-006a`, OLA 4 hasta `OLA4-DIS-008b`, OLA 5 hasta `OLA5-AI-006a`, Audit y Reporting v1 están integrados y verificados. `OLA6-AUT-001a` está autorizado y en implementación backend local; `PRODUCTION_READY = NO`.
 
 Estado remoto histórico verificado el 2026-10-07: la organización oficial nueva `J-AXON-PLATFORM` contiene los repositorios privados `BACKEND`, `FRONTEND` y `AUTOMATION-COLLECTOR`, correspondientes a los nombres lógicos canónicos `backend`, `frontend` y `automation-collector`; `backend` fue inicializado y publicado mediante `TEC-GIT-001C`.
 
@@ -56,7 +56,7 @@ Estado frontend verificado el 2026-10-08: `FRONTEND` fue publicado con `main` y 
 
 Estado Python verificado el 2026-10-08: `AUTOMATION-COLLECTOR` fue publicado con `main` y `develop`; contiene una fundación Python 3.14.8/uv 0.12.24 con Agent y Discovery Executor separados, sin SFTP o discovery funcional. `Python CI` fue integrado en `develop` mediante el Pull Request `#1` y squash `a040c5fba34fae22903088b82191e8355deaab26`; los runs de PR `37852626079` y post-merge `37852683236` quedaron verdes, incluida la auditoría sin vulnerabilidades conocidas. No se crearon Issues, Projects, rulesets, tags, releases, Packages, artefactos publicados o despliegues.
 
-Los bloques técnicos de OLA 0 fueron completados. Identity, Inventory, Agent/Collector autorizado, Support hasta lifecycle terminal, Discovery hasta creación de activo desde dispositivo, AI hasta deshabilitación de fuentes, Auditoría hasta AI 2.0 y Reporting v1 backend/frontend están integrados. `AC-JAXON-103/104` cierran `OLA6-RPT-001a/001b` sobre OpenAPI 8.4; otros formatos, programación, exports asíncronos, proyecciones/warehouse y Production siguen fuera de alcance. Para un trabajo posterior, que requiere nueva autorización expresa, cargar obligatoriamente las cinco fuentes de continuidad y luego únicamente los documentos específicos capaces de cambiar su delimitación:
+Los bloques técnicos de OLA 0 fueron completados. Identity, Inventory, Agent/Collector autorizado, Support hasta lifecycle terminal, Discovery hasta creación de activo desde dispositivo, AI hasta deshabilitación de fuentes, Auditoría hasta AI 2.0 y Reporting v1 backend/frontend están integrados. `AC-JAXON-105` delimita la primera regla Automation y notificación in-app sobre OpenAPI 8.5; n8n, SSE/polling, otros canales/reglas y Production siguen fuera. Para este trabajo cargar obligatoriamente las cinco fuentes de continuidad y los documentos de Automation, Support, eventos, datos, seguridad, API, pruebas y CI.
 
 - `docs/12-agil/GESTION_BACKLOG.md`, `docs/12-agil/GUIAS_TAREAS.md` y `docs/12-agil/FLUJO_KANBAN.md`;
 - los documentos específicos de plataforma, arquitectura, contratos, datos, seguridad y pruebas capaces de delimitar el incremento;

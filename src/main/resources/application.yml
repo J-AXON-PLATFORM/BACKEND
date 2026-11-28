@@ -47,6 +47,20 @@ jaxon:
       enabled: ${JAXON_IDENTITY_BOOTSTRAP_ENABLED:false}
       username: ${JAXON_IDENTITY_BOOTSTRAP_USERNAME:}
       password: ${JAXON_IDENTITY_BOOTSTRAP_PASSWORD:}
+  automation:
+    execution:
+      enabled: ${JAXON_AUTOMATION_EXECUTION_ENABLED:true}
+      poll-interval: ${JAXON_AUTOMATION_EXECUTION_POLL_INTERVAL:1s}
+      batch-size: ${JAXON_AUTOMATION_EXECUTION_BATCH_SIZE:50}
+    audit-dispatch:
+      enabled: ${JAXON_AUTOMATION_AUDIT_DISPATCH_ENABLED:true}
+      poll-interval: ${JAXON_AUTOMATION_AUDIT_DISPATCH_POLL_INTERVAL:1s}
+      batch-size: ${JAXON_AUTOMATION_AUDIT_DISPATCH_BATCH_SIZE:50}
+  support:
+    automation-dispatch:
+      enabled: ${JAXON_SUPPORT_AUTOMATION_DISPATCH_ENABLED:true}
+      poll-interval: ${JAXON_SUPPORT_AUTOMATION_DISPATCH_POLL_INTERVAL:1s}
+      batch-size: ${JAXON_SUPPORT_AUTOMATION_DISPATCH_BATCH_SIZE:50}
   sftp:
     enabled: ${JAXON_SFTP_ENABLED:false}
     admin-api-url: ${JAXON_SFTPGO_ADMIN_API_URL:}

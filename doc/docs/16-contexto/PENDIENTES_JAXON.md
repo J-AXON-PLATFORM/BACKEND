@@ -82,6 +82,8 @@ Su cierre documental quedó integrado mediante `BACKEND#62`, squash `ad65931b731
 
 `OLA6-RPT-001a/001b` están implementados, integrados y verificados bajo `AC-JAXON-103/104`. `BACKEND#71`, squash `609dc8d79ba269223cfbf1c181e2edc571934f69`, tuvo runs verdes `46026385315`/`46027850765`; `FRONTEND#36`, squash `3901ca74c9dad4d0084cabcea29b7b548df6f89e`, tuvo runs verdes `46066833059`/`46067103819`. Los cuatro clasificaron `APPLICATION`, finalizaron en `run_attempt=1` y las ramas remotas fueron eliminadas.
 
+`OLA6-AUT-001a` está autorizado por `AC-JAXON-105` y en implementación backend local. Quedan pendientes su verificación local completa, integración backend, implementación/integración frontend secuencial y cierre documental. El corte se limita a una regla interna, notificación in-app propia, Audit terminal y OpenAPI 8.5; no autoriza n8n, SSE, polling, reproceso, otros canales o Production.
+
 `SPIKE-AUDIT-001` quedó registrado como análisis previo adoptado por `AC-JAXON-092`.
 
 `SPIKE-AI-GENERATION-001` quedó registrado solo como análisis: comparó generación local, proveedor externo y lifecycle de fuentes; su recomendación de generación local requiere decisiones abiertas de hardware, latencia, pesos, runtime, datos y calidad y no está aprobada.
@@ -145,8 +147,8 @@ Su cierre documental quedó integrado mediante `BACKEND#62`, squash `ad65931b731
 - `TEC-QLT-006a` cerró `BACKEND#41` y no requiere acción remota adicional. La corrección documental retrospectiva queda incluida en el alcance backend de `OLA3-SUP-005a`.
 - Las autorizaciones de los bloques backend, frontend, `automation-collector`, health/contenedores, Compose Local, observabilidad, backup/restore lógico y Reporting v1 fueron consumidas. La excepción vigente cubre únicamente este cierre documental. No operar Issues/Projects, crear otros workflows o rulesets, tags, releases, imágenes o artefactos publicados, ni desplegar sin autorización expresa de LUIS.
 - No asumir autorización general para nuevas tareas de implementación a partir de los incrementos ya verificados; cada incremento requiere alcance concreto.
-- Siguiente paso remoto pendiente: validar, integrar y verificar el único Pull Request backend `DOCS_ONLY` de cierre `OLA6-RPT-001b`; comprobar presupuesto Actions antes del único push. El código funcional de los tres repositorios permanece intacto.
-- Próxima acción posterior: emitir el reporte final autorizado de `OLA6-RPT-001b` únicamente tras post-merge, eliminación de ramas y limpieza de los tres repositorios. No existe siguiente incremento autorizado.
+- Siguiente paso remoto pendiente: completar verificaciones backend de `OLA6-AUT-001a`, comprobar presupuesto Actions y tramitar el único PR backend autorizado.
+- Próxima acción posterior: iniciar frontend solo tras backend integrado y verificado; después realizar el cierre documental `DOCS_ONLY` y el reporte final autorizado.
 - La primera vertical E2E ya fue alcanzada mediante incrementos autorizados; la continuación mantiene el mismo enfoque incremental y no implementa “todo J-AXON de una vez”.
 
 ## Reglas de continuidad
