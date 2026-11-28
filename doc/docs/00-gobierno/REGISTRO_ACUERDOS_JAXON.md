@@ -762,6 +762,8 @@ Se autorizan exactamente `V20261202000000__support_automation_delivery.sql`, `V2
 
 Quedan fuera expiración efectiva, reproceso de `FAILED`, n8n, SSE o polling frontend, otros triggers/reglas/acciones/tipos, edición de reglas, notificaciones por otros canales, purga, dependencias, lockfiles, workflows, `automation-collector`, infraestructura Production y despliegues. A la fecha de este registro backend está autorizado y en implementación local; no está integrado ni verificado remotamente y frontend aún no ha comenzado. `PRODUCTION_READY = NO`.
 
+La autorización funcional fue consumida: `BACKEND#73`, squash `fba8cd5747015424a8bfeb66a4f09afb3caba0c7`, tuvo runs verdes `46107806758`/`46108784813`; `FRONTEND#37`, squash `829534145329c9f93fb32d14b7c35012e30e0a63`, tuvo runs verdes `46111702406`/`46111890677`. Todos clasificaron `APPLICATION`, finalizaron en `run_attempt=1` y las ramas funcionales fueron eliminadas. `automation-collector` permaneció en `3dac71ca95442e4f50e77dd2a172b561ca49face`, byte a byte intacto. `OLA6-AUT-001a` está implementado, integrado y verificado; este único cierre documental consume la última operación remota autorizada y no habilita el siguiente incremento. `PRODUCTION_READY = NO`.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)
