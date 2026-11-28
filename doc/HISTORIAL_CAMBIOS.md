@@ -1,5 +1,15 @@
 # Historial de cambios
 
+## Primera regla Automation y notificación in-app -- OLA6-AUT-001a, 2026-12-02
+
+`AC-JAXON-105` cierra la primera vertical interna Automation/Notificaciones: Support entrega durablemente el único trigger `TICKET_STATUS_CHANGED` 2.0 autorizado; Automation deduplica y ejecuta `SUPPORT_WAITING_FOR_REQUESTER_NOTIFY_REQUESTER`, persiste la notificación propia `TICKET_WAITING_FOR_REQUESTER`, terminaliza la ejecución y entrega su hecho a Audit. OpenAPI 8.5 añade listado propio y transición `READ`; el frontend incorpora bandeja autenticada con caché por usuario, filtros/paginación y actualización exclusivamente explícita.
+
+`BACKEND#73`, squash `fba8cd5747015424a8bfeb66a4f09afb3caba0c7`, quedó verde en `46107806758`/`46108784813`; `FRONTEND#37`, squash `829534145329c9f93fb32d14b7c35012e30e0a63`, quedó verde en `46111702406`/`46111890677`. Los cuatro runs clasificaron `APPLICATION`, finalizaron con éxito en `run_attempt=1` y las ramas funcionales fueron eliminadas. El E2E Chromium multirrepo real verificó trigger, entrega Support -> Automation, ejecución `SUCCEEDED`, ownership, `READ` y entrega Audit.
+
+No se añadieron dependencias ni se modificaron lockfiles, workflows, `automation-collector`, n8n, SSE/polling, otros triggers/reglas/acciones/canales, infraestructura Production o despliegues.
+
+---
+
 ## Workspace frontend de Reporting v1 -- OLA6-RPT-001b, 2026-12-01
 
 `AC-JAXON-104` cierra el frontend Reporting v1 sobre OpenAPI 8.4: workspace único de Assets, Agents y Tickets, roles por unión exacta, parsers cerrados, filtros/paginación en URL, caché segmentada y exportación CSV byte a byte sin retry. `BACKEND#71`, squash `609dc8d79ba269223cfbf1c181e2edc571934f69`, quedó verde en `46026385315`/`46027850765`; `FRONTEND#36`, squash `3901ca74c9dad4d0084cabcea29b7b548df6f89e`, quedó verde en `46066833059`/`46067103819`. Los cuatro runs clasificaron `APPLICATION`, fueron exitosos en `run_attempt=1` y las ramas remotas fueron eliminadas.
