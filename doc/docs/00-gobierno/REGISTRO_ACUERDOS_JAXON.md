@@ -750,6 +750,18 @@ La ejecución queda limitada a `feature/ola6-rpt-001b`, un único push y `FRONTE
 
 La autorización funcional fue consumida: `BACKEND#71`, squash `609dc8d79ba269223cfbf1c181e2edc571934f69`, tuvo runs verdes `46026385315`/`46027850765`; `FRONTEND#36`, squash `3901ca74c9dad4d0084cabcea29b7b548df6f89e`, tuvo runs verdes `46066833059`/`46067103819`. Todos clasificaron `APPLICATION`, finalizaron en `run_attempt=1` y las ramas remotas fueron eliminadas. No existe autorización implícita para el siguiente incremento. `PRODUCTION_READY = NO`.
 
+## AC-JAXON-105 -- Primera regla Automation y notificación in-app
+
+LUIS aprueba `OLA6-AUT-001a` en `backend` y `frontend` como primera vertical interna de Automation/Notificaciones. La única regla es `SUPPORT_WAITING_FOR_REQUESTER_NOTIFY_REQUESTER`: consume exclusivamente `TICKET_STATUS_CHANGED` 2.0 con transición exacta `IN_PROGRESS -> WAITING_FOR_REQUESTER`, ejecuta `IN_APP_NOTIFICATION` y crea para el requester una notificación `TICKET_WAITING_FOR_REQUESTER`. Support conserva Ticket, outbox y determinación del destinatario; Automation conserva regla, ejecución, notificación y sus estados. El trigger 2.0 permanece intacto.
+
+Support entrega el hecho mediante estado durable por consumidor y contrato neutral in-process; Automation deduplica por regla y `sourceEventId`. Cada ejecución posee UUIDv4 y el catálogo completo `PENDING|DISPATCHED|SUCCEEDED|FAILED|EXPIRED`, aunque este corte usa únicamente `PENDING -> SUCCEEDED|FAILED`, sin expiración ni dispatch externo. La notificación y el evento terminal se confirman atómicamente con el cambio de ejecución. Tras diez intentos fallidos, la ejecución queda `FAILED`; retry usa exponential backoff con jitter y cap de cinco minutos. Los únicos eventos nuevos son `AUTOMATION_EXECUTION_SUCCEEDED|AUTOMATION_EXECUTION_FAILED` 1.0, auditables mediante outbox Automation.
+
+Se autorizan `GET /api/v1/notifications` y `POST /api/v1/notifications/{notificationId}/read` en OpenAPI 8.5 compatible con 8.4. Toda sesión humana autenticada consulta solo notificaciones propias, con filtro cerrado `UNREAD|READ`, página 0, size default 20 y máximo 50. `READ` exige CSRF y `expectedVersion`; repetirlo con versión vigente es no-op sin evento adicional, una versión obsoleta devuelve `409` y una notificación ajena se trata como `404`.
+
+Se autorizan exactamente `V20261202000000__support_automation_delivery.sql`, `V20261202010000__automation_notification_vertical.sql` y `V20261202020000__audit_automation_execution_catalog.sql`; ninguna migración histórica se modifica. Backend se ejecuta primero en `feature/ola6-aut-001a`, con un único push y Pull Request; frontend comienza solo tras backend integrado y verificado y usa la misma rama lógica. Después se autoriza un único cierre documental `docs/ola6-aut-001a-closure`, exclusivamente canónico y `DOCS_ONLY`. Antes de cada push se comprueba presupuesto Actions; no se usa CI para depurar ni se relanzan runs sin diagnóstico.
+
+Quedan fuera expiración efectiva, reproceso de `FAILED`, n8n, SSE o polling frontend, otros triggers/reglas/acciones/tipos, edición de reglas, notificaciones por otros canales, purga, dependencias, lockfiles, workflows, `automation-collector`, infraestructura Production y despliegues. A la fecha de este registro backend está autorizado y en implementación local; no está integrado ni verificado remotamente y frontend aún no ha comenzado. `PRODUCTION_READY = NO`.
+
 ## Referencias
 
 - [Proyecto Maestro](../../PROYECTO_MAESTRO.md)

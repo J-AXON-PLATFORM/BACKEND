@@ -126,6 +126,10 @@ El salto major fue autorizado tras confirmar ejecutablemente que el `const: UNRE
 
 `doc/contracts/openapi/8.3/openapi.yaml` conserva todas las operaciones de 8.2 y añade únicamente `GET /audit/events` (`listAuditEvents`), exclusivo de `AUDITOR`. Filtros opcionales `from`, `to`, `module`, `eventType`, `actorId`, `resourceType`, `resourceId`, `result` y `correlationId`; `page` (0) y `size` (50, máximo 200). Responde `AuditEventPage` cerrada con `AuditEvent` de 15 propiedades y `401`, `403`, `422`, `500` o `503`. OpenAPI 8.2 queda congelado con SHA-256 `d92325d2330289a1346b034853c3bac47018cf8bb63216f9bde5cf7d9da450c3`; `oasdiff` no reporta cambios incompatibles 8.2 -> 8.3.
 
+## Contrato compatible 8.5 -- OLA6-AUT-001a
+
+`doc/contracts/openapi/8.5/openapi.yaml` conserva todas las operaciones de 8.4 y añade únicamente `GET /notifications` y `POST /notifications/{notificationId}/read`. El listado autenticado filtra opcionalmente `UNREAD|READ`, usa página 0, size 20 y máximo 50, y nunca enumera datos ajenos. `READ` exige CSRF y body cerrado `expectedVersion`; devuelve `200`, `404` uniforme para inexistente/ajena, `409` para versión obsoleta y `422` para entrada inválida. OpenAPI 8.4 queda histórico e inmutable; REST es la fuente oficial y no se añade SSE ni polling.
+
 La respuesta contiene exclusivamente `jobId`, `executorId`, `scopeId`, `profile`, `status`, `createdAt`, `expiresAt`, `dispatchedAt` y `version`. `409` cubre combinación inválida o job no terminal y `503` conserva el job `PENDING` cuando falla la publicación, devolviendo en `Location` la URI exacta para consultarlo. OpenAPI 5.0 permanece byte a byte inmutable; REST sigue siendo fuente oficial y el canal del ejecutable continúa siendo SFTP/JSON Schema Discovery 1.0.
 
 ## Pendiente de diseño detallado

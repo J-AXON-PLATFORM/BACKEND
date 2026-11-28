@@ -149,6 +149,8 @@ Mutación `AUDIT_REQUIRED` -> cambio de negocio + captura durable `AuditFact` ->
 
 `OLA6-RPT-001a`: sesión y rol autorizados -> `audit_reporting` valida filtros -> contrato público del módulo dueño consulta su schema bajo `REPEATABLE_READ` -> JSON devuelve página estable o CSV genera todos los bytes acotados -> Audit confirma `REPORT_EXPORTED` en transacción corta -> solo entonces se devuelve `200`. Fallos, filtros inválidos o límites excedidos no crean hechos de exportación exitosa.
 
+`OLA6-AUT-001a`: Support confirma `IN_PROGRESS -> WAITING_FOR_REQUESTER` y su evento 2.0 -> entrega durable al consumidor Automation -> regla exacta crea o deduplica ejecución `PENDING` -> worker confirma notificación requester + `SUCCEEDED` + evento terminal, o reintenta y terminaliza `FAILED` al décimo fallo -> dispatcher Automation entrega el hecho a Audit. REST lista solo notificaciones propias y `READ` usa CSRF/versión; no hay SSE ni polling.
+
 ### FL-AUT-001 / eventos internos
 
 Command/query entre módulos -> API pública in-process. Hecho durable -> outbox del productor -> consumidores idempotentes `at-least-once`. Automation solo procesa eventos elegibles y cualquier mutación vuelve al contrato del módulo dueño. n8n no consume el bus interno directamente. SSE es adaptación best-effort y REST conserva verdad.

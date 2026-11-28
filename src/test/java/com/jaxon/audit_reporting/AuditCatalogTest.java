@@ -475,4 +475,69 @@ class AuditCatalogTest {
             assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
         }
     }
+
+    @Test
+    void acceptsOnlyClosedAutomationExecutionFacts() {
+        UUID executionId = UUID.randomUUID();
+        Map<String, String> succeeded = Map.of(
+                "ruleCode", "SUPPORT_WAITING_FOR_REQUESTER_NOTIFY_REQUESTER",
+                "actionType", "IN_APP_NOTIFICATION");
+        Map<String, String> failed = Map.of(
+                "ruleCode", "SUPPORT_WAITING_FOR_REQUESTER_NOTIFY_REQUESTER",
+                "actionType", "IN_APP_NOTIFICATION",
+                "failureCode", "NOTIFICATION_PERSISTENCE_FAILED");
+        assertThat(AuditCatalog.accepts(new AuditFact(
+                        UUID.randomUUID(),
+                        "AUTOMATION_EXECUTION_SUCCEEDED",
+                        "1.0",
+                        "AUTOMATION",
+                        Instant.now(),
+                        "AUTOMATION",
+                        executionId,
+                        "AUTOMATION_EXECUTION",
+                        executionId,
+                        1L,
+                        "SUCCESS",
+                        UUID.randomUUID(),
+                        succeeded)))
+                .isTrue();
+        assertThat(AuditCatalog.accepts(new AuditFact(
+                        UUID.randomUUID(),
+                        "AUTOMATION_EXECUTION_FAILED",
+                        "1.0",
+                        "AUTOMATION",
+                        Instant.now(),
+                        "AUTOMATION",
+                        executionId,
+                        "AUTOMATION_EXECUTION",
+                        executionId,
+                        1L,
+                        "FAILED",
+                        UUID.randomUUID(),
+                        failed)))
+                .isTrue();
+
+        for (AuditFact invalid : new AuditFact[] {
+            new AuditFact(UUID.randomUUID(), "AUTOMATION_EXECUTION_SUCCEEDED", "2.0", "AUTOMATION",
+                    Instant.now(), "AUTOMATION", executionId, "AUTOMATION_EXECUTION", executionId,
+                    1L, "SUCCESS", UUID.randomUUID(), succeeded),
+            new AuditFact(UUID.randomUUID(), "AUTOMATION_EXECUTION_SUCCEEDED", "1.0", "SUPPORT",
+                    Instant.now(), "AUTOMATION", executionId, "AUTOMATION_EXECUTION", executionId,
+                    1L, "SUCCESS", UUID.randomUUID(), succeeded),
+            new AuditFact(UUID.randomUUID(), "AUTOMATION_EXECUTION_SUCCEEDED", "1.0", "AUTOMATION",
+                    Instant.now(), "SYSTEM", executionId, "AUTOMATION_EXECUTION", executionId,
+                    1L, "SUCCESS", UUID.randomUUID(), succeeded),
+            new AuditFact(UUID.randomUUID(), "AUTOMATION_EXECUTION_SUCCEEDED", "1.0", "AUTOMATION",
+                    Instant.now(), "AUTOMATION", executionId, "AUTOMATION_EXECUTION", UUID.randomUUID(),
+                    1L, "SUCCESS", UUID.randomUUID(), succeeded),
+            new AuditFact(UUID.randomUUID(), "AUTOMATION_EXECUTION_SUCCEEDED", "1.0", "AUTOMATION",
+                    Instant.now(), "AUTOMATION", executionId, "AUTOMATION_EXECUTION", executionId,
+                    1L, "FAILED", UUID.randomUUID(), succeeded),
+            new AuditFact(UUID.randomUUID(), "AUTOMATION_EXECUTION_FAILED", "1.0", "AUTOMATION",
+                    Instant.now(), "AUTOMATION", executionId, "AUTOMATION_EXECUTION", executionId,
+                    1L, "FAILED", UUID.randomUUID(), succeeded)
+        }) {
+            assertThat(AuditCatalog.accepts(invalid)).as(String.valueOf(invalid)).isFalse();
+        }
+    }
 }

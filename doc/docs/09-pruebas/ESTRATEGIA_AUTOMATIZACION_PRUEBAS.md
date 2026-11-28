@@ -129,3 +129,10 @@ Automatizar pruebas sin depender de un proveedor de CI específico
 - CSV: paridad de filtros sin `page|size`, `Content-Type`, validación condicional del header no expuesto por CORS, filename estático, bytes sin lectura/transformación y revocación del object URL.
 - E2E Chromium multirepo: backend/PostgreSQL reales, todos los roles, filtros y URL, paridad JSON/CSV, descarga efectiva y fila `REPORT_EXPORTED`; el journey completo conserva regresión de Identity, Inventory, Agent, Discovery, Support y AI.
 - Cierre real local frontend: 20 archivos/188 pruebas Vitest, lint, typecheck, build, auditorías y 1/1 Playwright verdes; SFTPGo upstream, govulncheck y Trivy también verdes.
+
+## OLA6-AUT-001a
+
+- Backend: trigger exacto/rechazos, deduplicación y conflicto, handoff Support, atomicidad ejecución/notificación/outbox, diez fallos, backoff, Audit terminal y constraints de instalación limpia/upgrade.
+- API/seguridad: autenticación, CSRF, ownership sin enumeración, filtro/paginación/orden, `READ` efectivo/no-op/conflicto, parámetros/body cerrados y OpenAPI 8.5 compatible.
+- Arquitectura/regresión: ocho módulos sin ciclos, ausencia de SQL cross-schema, contratos históricos inmutables, `clean verify`, documentación, whitespace, Gitleaks y clasificador esperado `APPLICATION`.
+- Frontend posterior: parsers cerrados, caché por usuario, UX sin polling y E2E Chromium multirepo real; se ejecutará solo tras backend integrado.

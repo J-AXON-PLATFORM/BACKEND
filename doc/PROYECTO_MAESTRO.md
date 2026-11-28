@@ -3,8 +3,8 @@
 > **Clasificación:** OBLIGATORIO  
 > **Versión del framework:** 1.0.0  
 > **Proyecto:** J-AXON  
-> **Revisión de continuidad:** CKP-JAXON-005 | `OLA6-RPT-001a/001b`: Reporting v1 backend y frontend, 2026-12-01
-> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 5, `OLA6-AUD-001a`--`001j` y `OLA6-RPT-001a/001b` integradas y verificadas; no existe siguiente incremento autorizado; `PRODUCTION_READY = NO`.
+> **Revisión de continuidad:** CKP-JAXON-005 | `OLA6-AUT-001a`: primera regla Automation y notificación in-app, 2026-12-02
+> **Estado documental:** baseline v1 `DESIGN_READY`; OLA 5, Audit y Reporting v1 integrados y verificados; `OLA6-AUT-001a` autorizado y en implementación backend local; `PRODUCTION_READY = NO`.
 > **Regla:** Los acuerdos aprobados son diseño/forma de trabajo, no evidencia de implementación. Los campos que siguen `POR_DECIDIR` no deben inventarse.
 
 Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobierno/REGISTRO_ACUERDOS_JAXON.md), [TRABAJO_ACTUAL.md](docs/16-contexto/TRABAJO_ACTUAL.md), este `PROYECTO_MAESTRO.md` y [PENDIENTES_JAXON.md](docs/16-contexto/PENDIENTES_JAXON.md). El checkpoint conversacional se distribuye aparte del framework como `CHECKPOINT_JAXON_CKP_005.md`.
@@ -24,7 +24,7 @@ Para continuidad leer, en este orden: [REGISTRO_ACUERDOS_JAXON.md](docs/00-gobie
 - Responsable de aprobar decisiones significativas: usuario promotor de J-AXON; identidad formal `POR_DECIDIR`.
 - Fecha de última revisión: 2026-11-30.
 - Refinamiento aprobado hasta: **Lote 54**. Lotes 49--54 consolidan Support, Inventory, Collector tasks, Audit/Reporting, contratos/eventos internos y readiness. **No existe próximo lote de refinamiento funcional planificado antes de implementación**; cualquier implementación requiere autorización expresa.
-- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, Discovery hasta creación/vínculo `INCORPORATED`, OLA 5, `OLA6-AUD-001a`--`001j` y Reporting v1 `OLA6-RPT-001a/001b` están integrados y verificados. Otros formatos, programación, exports asíncronos, proyecciones/warehouse y Production quedan fuera.
+- Estado funcional: Identity, Inventory y Agent/Collector autorizados, Support hasta lifecycle terminal, Discovery hasta creación/vínculo `INCORPORATED`, OLA 5, Audit y Reporting v1 están integrados y verificados. La primera vertical Automation está autorizada y en implementación local, aún no integrada.
 
 ## 1. Identidad
 
@@ -614,4 +614,4 @@ Cuando exista `POR_DECIDIR` o más de un camino razonable:
 
 ### Siguiente fase
 
-Baseline `DESIGN_READY`, con OLA 5 verificada mediante `BACKEND#54..59` y `FRONTEND#29..34`, `OLA6-AUD-001a`--`001j` hasta `BACKEND#70`, y Reporting v1 cerrado por `AC-JAXON-103/104`. `BACKEND#71`, squash `609dc8d79ba269223cfbf1c181e2edc571934f69`, tuvo runs verdes `46026385315`/`46027850765`; `FRONTEND#36`, squash `3901ca74c9dad4d0084cabcea29b7b548df6f89e`, tuvo runs verdes `46066833059`/`46067103819`. Los cuatro clasificaron `APPLICATION` y finalizaron en `run_attempt=1`. No existe siguiente incremento autorizado. `PRODUCTION_READY = NO`.
+Baseline `DESIGN_READY`, con OLA 5, Audit y Reporting v1 verificados hasta `BACKEND#71` y `FRONTEND#36`. `AC-JAXON-105` autoriza `OLA6-AUT-001a`; backend está en implementación local y frontend permanece pendiente de la integración backend. `PRODUCTION_READY = NO`.
